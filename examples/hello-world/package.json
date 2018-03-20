@@ -12,7 +12,7 @@
     "march": "2.0.0",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
-    "symphony-js": "0.0.1"
+    "symphony-joy": "latest"
   },
   "devDependencies": {
     "babel-plugin-module-resolver": "^2.7.1"

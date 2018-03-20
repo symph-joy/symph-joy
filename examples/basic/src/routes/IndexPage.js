@@ -90,7 +90,6 @@ export default class IndexPage extends Component {
 
   render() {
     let {products = []} = this.props;
-    console.dir(this.props);
     return (
       <div className={styles.root}>
         <style jsx>{`

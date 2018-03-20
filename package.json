@@ -1,6 +1,6 @@
 {
-  "name": "symphony-js",
-  "version": "0.0.1",
+  "name": "symphony-joy",
+  "version": "0.0.2",
   "description": "Minimalistic framework for React applications, inspiration comes from Next.js and Dva",
   "main": "./dist/server/symphony.js",
   "license": "MIT",
@@ -9,19 +9,19 @@
   "homepage": "",
   "files": [
     "dist",
+    "asset.js",
     "babel.js",
     "client.js",
-    "link.js",
-    "css.js",
-    "head.js",
+    "config.js",
+    "constants.js",
     "document.js",
     "dynamic.js",
-    "prefetch.js",
-    "router.js",
-    "asset.js",
     "error.js",
-    "constants.js",
-    "config.js"
+    "fetch.js",
+    "head.js",
+    "prefetch.js",
+    "proxy-api-middleware.js",
+    "router.js"
   ],
   "bin": {
     "symphony": "./dist/bin/symphony"

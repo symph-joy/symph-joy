@@ -1,5 +1,5 @@
 const withLess = require('@zeit/next-less')
-const withImageLoader = require('symphony-image-loader')
+const withImageLoader = require('next-images')
 
 module.exports = withImageLoader(withLess({
   cssModules: true,
