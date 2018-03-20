@@ -27,7 +27,7 @@ export default {
               price: 5999,
             }]
           )
-        }, 1000);
+        }, 100);
       });
       yield put({type: 'save', payload: {products}});
     },

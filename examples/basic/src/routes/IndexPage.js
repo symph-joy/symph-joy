@@ -1,33 +1,18 @@
 import React, {Component} from 'react';
-// import {connect} from 'dva';
 import PropTypes from "prop-types";
-import {connect} from 'react-redux';
 import styles from './IndexPage.less';
-// import {startBatch, endBatch} from 'dva-core/lib/createPromiseMiddleware'
-import {controller} from 'symphony/dist/lib/dva'
+import Controller from 'symphony-joy/controller'
 import ImageView from '../components/image-view'
 
 
-@controller((state) => ({
+@Controller((state) => ({
   me: state.user.me,
   products: state.product.products
 }))
 export default class IndexPage extends Component {
   static contextTypes = {
     dva: PropTypes.object,
-    // store: PropTypes.object,
     isInitialRender: PropTypes.bool,
-  }
-
-  static async getInitialProps(dva) {
-    const dispatch = dva._store.dispatch
-    // startBatch();
-
-
-    // return endBatch().then((data) => {
-    //   console.log('>>>>>>  getInitialPropsFinish:' + JSON.stringify(data));
-    //   return '++++++++++++++++++++++'
-    // })
   }
 
   constructor() {
@@ -50,20 +35,9 @@ export default class IndexPage extends Component {
     });
   }
 
-
   componentWillMount() {
     console.log('>>>>>> IndexPage componentWillMount');
-    // IndexPage.getInitialProps(this.context.dva);
-    // let effectResult = this.props.dispatch({
-    //   type: 'user/fetchMe'
-    // }).then((result) => {
-    //   console.log('>>>>>>  effectResult:' + result);
-    // });
-    //
-    //
-    // this.props.dispatch({
-    //   type: 'product/fetchProducts'
-    // })
+
   }
 
   componentDidMount() {

@@ -24,7 +24,7 @@ export default {
               name:'lane lee',
               age: 18,
             })
-        }, 2000);
+        }, 100);
       });
 
       yield put({ type: 'save', payload: {me}});

@@ -1,6 +1,6 @@
 const express = require('express')
-const symphony = require('symphony')
-const proxyApiMiddleware = require('symphony/proxy-api-middleware').default
+const symphony = require('symphony-joy')
+const proxyApiMiddleware = require('symphony-joy/proxy-api-middleware').default
 
 
 const port = parseInt(process.env.PORT, 10) || 3000

@@ -1,5 +1,5 @@
 {
   "presets": [
-    "symphony/babel"
+    "symphony-joy/babel"
   ]
 }
