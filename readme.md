@@ -1,8 +1,7 @@
 
-#SYMPHONY 
+# SYMPHONY 
 
 Symphony-js is a minimalistic framework for server-rendered React applications.
-
 
 
 ## How to use
@@ -12,10 +11,10 @@ Symphony-js is a minimalistic framework for server-rendered React applications.
 Install it:
 
 ```bash
-npm install --save symphony react react-dom
+npm install --save symphony-joy react react-dom
 ```
 
-> Symphony only supports [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html).<br/>
+> symphony-joy only supports [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html).<br/>
 
 and add a script to your package.json like this:
 
@@ -81,28 +80,11 @@ export default () =>
 
 Please see the [styled-jsx documentation](https://www.npmjs.com/package/styled-jsx) for more examples.
 
-#### CSS-in-JS
-
-<p><details>
-  <summary>
-    <b>Examples</b>
-    </summary>
-  <ul><li><a href="./examples/with-styled-components">Styled components</a></li><li><a href="./examples/with-styletron">Styletron</a></li><li><a href="./examples/with-glamor">Glamor</a></li><li><a href="./examples/with-glamorous">Glamorous</a></li><li><a href="./examples/with-cxs">Cxs</a></li><li><a href="./examples/with-aphrodite">Aphrodite</a></li><li><a href="./examples/with-fela">Fela</a></li></ul>
-</details></p>
-
-It's possible to use any existing CSS-in-JS solution. The simplest one is inline styles:
-
-```jsx
-export default () => <p style={{ color: 'red' }}>hi there</p>
-```
-
-To use more sophisticated CSS-in-JS solutions, you typically have to implement style flushing for server-side rendering. We enable this by allowing you to define your own [custom `<Document>`](#user-content-custom-document) component that wraps each page.
-
 #### Importing CSS / Sass / Less files
 
 To support importing `.css` `.scss` or `.less` files you can use these modules, which configure sensible defaults for server rendered applications.
 
-- [@zeit/symphony-css](https://github.com/zeit/symphony-plugins/tree/master/packages/next-css)
+- [@zeit/next-css](https://github.com/zeit/next-plugins/tree/master/packages/next-css)
 - [@zeit/next-sass](https://github.com/zeit/next-plugins/tree/master/packages/next-sass)
 - [@zeit/next-less](https://github.com/zeit/next-plugins/tree/master/packages/next-less)
 
@@ -116,18 +98,11 @@ export default () => <img src="/static/my-image.png" />
 
 ### Populating `<head>`
 
-<p><details>
-  <summary><b>Examples</b></summary>
-  <ul>
-    <li><a href="./examples/head-elements">Head elements</a></li>
-    <li><a href="./examples/layout-component">Layout component</a></li>
-  </ul>
-</details></p>
 
 We expose a built-in component for appending elements to the `<head>` of the page.
 
 ```jsx
-import Head from 'next/head'
+import Head from 'symphony/head'
 
 export default () =>
   <div>
@@ -167,7 +142,7 @@ TODO
 
 ### Routing
 
-#### With `react-router-4`
+symphony has integrate  `react-router-4`
 
 ### Custom server and routing
 
