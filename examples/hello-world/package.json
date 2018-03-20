@@ -1,0 +1,20 @@
+{
+  "name": "sample",
+  "version": "1.0.0",
+  "description": "for test",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "march": "2.0.0",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
+    "symphony-js": "0.0.1"
+  },
+  "devDependencies": {
+    "babel-plugin-module-resolver": "^2.7.1"
+  }
+}

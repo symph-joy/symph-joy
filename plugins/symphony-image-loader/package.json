@@ -1,0 +1,10 @@
+{
+  "name": "symphony-image-loader",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "url-loader": "^1.0.1",
+    "file-loader": "^1.1.11"
+  }
+}

@@ -1,0 +1,21 @@
+# build output
+dist
+.symphony
+
+# dependencies
+node_modules
+package-lock.json
+test/node_modules
+
+# logs & pids
+*.log
+pids
+
+# coverage
+.nyc_output
+coverage
+
+# test output
+test/**/out
+.DS_Store
+.idea

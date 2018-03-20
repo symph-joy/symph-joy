@@ -1,0 +1,25 @@
+{
+  "name": "dva-example",
+  "private": true,
+  "scripts": {
+    "start": "node --experimental-modules server.js",
+    "build": "next build"
+  },
+  "engines": {
+    "install-node": "6.9.2"
+  },
+  "dependencies": {
+    "@zeit/next-less": "^0.1.1",
+    "babel-runtime": "^6.9.2",
+    "express": "^4.16.2",
+    "is-plain-object": "^2.0.4",
+    "less": "^3.0.1",
+    "symphony-js": "^0.0.1",
+    "symphony-image-loader": "file:../../plugins/symphony-image-loader",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0"
+  },
+  "devDependencies": {
+    "babel-plugin-module-resolver": "^2.7.1"
+  }
+}
