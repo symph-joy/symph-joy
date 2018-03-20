@@ -37,7 +37,7 @@ export default class Index extends Component{
 }
 ```
 
-然后运行`symphony` 命令，在浏览器中输入http://localhost:3000可以访问刚才添加的页面。如果使用其它端口来启动应用，可使用`symphony dev -p <your port here>`
+然后运行`symphony` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `symphony dev -p <your port here>`
 
 到目前为止，一个简单可完整运行的react app已经创建完成，例子 [hello-world](./examples/hello)， 那我们拥有了什么呢？
 
@@ -81,6 +81,14 @@ export default () =>
 ```
 
 查看  [styled-jsx 文档](https://www.npmjs.com/package/styled-jsx) ，获取详细信息。
+
+#### Import CSS / LESS / SASS 文件
+
+为了支持导入css、less和sass样式文件，需要使用一下next.js插件，具体使用方法请见插件详情页面。
+
+- [@zeit/next-css](https://github.com/zeit/next-plugins/tree/master/packages/next-css)
+- [@zeit/next-sass](https://github.com/zeit/next-plugins/tree/master/packages/next-sass)
+- [@zeit/next-less](https://github.com/zeit/next-plugins/tree/master/packages/next-less)
 
 
 
