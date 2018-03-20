@@ -1,6 +1,6 @@
 {
   "name": "symphony-joy",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Minimalistic framework for React applications, inspiration comes from Next.js and Dva",
   "main": "./dist/server/symphony.js",
   "license": "MIT",
