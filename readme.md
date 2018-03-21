@@ -82,13 +82,142 @@ export default () =>
 
 查看  [styled-jsx 文档](https://www.npmjs.com/package/styled-jsx) ，获取详细信息。
 
+
 #### Import CSS / LESS / SASS 文件
 
-为了支持导入css、less和sass样式文件，需要使用一下next.js插件，具体使用方法请见插件详情页面。
+为了支持导入css、less和sass样式文件，可使用next.js的兼容插件，具体使用方法请见插件详情页面。
 
 - [@zeit/next-css](https://github.com/zeit/next-plugins/tree/master/packages/next-css)
 - [@zeit/next-sass](https://github.com/zeit/next-plugins/tree/master/packages/next-sass)
 - [@zeit/next-less](https://github.com/zeit/next-plugins/tree/master/packages/next-less)
+
+
+### 访问静态文件
+
+在工程根目录下创建`static`目录，在代码里，通过在url前面添加`/static/`前缀来引用里面的资源
+
+```jsx
+export default () => <img src="/static/my-image.png" />
+```
+
+### 自定义 Head
+
+symphony-joy 提供了内建的component来自定义html页面的<head>部分
+
+```jsx
+import Head from 'symphony/head'
+
+export default () =>
+  <div>
+    <Head>
+      <title>My page title</title>
+      <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+    </Head>
+    <p>Hello world!</p>
+  </div>
+```
+
+为了避免在`head`中重复添加多个相同标签，可以给标签添加`key`属性， 相同的key只会渲染一次。
+
+```jsx
+import Head from 'next/head'
+export default () => (
+  <div>
+    <Head>
+      <title>My page title</title>
+      <meta name="viewport" content="initial-scale=1.0, width=device-width" key="viewport" />
+    </Head>
+    <Head>
+      <meta name="viewport" content="initial-scale=1.2, width=device-width" key="viewport" />
+    </Head>
+    <p>Hello world!</p>
+  </div>
+)
+```
+
+在上面的例子中，只有第二个`<meta name="viewport" />`被渲染和添加到页面。
+
+### 获取数据
+
+symphony-joy提供了`symphony-joy/fetch`方法来获取远程数据， 其调用参数和浏览器提供的[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)方法保持一致。
+
+```jsx
+import fetch from 'symphony-joy/fetch'
+
+fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET'})
+  .then(respone = >{
+      // do something...
+  });
+```
+
+`symphony-joy/fetch` 内建提供简单的跨域解决方案，在浏览器发起的跨域请求，会先被封装后转发到服务端，由服务端完成远端的数据请求和将响应转发给浏览器端，服务端作为自动的代理服务器。
+
+TODO 插入流程图
+
+如果想关闭改内建行为，使用jsonp来完成跨域请求，可以在fetch的options参数上设定`options.mode='cors'`
+
+```jsx
+import fetch from 'symphony-joy/fetch'
+
+fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET', mode:'cors})
+  .then(respone = >{
+      // do something...
+  });
+```
+
+> 在不做任何配置的前提下，依然可以使用其它的类似解决方案，例如：[node-http-proxy](https://github.com/nodejitsu/node-http-proxy#using-https), [express-http-proxy](https://github.com/villadora/express-http-proxy)等，在服务端搭建proxy服务。我们内建了这个服务，是为了让开发人员像原生端开发人员一样，更专注于业务开发，不再为跨域、代理路径、代理服务配置等问题困扰。
+
+### 应用组件
+
+由于javascript语言的开放性，在实际的开发工作中，不同的团队和开发人员，所形成的应用在结构和代码风格上往往存在较大的差异，这给维护迭代和多人协同开发带来了麻烦，再由于symphony-joy在提供高级功能的同时，难免会来带一些副作用，为了避免以上问题，我们所以提供了以下应用层组件，保证应用的协同高效运行。
+
+![图片](https://github.com/lnlfps/static/blob/master/symphony-joy/images/app-work-flow.jpeg?raw=true)
+
+#### Controller
+
+Controller为`Component`提供新的`componentPrepare`生命周期方法，该方法会在组件初始化后，渲染前执行，主要用于准备组件渲染所需要的model数据，symphony-joy会保证该方法在组件展现给用户之前只会执行一次。
+
+```jsx
+import React, {Component} from 'react';
+import Controller from 'symphony-joy/controller'
+
+@Controller((state) => ({
+  user: state.user.me
+}))
+export default class UserController extends Component {
+
+  componentPrepare() {
+    let {dispatch} = this.props;
+    dispatch({
+      type: 'user/fetchMyInfo'
+    })
+  }
+
+  render() {
+    let {products = []} = this.props;
+    return (
+      <div className={styles.root}>
+        <div className={'user-name'}>
+          用户名：{this.props.me ? this.props.me.name : '未登录'}
+        </div>
+      </div>
+    );
+  }
+}
+```
+
+在上面，我们使用`@Controller(mapStateToProps)`装饰器来将一个普通的React Component声明为一个Controller，同时提供提个`mapStateToProps`的参数来申明redux state和组件props的绑定。
+
+这是一个展现用户信息的Controller，需要在界面上展示当前用户的信息，componentPrepare生命周期函数中，`dispatch({type: 'user/fetchMyInfo'})` 使用redux提供的`dispatch`方法，调用userModel中的fetchMyInfo方法，改方法
+
+
+
+ 
+ 
+
+
+
+
 
 
 
@@ -96,11 +225,3 @@ export default () =>
 
 - 完善使用文档
 - 添加例子和测试案例
-
-
-
-
-
-   
-
-

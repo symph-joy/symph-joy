@@ -2,7 +2,7 @@ import React, {Component} from 'react'
 import userModel from './models/userModel'
 import productsModel from './models/productsModel'
 import {Switch, Route} from 'symphony-joy/router'
-import dynamic from 'symphony/dynamic'
+import dynamic from 'symphony-joy/dynamic'
 import PropTypes from "prop-types"
 
 

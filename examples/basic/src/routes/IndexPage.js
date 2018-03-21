@@ -10,10 +10,6 @@ import ImageView from '../components/image-view'
   products: state.product.products
 }))
 export default class IndexPage extends Component {
-  static contextTypes = {
-    dva: PropTypes.object,
-    isInitialRender: PropTypes.bool,
-  }
 
   constructor() {
     console.log('>>>>===== IndexPage constructor');
@@ -25,7 +21,7 @@ export default class IndexPage extends Component {
     console.log('>>>>===== prepare');
     console.log('>>>>>> IndexPage start dispatch action ');
     dispatch({
-      type: 'user/fetchMe'
+      type: 'user/fetchMyInfo'
     }).then((result) => {
       console.log('>>>>>>  effectResult:' + result);
       return result;

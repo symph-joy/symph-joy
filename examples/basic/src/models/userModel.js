@@ -14,7 +14,7 @@ export default {
   },
 
   effects: {
-    *fetchMe({ payload }, { call, put }) {  // eslint-disable-line
+    *fetchMyInfo({ payload }, { call, put }) {  // eslint-disable-line
       console.log('>>>>>> user model get action fetchMe');
       let me = yield new Promise((resolve, reject)=>{
         setTimeout(()=>{

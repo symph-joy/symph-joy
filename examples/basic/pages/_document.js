@@ -1,4 +1,4 @@
-import Document, {Head, Main, SymphonyScript} from 'symphony/document'
+import Document, {Head, Main, SymphonyScript} from 'symphony-joy/document'
 
 export default class MyDocument extends Document {
   render() {
