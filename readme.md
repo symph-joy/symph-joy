@@ -14,9 +14,8 @@ symphony-joy 的目标是创建极致开发和用户体验的 React 应用，灵
 - 使用Model类管理redux 的action、state、reducer部件，代码结构和业务逻辑更清晰
 - 支持插件化配置，兼容next.js的大部分插件。
 
-## 使用方法
 
-### 安装
+## 安装
 
 运行`npm init`创建一个空工程，并填写项目的基本信息，当然也可以在一个已有的项目中直接安装。
 
@@ -48,9 +47,9 @@ export default class Index extends Component{
 - 静态资源服务，在`/static/`目录下的静态资源，可通过`http://localhost:3000/static/`访问
 
 
-### 样式 CSS
+## 样式 CSS
 
-#### jsx内建样式
+### jsx内建样式
 
 和next.js一样，内建了 [styled-jsx](https://github.com/zeit/styled-jsx) 模块，支持Component内独立域的CSS样式，不会和组件外同名样式冲突。
 
@@ -83,7 +82,7 @@ export default () =>
 查看  [styled-jsx 文档](https://www.npmjs.com/package/styled-jsx) ，获取详细信息。
 
 
-#### Import CSS / LESS / SASS 文件
+### Import CSS / LESS / SASS 文件
 
 为了支持导入css、less和sass样式文件，可使用next.js的兼容插件，具体使用方法请见插件详情页面。
 
@@ -92,7 +91,7 @@ export default () =>
 - [@zeit/next-less](https://github.com/zeit/next-plugins/tree/master/packages/next-less)
 
 
-### 访问静态文件
+## 访问静态文件
 
 在工程根目录下创建`static`目录，在代码里，通过在url前面添加`/static/`前缀来引用里面的资源
 
@@ -100,7 +99,7 @@ export default () =>
 export default () => <img src="/static/my-image.png" />
 ```
 
-### 自定义 Head
+## 自定义 Head
 
 symphony-joy 提供了内建的component来自定义html页面的<head>部分
 
@@ -137,7 +136,7 @@ export default () => (
 
 在上面的例子中，只有第二个`<meta name="viewport" />`被渲染和添加到页面。
 
-### 获取数据
+## 获取数据
 
 symphony-joy提供了`symphony-joy/fetch`方法来获取远程数据， 其调用参数和浏览器提供的[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)方法保持一致。
 
@@ -167,22 +166,27 @@ fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET', mode:'cors})
 
 > 在不做任何配置的前提下，依然可以使用其它的类似解决方案，例如：[node-http-proxy](https://github.com/nodejitsu/node-http-proxy#using-https), [express-http-proxy](https://github.com/villadora/express-http-proxy)等，在服务端搭建proxy服务。我们内建了这个服务，是为了让开发人员像原生端开发人员一样，更专注于业务开发，不再为跨域、代理路径、代理服务配置等问题困扰。
 
-### 应用组件
+## 应用组件
 
-由于javascript语言的开放性，在实际的开发工作中，不同的团队和开发人员，所形成的应用在结构和代码风格上往往存在较大的差异，这给维护迭代和多人协同开发带来了麻烦，再由于symphony-joy在提供高级功能的同时，难免会来带一些副作用，为了避免以上问题，我们所以提供了以下应用层组件，保证应用的协同高效运行。
+<!-- 由于javascript语言的开放性，在实际的开发工作中，不同的团队和开发人员，所形成的应用在结构和代码风格上往往存在较大的差异，这给维护迭代和多人协同开发带来了麻烦，再由于symphony-joy在提供高级功能的同时，难免会来带一些副作用，为了避免以上问题，我们所以提供了以下应用层组件，保证应用的协同高效运行。 -->
 
-![图片](https://github.com/lnlfps/static/blob/master/symphony-joy/images/app-work-flow.jpeg?raw=true)
+![app work flow](https://github.com/lnlfps/static/blob/master/symphony-joy/images/app-work-flow.jpeg?raw=true)
 
-#### Controller
+图中蓝色的箭头表示数据流的方向，红色箭头表示控制流的方向，在内部使用redux来实现整个流程，为了更好的推进工程化以及简化redux的实现，我们抽象了出了Controller和Model两个类。
 
-Controller为`Component`提供新的`componentPrepare`生命周期方法，该方法会在组件初始化后，渲染前执行，主要用于准备组件渲染所需要的model数据，symphony-joy会保证该方法在组件展现给用户之前只会执行一次。
+>为了更好的理解以下内容，查先查阅一下知识点：[redux](https://github.com/reactjs/redux)， [dva concepts](https://github.com/dvajs/dva/blob/master/docs/Concepts.md)
+
+### Controller
+
+Controller的作用是管理View和model状态的绑定，新增了`componentPrepare`生命周期方法，用于在界面渲染前获取业务数据，在服务端渲染时，`componentPrepare`会在服务端被执行一次，等待里面的所有数据获取方法执行完成后，才会渲染出界面返回给浏览器，浏览器会复用服务端准备的数据，不会执行再次执行该方法，如果没有启动服务端渲染，或者是在运行时动态加载的界面，该方法将在客户端上自动运行。
+
 
 ```jsx
 import React, {Component} from 'react';
 import Controller from 'symphony-joy/controller'
 
 @Controller((state) => ({
-  user: state.user.me
+  me: state.user.me
 }))
 export default class UserController extends Component {
 
@@ -194,25 +198,70 @@ export default class UserController extends Component {
   }
 
   render() {
-    let {products = []} = this.props;
+    let {user} = this.props;
     return (
-      <div className={styles.root}>
-        <div className={'user-name'}>
-          用户名：{this.props.me ? this.props.me.name : '未登录'}
-        </div>
+      <div>
+        user name：{me ? me.name : 'guest'}
       </div>
     );
   }
 }
 ```
 
-在上面，我们使用`@Controller(mapStateToProps)`装饰器来将一个普通的React Component声明为一个Controller，同时提供提个`mapStateToProps`的参数来申明redux state和组件props的绑定。
+在上面，我们使用`@Controller(mapStateToProps)`装饰器来将一个普通的React Component声明为一个Controller，同时提供`mapStateToProps`的参数来将model状态和组件props属性绑定， 当model的状态发生改变时，同时会触发props的改变。
 
-这是一个展现用户信息的Controller，需要在界面上展示当前用户的信息，componentPrepare生命周期函数中，`dispatch({type: 'user/fetchMyInfo'})` 使用redux提供的`dispatch`方法，调用userModel中的fetchMyInfo方法，改方法
+每个controller的`props`都会被注入一个redux的`dispatch`方法，`dispatch`方法是controller给model发送action的唯一途径，`action`是一个普通对象，其type属性指定了对应的model和方法。
+
+### Model
+
+```jsx
+export default {
+
+  namespace: 'user',
+
+  state: {
+    me: null,
+  },
+
+  subscriptions: {
+      setup({ dispatch, history }) {  // eslint-disable-line
+      },
+  },
+
+  effects: {
+    *fetchMyInfo({ payload }, { call, put }) {  // eslint-disable-line
+      let me = yield new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+          resolve({
+              id: 1,
+              name:'lane lee',
+              age: 18,
+            })
+        }, 100);
+      });
+      yield put({ type: 'save', payload: {me}});
+    },
+  },
+
+  reducers: {
+    save(state, action) {
+      return { ...state, ...action.payload };
+    },
+  },
+
+};
+```
 
 
+### Router
+
+```jsx
+import {Switch, Route} from 'symphony-joy/router'
+```
+
+使用方法请参考：[react-router-4](https://reacttraining.com/react-router/web/guides/philosophy)
 
- 
+ > 我们并未对react-router-4做任何的修改，仅仅只是封装了一个外壳，方便统一导入和调用。
  
 
 
