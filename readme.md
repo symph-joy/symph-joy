@@ -1,6 +1,6 @@
 # symphony-joy
 
-symphony-joy 的目标是创建极致开发和用户体验的 React 应用，灵感来自于Next.js和Dva等优秀的开源库，在此非常感谢以上开源贡献者的辛勤付出。
+symphony-joy 的目标是创建便捷高效开发和用户体验的 React 应用，灵感来自于Next.js和Dva等优秀的开源库，在此非常感谢以上开源贡献者的辛勤付出。
 
 
 ## 特征
@@ -214,6 +214,8 @@ export default class UserController extends Component {
 
 ### Model
 
+`Model`将redux的`action`、`ActionTypeConstans`、`reducer`,`sage`等难以理解的概率抽象为一个业务对象，将同一个业务模块的相关代码放到一个独立的model文件中，便于流程梳理和代码追踪，从而使开发人员更专注于业务,同时实现业务和展现层的分离，下面是一个简单的model对象：
+
 ```jsx
 export default {
 
@@ -255,14 +257,15 @@ export default {
 
 ### Router
 
-```jsx
-import {Switch, Route} from 'symphony-joy/router'
-```
+使用方法请参考：[react-router-4](https://reacttraining.com/react-router/web/guides/philosophy)
 
-使用方法请参考：[react-router-4](https://reacttraining.com/react-router/web/guides/philosophy)
-
  > 我们并未对react-router-4做任何的修改，仅仅只是封装了一个外壳，方便统一导入和调用。
  
+ ```jsx
+ import {Switch, Route} from 'symphony-joy/router'
+ ```
+ 
+
 
 
 
