@@ -1,42 +1,42 @@
-import { join } from 'path'
-import { createElement } from 'react'
-import { renderToString, renderToStaticMarkup } from 'react-dom/server'
+import {join} from 'path'
+import {createElement} from 'react'
+import {renderToString, renderToStaticMarkup} from 'react-dom/server'
 import send from 'send'
 import generateETag from 'etag'
 import fresh from 'fresh'
 import requirePage from './require'
 // import { Router } from '../lib/router'
-import { loadGetInitialProps, isResSent } from '../lib/utils'
-import { getAvailableChunks } from './utils'
-import Head, { defaultHead } from '../lib/head'
+import {loadGetInitialProps, isResSent} from '../lib/utils'
+import {getAvailableChunks} from './utils'
+import Head, {defaultHead} from '../lib/head'
 import App from '../lib/app'
 import ErrorDebug from '../lib/error-debug'
-import { flushChunks } from '../lib/dynamic'
+import {flushChunks} from '../lib/dynamic'
 import * as DvaCore from '../lib/dva'
-import { createServerRouter } from '../lib/router'
+import {createServerRouter} from '../lib/router'
 
 
 const logger = console
 
-export async function render (req, res, pathname, query, opts) {
+export async function render(req, res, pathname, query, opts) {
   const html = await renderToHTML(req, res, pathname, query, opts)
   sendHTML(req, res, html, req.method, opts)
 }
 
-export function renderToHTML (req, res, pathname, query, opts) {
+export function renderToHTML(req, res, pathname, query, opts) {
   return doRender(req, res, pathname, query, opts)
 }
 
-export async function renderError (err, req, res, pathname, query, opts) {
+export async function renderError(err, req, res, pathname, query, opts) {
   const html = await renderErrorToHTML(err, req, res, query, opts)
   sendHTML(req, res, html, req.method, opts)
 }
 
-export function renderErrorToHTML (err, req, res, pathname, query, opts = {}) {
-  return doRender(req, res, pathname, query, { ...opts, err, page: '/_error' })
+export function renderErrorToHTML(err, req, res, pathname, query, opts = {}) {
+  return doRender(req, res, pathname, query, {...opts, err, page: '/_error'})
 }
 
-async function doRender (req, res, pathname, query, {
+async function doRender(req, res, pathname, query, {
   err,
   page,
   ComponentPath,
@@ -67,7 +67,7 @@ async function doRender (req, res, pathname, query, {
   Component = Component.default || Component
   Document = Document.default || Document
   const asPath = req.url
-  const ctx = { err, req, res, pathname, query, asPath }
+  const ctx = {err, req, res, pathname, query, asPath}
   const props = await loadGetInitialProps(Component, ctx)
 
   // the response might be finshed on the getinitialprops call
@@ -100,32 +100,34 @@ async function doRender (req, res, pathname, query, {
 
     try {
       if (err && dev) {
-        errorHtml = render(createElement(ErrorDebug, { error: err }))
+        errorHtml = render(createElement(ErrorDebug, {error: err}))
       } else if (err) {
         errorHtml = render(app)
       } else {
         // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
         // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
-        html = renderToStaticMarkup(app)
+        renderToStaticMarkup(app)
+
+        await dva.prepareManager.waitAllPrepareFinished();
         await dva._store.dispatch({
-          type:'@@endAsyncBatch'
-        }).then(()=>{
-          console.log('> app has prepared')
+          type: '@@endAsyncBatch'
         });
+        console.log('> app has prepared')
 
         app = createApp({isComponentDidPrepare: true});
+        //第二次渲染，此时store的state已经获取数据完成
         html = render(app)
         console.log('> server render has finished')
       }
     } finally {
       head = Head.rewind() || defaultHead()
     }
-    const chunks = loadChunks({ dev, dir, dist, availableChunks })
+    const chunks = loadChunks({dev, dir, dist, availableChunks})
 
     return {html, head, errorHtml, chunks, initStoreState: dva._store.getState()}
   }
 
-  const docProps = await loadGetInitialProps(Document, { ...ctx, renderPage })
+  const docProps = await loadGetInitialProps(Document, {...ctx, renderPage})
 
   if (isResSent(res)) return
 
@@ -152,7 +154,7 @@ async function doRender (req, res, pathname, query, {
   return '<!DOCTYPE html>' + renderToStaticMarkup(doc)
 }
 
-export async function renderScriptError (req, res, page, error) {
+export async function renderScriptError(req, res, page, error) {
   // Asks CDNs and others to not to cache the errored page
   res.setHeader('Cache-Control', 'no-store, must-revalidate')
 
@@ -167,11 +169,11 @@ export async function renderScriptError (req, res, page, error) {
   res.end('500 - Internal Error')
 }
 
-export function sendHTML (req, res, html, method, { dev }) {
+export function sendHTML(req, res, html, method, {dev}) {
   if (isResSent(res)) return
   const etag = generateETag(html)
 
-  if (fresh(req.headers, { etag })) {
+  if (fresh(req.headers, {etag})) {
     res.statusCode = 304
     res.end()
     return
@@ -191,7 +193,7 @@ export function sendHTML (req, res, html, method, { dev }) {
   res.end(method === 'HEAD' ? null : html)
 }
 
-export function sendJSON (res, obj, method) {
+export function sendJSON(res, obj, method) {
   if (isResSent(res)) return
 
   const json = JSON.stringify(obj)
@@ -200,49 +202,49 @@ export function sendJSON (res, obj, method) {
   res.end(method === 'HEAD' ? null : json)
 }
 
-function errorToJSON (err) {
-  const { name, message, stack } = err
-  const json = { name, message, stack }
+function errorToJSON(err) {
+  const {name, message, stack} = err
+  const json = {name, message, stack}
 
   if (err.module) {
     // rawRequest contains the filename of the module which has the error.
-    const { rawRequest } = err.module
-    json.module = { rawRequest }
+    const {rawRequest} = err.module
+    json.module = {rawRequest}
   }
 
   return json
 }
 
-function serializeError (dev, err) {
+function serializeError(dev, err) {
   if (dev) {
     return errorToJSON(err)
   }
 
-  return { message: '500 - Internal Server Error.' }
+  return {message: '500 - Internal Server Error.'}
 }
 
-export function serveStatic (req, res, path) {
+export function serveStatic(req, res, path) {
   return new Promise((resolve, reject) => {
     send(req, path)
-    .on('directory', () => {
-      // We don't allow directories to be read.
-      const err = new Error('No directory access')
-      err.code = 'ENOENT'
-      reject(err)
-    })
-    .on('error', reject)
-    .pipe(res)
-    .on('finish', resolve)
+      .on('directory', () => {
+        // We don't allow directories to be read.
+        const err = new Error('No directory access')
+        err.code = 'ENOENT'
+        reject(err)
+      })
+      .on('error', reject)
+      .pipe(res)
+      .on('finish', resolve)
   })
 }
 
-async function ensurePage (page, { dir, hotReloader }) {
+async function ensurePage(page, {dir, hotReloader}) {
   if (page === '/_error') return
 
   await hotReloader.ensurePage(page)
 }
 
-function loadChunks ({ dev, dir, dist, availableChunks }) {
+function loadChunks({dev, dir, dist, availableChunks}) {
   const flushedChunks = flushChunks()
   const response = {
     names: [],

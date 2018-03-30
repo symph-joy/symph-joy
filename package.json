@@ -20,6 +20,7 @@
     "error.js",
     "fetch.js",
     "head.js",
+    "model.js",
     "prefetch.js",
     "proxy-api-middleware.js",
     "router.js"

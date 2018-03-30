@@ -1,11 +1,13 @@
 import React, {Component} from 'react';
-import PropTypes from "prop-types";
 import styles from './IndexPage.less';
-import Controller from 'symphony-joy/controller'
+import controller, {requireModel} from 'symphony-joy/controller'
 import ImageView from '../components/image-view'
+import productsModel from '../models/productsModel'
+import userModel from '../models/userModel'
 
 
-@Controller((state) => ({
+@requireModel(productsModel)
+@controller((state) => ({
   me: state.user.me,
   products: state.product.products
 }))
@@ -16,16 +18,13 @@ export default class IndexPage extends Component {
     super(...arguments);
   }
 
-  componentPrepare() {
+  async componentPrepare() {
     let dispatch = this.props.dispatch;
     console.log('>>>>===== prepare');
     console.log('>>>>>> IndexPage start dispatch action ');
-    dispatch({
-      type: 'user/fetchMyInfo'
-    }).then((result) => {
-      console.log('>>>>>>  effectResult:' + result);
-      return result;
-    });
+
+    await userModel.fetchMyInfo();
+
     dispatch({
       type: 'product/fetchProducts'
     });
@@ -80,14 +79,6 @@ export default class IndexPage extends Component {
     );
   }
 }
-
-
-// export default controller((state) => ({
-//   me: state.user.me,
-//   products: state.product.products
-// }))(IndexPage)
-
-// export default Connected;
 
 
 
