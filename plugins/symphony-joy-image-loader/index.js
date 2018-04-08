@@ -3,7 +3,7 @@ module.exports = (symphonyConfig = {}) => {
     webpack(config, options) {
       if (!options.defaultLoaders) {
         throw new Error(
-          'This plugin is not compatible with Symphony.js versions below 5.0.0 https://err.sh/symphony-plugins/upgrade'
+          'This plugin is not compatible with Symphony.js'
         )
       }
       config.module.rules.push({
@@ -12,13 +12,14 @@ module.exports = (symphonyConfig = {}) => {
           {
             loader: 'url-loader',
             options: {
-              limit: 5000,
-              outputPath: 'static',
-              publicPath: '/_symphony/webpack/static'
+              limit: 8192,
+              publicPath: '/_symphony/webpack/static',
+              outputPath: 'static/images',
+              name: "[name]-[hash].[ext]"
             }
           }
         ]
-      })
+      });
 
       if (typeof symphonyConfig.webpack === 'function') {
         return symphonyConfig.webpack(config, options)
@@ -27,4 +28,4 @@ module.exports = (symphonyConfig = {}) => {
       return config
     }
   })
-}
+};

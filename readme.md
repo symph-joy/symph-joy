@@ -183,9 +183,9 @@ Controller的作用是管理View和model状态的绑定，新增了`componentPre
 
 ```jsx
 import React, {Component} from 'react';
-import Controller from 'symphony-joy/controller'
+import controller from 'symphony-joy/controller'
 
-@Controller((state) => ({
+@controller((state) => ({
   me: state.user.me
 }))
 export default class UserController extends Component {
@@ -214,45 +214,140 @@ export default class UserController extends Component {
 
 ### Model
 
-`Model`将redux的`action`、`ActionTypeConstans`、`reducer`,`sage`等难以理解的概率抽象为一个业务对象，将同一个业务模块的相关代码放到一个独立的model文件中，便于流程梳理和代码追踪，从而使开发人员更专注于业务,同时实现业务和展现层的分离，下面是一个简单的model对象：
+Model拥有初始状态`initState`和更新state的方法`setState(nextState)`，和Component的state概念类似，这里并没有什么魔法和创造新的东西，只是将redux的`action`、`actionCreator`、`reducer`,`thunk`等难以理解的概率抽象成业务状态和流程，并封装到同一个model中，从而使开发人员更专注于业务，同时实现业务和展现层的分离.
+
+下面是一个简单的model对象示例：
 
 ```jsx
-export default {
+import model from 'symphony-joy/model'
 
-  namespace: 'user',
+@model()
+export default class ProductsModel {
 
-  state: {
-    me: null,
-  },
+  // the mount point of store state tree, must uniq in the app.
+  namespace = 'products';
 
-  subscriptions: {
-      setup({ dispatch, history }) {  // eslint-disable-line
-      },
-  },
+  // model has own state， this is the initial state
+  initState = {
+    pageIndex: null,
+    pageSize: 5,
+    products: [],
+  };
 
-  effects: {
-    *fetchMyInfo({ payload }, { call, put }) {  // eslint-disable-line
-      let me = yield new Promise((resolve, reject)=>{
-        setTimeout(()=>{
-          resolve({
-              id: 1,
-              name:'lane lee',
-              age: 18,
-            })
-        }, 100);
-      });
-      yield put({ type: 'save', payload: {me}});
-    },
-  },
+  async getProducts({pageIndex = 1, pageSize}) {
+    // fetch data
+    let data = await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        let resultData = [];
+        for (let i = (pageIndex - 1) * pageSize; i < pageIndex * pageSize; i++) {
+          resultData.push({
+            id: i,
+            name: 'iphone 7',
+            price: 4999,
+          })
+        }
+        resolve(resultData)
+      }, 200);
+    });
 
-  reducers: {
-    save(state, action) {
-      return { ...state, ...action.payload };
-    },
-  },
+    let {products} = this.getState();
+    if (pageIndex === 1) {
+      products = data;
+    } else {
+      products = [...products, ...data];
+    }
+
+    this.setState({
+      products,
+      pageIndex,
+      pageSize
+    });
+  }
 
 };
+
 ```
+
+我们使用`@model()`将一个类声明为Model类，Model类在实例化的时候会添加`getState`、`setState`，`dispatch`等快捷方法，下面展示如何使用一个model
+
+```jsx
+import React, {Component} from 'react';
+import ProductsModel from '../models/ProductsModel'
+import controller, {requireModel} from 'symphony-joy/controller'
+
+
+@requireModel(ProductsModel)  // register model
+@controller((state) => {
+  return {
+    products: state.products.products // read model's state
+  }
+})
+export default class IndexController extends Component {
+
+  async componentPrepare() {
+    let {dispatch} = this.props;
+    // invoke model's method
+    await dispatch({
+      type: 'products/getProducts',  // namespace/methodname 
+      pageIndex: 1,
+      pageSize: 5,
+    });
+  }
+
+  render() {
+    let {products = []} = this.props;
+    return (
+      <div >
+        <div>PRODUCTS</div>
+        <div>
+          {products.map((p, i) => {
+            return <div key={p.id}>{p.id}:{p.name}</div>
+          })}
+        </div>
+      </div>
+    );
+  }
+}
+
+```
+
+1. 注册model，`@requireModel(ModelClass)`注册Controller需要依赖的Model，通常只需要在model的入口Controller上注册一次，重复注册无效。
+2. 获取model的状态， 只有controller类型的Component才能绑定Model中的状态，在使用`@controller(mapStateToProps)`声明Controller时，第一个参数`mapStateToProps`是一个回调函数，回调函数参数`state`为store的整个状态，使用`state[namespace]`来获取特定model的状态。
+3. 调用model的方法， `store.dispatch(action)`发送action对象到model的方法中，action对象中的type属性格式为`namespace/methodname`，`namespace`为Model类中定义的namespace，`methodname`是Model类中定义的方法名称，action对象中同样可以包含其它业务参数， 例如上面例子中的`pageIndex`。
+
+#### Model API
+
+##### namespace
+
+model将会被注册到store中，由store统一管理model，在store中不能存在两个相同的`namespace`的model。
+
+##### initState
+
+在创建新的store时，作为store的初始状态，在之后的model的运行过程中使用的是store中对应的state， 所以请勿直接使用`model.state`来获取和更新model的状态，提供了`setState(nextState)`和`getState()`方法来操控state。
+
+##### setState(nextState)
+
+`setState(nextState)`更新model的状态，`nextState`是可以是当前model状态的一个子集，内部将使用浅拷贝的方式合并当前的状态，并更新store的state。
+
+##### getState
+
+`getState()`获取当前model的状态，`async`函数运行中，store的状态可能已经发生了改变，可使用该方法，获取最新状态。
+
+##### getStoreState()
+
+`getStoreState(）`获取当前store的状态，和`getState()`方法类似。
+
+##### dispatch(action)
+
+和redux的`store.dispatch(action)`的使用一样，我们可以通过该方法发送一个普通action对象到store。
+
+#### Dva Model
+
+我们同时兼容dva风格的model对象，使用方法和上面一样，model对象的定义请参考 [Dva Concepts](https://github.com/dvajs/dva/blob/master/docs/Concepts_zh-CN.md) ;
+
+
+
+
 
 
 ### Router

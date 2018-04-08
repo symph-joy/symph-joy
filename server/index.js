@@ -285,6 +285,12 @@ export default class Server {
         await this.serveStatic(req, res, p)
       },
 
+      // compatible for next-images plugin
+      '/_next/static/:path*': async (req, res, params) => {
+        const p = join(this.dir, this.dist, 'static', ...(params.path || []))
+        await this.serveStatic(req, res, p)
+      },
+
       // It's very important keep this route's param optional.
       // (but it should support as many as params, seperated by '/')
       // Othewise this will lead to a pretty simple DOS attack.
@@ -304,13 +310,11 @@ export default class Server {
       }
     }
 
-    if (this.symphonyConfig.useFileSystemPublicRoutes) {
       routes['/:path*'] = async (req, res, params, parsedUrl) => {
         console.log('>>>>>> route path:'+ req.path)
         const { pathname, query } = parsedUrl
         await this.render(req, res, pathname, query)
       }
-    }
 
     for (const method of ['GET', 'HEAD']) {
       for (const p of Object.keys(routes)) {
