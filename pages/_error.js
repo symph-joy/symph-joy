@@ -1,1 +1,1 @@
-module.exports = require('symphony/error')
+module.exports = require('symphony-joy/error')
