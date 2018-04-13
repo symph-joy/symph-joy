@@ -83,12 +83,13 @@ export class Head extends Component {
 
   render () {
     const { head, styles, __SYMPHONY_DATA__ } = this.context._documentProps
-    const { page, pathname, buildId, assetPrefix } = __SYMPHONY_DATA__
-    const pagePathname = getPagePathname(pathname)
-    //去掉page的link，不在使用page路由，使用react-route 4 lane 2017-12-06
+    // const { page, pathname, buildId, assetPrefix } = __SYMPHONY_DATA__
+    const { buildId, assetPrefix } = __SYMPHONY_DATA__
+    // const pagePathname = getPagePathname(pathname)
+    // 去掉page的link，不在使用page路由，使用react-route 4 lane 2017-12-06
     return <head {...this.props}>
       {(head || []).map((h, i) => React.cloneElement(h, { key: h.key || i }))}
-      {/*{page !== '/_error' && <link rel='preload' href={`${assetPrefix}/_symphony/${buildId}/page${pagePathname}`} as='script' />}*/}
+      {/* {page !== '/_error' && <link rel='preload' href={`${assetPrefix}/_symphony/${buildId}/page${pagePathname}`} as='script' />} */}
       <link rel='preload' href={`${assetPrefix}/_symphony/${buildId}/page/_error.js`} as='script' />
       {this.getPreloadDynamicChunks()}
       {this.getPreloadMainLinks()}
@@ -170,7 +171,7 @@ export class SymphonyScript extends Component {
   render () {
     const { staticMarkup, __SYMPHONY_DATA__, chunks } = this.context._documentProps
     const { page, pathname, buildId, assetPrefix } = __SYMPHONY_DATA__
-    const pagePathname = getPagePathname(pathname)
+    // const pagePathname = getPagePathname(pathname)
 
     __SYMPHONY_DATA__.chunks = chunks.names
 
@@ -200,8 +201,8 @@ export class SymphonyScript extends Component {
           `}
         `
       }} />}
-      {/*{page !== '/_error' && <script async id={`__SYMPHONY_PAGE__${pathname}`} src={`${assetPrefix}/_symphony/${buildId}/page${pagePathname}`} />}*/}
-      {/*<script  id={`__SYMPHONY_PAGE__index`} src={`${assetPrefix}/_symphony/${buildId}/page/index.js`} />*/}
+      {/* {page !== '/_error' && <script async id={`__SYMPHONY_PAGE__${pathname}`} src={`${assetPrefix}/_symphony/${buildId}/page${pagePathname}`} />} */}
+      {/* <script  id={`__SYMPHONY_PAGE__index`} src={`${assetPrefix}/_symphony/${buildId}/page/index.js`} /> */}
       <script async id={`__SYMPHONY_PAGE__/_error`} src={`${assetPrefix}/_symphony/${buildId}/page/_error.js`} />
       {staticMarkup ? null : this.getDynamicChunks()}
       {staticMarkup ? null : this.getScripts()}
@@ -209,10 +210,10 @@ export class SymphonyScript extends Component {
   }
 }
 
-function getPagePathname (pathname) {
-  if (pathname === '/') {
-    return '/index.js'
-  }
-
-  return `${pathname}.js`
-}
+// function getPagePathname (pathname) {
+//   if (pathname === '/') {
+//     return '/index.js'
+//   }
+//
+//   return `${pathname}.js`
+// }

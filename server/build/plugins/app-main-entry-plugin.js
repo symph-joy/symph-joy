@@ -5,17 +5,13 @@
  */
 import {ConcatSource} from 'webpack-sources'
 
-
 class AppMainEntryTemplatePlugin {
-
-  constructor(appEntryFilePath){
-    this.appEntryFilePath = appEntryFilePath;
+  constructor (appEntryFilePath) {
+    this.appEntryFilePath = appEntryFilePath
   }
 
-  apply(chunkTemplate) {
-    chunkTemplate.plugin('render',  (moduleSource, module) => {
-
-
+  apply (chunkTemplate) {
+    chunkTemplate.plugin('render', (moduleSource, module) => {
       if (!module.resource || module.resource !== this.appEntryFilePath) {
         return moduleSource
       }
@@ -32,15 +28,14 @@ class AppMainEntryTemplatePlugin {
 }
 
 export default class AppMainEntryPlugin {
-  constructor({appEntryFilePath}) {
-
+  constructor ({appEntryFilePath}) {
     if (appEntryFilePath === undefined || appEntryFilePath === null || appEntryFilePath.length === 0) {
-      throw 'has not config app entry component';
+      throw new Error('has not config app entry component')
     }
-    this.appEntryFilePath = appEntryFilePath;
+    this.appEntryFilePath = appEntryFilePath
   }
 
-  apply(compiler) {
+  apply (compiler) {
     compiler.plugin('compilation', (compilation) => {
       compilation.moduleTemplate.apply(new AppMainEntryTemplatePlugin(this.appEntryFilePath))
     })

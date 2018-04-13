@@ -20,7 +20,7 @@ export default class SymphonyJsSsrImportPlugin {
         // doing SSR for chunks
         updatedCode = updatedCode.replace(
           'return Promise.resolve();',
-          `return require('symphony/dynamic').SameLoopPromise.resolve();`
+          `return require('symphony-joy/dynamic').SameLoopPromise.resolve();`
         )
         return updatedCode
       })

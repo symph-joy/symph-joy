@@ -1,1 +1,1 @@
-module.exports = require('./dist/lib/dva/model');
+module.exports = require('./dist/lib/dva/model')

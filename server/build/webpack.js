@@ -11,7 +11,7 @@ import SymphonyJsSsrImportPlugin from './plugins/symphonyjs-ssr-import'
 import DynamicChunksPlugin from './plugins/dynamic-chunks-plugin'
 import UnlinkFilePlugin from './plugins/unlink-file-plugin'
 import findBabelConfig from './babel/find-config'
-import AppMainEntryPlugin from "./plugins/app-main-entry-plugin";
+import AppMainEntryPlugin from './plugins/app-main-entry-plugin'
 
 const symphonyDir = path.join(__dirname, '..', '..', '..')
 const symphonyNodeModulesDir = path.join(symphonyDir, 'node_modules')
@@ -131,7 +131,7 @@ export default async function getBaseWebpackConfig (dir, {dev = false, isServer 
       }
       return {
         ...clientConfig,
-        ...pages,
+        ...pages
       }
     },
     output: {

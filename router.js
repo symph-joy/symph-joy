@@ -1,1 +1,1 @@
-module.exports = require('./dist/lib/router.js');
+module.exports = require('./dist/lib/router.js')

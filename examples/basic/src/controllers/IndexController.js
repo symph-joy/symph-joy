@@ -1,5 +1,5 @@
-import React, {Component} from 'react';
-import styles from './IndexController.less';
+import React, {Component} from 'react'
+import styles from './IndexController.less'
 import controller, {requireModel} from 'symphony-joy/controller'
 import ImageView from '../components/image-view'
 import ProductsModel from '../models/ProductsModel'
@@ -13,7 +13,6 @@ import ProductsModel from '../models/ProductsModel'
   }
 })
 export default class IndexController extends Component {
-
   constructor() {
     console.log('>>>>>> IndexController constructor');
     super(...arguments);
@@ -49,6 +48,10 @@ export default class IndexController extends Component {
     });
   };
 
+  onClickProduct = () => {
+
+  };
+
   render() {
     let {products = [], pageIndex} = this.props;
     return (
@@ -63,7 +66,7 @@ export default class IndexController extends Component {
         <button onClick={this.addProduct}>添加产品</button>
         <div>
           {products.map((p, i) => {
-            return <div key={p.id}>{p.id}:{p.name}</div>
+            return <div key={p.id} onClick={this.onClickProduct.bind(p)}>{p.id}:{p.name}</div>
           })}
         </div>
         <button onClick={this.getProducts.bind(this, pageIndex + 1, 5)}>获取下一页</button>

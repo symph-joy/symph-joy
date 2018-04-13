@@ -16,7 +16,7 @@ const TYPE_IMPORT = 'Import'
 
 const buildImport = (args) => (template(`
   (
-    new (require('symphony/dynamic').SameLoopPromise)((resolve, reject) => {
+    new (require('symphony-joy/dynamic').SameLoopPromise)((resolve, reject) => {
       const weakId = require.resolveWeak(SOURCE)
       try {
         const weakModule = __webpack_require__(weakId)

@@ -114,7 +114,7 @@ export default class HotReloader {
     this.middlewares = [
       webpackDevMiddleware,
       webpackHotMiddleware,
-      onDemandEntries.middleware() //屏蔽改插件， 不需要客户端轮询页面的源码状态。 lane 2017-12-06
+      onDemandEntries.middleware() // 屏蔽改插件， 不需要客户端轮询页面的源码状态。 lane 2017-12-06
     ]
   }
 

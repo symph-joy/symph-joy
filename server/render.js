@@ -4,7 +4,7 @@ import {renderToString, renderToStaticMarkup} from 'react-dom/server'
 import send from 'send'
 import generateETag from 'etag'
 import fresh from 'fresh'
-import requirePage from './require'
+// import requirePage from './require'
 // import { Router } from '../lib/router'
 import {loadGetInitialProps, isResSent} from '../lib/utils'
 import {getAvailableChunks} from './utils'
@@ -15,28 +15,27 @@ import {flushChunks} from '../lib/dynamic'
 import * as DvaCore from '../lib/dva'
 import {createServerRouter} from '../lib/router'
 
-
 const logger = console
 
-export async function render(req, res, pathname, query, opts) {
+export async function render (req, res, pathname, query, opts) {
   const html = await renderToHTML(req, res, pathname, query, opts)
   sendHTML(req, res, html, req.method, opts)
 }
 
-export function renderToHTML(req, res, pathname, query, opts) {
+export function renderToHTML (req, res, pathname, query, opts) {
   return doRender(req, res, pathname, query, opts)
 }
 
-export async function renderError(err, req, res, pathname, query, opts) {
+export async function renderError (err, req, res, pathname, query, opts) {
   const html = await renderErrorToHTML(err, req, res, query, opts)
   sendHTML(req, res, html, req.method, opts)
 }
 
-export function renderErrorToHTML(err, req, res, pathname, query, opts = {}) {
+export function renderErrorToHTML (err, req, res, pathname, query, opts = {}) {
   return doRender(req, res, pathname, query, {...opts, err, page: '/_error'})
 }
 
-async function doRender(req, res, pathname, query, {
+async function doRender (req, res, pathname, query, {
   err,
   page,
   ComponentPath,
@@ -54,7 +53,7 @@ async function doRender(req, res, pathname, query, {
   console.log(`> start doRender, pathname:${pathname}, page:${page} err:${err}`)
   page = page || pathname
 
-  //暂时不需要监听页面的编译情况 lane 2017-12-05
+  // 暂时不需要监听页面的编译情况 lane 2017-12-05
   // if (hotReloader) { // In dev mode we use on demand entries to compile the page before rendering
   //   await ensurePage(page, { dir, hotReloader })
   // }
@@ -73,8 +72,8 @@ async function doRender(req, res, pathname, query, {
   // the response might be finshed on the getinitialprops call
   if (isResSent(res)) return
 
-  const dva = DvaCore.create({});
-  dva.start();
+  const dva = DvaCore.create({})
+  dva.start()
 
   const renderPage = async (enhancer = Page => Page) => {
     const enhancedComponent = enhancer(Component)
@@ -89,8 +88,8 @@ async function doRender(req, res, pathname, query, {
         Router,
         ...appProps
       })
-    };
-    let app = createApp({isComponentDidPrepare: false});
+    }
+    let app = createApp({isComponentDidPrepare: false})
 
     const render = staticMarkup ? renderToStaticMarkup : renderToString
 
@@ -108,14 +107,14 @@ async function doRender(req, res, pathname, query, {
         // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
         renderToStaticMarkup(app)
 
-        await dva.prepareManager.waitAllPrepareFinished();
+        await dva.prepareManager.waitAllPrepareFinished()
         await dva._store.dispatch({
           type: '@@endAsyncBatch'
-        });
+        })
         console.log('> app has prepared')
 
-        app = createApp({isComponentDidPrepare: true});
-        //第二次渲染，此时store的state已经获取数据完成
+        app = createApp({isComponentDidPrepare: true})
+        // 第二次渲染，此时store的state已经获取数据完成
         html = render(app)
         console.log('> server render has finished')
       }
@@ -154,7 +153,7 @@ async function doRender(req, res, pathname, query, {
   return '<!DOCTYPE html>' + renderToStaticMarkup(doc)
 }
 
-export async function renderScriptError(req, res, page, error) {
+export async function renderScriptError (req, res, page, error) {
   // Asks CDNs and others to not to cache the errored page
   res.setHeader('Cache-Control', 'no-store, must-revalidate')
 
@@ -169,7 +168,7 @@ export async function renderScriptError(req, res, page, error) {
   res.end('500 - Internal Error')
 }
 
-export function sendHTML(req, res, html, method, {dev}) {
+export function sendHTML (req, res, html, method, {dev}) {
   if (isResSent(res)) return
   const etag = generateETag(html)
 
@@ -193,7 +192,7 @@ export function sendHTML(req, res, html, method, {dev}) {
   res.end(method === 'HEAD' ? null : html)
 }
 
-export function sendJSON(res, obj, method) {
+export function sendJSON (res, obj, method) {
   if (isResSent(res)) return
 
   const json = JSON.stringify(obj)
@@ -202,7 +201,7 @@ export function sendJSON(res, obj, method) {
   res.end(method === 'HEAD' ? null : json)
 }
 
-function errorToJSON(err) {
+function errorToJSON (err) {
   const {name, message, stack} = err
   const json = {name, message, stack}
 
@@ -215,7 +214,7 @@ function errorToJSON(err) {
   return json
 }
 
-function serializeError(dev, err) {
+function serializeError (dev, err) {
   if (dev) {
     return errorToJSON(err)
   }
@@ -223,7 +222,7 @@ function serializeError(dev, err) {
   return {message: '500 - Internal Server Error.'}
 }
 
-export function serveStatic(req, res, path) {
+export function serveStatic (req, res, path) {
   return new Promise((resolve, reject) => {
     send(req, path)
       .on('directory', () => {
@@ -238,13 +237,13 @@ export function serveStatic(req, res, path) {
   })
 }
 
-async function ensurePage(page, {dir, hotReloader}) {
-  if (page === '/_error') return
+// async function ensurePage (page, {dir, hotReloader}) {
+//   if (page === '/_error') return
+//
+//   await hotReloader.ensurePage(page)
+// }
 
-  await hotReloader.ensurePage(page)
-}
-
-function loadChunks({dev, dir, dist, availableChunks}) {
+function loadChunks ({dev, dir, dist, availableChunks}) {
   const flushedChunks = flushChunks()
   const response = {
     names: [],

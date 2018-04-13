@@ -1,10 +1,10 @@
 require('@zeit/source-map-support').install()
-import { resolve, join, sep } from 'path'
-import { parse as parseUrl } from 'url'
-import { parse as parseQs } from 'querystring'
+import {resolve, join, sep} from 'path'
+import {parse as parseUrl} from 'url'
+import {parse as parseQs} from 'querystring'
 import fs from 'fs'
 import fsAsync from 'mz/fs'
-import http, { STATUS_CODES } from 'http'
+import http, {STATUS_CODES} from 'http'
 import updateNotifier from '@zeit/check-updates'
 import {
   renderToHTML,
@@ -14,14 +14,14 @@ import {
   renderScriptError
 } from './render'
 import Router from './router'
-import { getAvailableChunks, isInternalUrl } from './utils'
+import {getAvailableChunks, isInternalUrl} from './utils'
 import getConfig from './config'
 import {PHASE_PRODUCTION_SERVER, PHASE_DEVELOPMENT_SERVER} from '../lib/constants'
 // We need to go up one more level since we are in the `dist` directory
 import pkg from '../../package'
 import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
-import { isResSent } from '../lib/utils'
+import {isResSent} from '../lib/utils'
 
 const blockedPages = {
   '/_document': true,
@@ -29,7 +29,7 @@ const blockedPages = {
 }
 
 export default class Server {
-  constructor ({ dir = '.', dev = false, staticMarkup = false, quiet = false, conf = null } = {}) {
+  constructor ({dir = '.', dev = false, staticMarkup = false, quiet = false, conf = null} = {}) {
     this.dir = resolve(dir)
     this.dev = dev
     this.quiet = quiet
@@ -39,7 +39,7 @@ export default class Server {
     this.symphonyConfig = getConfig(phase, this.dir, conf)
     this.dist = this.symphonyConfig.distDir
 
-    this.hotReloader = dev ? this.getHotReloader(this.dir, { quiet, config: this.symphonyConfig }) : null
+    this.hotReloader = dev ? this.getHotReloader(this.dir, {quiet, config: this.symphonyConfig}) : null
 
     if (dev) {
       updateNotifier(pkg, 'symphony')
@@ -138,6 +138,8 @@ export default class Server {
   }
 
   defineRoutes () {
+    const {assetPrefix} = this.symphonyConfig
+
     const routes = {
       '/_symphony/files/:name': async (req, res, params) => {
         if (!this.dev) return this.send404(res)
@@ -191,7 +193,7 @@ export default class Server {
           const buildId = params.hash
           if (!this.handleBuildId(buildId, res)) {
             const error = new Error('INVALID_BUILD_ID')
-            const customFields = { buildIdMismatched: true }
+            const customFields = {buildIdMismatched: true}
 
             return await renderScriptError(req, res, '/_error', error, customFields, this.renderOpts)
           }
@@ -274,7 +276,7 @@ export default class Server {
         // [production] If the page is not exists, we need to send a proper Symphony.js style 404
         // Otherwise, it'll affect the multi-zones feature.
         if (!(await fsAsync.exists(p))) {
-          return await renderScriptError(req, res, page, { code: 'ENOENT' })
+          return await renderScriptError(req, res, page, {code: 'ENOENT'})
         }
 
         await this.serveStatic(req, res, p)
@@ -310,15 +312,15 @@ export default class Server {
       }
     }
 
-      routes['/:path*'] = async (req, res, params, parsedUrl) => {
-        console.log('>>>>>> route path:'+ req.path)
-        const { pathname, query } = parsedUrl
-        await this.render(req, res, pathname, query)
-      }
+    routes['/:path*'] = async (req, res, params, parsedUrl) => {
+      const {pathname, query} = parsedUrl
+      console.log('>>>>>> route path:' + pathname)
+      await this.render(req, res, pathname, query)
+    }
 
     for (const method of ['GET', 'HEAD']) {
       for (const p of Object.keys(routes)) {
-        this.router.add(method, p, routes[p])
+        this.router.add(method, assetPrefix + p, routes[p])
       }
     }
   }
@@ -425,7 +427,7 @@ export default class Server {
   }
 
   async render404 (req, res, parsedUrl = parseUrl(req.url, true)) {
-    const { pathname, query } = parsedUrl
+    const {pathname, query} = parsedUrl
     res.statusCode = 404
     return this.renderError(null, req, res, pathname, query)
   }
@@ -438,7 +440,7 @@ export default class Server {
     try {
       return await serveStatic(req, res, path)
     } catch (err) {
-      console.log('> serve static error:'+err)
+      console.log('> serve static error:' + err)
       if (err.code === 'ENOENT') {
         this.render404(req, res)
       } else {

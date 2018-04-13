@@ -46,7 +46,7 @@
     "parser": "babel-eslint",
     "ignore": [
       "**/node_modules/**",
-      "**/examples/**/lib/**"
+      "**/examples/**"
     ]
   },
   "lint-staged": {
@@ -100,7 +100,7 @@
     "prop-types-exact": "1.1.1",
     "react-hot-loader": "4.0.0-beta.23",
     "react-redux": "^5.0.5",
-    "react-router-dom": "^4.1.2",
+    "react-router-dom": "^4.2.2",
     "recursive-copy": "2.0.6",
     "redux": "^3.7.2",
     "redux-saga": "0.16.0",

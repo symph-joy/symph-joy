@@ -1,1 +1,1 @@
-module.exports = require('symphony-joy/error')
+module.exports = require('../lib/error')

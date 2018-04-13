@@ -1,1 +1,1 @@
-module.exports = require('./dist/lib/fetch/proxy-api-middleware');
+module.exports = require('./dist/lib/fetch/proxy-api-middleware')

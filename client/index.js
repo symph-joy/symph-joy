@@ -66,7 +66,7 @@ const headManager = new HeadManager()
 const appContainer = document.getElementById('__symphony')
 const errorContainer = document.getElementById('__symphony-error')
 
-let lastAppProps
+// let lastAppProps
 export let Router
 export let ErrorComponent
 let ErrorDebugComponent
@@ -90,15 +90,15 @@ export default async ({ ErrorDebugComponent: passedDebugComponent, stripAnsi: pa
     // let dir = process.cwd();
     // console.log('>>>> index dir:'+join(dir, 'src', 'index.js'));
     // Component = require(join(dir, 'src', 'index.js'));
-    Component = window.__SYMPHONY_APP_MAIN;
-    Component = Component.default || Component;
+    Component = window.__SYMPHONY_APP_MAIN
+    Component = Component.default || Component
     // Component = await pageLoader.loadPage('/index');
   } catch (err) {
     console.error(stripAnsi(`${err.message}\n${err.stack}`))
     Component = ErrorComponent
   }
 
-  const dva = DvaCore.create({initialState:initStoreState})
+  const dva = DvaCore.create({initialState: initStoreState})
   dva.start()
 
   // router = createRouter(pathname, query, asPath, {
@@ -114,7 +114,7 @@ export default async ({ ErrorDebugComponent: passedDebugComponent, stripAnsi: pa
   Router = createClientRouter()
 
   const hash = location.hash.substring(1)
-  render({ Component, props, hash, err, emitter, Router, dva, isComponentDidPrepare:true })
+  render({ Component, props, hash, err, emitter, Router, dva, isComponentDidPrepare: true })
 
   return emitter
 }
@@ -172,7 +172,7 @@ async function doRender ({ Component, props, hash, err, emitter: emitterProp = e
 
   const appProps = { Component, props, hash, err, headManager, Router, dva, isComponentDidPrepare }
   // lastAppProps has to be set before ReactDom.render to account for ReactDom throwing an error.
-  lastAppProps = appProps
+  // lastAppProps = appProps
 
   emitterProp.emit('before-reactdom-render', { Component, ErrorComponent, appProps })
 
@@ -185,7 +185,7 @@ async function doRender ({ Component, props, hash, err, emitter: emitterProp = e
 
 let isInitialRender = true
 function renderReactElement (reactEl, domEl) {
-  console.log('>>>>> renderReactElement, isInitialRender:'+isInitialRender);
+  console.log('>>>>> renderReactElement, isInitialRender:' + isInitialRender)
   // The check for `.hydrate` is there to support React alternatives like preact
   if (isInitialRender && typeof ReactDOM.hydrate === 'function') {
     ReactDOM.hydrate(reactEl, domEl)

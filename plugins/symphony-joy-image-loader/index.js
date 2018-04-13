@@ -1,6 +1,6 @@
 module.exports = (symphonyConfig = {}) => {
   return Object.assign({}, symphonyConfig, {
-    webpack(config, options) {
+    webpack (config, options) {
       if (!options.defaultLoaders) {
         throw new Error(
           'This plugin is not compatible with Symphony.js'
@@ -15,11 +15,11 @@ module.exports = (symphonyConfig = {}) => {
               limit: 8192,
               publicPath: '/_symphony/webpack/static',
               outputPath: 'static/images',
-              name: "[name]-[hash].[ext]"
+              name: '[name]-[hash].[ext]'
             }
           }
         ]
-      });
+      })
 
       if (typeof symphonyConfig.webpack === 'function') {
         return symphonyConfig.webpack(config, options)
@@ -28,4 +28,4 @@ module.exports = (symphonyConfig = {}) => {
       return config
     }
   })
-};
+}
