@@ -27,7 +27,7 @@ export default class Document extends Component {
       <Head />
       <body>
         <Main />
-        <SymphonyScript />
+        <JoyScript />
       </body>
     </html>
   }
@@ -115,7 +115,7 @@ export class Main extends Component {
   }
 }
 
-export class SymphonyScript extends Component {
+export class JoyScript extends Component {
   static propTypes = {
     nonce: PropTypes.string
   }
