@@ -1,6 +1,6 @@
 # build output
 dist
-.symphony
+.joy
 
 # dependencies
 node_modules

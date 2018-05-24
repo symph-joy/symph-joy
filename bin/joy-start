@@ -24,15 +24,15 @@ if (argv.help) {
   console.log(`
     Description
       Starts the application in production mode.
-      The application should be compiled with \`symphony build\` first.
+      The application should be compiled with \`joy build\` first.
 
     Usage
-      $ symphony start <dir> -p <port>
+      $ joy start <dir> -p <port>
 
     <dir> is the directory that contains the compiled dist folder
-    created by running \`symphony build\`.
+    created by running \`joy build\`.
     If no directory is provided, the current directory will be assumed.
-    You can set a custom dist folder in config https://github.com/zeit/symphony.js#custom-configuration
+    You can set a custom dist folder in config https://github.com/lnlfps/@symph/joy
 
     Options
       --port, -p      A port number on which to start the application

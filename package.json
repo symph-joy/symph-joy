@@ -1,7 +1,7 @@
 {
-  "name": "symphony-joy",
-  "version": "0.0.5",
-  "description": "Minimalistic framework for React applications, inspiration comes from Next.js and Dva",
+  "name": "@symph/joy",
+  "version": "0.1.5",
+  "description": "Minimalistic framework for React SPA applications, inspiration comes from Next.js and Dva",
   "main": "./dist/server/symphony.js",
   "license": "MIT",
   "repository": "lnlfps/symphony-js",
@@ -23,10 +23,11 @@
     "model.js",
     "prefetch.js",
     "proxy-api-middleware.js",
-    "router.js"
+    "router.js",
+    "router-redux.js"
   ],
   "bin": {
-    "symphony": "./dist/bin/symphony"
+    "joy": "./dist/bin/joy"
   },
   "scripts": {
     "build": "taskr",
@@ -84,6 +85,7 @@
     "hoist-non-react-statics": "2.3.1",
     "htmlescape": "1.1.1",
     "http-errors": "1.6.2",
+    "http-proxy": "1.16.2",
     "http-status": "1.0.1",
     "is-plain-object": "2.0.4",
     "isomorphic-fetch": "2.2.1",
@@ -94,6 +96,7 @@
     "mkdirp-then": "1.2.0",
     "mv": "2.1.1",
     "mz": "2.7.0",
+    "node-http-proxy-json": "0.1.6",
     "path-to-regexp": "2.1.0",
     "pkg-up": "2.0.0",
     "prop-types": "15.6.0",
@@ -101,6 +104,7 @@
     "react-hot-loader": "4.0.0-beta.23",
     "react-redux": "^5.0.5",
     "react-router-dom": "^4.2.2",
+    "react-router-redux": "5.0.0-alpha.9",
     "recursive-copy": "2.0.6",
     "redux": "^3.7.2",
     "redux-saga": "0.16.0",

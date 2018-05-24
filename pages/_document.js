@@ -1,1 +1,1 @@
-module.exports = require('symphony-joy/document')
+module.exports = require('../server/document')

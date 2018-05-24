@@ -1,15 +1,17 @@
-import { createElement } from 'react'
+import {createElement} from 'react'
 import ReactDOM from 'react-dom'
 import HeadManager from './head-manager'
 // import { createRouter } from '../lib/router'
-import { createClientRouter } from '../lib/router'
+import {createClientRouter} from '../lib/router'
 import EventEmitter from '../lib/EventEmitter'
 import App from '../lib/app'
-import { loadGetInitialProps, getURL } from '../lib/utils'
+import {loadGetInitialProps, getURL} from '../lib/utils'
 import PageLoader from '../lib/page-loader'
 import * as DvaCore from '../lib/dva'
 import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
+import createHistory from 'history/createBrowserHistory'
+import {routerReducer, routerMiddleware} from 'react-router-redux'
 
 // Polyfill Promise globally
 // This is needed because Webpack2's dynamic loading(common chunks) code
@@ -49,12 +51,12 @@ envConfig.setConfig({
 const asPath = getURL()
 
 const pageLoader = new PageLoader(buildId, assetPrefix)
-window.__SYMPHONY_LOADED_PAGES__.forEach(({ route, fn }) => {
+window.__SYMPHONY_LOADED_PAGES__.forEach(({route, fn}) => {
   pageLoader.registerPage(route, fn)
 })
 delete window.__SYMPHONY_LOADED_PAGES__
 
-window.__SYMPHONY_LOADED_CHUNKS__.forEach(({ chunkName, fn }) => {
+window.__SYMPHONY_LOADED_CHUNKS__.forEach(({chunkName, fn}) => {
   pageLoader.registerChunk(chunkName, fn)
 })
 delete window.__SYMPHONY_LOADED_CHUNKS__
@@ -75,7 +77,7 @@ let stripAnsi = (s) => s
 
 export const emitter = new EventEmitter()
 
-export default async ({ ErrorDebugComponent: passedDebugComponent, stripAnsi: passedStripAnsi } = {}) => {
+export default async ({ErrorDebugComponent: passedDebugComponent, stripAnsi: passedStripAnsi} = {}) => {
   // Wait for all the dynamic chunks to get loaded
   for (const chunkName of chunks) {
     await pageLoader.waitForChunk(chunkName)
@@ -98,7 +100,17 @@ export default async ({ ErrorDebugComponent: passedDebugComponent, stripAnsi: pa
     Component = ErrorComponent
   }
 
-  const dva = DvaCore.create({initialState: initStoreState})
+  const history = createHistory()
+  const routerMid = routerMiddleware(history)
+  const dva = DvaCore.create({initialState: initStoreState}, {
+    initialReducer: {
+      router: routerReducer
+    },
+    setupMiddlewares: (middlewares) => {
+      middlewares.push(routerMid)
+      return middlewares
+    }
+  })
   dva.start()
 
   // router = createRouter(pathname, query, asPath, {
@@ -111,10 +123,10 @@ export default async ({ ErrorDebugComponent: passedDebugComponent, stripAnsi: pa
   // router.subscribe(({ Component, props, hash, err }) => {
   //   render({ Component, props, err, hash, emitter, dva , isComponentDidPrepare: false})
   // })
-  Router = createClientRouter()
+  Router = createClientRouter(history)
 
   const hash = location.hash.substring(1)
-  render({ Component, props, hash, err, emitter, Router, dva, isComponentDidPrepare: true })
+  render({Component, props, hash, err, emitter, Router, dva, isComponentDidPrepare: true})
 
   return emitter
 }
@@ -150,15 +162,15 @@ export async function renderError (error) {
   console.error(stripAnsi(errorMessage))
 
   if (prod) {
-    const initProps = { err: error, pathname, query, asPath }
+    const initProps = {err: error, pathname, query, asPath}
     const props = await loadGetInitialProps(ErrorComponent, initProps)
     renderReactElement(createElement(ErrorComponent, props), errorContainer)
   } else {
-    renderReactElement(createElement(ErrorDebugComponent, { error }), errorContainer)
+    renderReactElement(createElement(ErrorDebugComponent, {error}), errorContainer)
   }
 }
 
-async function doRender ({ Component, props, hash, err, emitter: emitterProp = emitter, Router, dva, isComponentDidPrepare }) {
+async function doRender ({Component, props, hash, err, emitter: emitterProp = emitter, Router, dva, isComponentDidPrepare}) {
   // if (!props && Component &&
   //   Component !== ErrorComponent &&
   //   lastAppProps.Component === ErrorComponent) {
@@ -170,20 +182,21 @@ async function doRender ({ Component, props, hash, err, emitter: emitterProp = e
   // Component = Component || lastAppProps.Component
   // props = props || lastAppProps.props
 
-  const appProps = { Component, props, hash, err, headManager, Router, dva, isComponentDidPrepare }
+  const appProps = {Component, props, hash, err, headManager, Router, dva, isComponentDidPrepare}
   // lastAppProps has to be set before ReactDom.render to account for ReactDom throwing an error.
   // lastAppProps = appProps
 
-  emitterProp.emit('before-reactdom-render', { Component, ErrorComponent, appProps })
+  emitterProp.emit('before-reactdom-render', {Component, ErrorComponent, appProps})
 
   // We need to clear any existing runtime error messages
   ReactDOM.unmountComponentAtNode(errorContainer)
   renderReactElement(createElement(App, appProps), appContainer)
 
-  emitterProp.emit('after-reactdom-render', { Component, ErrorComponent, appProps })
+  emitterProp.emit('after-reactdom-render', {Component, ErrorComponent, appProps})
 }
 
 let isInitialRender = true
+
 function renderReactElement (reactEl, domEl) {
   console.log('>>>>> renderReactElement, isInitialRender:' + isInitialRender)
   // The check for `.hydrate` is there to support React alternatives like preact

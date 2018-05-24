@@ -7,7 +7,7 @@ const defaultConfig = {
   webpack: null,
   webpackDevMiddleware: null,
   poweredByHeader: true,
-  distDir: '.symphony',
+  distDir: '.joy',
   assetPrefix: '',
   configOrigin: 'default',
   useFileSystemPublicRoutes: true,
@@ -26,7 +26,7 @@ export function loadConfig (phase, dir, customConfig) {
     customConfig.configOrigin = 'server'
     return withDefaults(customConfig)
   }
-  const path = findUp.sync('symphony.config.js', {
+  const path = findUp.sync('joy.config.js', {
     cwd: dir
   })
 
@@ -38,7 +38,7 @@ export function loadConfig (phase, dir, customConfig) {
     if (typeof userConfigModule === 'function') {
       userConfig = userConfigModule(phase, {defaultConfig})
     }
-    userConfig.configOrigin = 'symphony.config.js'
+    userConfig.configOrigin = 'joy.config.js'
   }
 
   return withDefaults(userConfig)

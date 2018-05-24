@@ -18,11 +18,11 @@ if (argv.help) {
       Compiles the application for production deployment
 
     Usage
-      $ symphony build <dir>
+      $ joy build <dir>
 
     <dir> represents where the compiled dist folder should go.
     If no directory is provided, the dist folder will be created in the current directory.
-    You can set a custom folder in config https://github.com/zeit/symphony.js#custom-configuration, otherwise it will be created inside '.next'
+    You can set a custom folder in config https://github.com/lnlfps/@symph/joy, otherwise it will be created inside '.symph'
   `)
   process.exit(0)
 }
@@ -36,7 +36,7 @@ if (!existsSync(dir)) {
 
 if (!existsSync(join(dir, 'pages'))) {
   if (existsSync(join(dir, '..', 'pages'))) {
-    printAndExit('> No `pages` directory found. Did you mean to run `symphony` in the parent (`../`) directory?')
+    printAndExit('> No `pages` directory found. Did you mean to run `joy` in the parent (`../`) directory?')
   }
 
   printAndExit('> Couldn\'t find a `pages` directory. Please create one under the project root')

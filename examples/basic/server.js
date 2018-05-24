@@ -1,10 +1,10 @@
 const express = require('express')
-const symphony = require('symphony-joy')
-const {createProxyApiMiddleware} = require('symphony-joy/proxy-api-middleware')
+const symph = require('@symph/joy')
+const {createProxyApiMiddleware} = require('@symph/joy/proxy-api-middleware')
 
 const port = parseInt(process.env.PORT, 10) || 3000
 const dev = process.env.NODE_ENV !== 'production'
-const app = symphony({ dev })
+const app = symph({ dev })
 const handle = app.getRequestHandler()
 
 app.prepare()

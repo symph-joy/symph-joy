@@ -219,7 +219,7 @@ export default class HotReloader {
     const webpackDevMiddleware = WebpackDevMiddleware(compiler, webpackDevMiddlewareConfig)
 
     const webpackHotMiddleware = WebpackHotMiddleware(compiler.compilers[0], {
-      path: '/_symphony/webpack-hmr',
+      path: `${this.config.assetPrefix}/_symphony/webpack-hmr`,
       log: false,
       heartbeat: 2500
     })

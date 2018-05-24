@@ -1,11 +1,11 @@
 # symphony-joy
 
-symphony-joy 的目标是创建便捷高效开发和用户体验的 React 应用，灵感来自于Next.js和Dva等优秀的开源库，在此非常感谢以上开源贡献者的辛勤付出。
+@symph/joy 的目标是创建便捷高效开发和用户体验的SPA React 应用，灵感来自于Next.js和Dva等优秀的开源库，在此非常感谢以上开源贡献者的辛勤付出。
 
 
 ## 特征
 
-以下特征功能均可零配置实现, symphony-joy默认为应用良好运行提供了默认配置，当然可以定制配置。
+以下特征功能均可零配置实现, @symph/joy默认为应用良好运行提供了默认配置，当然可以定制配置。
  
 - 自动编译和打包源码（使用webpack和babel）
 - 服务端数据获取和渲染， 解决首屏加载速度、页面静态化、SEO等问题
@@ -20,9 +20,9 @@ symphony-joy 的目标是创建便捷高效开发和用户体验的 React 应用
 运行`npm init`创建一个空工程，并填写项目的基本信息，当然也可以在一个已有的项目中直接安装。
 
 ```bash
-npm install --save symphony-joy react react-dom
+npm install --save @symph/joy react react-dom
 ```
-> symphony-joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html).<br/>
+> @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html).<br/>
 
 创建`./src/index.js`文件，并插入以下代码：
 
@@ -36,7 +36,7 @@ export default class Index extends Component{
 }
 ```
 
-然后运行`symphony` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `symphony dev -p <your port here>`
+然后运行`joy` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `joy dev -p <your port here>`
 
 到目前为止，一个简单可完整运行的react app已经创建完成，例子 [hello-world](./examples/hello)， 那我们拥有了什么呢？
 

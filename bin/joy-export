@@ -24,7 +24,7 @@ if (argv.help) {
       Exports the application for production deployment
 
     Usage
-      $ symphony export [options] <dir>
+      $ joy export [options] <dir>
 
     <dir> represents where the compiled dist folder should go.
     If no directory is provided, the 'out' folder will be created in the current directory.
@@ -46,7 +46,7 @@ if (!existsSync(dir)) {
 
 if (!existsSync(join(dir, 'pages'))) {
   if (existsSync(join(dir, '..', 'pages'))) {
-    printAndExit('> No `pages` directory found. Did you mean to run `symphony` in the parent (`../`) directory?')
+    printAndExit('> No `pages` directory found. Did you mean to run `joy` in the parent (`../`) directory?')
   }
 
   printAndExit('> Couldn\'t find a `pages` directory. Please create one under the project root')

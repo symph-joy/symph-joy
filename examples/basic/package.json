@@ -2,8 +2,7 @@
   "name": "dva-example",
   "private": true,
   "scripts": {
-    "start": "node --experimental-modules server.js",
-    "build": "next build"
+    "start": "node --experimental-modules server.js"
   },
   "engines": {
     "install-node": "6.9.2"
@@ -17,7 +16,7 @@
     "next-images": "0.9.2",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
-    "symphony-joy": "latest"
+    "@symph/joy": "latest"
   },
   "devDependencies": {
     "babel-plugin-module-resolver": "^2.7.1"
