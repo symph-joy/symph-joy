@@ -1,16 +1,17 @@
-import Document, {Head, Main, JoyScript} from 'symphony-joy/document'
+import Document, { Head, Main, SymphonyScript } from '@symph/joy/document'
 
 export default class MyDocument extends Document {
-  render() {
+  render () {
     return (
       <html>
-      <Head>
-        <link rel="stylesheet" href="/_symphony/static/style.css"/>
-      </Head>
-      <body>
-      <Main/>
-      <JoyScript/>
-      </body>
+        <Head>
+          {/* add custom style file */}
+          <link rel='stylesheet' href='/_symphony/static/style.css' />
+        </Head>
+        <body>
+          <Main />
+          <SymphonyScript />
+        </body>
       </html>
     )
   }

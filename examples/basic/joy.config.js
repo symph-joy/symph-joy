@@ -3,8 +3,7 @@ const withImageLoader = require('next-images')
 
 module.exports = withImageLoader(withLess({
   cssModules: true,
-  webpack(config, options) {
+  webpack (config, options) {
     return config
   }
-}));
-
+}))

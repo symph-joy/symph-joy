@@ -1,6 +1,6 @@
 import React, {Component} from 'react'
-import {Switch, Route} from 'symphony-joy/router'
-import dynamic from 'symphony-joy/dynamic'
+import {Switch, Route} from '@symph/joy/router'
+import dynamic from '@symph/joy/dynamic'
 
 class ClientRootComponent extends Component {
 

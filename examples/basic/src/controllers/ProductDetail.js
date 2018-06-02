@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import controller from 'symphony-joy/controller'
+import controller from '@symph/joy/controller'
 
 @controller()
 export default class ProductDetail extends Component {
