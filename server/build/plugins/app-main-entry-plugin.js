@@ -3,7 +3,7 @@
  * 应用入口在config.mian 配置入口文件路径
  *
  */
-import {ConcatSource} from 'webpack-sources'
+import { ConcatSource } from 'webpack-sources'
 
 class AppMainEntryTemplatePlugin {
   constructor (appEntryFilePath) {
@@ -12,6 +12,10 @@ class AppMainEntryTemplatePlugin {
 
   apply (chunkTemplate) {
     chunkTemplate.plugin('render', (moduleSource, module) => {
+      if (!module.resource && module.rootModule) {
+        module = module.rootModule
+      }
+
       if (!module.resource || module.resource !== this.appEntryFilePath) {
         return moduleSource
       }
@@ -21,7 +25,7 @@ class AppMainEntryTemplatePlugin {
         var AppMain = `)
       source.add(moduleSource)
       source.add(`
-        window.__SYMPHONY_APP_MAIN = AppMain.default;`)
+        window.__SYMPHONY_APP_MAIN = AppMain.default || AppMain;`)
       return source
     })
   }

@@ -1,4 +1,4 @@
-import Document, { Head, Main, SymphonyScript } from '@symph/joy/document'
+import Document, { Head, Main, JoyScript } from '@symph/joy/document'
 
 export default class MyDocument extends Document {
   render () {
@@ -10,7 +10,7 @@ export default class MyDocument extends Document {
         </Head>
         <body>
           <Main />
-          <SymphonyScript />
+          <JoyScript />
         </body>
       </html>
     )
