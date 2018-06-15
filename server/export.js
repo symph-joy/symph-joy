@@ -21,7 +21,7 @@ export default async function (dir, options, configuration) {
 
   if (!existsSync(symphonyDir)) {
     console.error(
-      `Build directory ${symphonyDir} does not exist. Make sure you run "symphony build" before running "symphony start" or "symphony export".`
+      `Build directory ${symphonyDir} does not exist. Make sure you run "joy build" before running "joy start" or "joy export".`
     )
     process.exit(1)
   }

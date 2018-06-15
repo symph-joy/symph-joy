@@ -46,12 +46,11 @@ export default class Server {
     }
 
     if (!dev && !fs.existsSync(resolve(dir, this.dist, 'BUILD_ID'))) {
-      console.error(`> Could not find a valid build in the '${this.dist}' directory! Try building your app with 'symphony build' before starting the server.`)
+      console.error(`> Could not find a valid build in the '${this.dist}' directory! Try building your app with 'joy build' before starting the server.`)
       process.exit(1)
     }
     this.buildId = !dev ? this.readBuildId() : '-'
     this.renderOpts = {
-      // ComponentPath: resolve(dir, this.dist, './dist/', this.symphonyConfig.main),
       ComponentPath: resolve(dir, this.dist, './dist', './app-main.js'),
       dev,
       staticMarkup,
@@ -314,7 +313,6 @@ export default class Server {
 
     routes['/:path*'] = async (req, res, params, parsedUrl) => {
       const {pathname, query} = parsedUrl
-      console.log('>>>>>> route path:' + pathname)
       await this.render(req, res, pathname, query)
     }
 

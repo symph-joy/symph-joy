@@ -21,7 +21,9 @@ const buildImport = (args) => (template(`
       try {
         const weakModule = __webpack_require__(weakId)
         return resolve(weakModule)
-      } catch (err) {}
+      } catch (err) {
+        // todo notify error
+      }
 
       require.ensure([], (require) => {
         try {

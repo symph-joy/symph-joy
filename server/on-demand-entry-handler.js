@@ -39,7 +39,6 @@ export default function onDemandEntryHandler (devMiddleware, compilers, {
     compiler.plugin('make', function (compilation, done) {
       invalidator.startBuilding()
       currentBuilders.add(compiler.name)
-      console.log('+++++++  entries:' + JSON.stringify(entries))
       const allEntries = Object.keys(entries).map((page) => {
         const { name, entry } = entries[page]
         entries[page].status = BUILDING

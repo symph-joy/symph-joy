@@ -90,7 +90,6 @@ export default async ({ErrorDebugComponent: passedDebugComponent, stripAnsi: pas
   try {
     // Component = await pageLoader.loadPage(pathname)
     // let dir = process.cwd();
-    // console.log('>>>> index dir:'+join(dir, 'src', 'index.js'));
     // Component = require(join(dir, 'src', 'index.js'));
     Component = window.__SYMPHONY_APP_MAIN
     Component = Component.default || Component
@@ -141,7 +140,6 @@ export async function render (props) {
     await doRender(props)
   } catch (err) {
     if (err.abort) return
-    console.log('>>>>>>>> doRender occurred a error')
     await renderError(err)
   }
 }
@@ -150,7 +148,6 @@ export async function render (props) {
 // 404 and 500 errors are special kind of errors
 // and they are still handle via the main render method.
 export async function renderError (error) {
-  console.log('>>>>>>>> renderError')
   const prod = process.env.NODE_ENV === 'production'
   // We need to unmount the current app component because it's
   // in the inconsistant state.
@@ -198,7 +195,6 @@ async function doRender ({Component, props, hash, err, emitter: emitterProp = em
 let isInitialRender = true
 
 function renderReactElement (reactEl, domEl) {
-  console.log('>>>>> renderReactElement, isInitialRender:' + isInitialRender)
   // The check for `.hydrate` is there to support React alternatives like preact
   if (isInitialRender && typeof ReactDOM.hydrate === 'function') {
     ReactDOM.hydrate(reactEl, domEl)

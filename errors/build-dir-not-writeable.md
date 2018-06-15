@@ -2,7 +2,7 @@
 
 #### Why This Error Occurred
 
-The filesystem does not allow writing to the specified directory. A common cause for this error is starting a [custom server](https://github.com/zeit/symphony.js#custom-server-and-routing) in development mode on a production server, for example, [now.sh](https://zeit.co) which [doesn't allow you to write to the filesystem after your app is built](https://zeit.co/docs/deployment-types/node#file-system-specifications).
+The filesystem does not allow writing to the specified directory. A common cause for this error is starting a `custom server` in development mode on a production server.
 
 #### Possible Ways to Fix It
 
@@ -12,19 +12,21 @@ When using a custom server with a server file, for example called `server.js`, m
 {
   "scripts": {
     "dev": "node server.js",
-    "build": "symphony build",
+    "build": "joy build",
     "start": "NODE_ENV=production node server.js"
   }
 }
 ```
 
-and the custom server starts Symphony in production mode when `NODE_ENV` is `production`
+and the custom server starts @symph/joy in production mode when `NODE_ENV` is `production`
 
 ```js
+const symphony = require('@symph/joy')
+
 const dev = process.env.NODE_ENV !== 'production'
-const app = symphony({ dev })
+const app = joy({ dev })
 ```
 
 ### Useful Links
 
-- [Custom Server documentation + examples](https://github.com/zeit/symphony.js#custom-server-and-routing)
+- [Custom Server documentation + examples](https://reacttraining.com/react-router/web/guides/philosophy)

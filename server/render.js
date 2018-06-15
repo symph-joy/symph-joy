@@ -11,7 +11,7 @@ import {getAvailableChunks} from './utils'
 import Head, {defaultHead} from '../lib/head'
 import App from '../lib/app'
 import ErrorDebug from '../lib/error-debug'
-import {flushChunks} from '../lib/dynamic'
+import {flushChunks, clearChunks} from '../lib/dynamic'
 import * as DvaCore from '../lib/dva'
 import {createServerRouter} from '../lib/router'
 
@@ -96,7 +96,6 @@ async function doRender (req, res, pathname, query, {
     let html
     let head
     let errorHtml = ''
-
     try {
       if (err && dev) {
         errorHtml = render(createElement(ErrorDebug, {error: err}))
@@ -112,17 +111,17 @@ async function doRender (req, res, pathname, query, {
           type: '@@endAsyncBatch'
         })
         console.log('> app has prepared')
-
+        clearChunks()
         app = createApp({isComponentDidPrepare: true})
         // 第二次渲染，此时store的state已经获取数据完成
         html = render(app)
+
         console.log('> server render has finished')
       }
     } finally {
       head = Head.rewind() || defaultHead()
     }
     const chunks = loadChunks({dev, dir, dist, availableChunks})
-
     return {html, head, errorHtml, chunks, initStoreState: dva._store.getState()}
   }
 
