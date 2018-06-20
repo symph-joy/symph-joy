@@ -1,4 +1,5 @@
-# `@symph/joy`
+
+# 介绍
 
 @symph/joy 的目标是简单易用的React SPA应用，灵感来自于Next.js和Dva等优秀的开源库，在此诚挚感谢以上开源贡献者的辛勤付出。
 
