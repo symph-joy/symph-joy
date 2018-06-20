@@ -2,20 +2,23 @@
   "name": "dva-example",
   "private": true,
   "scripts": {
-    "start": "node --experimental-modules server.js"
+    "start": "node --experimental-modules server.js",
+    "build": "joy build",
+    "export": "npm run build && joy export"
   },
   "engines": {
     "install-node": "6.9.2"
   },
   "dependencies": {
-    "@symph/joy": "latest",
-    "@zeit/next-less": "^0.1.1",
+    "@symph/joy": "^0.2.13",
+    "@symph/joy-image": "latest",
+    "@symph/joy-less": "latest",
     "babel-runtime": "^6.9.2",
     "express": "^4.16.2",
     "is-plain-object": "^2.0.4",
     "less": "^3.0.1",
     "next-images": "0.9.2",
-    "prop-types": "^15.6.1",
+    "prop-types": "^15.6.2",
     "react": "^16.4.1",
     "react-dom": "^16.4.1"
   },

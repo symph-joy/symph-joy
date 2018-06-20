@@ -4,6 +4,7 @@ const cache = new Map()
 
 const defaultConfig = {
   main: 'src/index.js',
+  serverRender: true,
   webpack: null,
   webpackDevMiddleware: null,
   poweredByHeader: true,

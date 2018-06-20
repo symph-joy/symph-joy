@@ -38,6 +38,7 @@ export function renderErrorToHTML (err, req, res, pathname, query, opts = {}) {
 async function doRender (req, res, pathname, query, {
   err,
   page,
+  serverRender,
   ComponentPath,
   buildId,
   hotReloader,
@@ -48,9 +49,9 @@ async function doRender (req, res, pathname, query, {
   dir = process.cwd(),
   dev = false,
   staticMarkup = false,
-  symphonyExport = false
+  joyExport = false
 } = {}) {
-  console.log(`> start doRender, pathname:${pathname}, page:${page} err:${err}`)
+  console.log(`> start doRender, pathname:${pathname}, err:${err}`)
   page = page || pathname
 
   // 暂时不需要监听页面的编译情况 lane 2017-12-05
@@ -61,7 +62,6 @@ async function doRender (req, res, pathname, query, {
   const documentPath = join(dir, dist, 'dist', 'bundles', 'pages', '_document')
 
   let Component = require(ComponentPath)
-  // let Component = requirePage('/index.js', {dir, dist})
   let Document = require(documentPath)
   Component = Component.default || Component
   Document = Document.default || Document
@@ -72,9 +72,6 @@ async function doRender (req, res, pathname, query, {
   // the response might be finshed on the getinitialprops call
   if (isResSent(res)) return
 
-  const dva = DvaCore.create({})
-  dva.start()
-
   const renderPage = async (enhancer = Page => Page) => {
     const enhancedComponent = enhancer(Component)
     // const Router = new Router(pathname, query, asPath)
@@ -84,45 +81,50 @@ async function doRender (req, res, pathname, query, {
       return createElement(App, {
         Component: enhancedComponent,
         props,
-        dva,
         Router,
         ...appProps
       })
     }
-    let app = createApp({isComponentDidPrepare: false})
 
     const render = staticMarkup ? renderToStaticMarkup : renderToString
-
     let html
     let head
     let errorHtml = ''
+    let initStoreState
     try {
       if (err && dev) {
         errorHtml = render(createElement(ErrorDebug, {error: err}))
       } else if (err) {
-        errorHtml = render(app)
+        errorHtml = render(createApp({isComponentDidPrepare: false}))
       } else {
-        // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
-        // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
-        renderToStaticMarkup(app)
+        if (serverRender) {
+          const dva = DvaCore.create({})
+          dva.start()
+          // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
+          // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
+          renderToStaticMarkup(createApp({dva, isComponentDidPrepare: false}))
 
-        await dva.prepareManager.waitAllPrepareFinished()
-        await dva._store.dispatch({
-          type: '@@endAsyncBatch'
-        })
-        console.log('> app has prepared')
-        clearChunks()
-        app = createApp({isComponentDidPrepare: true})
-        // 第二次渲染，此时store的state已经获取数据完成
-        html = render(app)
-
-        console.log('> server render has finished')
+          await dva.prepareManager.waitAllPrepareFinished()
+          await dva._store.dispatch({
+            type: '@@endAsyncBatch'
+          })
+          console.log('> app has prepared')
+          clearChunks()
+          const app = createApp({dva, isComponentDidPrepare: true})
+          // 第二次渲染，此时store的state已经获取数据完成
+          html = render(app)
+          initStoreState = dva._store.getState()
+          console.log('> server render has finished')
+        } else {
+          html = ''
+          clearChunks()
+        }
       }
     } finally {
       head = Head.rewind() || defaultHead()
     }
     const chunks = loadChunks({dev, dir, dist, availableChunks})
-    return {html, head, errorHtml, chunks, initStoreState: dva._store.getState()}
+    return {html, head, errorHtml, chunks, initStoreState}
   }
 
   const docProps = await loadGetInitialProps(Document, {...ctx, renderPage})
@@ -139,7 +141,7 @@ async function doRender (req, res, pathname, query, {
       buildId,
       assetPrefix,
       runtimeConfig,
-      symphonyExport,
+      joyExport,
       err: (err) ? serializeError(dev, err) : null,
       initStoreState: docProps.initStoreState
     },

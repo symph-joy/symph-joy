@@ -1,4 +1,5 @@
 import React, {Component} from 'react'
+import PropTypes from 'prop-types'
 import styles from './IndexController.less'
 import controller, {requireModel} from '@symph/joy/controller'
 import ImageView from '../components/image-view'
@@ -12,6 +13,9 @@ import ProductsModel from '../models/ProductsModel'
   }
 })
 export default class IndexController extends Component {
+  static contextProps = {
+    isComponentDidPrepare: PropTypes.bool,
+  };
   constructor() {
     super(...arguments);
   }

@@ -8,7 +8,7 @@
   "bugs": "",
   "homepage": "",
   "files": [
-    "dist",
+    "./dist",
     "asset.js",
     "babel.js",
     "client.js",

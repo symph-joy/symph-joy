@@ -84,10 +84,11 @@ export default async function (dir, options, configuration) {
 
   // Start the rendering process
   const renderOpts = {
+    ComponentPath: resolve(dir, symphonyConfig.distDir, './dist', './app-main.js'),
     dir,
     dist: symphonyConfig.distDir,
     buildId,
-    symphonyExport: true,
+    joyExport: true,
     assetPrefix: symphonyConfig.assetPrefix.replace(/\/$/, ''),
     dev: false,
     staticMarkup: false,
@@ -111,7 +112,7 @@ export default async function (dir, options, configuration) {
 
   // We need this for server rendering the Link component.
   global.__SYMPHONY_DATA__ = {
-    symphonyExport: true
+    joyExport: true
   }
 
   for (const path of exportPaths) {

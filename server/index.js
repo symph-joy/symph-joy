@@ -38,6 +38,7 @@ export default class Server {
     const phase = dev ? PHASE_DEVELOPMENT_SERVER : PHASE_PRODUCTION_SERVER
     this.symphonyConfig = getConfig(phase, this.dir, conf)
     this.dist = this.symphonyConfig.distDir
+    this.serverRender = this.symphonyConfig.serverRender
 
     this.hotReloader = dev ? this.getHotReloader(this.dir, {quiet, config: this.symphonyConfig}) : null
 
@@ -51,6 +52,7 @@ export default class Server {
     }
     this.buildId = !dev ? this.readBuildId() : '-'
     this.renderOpts = {
+      serverRender: this.serverRender,
       ComponentPath: resolve(dir, this.dist, './dist', './app-main.js'),
       dev,
       staticMarkup,
@@ -307,6 +309,11 @@ export default class Server {
       // See more: https://github.com/zeit/symphony.js/issues/2617
       '/static/:path*': async (req, res, params) => {
         const p = join(this.dir, 'static', ...(params.path || []))
+        await this.serveStatic(req, res, p)
+      },
+
+      '/favicon.ico': async (req, res, params) => {
+        const p = join(this.dir, 'static', 'favicon.ico')
         await this.serveStatic(req, res, p)
       }
     }

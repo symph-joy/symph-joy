@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { Switch, Route } from '@symph/joy/router'
 import dynamic from '@symph/joy/dynamic'
 
-class ClientRootComponent extends Component {
+export default class ClientRootComponent extends Component {
 
   render () {
     return (
@@ -13,5 +13,3 @@ class ClientRootComponent extends Component {
     )
   }
 }
-
-export default ClientRootComponent

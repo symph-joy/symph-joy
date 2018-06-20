@@ -22,7 +22,7 @@ if (argv.help) {
 
     <dir> represents where the compiled dist folder should go.
     If no directory is provided, the dist folder will be created in the current directory.
-    You can set a custom folder in config https://github.com/lnlfps/@symph/joy, otherwise it will be created inside '.symph'
+    You can set a custom folder in config https://github.com/lnlfps/@symph/joy, otherwise it will be created inside '.joy'
   `)
   process.exit(0)
 }

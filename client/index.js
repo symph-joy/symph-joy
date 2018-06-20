@@ -1,17 +1,17 @@
-import {createElement} from 'react'
+import { createElement } from 'react'
 import ReactDOM from 'react-dom'
 import HeadManager from './head-manager'
 // import { createRouter } from '../lib/router'
-import {createClientRouter} from '../lib/router'
+import { createClientRouter } from '../lib/router'
 import EventEmitter from '../lib/EventEmitter'
 import App from '../lib/app'
-import {loadGetInitialProps, getURL} from '../lib/utils'
+import { loadGetInitialProps, getURL } from '../lib/utils'
 import PageLoader from '../lib/page-loader'
 import * as DvaCore from '../lib/dva'
 import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
 import createHistory from 'history/createBrowserHistory'
-import {routerReducer, routerMiddleware} from 'react-router-redux'
+import { routerReducer, routerMiddleware } from 'react-router-redux'
 
 // Polyfill Promise globally
 // This is needed because Webpack2's dynamic loading(common chunks) code
@@ -112,20 +112,10 @@ export default async ({ErrorDebugComponent: passedDebugComponent, stripAnsi: pas
   })
   dva.start()
 
-  // router = createRouter(pathname, query, asPath, {
-  //   pageLoader,
-  //   Component,
-  //   ErrorComponent,
-  //   err
-  // })
-  //
-  // router.subscribe(({ Component, props, hash, err }) => {
-  //   render({ Component, props, err, hash, emitter, dva , isComponentDidPrepare: false})
-  // })
   Router = createClientRouter(history)
 
   const hash = location.hash.substring(1)
-  render({Component, props, hash, err, emitter, Router, dva, isComponentDidPrepare: true})
+  render({Component, props, hash, err, emitter, Router, dva, isComponentDidPrepare: !!initStoreState})
 
   return emitter
 }
@@ -196,7 +186,7 @@ let isInitialRender = true
 
 function renderReactElement (reactEl, domEl) {
   // The check for `.hydrate` is there to support React alternatives like preact
-  if (isInitialRender && typeof ReactDOM.hydrate === 'function') {
+  if (isInitialRender && typeof ReactDOM.hydrate === 'function' && reactEl.props.isComponentDidPrepare) {
     ReactDOM.hydrate(reactEl, domEl)
     isInitialRender = false
   } else {
