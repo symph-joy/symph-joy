@@ -1,6 +1,6 @@
 {
   "name": "@symph/joy",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "description": "Minimalistic framework for React SPA applications, inspiration comes from Next.js and Dva",
   "main": "./dist/server/symphony.js",
   "license": "MIT",
