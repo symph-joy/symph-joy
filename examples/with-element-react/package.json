@@ -1,0 +1,25 @@
+{
+  "name": "with-element-react",
+  "version": "1.0.0",
+  "description": "for test",
+  "main": "index.js",
+  "scripts": {
+    "dev": "joy dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@symph/joy": "^0.2.14",
+    "@symph/joy-css": "^0.1.5",
+    "element-react": "^1.4.19",
+    "element-theme-default": "^1.4.13",
+    "file-loader": "^1.1.11",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
+    "url-loader": "^1.0.1"
+  },
+  "devDependencies": {
+    "babel-plugin-module-resolver": "^2.7.1"
+  }
+}
