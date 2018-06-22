@@ -61,29 +61,33 @@ async function doRender (req, res, pathname, query, {
 
   const documentPath = join(dir, dist, 'dist', 'bundles', 'pages', '_document')
 
-  let Component = require(ComponentPath)
   let Document = require(documentPath)
-  Component = Component.default || Component
+
   Document = Document.default || Document
   const asPath = req.url
   const ctx = {err, req, res, pathname, query, asPath}
-  const props = await loadGetInitialProps(Component, ctx)
+  // const props = await loadGetInitialProps(Component, ctx)
+  const props = {}
 
   // the response might be finshed on the getinitialprops call
   if (isResSent(res)) return
 
-  const renderPage = async (enhancer = Page => Page) => {
-    const enhancedComponent = enhancer(Component)
+  const renderPage = async (enhancer = Comp => Comp) => {
     // const Router = new Router(pathname, query, asPath)
     const Router = createServerRouter(pathname, query)
 
-    const createApp = function (appProps) {
+    const createApp = function (Component, appProps) {
       return createElement(App, {
-        Component: enhancedComponent,
+        Component,
         props,
         Router,
         ...appProps
       })
+    }
+    const requireComp = function () {
+      let Component = require(ComponentPath)
+      Component = Component.default || Component
+      return enhancer(Component)
     }
 
     const render = staticMarkup ? renderToStaticMarkup : renderToString
@@ -95,14 +99,21 @@ async function doRender (req, res, pathname, query, {
       if (err && dev) {
         errorHtml = render(createElement(ErrorDebug, {error: err}))
       } else if (err) {
-        errorHtml = render(createApp({isComponentDidPrepare: false}))
+        if (serverRender) {
+          const Component = requireComp()
+          errorHtml = render(createApp(Component, {isComponentDidPrepare: false}))
+        } else {
+          html = ''
+          clearChunks()
+        }
       } else {
         if (serverRender) {
+          const Component = requireComp()
           const dva = DvaCore.create({})
           dva.start()
           // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
           // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
-          renderToStaticMarkup(createApp({dva, isComponentDidPrepare: false}))
+          renderToStaticMarkup(createApp(Component, {dva, isComponentDidPrepare: false}))
 
           await dva.prepareManager.waitAllPrepareFinished()
           await dva._store.dispatch({

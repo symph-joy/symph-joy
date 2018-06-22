@@ -121,7 +121,7 @@ export default async function (dir, options, configuration) {
       throw new Error(`path "${path}" doesn't start with a backslash`)
     }
 
-    const { page, query = {} } = exportPathMap[path]
+    const { page, query = {} } = exportPathMap[path] || {}
     const req = { url: path }
     const res = {}
 

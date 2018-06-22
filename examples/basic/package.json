@@ -2,7 +2,7 @@
   "name": "dva-example",
   "private": true,
   "scripts": {
-    "start": "node --experimental-modules server.js",
+    "dev": "joy dev",
     "build": "joy build",
     "export": "npm run build && joy export"
   },
