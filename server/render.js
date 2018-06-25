@@ -121,7 +121,7 @@ async function doRender (req, res, pathname, query, {
           })
           console.log('> app has prepared')
           clearChunks()
-          const app = createApp({dva, isComponentDidPrepare: true})
+          const app = createApp(Component, {dva, isComponentDidPrepare: true})
           // 第二次渲染，此时store的state已经获取数据完成
           html = render(app)
           initStoreState = dva._store.getState()

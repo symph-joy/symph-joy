@@ -1,9 +1,12 @@
 const withLess = require('@symph/joy-less')
 const withImageLoader = require('@symph/joy-image')
 
-module.exports = withImageLoader(withLess({
-  serverRender: false,
-  cssModules: true,
+module.exports = {
+  serverRender: true,
+  plugins: [
+    withLess({cssModules: true}),
+    withImageLoader({limit: 8192})
+  ],
   exportPathMap: async function (defaultPathMap) {
     return {
       '/': { page: '/', query: { title: 'basic example' } },
@@ -12,4 +15,4 @@ module.exports = withImageLoader(withLess({
   webpack (config, options) {
     return config
   }
-}))
+}

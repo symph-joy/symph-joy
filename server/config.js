@@ -1,4 +1,5 @@
 import findUp from 'find-up'
+import { CONFIG_FILE } from '../lib/constants'
 
 const cache = new Map()
 
@@ -25,26 +26,37 @@ export default function getConfig (phase, dir, customConfig) {
 export function loadConfig (phase, dir, customConfig) {
   if (customConfig && typeof customConfig === 'object') {
     customConfig.configOrigin = 'server'
-    return withDefaults(customConfig)
+    return preparePlugins({...defaultConfig, ...customConfig})
   }
-  const path = findUp.sync('joy.config.js', {
+  const path = findUp.sync(CONFIG_FILE, {
     cwd: dir
   })
 
-  let userConfig = {}
-
+// If config file was found
   if (path && path.length) {
     const userConfigModule = require(path)
-    userConfig = userConfigModule.default || userConfigModule
-    if (typeof userConfigModule === 'function') {
-      userConfig = userConfigModule(phase, {defaultConfig})
+    const userConfigInitial = userConfigModule.default || userConfigModule
+    if (typeof userConfigInitial === 'function') {
+      return preparePlugins({...defaultConfig, configOrigin: CONFIG_FILE, ...userConfigInitial(phase, {defaultConfig})})
     }
-    userConfig.configOrigin = 'joy.config.js'
+
+    return preparePlugins({...defaultConfig, configOrigin: CONFIG_FILE, ...userConfigInitial})
   }
 
-  return withDefaults(userConfig)
+  return defaultConfig
 }
 
-function withDefaults (config) {
-  return Object.assign({}, defaultConfig, config)
+function preparePlugins (config) {
+  if (config.plugins) {
+    let webpackConfig = {...config}
+    if (!Array.isArray(config.plugins)) {
+      throw new Error(`in ${CONFIG_FILE}, the plugins config value must is a Array, or empty`)
+    }
+
+    config.plugins.forEach(plugin => {
+      webpackConfig = plugin(webpackConfig)
+    })
+    return webpackConfig
+  }
+  return config
 }

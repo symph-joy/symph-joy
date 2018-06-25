@@ -348,6 +348,11 @@ export default class IndexController extends Component {
  import {Switch, Route} from '@symph/joy/router'
  ```
 
+## 动态导入
+
+`@symph/joy`支持JavaScript的TC39 [dynamic import](https://github.com/tc39/proposal-dynamic-import)提议，所以，你可以动态的导入JavaScript模块。这就意味着，你可以将代码分割为多个代码块，在浏览器上首次加载时，只加载必须的最小模块，
+
+
 ## 自定义 `<Document>`
 
 - 服务端渲染时，使用该组件生成静态的html文档

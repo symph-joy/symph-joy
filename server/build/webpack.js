@@ -1,11 +1,11 @@
-import path, {sep} from 'path'
+import path, { sep } from 'path'
 import webpack from 'webpack'
 import resolve from 'resolve'
 import UglifyJSPlugin from 'uglifyjs-webpack-plugin'
 import CaseSensitivePathPlugin from 'case-sensitive-paths-webpack-plugin'
 import WriteFilePlugin from 'write-file-webpack-plugin'
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin'
-import {getPages} from './webpack/utils'
+import { getPages } from './webpack/utils'
 import PagesPlugin from './plugins/pages-plugin'
 import SymphonyJsSsrImportPlugin from './plugins/symphonyjs-ssr-import'
 import DynamicChunksPlugin from './plugins/dynamic-chunks-plugin'
@@ -43,7 +43,7 @@ function babelConfig (dir, {isServer, dev}) {
     // It's possible to turn off babelrc support via babelrc itself.
     // In that case, we should add our default preset.
     // That's why we need to do this.
-    const { options } = externalBabelConfig
+    const {options} = externalBabelConfig
     mainBabelOptions.babelrc = options.babelrc !== false
   } else {
     mainBabelOptions.babelrc = false
@@ -65,7 +65,7 @@ function externalsConfig (dir, isServer) {
   }
 
   externals.push((context, request, callback) => {
-    resolve(request, { basedir: dir, preserveSymlinks: true }, (err, res) => {
+    resolve(request, {basedir: dir, preserveSymlinks: true}, (err, res) => {
       if (err) {
         return callback()
       }
@@ -143,7 +143,7 @@ export default async function getBaseWebpackConfig (dir, {dev = false, isServer 
       strictModuleExceptionHandling: true,
       devtoolModuleFilenameTemplate: '[absolute-resource-path]'
     },
-    performance: { hints: false },
+    performance: {hints: false},
     resolve: {
       extensions: ['.js', '.jsx', '.json'],
       modules: [
