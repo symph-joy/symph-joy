@@ -1,9 +1,18 @@
 const withCss = require('@symph/joy-css')
+const withLess = require('@symph/joy-less')
 const assetPrefix = ''
-module.exports = withCss({
-  cssModules: false,
+module.exports = {
+  // cssModules: false,
   serverRender: false,
   assetPrefix,
+  plugins: [
+    withCss({
+      cssModules: false
+    }),
+    withLess({
+      cssModules: true
+    })
+  ],
   webpack (config, options) {
     const {isServer} = options
     config.module.rules.push({
@@ -22,4 +31,4 @@ module.exports = withCss({
     })
     return config
   }
-})
+}

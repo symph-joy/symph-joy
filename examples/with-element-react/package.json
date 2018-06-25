@@ -10,11 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@symph/joy": "^0.2.14",
+    "@symph/joy": "^0.2.15",
     "@symph/joy-css": "^0.1.5",
+    "@symph/joy-less": "^0.2.0",
     "element-react": "^1.4.19",
     "element-theme-default": "^1.4.13",
     "file-loader": "^1.1.11",
+    "less": "^3.0.4",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "url-loader": "^1.0.1"
