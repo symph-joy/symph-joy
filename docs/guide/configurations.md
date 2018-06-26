@@ -1,9 +1,9 @@
 
 # Configuration
 
-默认情况下`@symph/joy`已经提供了从开发到发布所需的默认配置，如需定制高级功能，请在项目根目录下创建`joy.config.js`配置文件，同`src`和`static`目录同级。
+默认情况下`@symph/joy`已经提供了从开发到发布所需的默认配置，如需定制功能，请在项目根目录下创建`joy.config.js`配置文件，同`src`和`static`目录同级。
 
-`joy.config.js`它通常使用在`@symph/joy` Server运行时和Build阶段，并不会被导入到浏览器上运行。它是一个常规的Node.js module，且会被直接加载运行，所以要求使用`module.exports`输出配置对象，并且这里暂时还不能使用ES6等高级语法。
+`joy.config.js`它通常使用在`@symph/joy` Server运行时和Build阶段，并不会被导入到浏览器上运行。它是一个常规的Node.js模块，所以要求在其内部使用`module.exports`输出配置对象，并且这里暂时还不能使用ES6等高级语法。
 
 ```jsx
 // joy.config.js
@@ -50,36 +50,32 @@ module.exports = (phase, {defaultConfig}) => {
 
 类型：string，默认`src/index.js`
 
-设定应用入口组件所在的文件路径，需要使用`export default`导出Main组件，一般会在这里设置整个应用的公共模块，以及路由定义。
+设定应用入口组件所在的文件路径，这个大部分开发语言执行Main入口一样，一般会在应用入口的地方，设置应用内路由，以及整个应用的公共模块，。
 
 ### distDir
 
 类型：string，默认`.joy`
 
-编辑目录是指在编译阶段输出的目标文件夹，你也可以设置自定义的目录名称。
+目标目录是指在编译阶段输出的目标文件夹，你也可以设置自定义的目录名称。
 
 ### assetPrefix
 
-类型：string，默认`''`空字符串，即在域名的根目录下访问脚本和资源。
+类型：string，默认`''`空字符串，即在URL域名的根目录下访问脚本和资源。
 
-如果使用CDN，或者访问路径某个子路径上，你可以设置`assetPrefix`来更改`@symph/joy`访问路径。例如: 下面将生产环境的访问路径设置为`https://cdn.mydomain.com/myapp`， 开发环境访问路径`localhost:3000/myapp`
+如果使用CDN，或者在URL的某个子路径上，你可以设置`assetPrefix`来更改`@symph/joy`应用的访问路径。例如: 下面将生产环境的访问路径设置为`https://cdn.mydomain.com/myapp`， 开发环境访问路径`localhost:3000`
 
 ```jsx
 const isProd = process.env.NODE_ENV === 'production'
 module.exports = {
-  assetPrefix: isProd ? 'https://cdn.mydomain.com/myapp' : '/myapp'
+  assetPrefix: isProd ? 'https://cdn.mydomain.com/myapp' : ''
 }
 ```
 
-> `@symph/joy`会自动将`assetPrefix`引入到加载的scripts和styles的路径上，但`/static`路径下的资源除外，你必须自己在代码里写入prfix，例如：`<img src='/assetprefix/static/logo.png'/>`；
-
-### publicRuntimeConfig
-
-请见: [serverRuntimeConfig](#serverRuntimeConfig)
+> `@symph/joy`会自动将`assetPrefix`引入到加载的scripts和styles的路径上，但`/static`文件夹下的资源除外，你必须自己在路径前面加上`assetprefix`，例如：`<img src='/assetprefix/static/logo.png'/>`；
 
 ### serverRuntimeConfig
 
-配置的业务代码中使用的配置数据，`serverRuntimeConfig`定义的配置只能在Server端读取，`publicRuntimeConfig`在Server和Client都可读取。
+配置在业务代码中使用的配置信息，`serverRuntimeConfig`定义的配置只能在Node.js Server端读取，
 
 ```jsx
 // joy.config.js
@@ -109,11 +105,64 @@ export default () => <div>
 </div>
 ```
 
+### publicRuntimeConfig
+
+请见: [serverRuntimeConfig](#serverRuntimeConfig), `publicRuntimeConfig`中的配置在Server和Client都可读取。
+
+### exportPathMap
+
+类型：async functon, 默认`async () => ({'/': {}})`
+
+在导出应用的静态版本时，该配置定义了需要导出的页面，考虑到这个配置在很多时候是动态的，所以使用异步方法来返回配置信息。
+
+```js
+// joy.config.js
+const withLess = require('@symph/joy-less')
+
+module.exports = {
+  exportPathMap: async function () {
+    return {
+      '/': null,
+      '/about.html': {},
+      '/learn/getting-started.html': {query: { title: 'getting-started' }},
+    }
+  }
+}
+```
+
+对象的`key`是需要渲染的url路径，`query`将作为url的query参数，传递给被渲染的页面。如果url路径是以目录结束，将会被导出为`/dir-name/index.html`文件，如果以文件名结尾，将导出为相同的文件名称，例如上面的`/about.html`。
+
+### plugins
+
+类型：array, 默认`[]`
+
+`@symph/joy`提供了插件机制来扩展其能力，例如支持less样式和导入图片等，插件的配置请参考各插件的使用说明文档。插件按照列表定义的顺序依次执行。
+
+```js
+const withLess = require('@symph/joy-less')
+const withImageLoader = require('@symph/joy-image')
+
+module.exports = {
+  serverRender: true,
+  plugins: [
+    withLess({cssModules: true}),
+    withImageLoader({limit: 8192})
+  ]
+}
+```
+
+下面列举了[`joy-pluins`](https://github.com/lnlfps/joy-plugins)提供的插件：
+- [@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css) 支持css样式导入，例如`import './index.css'`
+- [@symph/joy-less](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-less) 支持less样式导入， 例如`import styles form './index.css'`
+- [@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image) 提供图片的导入，例如`<img src={require('./logo.png')} />`
+
+> 我们将不断提供新的插件，如果你需要帮助或建议，请联系我们lnlfps@gmail.com，或者创建issue。如果你完成了一个新的插件，并愿意分享，请提交到[`https://github.com/lnlfps/joy-plugins`](https://github.com/lnlfps/joy-plugins). 
+
 ### webpack 
 
 类型：function
 
-为了扩展webpack的能力，你可以定义函数来增加webpack的配置，或者修改以后的配置。
+一些常用的功能，`@symph/joy`提供了插件来支持，请先查看[插件列表](#plugins)是否有你想要额外功能。你也可以定义函数来增加或修改webpack的配置。
 
 ```jsx
 // This file is not going through babel transformation.
@@ -136,31 +185,11 @@ module.exports = {
 }
 ```
 
-注意：`webpack`函数会被执行两次，一次是为编译服务端运行的代码，另一次是为了编译在客户端上运行的代码，可以通过`isServer`入参来区分。
-
-一些常用的功能配置已经封装为配置插件，可以直接使用，比如：
-
-- [@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)
-- [@symph/joy-less](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-less)
-- [@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)
-
-多个模块配置可以使用函数组合调用实现，例如：
-
-```jsx
-const withImage = require('@zeit/next-image')
-const withLess = require('@symph/joy/joy-less')
-
-module.exports = withLess(withImage({
-  webpack(config, options) {
-    // Further custom configuration here
-    return config
-  }
-}))
-```
+注意：`webpack`函数会被执行两次，分别是为了编译出在服务端和客户端运行的代码，你可以通过`isServer`入参来区分。
 
 ## 自定义 Babel config
 
-为了扩展`babel`的配置，可以在应用的根目录下创建`.babelrc`的文件，这个文件是可选的，如果它存在，就必须包含`@symph/joy/babel`preset里预定义的，提供joy正常运行的配置。
+为了扩展`babel`的配置，可以在应用的根目录下创建`.babelrc`的文件，这个文件是可选的，如果它存在，就必须包含`@symph/joy/babel` preset，这样joy才能正常运行。
 
 下面是一个`.babelrc`的例子：
 
@@ -171,7 +200,7 @@ module.exports = withLess(withImage({
 }
 ```
 
-`@symph/joy/babel` 里包含了编译React应用的所有配置，比如：
+`@symph/joy/babel` 里包含了编译应用的所需的所有配置，比如：
 
 - preset-env
 - preset-react
@@ -185,7 +214,7 @@ module.exports = withLess(withImage({
 ```json
 {
   "presets": [
-    ["next/babel", {
+    ["@symph/joy/babel", {
       "preset-env": {},
       "transform-runtime": {},
       "styled-jsx": {}
@@ -195,4 +224,4 @@ module.exports = withLess(withImage({
 }
 ```
 
-注意：`preset-env`里的`modules`配置项必须保持其值为`false`，否则webpack的代码分离功能将不可以用。
+注意：`preset-env`里的`modules`配置项必须保持为`false`，否则webpack的代码分离功能将不可以用。

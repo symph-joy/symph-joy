@@ -51,7 +51,7 @@ async function doRender (req, res, pathname, query, {
   staticMarkup = false,
   joyExport = false
 } = {}) {
-  console.log(`> start doRender, pathname:${pathname}, err:${err}`)
+  console.log(`> start doRender, pathname:${pathname}, err:${err || null}`)
   page = page || pathname
 
   // 暂时不需要监听页面的编译情况 lane 2017-12-05

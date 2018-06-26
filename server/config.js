@@ -1,8 +1,6 @@
 import findUp from 'find-up'
 import { CONFIG_FILE } from '../lib/constants'
 
-const cache = new Map()
-
 const defaultConfig = {
   main: 'src/index.js',
   serverRender: true,
@@ -13,14 +11,16 @@ const defaultConfig = {
   assetPrefix: '',
   configOrigin: 'default',
   useFileSystemPublicRoutes: true,
-  pageExtensions: ['jsx', 'js'] // jsx before js because otherwise regex matching will match js first
+  pageExtensions: ['jsx', 'js'], // jsx before js because otherwise regex matching will match js first
+  exportPathMap: async () => {
+    return {
+      '/': {page: '/'}
+    }
+  }
 }
 
 export default function getConfig (phase, dir, customConfig) {
-  if (!cache.has(dir)) {
-    cache.set(dir, loadConfig(phase, dir, customConfig))
-  }
-  return cache.get(dir)
+  return loadConfig(phase, dir, customConfig)
 }
 
 export function loadConfig (phase, dir, customConfig) {

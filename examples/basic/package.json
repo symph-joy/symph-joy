@@ -10,7 +10,7 @@
     "install-node": "6.9.2"
   },
   "dependencies": {
-    "@symph/joy": "^0.2.15",
+    "@symph/joy": "^0.3.0",
     "@symph/joy-image": "latest",
     "@symph/joy-less": "latest",
     "babel-runtime": "^6.9.2",

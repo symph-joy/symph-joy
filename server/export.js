@@ -5,7 +5,7 @@ import walk from 'walk'
 import { extname, resolve, join, dirname, sep } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import getConfig from './config'
-import {PHASE_EXPORT} from '../lib/constants'
+import {PHASE_EXPORT, CONFIG_FILE} from '../lib/constants'
 import { renderToHTML } from './render'
 import { getAvailableChunks } from './utils'
 import { printAndExit } from '../lib/utils'
@@ -71,11 +71,10 @@ export default async function (dir, options, configuration) {
 
   await copyPages(symphonyDir, outDir, buildId)
 
-  // Get the exportPathMap from the `symphony.config.js`
+  // Get the exportPathMap from the `joy.config.js`
   if (typeof symphonyConfig.exportPathMap !== 'function') {
     printAndExit(
-      '> Could not find "exportPathMap" function inside "symphony.config.js"\n' +
-      '> "symphony export" uses that function to build html pages.'
+      `> No "exportPathMap" found in "${CONFIG_FILE}"`
     )
   }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { resolve, join } from 'path'
+import { resolve } from 'path'
 import { existsSync } from 'fs'
 import parseArgs from 'minimist'
 import exportApp from '../server/export'
@@ -44,13 +44,13 @@ if (!existsSync(dir)) {
   printAndExit(`> No such directory exists as the project root: ${dir}`)
 }
 
-if (!existsSync(join(dir, 'pages'))) {
-  if (existsSync(join(dir, '..', 'pages'))) {
-    printAndExit('> No `pages` directory found. Did you mean to run `joy` in the parent (`../`) directory?')
-  }
-
-  printAndExit('> Couldn\'t find a `pages` directory. Please create one under the project root')
-}
+// if (!existsSync(join(dir, 'pages'))) {
+//   if (existsSync(join(dir, '..', 'pages'))) {
+//     printAndExit('> No `pages` directory found. Did you mean to run `joy` in the parent (`../`) directory?')
+//   }
+//
+//   printAndExit('> Couldn\'t find a `pages` directory. Please create one under the project root')
+// }
 
 const options = {
   silent: argv.silent,

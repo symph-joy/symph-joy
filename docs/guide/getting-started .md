@@ -8,7 +8,7 @@
 ```bash
 npm install --save @symph/joy react react-dom
 ```
-> @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html).<br/>
+> @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html)及以上版本
 
 创建`./src/index.js`文件，并插入以下代码：
 
@@ -69,14 +69,34 @@ export default () =>
 查看  [styled-jsx 文档](https://www.npmjs.com/package/styled-jsx) ，获取详细信息。
 
 
-### Import CSS / LESS / SASS 文件
+### Import CSS / LESS 文件
 
-为了支持导入css、less和sass样式文件，可使用样式插件，具体使用方法请见插件详情页面。
+为了支持导入css和less样式文件，可使用样式插件，具体使用方法请见插件详情页面。
 
 - [@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)
 - [@symph/joy-less](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-less)
-- [@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)
 
+### 导入图片 
+
+[@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)插件提供了图片导入功能，详细的配置请参见[插件主页](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)。
+
+```js
+  // joy.config.js
+const withLess = require('@symph/joy-less')
+const withImageLoader = require('@symph/joy-image')
+
+module.exports = {
+  serverRender: true,
+  plugins: [
+    withImageLoader({limit: 8192})
+  ]
+}
+```
+
+```js
+export default () =>
+  <img src={require('./image.png')}/>
+```
 
 ## 静态文件
 
@@ -348,10 +368,113 @@ export default class IndexController extends Component {
  import {Switch, Route} from '@symph/joy/router'
  ```
 
-## 动态导入
+## 代码启动 Server
 
-`@symph/joy`支持JavaScript的TC39 [dynamic import](https://github.com/tc39/proposal-dynamic-import)提议，所以，你可以动态的导入JavaScript模块。这就意味着，你可以将代码分割为多个代码块，在浏览器上首次加载时，只加载必须的最小模块，
+通常我们使用`joy start`来启动应用，但是我们依然可以使用纯代码来启动`@symph/joy`应用，以次来集成到其它的服务器框架中，比如`express`、`koa`等。
 
+下面例子展示了，如何集成到express中，并且修改路由`\a`到`\b`.
+
+```js
+// server.js
+const express = require('express')
+const joy = require('@symph/joy')
+
+const port = parseInt(process.env.PORT, 10) || 3000
+const dev = process.env.NODE_ENV !== 'production'
+const app = joy({ dev, dir: '.' })
+const handle = app.getRequestHandler()
+
+const server = express()
+const preapredApp = app.prepare()
+
+server.get('/a', (req, res) => {
+  preapredApp.then(() => {
+    return app.render(req, res, '/b', req.query)
+  })
+})
+
+server.get('*', (req, res) => {
+  preapredApp.then(() => {
+    return handle(req, res);
+  })
+})
+
+server.listen(port, (err) => {
+  if (err) throw err
+  console.log(`> Ready on http://localhost:${port}`)
+})
+```
+> 通过集成到已有的express服务器中时，我们的应用是挂载到url的某个子路径上的，此时请参考[assetPrefix](./configurations#assetPrefix)的配置说明。
+
+`joy(options: object)` API 提供以下参数：
+- dev:bool:false 是否以开发模式启动应用
+- dir:string:'.' 应用放置的路径，相对于server.js文件
+- quiet:bool:false 是否隐藏服务器错误信息
+- conf:object:{} 和`joy.config.js`相同的配置对象，如果设置了该值，则忽略`joy.config.js`文件。
+
+最后修改NPM `start`脚本:
+
+```json
+{
+  "scripts": {
+    "dev": "joy",
+    "build": "joy build",
+    "start": "NODE_ENV=production node server.js"
+  }
+}
+```
+
+## 动态导入 import
+
+`@symph/joy`支持JavaScript的TC39 [dynamic import](https://github.com/tc39/proposal-dynamic-import)提议，意味着你可以将代码分割为多个代码块，在浏览器上加载时，按需`import`需要的模块。同时这并不影响服务端渲染，这是因为`@symph/joy/dynamic`在服务端渲染时，依然使用同步的方式加载`import`的模块。
+
+下面展示了`@symph/joy/dynamic`的2种用法：
+
+ 1. `dynamic`基础用法的API提供以下选项：
+- ssr:bool:true, 设置是否开启服务端渲染
+- loading:Component:`<p>loading...</p>` 加载过程中，展示的组件
+
+```js
+import dynamic from '@symph/joy/dynamic'
+
+const DynamicComponent = dynamic(import('../components/hello'), {
+   ssr: true,
+   loading:<div>...</div>
+})
+
+export default () =>
+  <div>
+    <Header />
+    <DynamicComponent />
+    <p>HOME PAGE is here!</p>
+  </div>
+```
+
+ 2. 一次加载多个模块
+```js
+import dynamic from '@symph/joy/dynamic'
+
+const HelloBundle = dynamic({
+  modules: props => {
+    const components = {
+      Hello1: import('../components/hello1'),
+      Hello2: import('../components/hello2')
+    }
+    // Add remove components based on props
+    return components
+  },
+  render: (props, { Hello1, Hello2 }) =>
+    <div>
+      <h1>
+        {props.title}
+      </h1>
+      <Hello1 />
+      <Hello2 />
+    </div>
+})
+
+export default () => <HelloBundle title="Dynamic Bundle" />
+```
 
 ## 自定义 `<Document>`
 
@@ -384,7 +507,7 @@ export default class MyDocument extends Document {
 
 ## 打包部署
 
-部署的时候，我们先使用`joy build`命令来编译源代码，生成`.joy`目标目录(或者使用[distDir](./configurations#distDir)设置自定义的目录名称)，然后将项目上传到生产机器上，最后在生产机器上执行`joy start`命令，直接启动应用。例如我们可以在`package.json`中添加以下内容：
+部署的时候，我们先使用`joy build`命令来预编译源代码，生成`.joy`目标目录(或者使用[distDir](./configurations#distDir)设置自定义的目录名称)，然后将项目上传到生产机器上，在生产机器上执行`joy start`命令，直接启动应用。我们可以在`package.json`中添加以下内容：
 
 ```json
 {
@@ -406,9 +529,9 @@ export default class MyDocument extends Document {
 
 ## 静态HTML输出
 
-`joy export`用于将`@symph/joy` app输出为静态html资源，可在浏览器上直接访问，而不需要Node.js服务器。导出后的应用，`@symph/joy`的绝大部分特性依然支持，比如：动态路由、代码按需加载等。
+`joy export`用于将`@symph/joy` app输出为静态html资源，可在浏览器上直接访问，而不需要Node.js服务器。导出后的静态版本，仍然支持`@symph/joy`的绝大部分特性，比如：动态路由、按需加载等。
 
-`joy export`的原理是将可渲染的部分，预先渲染为HTML，这和在Node.js服务器上运行时，当用户请求到达后实时渲染的原理一样。默认只渲染出`index.html`文件，浏览器加载该文件后，客户端[Router](https://reacttraining.com/react-router/web/example/basic)再更具当前url，加载相应的页面。这要求我们在业务服务器上，例如JAVA的Spring MVC中，使用`@RequestMapping(path="/**", method=RequestMethod.GET)`正则路由来匹配应用内容所有的路径，并都返回`index.js`这个文件。
+`joy export`的原理是将请求可渲染的部分，预先渲染为HTML，这和当用户request到达Node.js服务器上时，实时渲染的工作流程一样。默认只渲染出`index.html`文件，浏览器加载该文件后，客户端[Router](https://reacttraining.com/react-router/web/example/basic)再根据当前url，加载相应的页面。这要求我们在业务服务器上，例如JAVA的Spring MVC中，使用`@RequestMapping(path="/**", method=RequestMethod.GET)`正则路由来匹配应用内部的所有路径，并都返回`index.js`这个文件。
 ```java
 @Controller
 @RequestMapping("/**")
@@ -424,31 +547,13 @@ public class ViewController {
 
 ### 导出步骤
 
-在没有任何的配置情况下，`joy export`提供默认的配置[`exportPathMap`](./configurations#exportPathMap)进行导出，如果你需要添加自己的导出页面，可先进行以下设置：
-
-```js
-// joy.config.js
-module.exports = {
-  exportPathMap: async function (defaultPathMap) {
-    return {
-      '/': null,
-      '/about.html': { },
-      '/learn/getting-started': {query: { title: 'getting-started' }},
-    }
-  }
-}
-```
-
-配置对象`key`是将要渲染的url路径，`query`将作为url的query参数，传递给被渲染的页面， 如果url路径的路径是以为目录结束，将会会被导出为`/dir-name/index.html`文件，如果有以文件名结尾，将导出为相同的文件名称，比如上面的`/about.html`。
+在没有任何的配置情况下，`joy export`提供默认的配置[`exportPathMap`](./configurations#exportPathMap)进行导出，如果你需要添加其它导出页面，请先在`joy.config.js`中设置[`exportPathMap`](./configurations#exportPathMap)参数。
 
 接下来我们分两步进行导出操作：
+1. 编译源代码 `joy build`
+2. 预渲染需要导出的页面 `joy export`
 
-```bash
-joy build
-joy export
-```
-
-为了执行以上的命令，需要添加NPM脚本到`package.json`文件中：
+添加NPM脚本到`package.json`文件中：
 
 ```json
 {
@@ -459,12 +564,12 @@ joy export
 }
 ```
 
-只需要执行下面一个命令：
+现在执行下面一个命令，完成整个导出工作：
 
 ```bash
 npm run export
 ```
 
-以上执行完成以后，在项目根目录下的`out`目录中，包含了整个静态应用的所有文件，只需要将`out`目录部署到静态文件服务器就可以了。
+以上执行完成以后，将得到该应用的静态版本，静态版本需要的所有文件都放置在应用根目录下的`out`目录中，只需要将`out`目录部署到静态文件服务器就可以了。
 
 > 你可以定制`out`目录名称，请运行`joy export -h`按提示操作。
