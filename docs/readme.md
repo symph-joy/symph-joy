@@ -3,7 +3,7 @@
 
 ## 介绍
 
-@symph/joy 的目标是创建高效的React SPA应用，结合了Nex.js的服务端渲染和dva的轻量级前端架构。
+@symph/joy的目标是创建高效的React SPA应用，拥有了[Nex.js](https://github.com/zeit/next.js)的服务端渲染和配置能力，也能像[dva](https://github.com/dvajs/dva)一样轻松的开发前端业务。
 
 ## 特征
  
