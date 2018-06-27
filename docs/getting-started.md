@@ -419,10 +419,10 @@ server.listen(port, (err) => {
 > 通过集成到已有的express服务器中时，我们的应用是挂载到url的某个子路径上的，此时请参考[assetPrefix](./configurations#assetPrefix)的配置说明。
 
 `joy(options: object)` API 提供以下参数：
-- dev:bool:false 是否以开发模式启动应用
-- dir:string:'.' 应用放置的路径，相对于server.js文件
-- quiet:bool:false 是否隐藏服务器错误信息
-- conf:object:{} 和`joy.config.js`相同的配置对象，如果设置了该值，则忽略`joy.config.js`文件。
+- dev: bool: false 是否以开发模式启动应用
+- dir: string: '.' 应用放置的路径，相对于server.js文件
+- quiet: bool: false 是否隐藏服务器错误信息
+- conf: object: {} 和`joy.config.js`相同的配置对象，如果设置了该值，则忽略`joy.config.js`文件。
 
 最后修改NPM `start`脚本:
 
@@ -442,9 +442,9 @@ server.listen(port, (err) => {
 
 下面展示了`@symph/joy/dynamic`的2种用法：
 
- 1. `dynamic`基础用法的API提供以下选项：
-- ssr:bool:true, 设置是否开启服务端渲染
-- loading:Component:`<p>loading...</p>` 加载过程中，展示的组件
+### 基础用法和配置：
+- ssr: bool: true, 设置是否开启服务端渲染
+- loading: Component: `<p>loading...</p>` 加载过程中，展示的组件
 
 ```js
 import dynamic from '@symph/joy/dynamic'
@@ -462,7 +462,8 @@ export default () =>
   </div>
 ```
 
- 2. 一次加载多个模块
+### 一次加载多个模块
+
 ```js
 import dynamic from '@symph/joy/dynamic'
 
