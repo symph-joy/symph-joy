@@ -1,27 +1,26 @@
 
-# 介绍
+# 使用指南
 
-@symph/joy 的目标是简单易用的React SPA应用，灵感来自于Next.js和Dva等优秀的开源库，在此诚挚感谢以上开源贡献者的辛勤付出。
-
-## 特征
- 
-- 零配置生成可用的工程，自动生成浏览器和服务端端代码。（使用webpack和babel）
-- 服务端数据获取和渲染， 解决首屏加载速度、页面静态化、SEO等问题
-- 代码热加载，便于开发调试
-- 按需加载，提升页面加载效率
-- 使用Model类管理redux的action、state、reducer部件，代码结构和业务逻辑更清晰
-- 在redux的基础上，简化概念和代码，更专注于业务实现。
-- 支持插件化配置。
-
-
-## 安装和第一个页面
+## 安装和开始
 
 运行`npm init`创建一个空工程，并填写项目的基本信息，当然也可以在一个已有的项目中直接安装。
 
 ```bash
 npm install --save @symph/joy react react-dom
 ```
-> @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html).<br/>
+> @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html)及以上版本
+
+添加NPM脚本到package.json文件：
+
+```json
+{
+  "scripts": {
+    "dev": "joy",
+    "build": "joy build",
+    "start": "joy start"
+  }
+}
+```
 
 创建`./src/index.js`文件，并插入以下代码：
 
@@ -35,7 +34,7 @@ export default class Index extends Component{
 }
 ```
 
-然后运行`joy` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `joy dev -p <your port here>`
+然后运行`npm run dev` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `npm run dev -- -p <your port here>`
 
 到目前为止，一个简单完整的react app已经创建完成，例子[hello-world](./examples/hello)，到这儿我们拥有了什么功能呢？
 
@@ -82,16 +81,36 @@ export default () =>
 查看  [styled-jsx 文档](https://www.npmjs.com/package/styled-jsx) ，获取详细信息。
 
 
-### Import CSS / LESS / SASS 文件
+### Import CSS / LESS 文件
 
-为了支持导入css、less和sass样式文件，可使用样式插件，具体使用方法请见插件详情页面。
+为了支持导入css和less样式文件，可使用样式插件，具体使用方法请见插件详情页面。
 
 - [@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)
 - [@symph/joy-less](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-less)
-- [@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)
 
+### 导入图片 
 
-## 访问静态文件
+[@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)插件提供了图片导入功能，详细的配置请参见[插件主页](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)。
+
+```js
+  // joy.config.js
+const withLess = require('@symph/joy-less')
+const withImageLoader = require('@symph/joy-image')
+
+module.exports = {
+  serverRender: true,
+  plugins: [
+    withImageLoader({limit: 8192})
+  ]
+}
+```
+
+```js
+export default () =>
+  <img src={require('./image.png')}/>
+```
+
+## 静态文件
 
 在工程根目录下创建`static`目录，将需要待访问的文件放入其中，也可以在里面创建子目录管理这些文件，可以通过`<assetPrefix>/static/<file>`路径访问这些文件。
 
@@ -136,9 +155,9 @@ export default () => (
 
 在上面的例子中，只有第二个`<meta name="viewport" />`被渲染和添加到页面。
 
-## 获取数据
+## 获取数据 fetch
 
-`@symph/joy/fetch`发送数据请求， 其调用参数和浏览器提供的[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)方法保持一致。
+`@symph/joy/fetch`发送数据请求， 其调用参数和浏览器提供的[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)方法保持一样。
 
 ```jsx
 import fetch from '@symph/joy/fetch'
@@ -361,11 +380,119 @@ export default class IndexController extends Component {
  import {Switch, Route} from '@symph/joy/router'
  ```
 
- ### 自定义`<Document>`
+## 代码启动 Server
+
+通常我们使用`joy start`来启动应用，但是我们依然可以使用纯代码来启动`@symph/joy`应用，以次来集成到其它的服务器框架中，比如`express`、`koa`等。
+
+下面例子展示了，如何集成到express中，并且修改路由`\a`到`\b`.
+
+```js
+// server.js
+const express = require('express')
+const joy = require('@symph/joy')
+
+const port = parseInt(process.env.PORT, 10) || 3000
+const dev = process.env.NODE_ENV !== 'production'
+const app = joy({ dev, dir: '.' })
+const handle = app.getRequestHandler()
+
+const server = express()
+const preapredApp = app.prepare()
+
+server.get('/a', (req, res) => {
+  preapredApp.then(() => {
+    return app.render(req, res, '/b', req.query)
+  })
+})
+
+server.get('*', (req, res) => {
+  preapredApp.then(() => {
+    return handle(req, res);
+  })
+})
+
+server.listen(port, (err) => {
+  if (err) throw err
+  console.log(`> Ready on http://localhost:${port}`)
+})
+```
+> 通过集成到已有的express服务器中时，我们的应用是挂载到url的某个子路径上的，此时请参考[assetPrefix](./configurations#assetPrefix)的配置说明。
+
+`joy(options: object)` API 提供以下参数：
+- dev:bool:false 是否以开发模式启动应用
+- dir:string:'.' 应用放置的路径，相对于server.js文件
+- quiet:bool:false 是否隐藏服务器错误信息
+- conf:object:{} 和`joy.config.js`相同的配置对象，如果设置了该值，则忽略`joy.config.js`文件。
+
+最后修改NPM `start`脚本:
+
+```json
+{
+  "scripts": {
+    "dev": "joy",
+    "build": "joy build",
+    "start": "NODE_ENV=production node server.js"
+  }
+}
+```
+
+## 动态导入 import
+
+`@symph/joy`支持JavaScript的TC39 [dynamic import](https://github.com/tc39/proposal-dynamic-import)提议，意味着你可以将代码分割为多个代码块，在浏览器上加载时，按需`import`需要的模块。同时这并不影响服务端渲染，这是因为`@symph/joy/dynamic`在服务端渲染时，依然使用同步的方式加载`import`的模块。
+
+下面展示了`@symph/joy/dynamic`的2种用法：
+
+ 1. `dynamic`基础用法的API提供以下选项：
+- ssr:bool:true, 设置是否开启服务端渲染
+- loading:Component:`<p>loading...</p>` 加载过程中，展示的组件
+
+```js
+import dynamic from '@symph/joy/dynamic'
+
+const DynamicComponent = dynamic(import('../components/hello'), {
+   ssr: true,
+   loading:<div>...</div>
+})
+
+export default () =>
+  <div>
+    <Header />
+    <DynamicComponent />
+    <p>HOME PAGE is here!</p>
+  </div>
+```
+
+ 2. 一次加载多个模块
+```js
+import dynamic from '@symph/joy/dynamic'
+
+const HelloBundle = dynamic({
+  modules: props => {
+    const components = {
+      Hello1: import('../components/hello1'),
+      Hello2: import('../components/hello2')
+    }
+    // Add remove components based on props
+    return components
+  },
+  render: (props, { Hello1, Hello2 }) =>
+    <div>
+      <h1>
+        {props.title}
+      </h1>
+      <Hello1 />
+      <Hello2 />
+    </div>
+})
+
+export default () => <HelloBundle title="Dynamic Bundle" />
+```
+
+## 自定义 `<Document>`
 
 - 服务端渲染时，使用该组件生成静态的html文档
 
-- 如果需要在后html文件引入额外的`<script>`或`<lint>`标签，需要自定义<Document>，例如在使用[@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)插件时，需要引入`"/_symphony/static/style.css`样式文件。
+- 如果需要在后html文件引入额外的`<script>`或`<lint>`标签，需要自定义<Document>，例如在使用[@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)插件时，需要引入`/_symphony/static/style.css`样式文件。
 
 在`@symph/joy`中，`<Main>`组件(默认存放路径：`src/index.js`)中只需包含功能代码，不能包含document标签中的`<head>`和`<body>`部分，这样设计目的是让开发从一开始就专注于业务。`<Main>`以外的部分，并不会在浏览器端初始化，所以不能在这里放置任何的业务代码，如果希望在整个应用里共享一部分功能，请将它们放到`<Main>`中。
 
@@ -390,199 +517,71 @@ export default class MyDocument extends Document {
 }
 ```
 
-### 自定义Configuration
+## 打包部署
 
-默认情况下`@symph/joy`已经提供了从开发到发布所需的默认配置，如需定制高级功能，请在项目根目录下创建`joy.config.js`配置文件，同`src`和`static`目录同级。
+部署的时候，我们先使用`joy build`命令来预编译源代码，生成`.joy`目标目录(或者使用[distDir](./configurations#distDir)设置自定义的目录名称)，然后将项目上传到生产机器上，在生产机器上执行`joy start`命令，直接启动应用。我们可以在`package.json`中添加以下内容：
 
-`joy.config.js`它通常使用在`@symph/joy` Server运行时和Build阶段，并不会被导入到浏览器上运行。它是一个常规的Node.js module，且会被直接加载运行，所以要求使用`module.exports`输出配置对象，并且这里暂时还不能使用ES6等高级语法。
-
-```jsx
-// joy.config.js
-module.exports = {
-  /* config options here */
-  main: 'src/index.js',
-  distDir: '.joy',
-  assetPrefix: '',
-  webpack: null,
-}
-```
-或者使用函数
-
-```jsx
-// joy.config.js
-
-module.exports = (phase, {defaultConfig}) => {
-  return {
-    /* config options here */
+```json
+{
+  "name": "my-app",
+  "dependencies": {
+    "@symph/joy": "latest"
+  },
+  "scripts": {
+    "dev": "joy",
+    "build": "joy build",
+    "start": "joy start"
   }
 }
 ```
 
-`phase`是加载当前配置文件的上下文，你可以在[`constants`](https://github.com/lnlfps/symph-joy/blob/master/lib/constants.js)中查看所以的枚举值，使用时请从`@symph/joy/constants`中导入。
+`@symph/joy` 可以部署到不同的域名或路径上，可参考[assetPrefix](./configurations#assetPrefix)的设置说明。
 
-```jsx
-const {PHASE_DEVELOPMENT_SERVER} = require('@symph/joy/constants')
-module.exports = (phase, {defaultConfig}) => {
-  if(phase === PHASE_DEVELOPMENT_SERVER) {
-    return {
-      /* development only config options here */
+> 在运行`joy build`的时候，`NODE_ENV`被默认设置为`production`， 使用`joy`启动开发环境的时候，设置为`development`。如果你是在自定义的Server内启动了应用，需要你自己设置`NODE_ENV=production`。
+
+## 静态HTML输出
+
+`joy export`用于将`@symph/joy` app输出为静态html资源，可在浏览器上直接访问，而不需要Node.js服务器。导出后的静态版本，仍然支持`@symph/joy`的绝大部分特性，比如：动态路由、按需加载等。
+
+`joy export`的原理是将请求可渲染的部分，预先渲染为HTML，这和当用户request到达Node.js服务器上时，实时渲染的工作流程一样。默认只渲染出`index.html`文件，浏览器加载该文件后，客户端[Router](https://reacttraining.com/react-router/web/example/basic)再根据当前url，加载相应的页面。这要求我们在业务服务器上，例如JAVA的Spring MVC中，使用`@RequestMapping(path="/**", method=RequestMethod.GET)`正则路由来匹配应用内部的所有路径，并都返回`index.js`这个文件。
+```java
+@Controller
+@RequestMapping("/**")
+public class ViewController {
+
+    @RequestMapping(path = "/**", method = RequestMethod.GET)
+    public Map<String, Appointment> pages() {
+       return "forward:/static/index.html";
     }
-  }
 
-  return {
-    /* config options for all phases except development here */
-  }
 }
 ```
 
-#### Configuration Items
+### 导出步骤
 
-##### main： string
+在没有任何的配置情况下，`joy export`提供默认的配置[`exportPathMap`](./configurations#exportPathMap)进行导出，如果你需要添加其它导出页面，请先在`joy.config.js`中设置[`exportPathMap`](./configurations#exportPathMap)参数。
 
-默认`src/index.js`
+接下来我们分两步进行导出操作：
+1. 编译源代码 `joy build`
+2. 预渲染需要导出的页面 `joy export`
 
-设定应用入口组件所在的文件路径，需要使用`export default`导出Main组件，一般会在这里设置整个应用的公共模块，以及路由定义。
-
-##### distDir： string
-
-默认`.joy`
-
-编辑目录是指在编译阶段输出的目标文件夹，你也可以设置自定义的目录名称。
-
-##### assetPrefix： string
-
-默认`''`空字符串，即通过`/`访问应用内的脚本和资源。
-
-如果使用CDN，或者访问路径某个子路径上，你可以设置`assetPrefix`来更改`@symph/joy`访问路径。例如: 下面将生产环境的访问路径设置为`https://cdn.mydomain.com/myapp`， 开发环境访问路径`localhost:3000/myapp`
-
-```jsx
-const isProd = process.env.NODE_ENV === 'production'
-module.exports = {
-  assetPrefix: isProd ? 'https://cdn.mydomain.com/myapp' : '/myapp'
-}
-```
-
-> `@symph/joy`会自动将`assetPrefix`引入到加载的scripts和styles的路径上，但`/static`路径下的资源除外，你必须自己在代码里写入prfix，例如：`<img src='/assetprefix/static/logo.png'/>`；
-
-##### webpack: function 
-
-为了扩展webpack的能力，你可以定义函数来增加webpack的配置，或者修改以后的配置。
-
-```jsx
-// This file is not going through babel transformation.
-// So, we write it in vanilla JS
-// (But you could use ES2015 features supported by your Node.js version)
-
-module.exports = {
-  webpack: (config, { buildId, dev, isServer, defaultLoaders }) => {
-    // Perform customizations to webpack config
-
-    // Important: return the modified config
-    return config
-  },
-  webpackDevMiddleware: config => {
-    // Perform customizations to webpack dev middleware config
-
-    // Important: return the modified config
-    return config
-  }
-}
-```
-
-注意：`webpack`函数会被执行两次，一次是为编译服务端运行的代码，另一次是为了编译在客户端上运行的代码，可以通过`isServer`入参来区分。
-
-一些常用的功能配置已经封装为配置插件，可以直接使用，比如：
-
-- [@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)
-- [@symph/joy-less](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-less)
-- [@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)
-
-多个模块配置可以使用函数组合调用实现，例如：
-
-```jsx
-const withImage = require('@zeit/next-image')
-const withLess = require('@symph/joy/joy-less')
-
-module.exports = withLess(withImage({
-  webpack(config, options) {
-    // Further custom configuration here
-    return config
-  }
-}))
-```
-
-### 自定义Babel config
-
-为了扩展`babel`的配置，可以在应用的根目录下创建`.babelrc`的文件，这个文件是可选的，如果它存在，就必须包含`@symph/joy/babel`preset里预定义的，提供joy正常运行的配置。
-
-下面是一个`.babelrc`的例子：
+添加NPM脚本到`package.json`文件中：
 
 ```json
 {
-  "presets": ["@symph/joy/babel"],
-  "plugins": []
-}
-```
-
-`@symph/joy/babel` 里包含了编译React应用的所有配置，比如：
-
-- preset-env
-- preset-react
-- plugin-proposal-class-properties
-- plugin-proposal-object-rest-spread
-- plugin-transform-runtime
-- styled-jsx
-
-上面这些已有的preset和plugin不能再添加到自定义的`.babelrc`中，你可以直接在`@symph/joy/babel` preset的基础上修改,比如：
-
-```json
-{
-  "presets": [
-    ["next/babel", {
-      "preset-env": {},
-      "transform-runtime": {},
-      "styled-jsx": {}
-    }]
-  ],
-  "plugins": []
-}
-```
-
-注意：`preset-env`里的`modules`配置项必须保持其值为`false`，否则webpack的代码分离功能将不可以用。
-
-#### 为Server和Client端配置运行时环境变量
-
-配置的所有项都可以在运行时读取，`serverRuntimeConfig`里的配置只能在Server端读取，`publicRuntimeConfig`在Server和Client都可读取。
-
-```jsx
-// joy.config.js
-module.exports = {
-  serverRuntimeConfig: { // Will only be available on the server side
-    mySecret: 'secret'
-  },
-  publicRuntimeConfig: { // Will be available on both server and client
-    staticFolder: '/static'
+  "scripts": {
+    "build": "joy build",
+    "export": "npm run build && joy export"
   }
 }
 ```
 
-```jsx
-// src/index.js
-import getConfig from '2symph/joy/config'
-// Only holds serverRuntimeConfig and publicRuntimeConfig from joy.config.js nothing else.
-const {serverRuntimeConfig, publicRuntimeConfig} = getConfig()
+现在执行下面一个命令，完成整个导出工作：
 
-console.log(serverRuntimeConfig.mySecret) // Will only be available on the server side
-console.log(publicRuntimeConfig.staticFolder) // Will be available on both server and client
-
-export default () => <div>
-  <img src={`${publicRuntimeConfig.staticFolder}/logo.png`} alt="logo" />
-</div>
+```bash
+npm run export
 ```
 
+以上执行完成以后，将得到该应用的静态版本，静态版本需要的所有文件都放置在应用根目录下的`out`目录中，只需要将`out`目录部署到静态文件服务器就可以了。
 
-## TODO
-
-- 完善使用文档
-- 添加例子和测试案例
-
+> 你可以定制`out`目录名称，请运行`joy export -h`按提示操作。

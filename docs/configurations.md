@@ -1,5 +1,5 @@
 
-# Configuration
+# 配置文档
 
 默认情况下`@symph/joy`已经提供了从开发到发布所需的默认配置，如需定制功能，请在项目根目录下创建`joy.config.js`配置文件，同`src`和`static`目录同级。
 
@@ -136,7 +136,10 @@ module.exports = {
 
 类型：array, 默认`[]`
 
+[查看可用的插件列表](./plugins)
+
 `@symph/joy`提供了插件机制来扩展其能力，例如支持less样式和导入图片等，插件的配置请参考各插件的使用说明文档。插件按照列表定义的顺序依次执行。
+
 
 ```js
 const withLess = require('@symph/joy-less')
@@ -151,12 +154,6 @@ module.exports = {
 }
 ```
 
-下面列举了[`joy-pluins`](https://github.com/lnlfps/joy-plugins)提供的插件：
-- [@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css) 支持css样式导入，例如`import './index.css'`
-- [@symph/joy-less](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-less) 支持less样式导入， 例如`import styles form './index.css'`
-- [@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image) 提供图片的导入，例如`<img src={require('./logo.png')} />`
-
-> 我们将不断提供新的插件，如果你需要帮助或建议，请联系我们lnlfps@gmail.com，或者创建issue。如果你完成了一个新的插件，并愿意分享，请提交到[`https://github.com/lnlfps/joy-plugins`](https://github.com/lnlfps/joy-plugins). 
 
 ### webpack 
 
