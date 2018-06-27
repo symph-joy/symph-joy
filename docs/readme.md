@@ -49,13 +49,13 @@ export default () => <div>Welcome to @symph/joy!</div>
 
 ### 文档
 
-[https://symph.gitbook.io/joy](https://symph.gitbook.io/joy)
+[https://lnlfps.github.io/symph-joy](https://lnlfps.github.io/symph-joy)
 
 快速连接：
 
-- [使用指南](https://symph.gitbook.io/joy/docs/guide/getting-started)
-- [配置文档](https://symph.gitbook.io/joy/docs/guide/configurations)
-- [插件列表](https://symph.gitbook.io/joy/docs/guide/configurations)
+- [使用指南](https://lnlfps.github.io/symph-joy/#/getting-started)
+- [配置文档](https://lnlfps.github.io/symph-joy/#/configurations)
+- [插件列表](https://lnlfps.github.io/symph-joy/#/plugins)
 
 ### 联系我们
 
