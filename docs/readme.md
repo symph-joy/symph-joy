@@ -11,8 +11,8 @@
 - 服务端渲染，解决首屏加载速度、SEO等问题
 - 支持静态版本导出，脱离Node.js运行，也可单独导出静态页面。
 - 展现组件上支持aync语法来编排业务逻辑，监听业务执行结
-- 使用model层统一管理业务逻辑，仅用4个api简化redux的使用，并支持async方法、任务调度和model状态管理等。
-- 内置api转发服务，在Node.js的支持下，不再困扰跨域问题
+- 使用model层统一管理业务逻辑，仅用4个api简化redux的使用，并支持async方法、任务调度和model状态管理等
+- 内置业务请求转发服务，在Node.js的支持下，不再困扰跨域问题
 - 支持插件化配置
 
 ## 安装和开始
@@ -25,7 +25,7 @@ npm install --save @symph/joy react react-dom
 
 > @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html)及以上版本
 
-添加NPM脚本到package.json文件：
+添加NPM脚本到package.json文件：
 
 ```json
 {
@@ -37,7 +37,7 @@ npm install --save @symph/joy react react-dom
 }
 ```
 
-然后就可以开始你的开发工作了，创建`./src/index.js`文件，并插入以下代码：
+然后就可以开始你的开发工作了，创建`./src/index.js`文件，并插入以下代码：
 
 ```jsx
 export default () => <div>Welcome to @symph/joy!</div>
