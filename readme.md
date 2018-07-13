@@ -55,7 +55,7 @@ export default () => <div>Welcome to @symph/joy!</div>
 快速连接：
 
 - [使用指南](https://lnlfps.github.io/symph-joy/#/getting-started)
-- [配置文档](https://lnlfps.github.io/symph-joy/#/configurations)
+- [配置文档](https://lnlfps.github.io/symph-joy/#/configurassetPrefixations)
 - [插件列表](https://lnlfps.github.io/symph-joy/#/plugins)
 
 ### 联系我们

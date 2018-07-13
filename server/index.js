@@ -22,6 +22,7 @@ import pkg from '../../package'
 import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
 import {isResSent} from '../lib/utils'
+import {createProxyApiMiddleware} from '../lib/fetch/proxy-api-middleware'
 
 const blockedPages = {
   '/_document': true,
@@ -37,10 +38,13 @@ export default class Server {
     this.http = null
     const phase = dev ? PHASE_DEVELOPMENT_SERVER : PHASE_PRODUCTION_SERVER
     this.symphonyConfig = getConfig(phase, this.dir, conf)
+    // Only serverRuntimeConfig needs the default
+    // publicRuntimeConfig gets it's default in client/index.js
+    const {serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix} = this.symphonyConfig
     this.dist = this.symphonyConfig.distDir
     this.serverRender = this.symphonyConfig.serverRender
-
     this.hotReloader = dev ? this.getHotReloader(this.dir, {quiet, config: this.symphonyConfig}) : null
+    this.apiProxy = createProxyApiMiddleware({dev, proxyPrefix: assetPrefix})
 
     if (dev) {
       updateNotifier(pkg, 'symphony')
@@ -62,10 +66,6 @@ export default class Server {
       buildId: this.buildId,
       availableChunks: dev ? {} : getAvailableChunks(this.dir, this.dist)
     }
-
-    // Only serverRuntimeConfig needs the default
-    // publicRuntimeConfig gets it's default in client/index.js
-    const {serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix} = this.symphonyConfig
 
     // Only the `publicRuntimeConfig` key is exposed to the client side
     // It'll be rendered as part of __SYMPHONY_DATA__ on the client side
@@ -344,6 +344,11 @@ export default class Server {
   async run (req, res, parsedUrl) {
     if (this.hotReloader) {
       await this.hotReloader.run(req, res)
+    }
+
+    if (await this.apiProxy(req, res)) {
+      // the request has be handled by proxy
+      return
     }
 
     const fn = this.router.match(req, res, parsedUrl)

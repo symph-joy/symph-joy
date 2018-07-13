@@ -112,7 +112,7 @@ export default () =>
 
 ## 静态文件
 
-在工程根目录下创建`static`目录，将需要待访问的文件放入其中，也可以在里面创建子目录管理这些文件，可以通过`<assetPrefix>/static/<file>`路径访问这些文件。
+在工程根目录下创建`static`目录，将需要待访问的文件放入其中，也可以在里面创建子目录管理这些文件，可以通过`{assetPrefix}/static/{file}`路径访问这些文件。
 
 ```jsx
 export default () => <img src="/static/my-image.png" />

@@ -3,11 +3,13 @@
 
 ## 介绍
 
+[https://lnlfps.github.io/symph-joy](https://lnlfps.github.io/symph-joy)
+
 @symph/joy的目标是创建高效的React SPA应用，拥有了[Nex.js](https://github.com/zeit/next.js)的服务端渲染和配置能力，也能像[dva](https://github.com/dvajs/dva)一样轻松的开发前端业务。
 
 ## 特征
 
-- 零配置可用，快速开发，已集成react、redux、react-router4、ES6语法支持等
+- 零配置可用，快速开发，已集成react、redux、react-router4和ES6、7语法支持等
 - 服务端渲染，解决首屏加载速度、SEO等问题
 - 支持静态版本导出，脱离Node.js运行，也可单独导出静态页面。
 - 展现组件上支持aync语法来编排业务逻辑，监听业务执行结
@@ -48,7 +50,7 @@ export default () => <div>Welcome to @symph/joy!</div>
 
 到目前为止，一个简单完整的react app已经创建完成.
 
-### 文档
+## 文档
 
 [https://lnlfps.github.io/symph-joy](https://lnlfps.github.io/symph-joy)
 
@@ -58,6 +60,6 @@ export default () => <div>Welcome to @symph/joy!</div>
 - [配置文档](https://lnlfps.github.io/symph-joy/#/configurations)
 - [插件列表](https://lnlfps.github.io/symph-joy/#/plugins)
 
-### 联系我们
+## 联系我们
 
 邮件：lnlfps@gmail.com
