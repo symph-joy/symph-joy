@@ -23,6 +23,7 @@ import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
 import {isResSent} from '../lib/utils'
 import {createProxyApiMiddleware} from '../lib/fetch/proxy-api-middleware'
+import compression from 'compression'
 
 const blockedPages = {
   '/_document': true,
@@ -45,6 +46,7 @@ export default class Server {
     this.serverRender = this.symphonyConfig.serverRender
     this.hotReloader = dev ? this.getHotReloader(this.dir, {quiet, config: this.symphonyConfig}) : null
     this.apiProxy = createProxyApiMiddleware({dev, proxyPrefix: assetPrefix})
+    this.compression = compression()
 
     if (dev) {
       updateNotifier(pkg, 'symphony')
@@ -97,6 +99,11 @@ export default class Server {
     // Parse the querystring ourselves if the user doesn't handle querystring parsing
     if (typeof parsedUrl.query === 'string') {
       parsedUrl.query = parseQs(parsedUrl.query)
+    }
+
+    // encode the response to gzip
+    if (!this.dev) {
+      this.compression(req, res, () => {})
     }
 
     res.statusCode = 200
