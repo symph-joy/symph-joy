@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "joy dev",
     "build": "joy build",
-    "export": "npm run build && joy export"
+    "export": "npm run build && joy export",
+    "start": "joy start"
   },
   "engines": {
     "install-node": "6.9.2"

@@ -301,6 +301,8 @@ model将会被注册到store中，由store统一管理model的状态，使用`st
 
 ##### dispatch(action)
 
+返回值：Promise，目标业务方法的返回值。
+
 和redux的`store.dispatch(action)`的使用一样，由系统分发`action`到指定的model业务方法中, `action.type`的格式为`modelNamespace/customServiceMethod`。
 
 为了方便调用model中的其它业务方法，可直接使用`await this.effect(action)`的方式调用。
@@ -321,7 +323,7 @@ Controller的作用是连接View和Model组件，并新增了`async componentPre
 ```jsx
 import React, {Component} from 'react';
 import ProductsModel from '../models/ProductsModel'
-import controller, {requireModel} from 'symphony-joy/controller'
+import controller, {requireModel} from '@symph/joy/controller'
 
 
 @requireModel(ProductsModel)          // register model
@@ -365,7 +367,7 @@ export default class IndexController extends Component {
 
 - 使用`@requireModel(ModelClass)`注册Controller需要依赖的Model，在浏览器端页面可能是按需加载的，所以通常只需要第一个使用到Model的Controller上注册一次就可以了，重复注册无效，但也会出任何问题。
 
-- 每个controller的`props`都会被注入一个redux的`dispatch`方法，`dispatch`方法是controller给model发送action的唯一途径，View通过这唯一的途径调用model上的业务方法。
+- 每个controller的`props`都会被注入一个redux的`dispatch`方法，`dispatch`方法是controller调用model的唯一途径，该方法的返回值是业务方法的返回值，一个promise对象。
 
 
 ### Router
@@ -436,6 +438,8 @@ server.listen(port, (err) => {
 }
 ```
 
+> 从上面例子中可以看到，可以使用函数调用的方式来渲染界面，所以我们将@symph/joy作为express、koa等服务端框架的View模块来使用。
+
 ## 动态导入 import
 
 `@symph/joy`支持JavaScript的TC39 [dynamic import](https://github.com/tc39/proposal-dynamic-import)提议，意味着你可以将代码分割为多个代码块，在浏览器上加载时，按需`import`需要的模块。同时这并不影响服务端渲染，这是因为`@symph/joy/dynamic`在服务端渲染时，依然使用同步的方式加载`import`的模块。
@@ -498,7 +502,7 @@ export default () => <HelloBundle title="Dynamic Bundle" />
 在`@symph/joy`中，`<Main>`组件(默认存放路径：`src/index.js`)中只需包含功能代码，不能包含document标签中的`<head>`和`<body>`部分，这样设计目的是让开发从一开始就专注于业务。`<Main>`以外的部分，并不会在浏览器端初始化，所以不能在这里放置任何的业务代码，如果希望在整个应用里共享一部分功能，请将它们放到`<Main>`中。
 
 ```jsx
-import Document, { Head, Main, SymphonyScript } from '@symph/joy/document'
+import Document, { Head, Main, JoyScript } from '@symph/joy/document'
 
 export default class MyDocument extends Document {
   render () {
@@ -510,7 +514,7 @@ export default class MyDocument extends Document {
         </Head>
         <body>
           <Main />
-          <SymphonyScript />
+          <JoyScript />
         </body>
       </html>
     )
