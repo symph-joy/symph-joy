@@ -12,12 +12,12 @@
 ## 特征
 
 - 零配置可用，快速开发，已集成react、redux、react-router4和ES6、7语法支持等
-- 支持服务端渲染，只需在Component中添加[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/getting-started?id=controller)一个方法获取组件数据
+- 支持服务端渲染，只需在Component中添加[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/getting-started?id=controller)一个方法来获取数据
 - 支持静态版本导出，脱离Node.js运行，也可单独导出静态页面
-- 展现组件上支持aync语法来编排业务逻辑，监听业务执行结
-- 使用model层统一管理业务逻辑，仅用4个api简化redux的使用，并支持async方法、任务调度和model状态管理等
-- 使用`@`装饰器的方式，动态注册model和controller，应用结构更清晰，耦合度也更低
-- 内置业务请求转发服务，在Node.js的支持下，不再困扰跨域问题
+- 使用MVC架构，组件结构清晰、依赖明确
+- 支持aync语法来编排业务，监听业务执行结果
+- 使用`@`装饰器的方式，动态注册model和controller，不侵入业务代码
+- 内置跨域请求转发服务，在Node.js服务端的支持下，不再困扰跨域问题
 - 支持插件化配置
 
 ## 安装和开始

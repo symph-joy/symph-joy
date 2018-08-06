@@ -1,5 +1,5 @@
 
-# 了解 @symph/joy，next.js + dva
+# 了解 @symph/joy
 
 我们希望有一个结合了next.js和dva优点的基础框架，它们都是目前非常流行的前端框架，next.js为我们解决了服务端渲染和零配置的问题，而dva能够更好的管理应用中的业务流程和数据，但两者现有结合的方案里，我们遇到了些问题，并尝试解决这些问题之后，发现直接import集成是无法完整的发挥其各自的优势的，甚至还不得不做出一些妥协，虽然他们的着重点相同，但实际上还是前端框架，模块直接难免会有冲突，所以我们选择以一个全新的起点出发，取他们的优点，创建了@symph/joy，希望她能像其名字一样(交响曲-欢乐颂)，融合了前端的各种最佳实践，创建出一首交响曲，能给我们带来欢乐。 
 
@@ -7,7 +7,7 @@
 - 数据获取方法存在于dva `model`和next.js `getInitialProps`两个地方，如何统一？在服务端渲染时，无法调用model中的业务方法来初始化应用数据，只能将获取方法放在next.js里getInitialProps里，然后将获取到的数据作initState来初始化dva的store。而我们希望，所有的业务都只存在于model中，不管是在服务端渲染加载页面初始数据时，还是浏览器上用户交互时，都可以自由的调用model中的业务方法来获取、处理数据。
 - 不同的router体系，如何统一为react-router-4？next.js使用文件系统路由，一个页面对应目录中的一个文件，切换页面时，上个页面的内容和数据将会被完全销毁，被新的界面替换，这让页面数据恢复、数据共享、局部更新等功能实现起来较困难，而react-router-4却能轻松解决这些问题。 例如我们有个分页展示的产品列表页，当点击某个产品进入详情页后，点击返回按钮再次回到列表页，但此时之前的列表数据已经不存在了，无法恢复到用户之前浏览到的位置，只能重新获取第一页数据。
 - 如何调用多层嵌套route中的数据初始化方法？react-route-4的路由是动态的，无法使用类似next.js的方式，在最外层的route上定义`getInitialProps`来加载整个页面的数据。为了保证模块间的独立性，我们仍然希望各业务组件的数据获取方法，定义在组件其内部。
-- dva `model`在服务端不能重复载入？dva中的model是单例的， 而每次请求都会创建新的dva实例，从新载入model，dva都会对model对象进行修改。例如给reducers方法名称前添加namespace前缀，。
+- dva `model`在服务端不能重复载入？dva中的model是单例的， 而每次请求都会创建新的dva实例，从新载入model，dva都会对model对象进行修改。例如给reducers方法名称前添加namespace前缀。
 
 ## 需要一个怎样的基础框架
 
@@ -53,8 +53,8 @@ MVC是最著名的软件架构，也是我们最容易理解，最基础的框�
 实现MVC的核心技术仅有React+Redux，Redux实现的是Model，React分为展现类组件(View)和控制类组件(Controller)。为了方便使用，@symph/joy提供了`@controller`和`@model`两个类装饰器，明确标识一个Class是Controller还是Model，这可有效的避免Class职责不明确，依赖混乱的问题。
 
 他们各自的职责如下：
-- Model: 管理应用的行为和数据，普通Class，有初始状态(Redux store中的一部分内容)，业务过程中更新model状态(更新store的状态)
-- View: 展示Model中的数据，普通React.Component，数据来源于`props`
+- Model: 管理应用的行为和数据，Class类，有初始状态(Redux store中的一部分内容)，业务过程中更新model状态(更新store的状态)
+- View: 展示Model中的数据，继承React.Component，展示的数据来源于`props`
 - Controller: 控制View的展示，绑定Model数据到View，响应用户的操作，调用Model中的业务, 被`@controller`注释的React.Component
 
 ### 如何编排业务流程？

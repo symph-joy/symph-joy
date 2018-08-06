@@ -2,6 +2,6 @@
 * [使用指南](getting-started.md)
 * [配置文档](configurations.md)
 * [插件列表](plugins.md)
-* [使用示例](examples.md)
+* [示例](examples.md)
 * [了解@symph/joy](thinking-in-joy.md)
 
