@@ -8,14 +8,14 @@ const Fragment = React.Fragment || function Fragment ({ children }) {
 }
 
 export default class Document extends Component {
-  static async getInitialProps ({ renderPage }) {
-    const { html, head, errorHtml, chunks, initStoreState } = await renderPage()
-    const styles = flush()
-    return { html, head, errorHtml, chunks, styles, initStoreState }
-  }
-
   static childContextTypes = {
     _documentProps: PropTypes.any
+  }
+
+  static async getInitialProps ({ renderPage }) {
+    const { html, head, errorHtml, buildManifest, initStoreState } = await renderPage()
+    const styles = flush()
+    return { html, head, errorHtml, styles, buildManifest, initStoreState }
   }
 
   getChildContext () {
@@ -38,61 +38,88 @@ export class Head extends Component {
     _documentProps: PropTypes.any
   }
 
-  getChunkPreloadLink (filename) {
-    const { __SYMPHONY_DATA__ } = this.context._documentProps
-    let { assetPrefix, buildId } = __SYMPHONY_DATA__
-    const hash = buildId
-
-    return (
-      <link
-        key={filename}
-        rel='preload'
-        href={`${assetPrefix}/_symphony/${hash}/${filename}`}
-        as='script'
-      />
-    )
+  static propTypes = {
+    nonce: PropTypes.string
   }
 
-  getPreloadMainLinks () {
-    const { dev } = this.context._documentProps
-    if (dev) {
-      return [
-        this.getChunkPreloadLink('manifest.js'),
-        this.getChunkPreloadLink('main.js')
-      ]
+  getCssLinks () {
+    const { assetPrefix, files } = this.context._documentProps
+    if (!files || files.length === 0) {
+      return null
     }
 
-    // In the production mode, we have a single asset with all the JS content.
-    return [
-      this.getChunkPreloadLink('main.js')
-    ]
+    return files.map((file) => {
+      // Only render .css files here
+      if (!/\.css$/.exec(file)) {
+        return null
+      }
+
+      return <link
+        key={file}
+        nonce={this.props.nonce}
+        rel='stylesheet'
+        href={`${assetPrefix}/_joy/${file}`}
+      />
+    })
   }
 
   getPreloadDynamicChunks () {
-    const { chunks, __SYMPHONY_DATA__ } = this.context._documentProps
-    let { assetPrefix } = __SYMPHONY_DATA__
-    return chunks.filenames.map((chunk) => (
-      <link
-        key={chunk}
-        rel='preload'
-        href={`${assetPrefix}/_symphony/webpack/chunks/${chunk}`}
+    const { dynamicImports, assetPrefix } = this.context._documentProps
+    return dynamicImports.map((bundle) => {
+      return <link
+        key={bundle.file}
+        nonce={this.props.nonce}
+        rel='preload==='
+        href={`${assetPrefix}/_joy/${bundle.file}`}
         as='script'
       />
-    ))
+
+      // return <script
+      //   async
+      //   key={bundle.file}
+      //   src={`${assetPrefix}/_joy/${bundle.file}`}
+      //   as='script'
+      //   nonce={this.props.nonce}
+      // />
+    })
+  }
+
+  getPreloadMainLinks () {
+    const { assetPrefix, files } = this.context._documentProps
+    if (!files || files.length === 0) {
+      return null
+    }
+
+    return files.map((file) => {
+      // Only render .js files here
+      if (!/\.js$/.exec(file)) {
+        return null
+      }
+
+      return <link
+        key={file}
+        nonce={this.props.nonce}
+        rel='preload'
+        href={`${assetPrefix}/_joy/${file}`}
+        as='script'
+      />
+    })
   }
 
   render () {
-    const { head, styles, __SYMPHONY_DATA__ } = this.context._documentProps
-    // const { page, pathname, buildId, assetPrefix } = __SYMPHONY_DATA__
-    const { buildId, assetPrefix } = __SYMPHONY_DATA__
+    const { head, styles, assetPrefix, __JOY_DATA__ } = this.context._documentProps
+    const { buildId } = __JOY_DATA__
+    // const { pathname, buildId } = __JOY_DATA__
     // const pagePathname = getPagePathname(pathname)
-    // 去掉page的link，不在使用page路由，使用react-route 4 lane 2017-12-06
+
     return <head {...this.props}>
       {(head || []).map((h, i) => React.cloneElement(h, { key: h.key || i }))}
-      {/* {page !== '/_error' && <link rel='preload' href={`${assetPrefix}/_symphony/${buildId}/page${pagePathname}`} as='script' />} */}
-      <link rel='preload' href={`${assetPrefix}/_symphony/${buildId}/page/_error.js`} as='script' />
+      {/* {page !== '/_error' && <link rel='preload' href={`${assetPrefix}/_joy/static/${buildId}/pages${pagePathname}`} as='script' nonce={this.props.nonce} />} */}
+      {/* <link rel='preload' href={`${assetPrefix}/_joy/static/${buildId}/pages/_app.js`} as='script' nonce={this.props.nonce} /> */}
+      <link rel='preload' href={`${assetPrefix}/_joy/static/${buildId}/pages/_error.js`} as='script' nonce={this.props.nonce} />
       {this.getPreloadDynamicChunks()}
       {this.getPreloadMainLinks()}
+      {this.getCssLinks()}
       {styles || null}
       {this.props.children}
     </head>
@@ -108,102 +135,82 @@ export class Main extends Component {
     const { html, errorHtml } = this.context._documentProps
     return (
       <Fragment>
-        <div id='__symphony' dangerouslySetInnerHTML={{ __html: html }} />
-        <div id='__symphony-error' dangerouslySetInnerHTML={{ __html: errorHtml }} />
+        <div id='__joy' dangerouslySetInnerHTML={{ __html: html }} />
+        <div id='__joy-error' dangerouslySetInnerHTML={{ __html: errorHtml }} />
       </Fragment>
     )
   }
 }
 
 export class JoyScript extends Component {
-  static propTypes = {
-    nonce: PropTypes.string
-  }
-
   static contextTypes = {
     _documentProps: PropTypes.any
   }
 
-  getChunkScript (filename, additionalProps = {}) {
-    const { __SYMPHONY_DATA__ } = this.context._documentProps
-    let { assetPrefix, buildId } = __SYMPHONY_DATA__
-    const hash = buildId
-
-    return (
-      <script
-        key={filename}
-        src={`${assetPrefix}/_symphony/${hash}/${filename}`}
-        {...additionalProps}
-      />
-    )
-  }
-
-  getScripts () {
-    const { dev } = this.context._documentProps
-    if (dev) {
-      return [
-        this.getChunkScript('manifest.js'),
-        this.getChunkScript('main.js')
-      ]
-    }
-
-    // In the production mode, we have a single asset with all the JS content.
-    // So, we can load the script with async
-    return [this.getChunkScript('main.js', { async: true })]
+  static propTypes = {
+    nonce: PropTypes.string
   }
 
   getDynamicChunks () {
-    const { chunks, __SYMPHONY_DATA__ } = this.context._documentProps
-    let { assetPrefix } = __SYMPHONY_DATA__
-    return (
-      <Fragment>
-        {chunks.filenames.map((chunk) => (
-          <script
-            async
-            key={chunk}
-            src={`${assetPrefix}/_symphony/webpack/chunks/${chunk}`}
-          />
-        ))}
-      </Fragment>
-    )
+    const { dynamicImports, assetPrefix } = this.context._documentProps
+    return dynamicImports.map((bundle) => {
+      return <script
+        async
+        key={bundle.file}
+        src={`${assetPrefix}/_joy/${bundle.file}`}
+        nonce={this.props.nonce}
+      />
+    })
+  }
+
+  getScripts () {
+    const { assetPrefix, files } = this.context._documentProps
+    if (!files || files.length === 0) {
+      return null
+    }
+
+    return files.map((file) => {
+      // Only render .js files here
+      if (!/\.js$/.exec(file)) {
+        return null
+      }
+
+      return <script
+        key={file}
+        src={`${assetPrefix}/_joy/${file}`}
+        nonce={this.props.nonce}
+        async
+      />
+    })
   }
 
   render () {
-    const { staticMarkup, __SYMPHONY_DATA__, chunks } = this.context._documentProps
-    const { page, pathname, buildId, assetPrefix } = __SYMPHONY_DATA__
+    const { staticMarkup, assetPrefix, __JOY_DATA__ } = this.context._documentProps
+    const { page, pathname, buildId } = __JOY_DATA__
     // const pagePathname = getPagePathname(pathname)
-
-    __SYMPHONY_DATA__.chunks = chunks.names
 
     return <Fragment>
       {staticMarkup ? null : <script nonce={this.props.nonce} dangerouslySetInnerHTML={{
         __html: `
-          __SYMPHONY_DATA__ = ${htmlescape(__SYMPHONY_DATA__)}
+          __JOY_DATA__ = ${htmlescape(__JOY_DATA__)}
           module={}
-          __SYMPHONY_LOADED_PAGES__ = []
-          __SYMPHONY_LOADED_CHUNKS__ = []
+          __JOY_LOADED_PAGES__ = []
 
-          __SYMPHONY_REGISTER_PAGE = function (route, fn) {
-            __SYMPHONY_LOADED_PAGES__.push({ route: route, fn: fn })
-          }
+          __JOY_REGISTER_PAGE = function (route, fn) {
+            __JOY_LOADED_PAGES__.push({ route: route, fn: fn })
+          }${page === '_error' ? `
 
-          __SYMPHONY_REGISTER_CHUNK = function (chunkName, fn) {
-            __SYMPHONY_LOADED_CHUNKS__.push({ chunkName: chunkName, fn: fn })
-          }
-
-          ${page === '_error' && `
-          __SYMPHONY_REGISTER_PAGE(${htmlescape(pathname)}, function() {
+          __JOY_REGISTER_PAGE(${htmlescape(pathname)}, function() {
             var error = new Error('Page does not exist: ${htmlescape(pathname)}')
             error.statusCode = 404
 
             return { error: error }
-          })
-          `}
+          })` : ''}
         `
       }} />}
-      {/* {page !== '/_error' && <script async id={`__SYMPHONY_PAGE__${pathname}`} src={`${assetPrefix}/_symphony/${buildId}/page${pagePathname}`} />} */}
-      {/* <script  id={`__SYMPHONY_PAGE__index`} src={`${assetPrefix}/_symphony/${buildId}/page/index.js`} /> */}
-      <script async id={`__SYMPHONY_PAGE__/_error`} src={`${assetPrefix}/_symphony/${buildId}/page/_error.js`} />
+      {/* {page !== '/_error' && <script async id={`__JOY_PAGE__${pathname}`} src={`${assetPrefix}/_joy/static/${buildId}/pages${pagePathname}`} nonce={this.props.nonce} />} */}
+      {/* <script async id={`__JOY_PAGE__/_app`} src={`${assetPrefix}/_joy/static/${buildId}/pages/_app.js`} nonce={this.props.nonce} /> */}
+      <script async id={`__JOY_PAGE__/_error`} src={`${assetPrefix}/_joy/static/${buildId}/pages/_error.js`} nonce={this.props.nonce} />
       {staticMarkup ? null : this.getDynamicChunks()}
       {staticMarkup ? null : this.getScripts()}
     </Fragment>

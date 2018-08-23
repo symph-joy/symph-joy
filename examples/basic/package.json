@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "joy dev",
-    "build": "joy build",
+    "build": "NODE_ENV=production joy build",
     "export": "npm run build && joy export",
     "start": "joy start"
   },
@@ -11,18 +11,13 @@
     "install-node": "6.9.2"
   },
   "dependencies": {
-    "@symph/joy": "^0.3.0",
-    "@symph/joy-image": "latest",
-    "@symph/joy-less": "latest",
-    "babel-runtime": "^6.9.2",
-    "express": "^4.16.2",
-    "is-plain-object": "^2.0.4",
-    "less": "^3.0.1",
+    "@symph/joy": "^0.4.0",
+    "@symph/joy-image": "^0.4.0",
+    "@symph/joy-less": "^0.4.0",
+    "less": "^3.8.1",
     "prop-types": "^15.6.2",
     "react": "^16.4.1",
-    "react-dom": "^16.4.1"
-  },
-  "devDependencies": {
-    "babel-plugin-module-resolver": "^2.7.1"
+    "react-dom": "^16.4.1",
+    "style-loader": "^0.22.1"
   }
 }

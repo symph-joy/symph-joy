@@ -16,7 +16,7 @@ export default class IndexController extends Component {
   static contextProps = {
     isComponentDidPrepare: PropTypes.bool,
   };
-  constructor() {
+  constructor(props, context) {
     super(...arguments);
   }
 

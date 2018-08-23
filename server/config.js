@@ -1,7 +1,25 @@
 import findUp from 'find-up'
-import { CONFIG_FILE } from '../lib/constants'
+import uuid from 'uuid'
+import {CONFIG_FILE} from '../lib/constants'
 
-const defaultConfig = {
+type WebpackConfig = *
+
+type WebpackDevMiddlewareConfig = *
+
+export type NextConfig = {|
+  webpack: null | (webpackConfig: WebpackConfig, {dir: string, dev: boolean, isServer: boolean, buildId: string, config: NextConfig, defaultLoaders: {}, totalPages: number}) => WebpackConfig,
+  webpackDevMiddleware: null | (WebpackDevMiddlewareConfig: WebpackDevMiddlewareConfig) => WebpackDevMiddlewareConfig,
+  poweredByHeader: boolean,
+  distDir: string,
+  assetPrefix: string,
+  configOrigin: string,
+  useFileSystemPublicRoutes: boolean,
+  generateBuildId: () => string,
+  generateEtags: boolean,
+  pageExtensions: Array<string>
+|}
+
+const defaultConfig: NextConfig = {
   main: 'src/index.js',
   serverRender: true,
   webpack: null,
@@ -11,31 +29,27 @@ const defaultConfig = {
   assetPrefix: '',
   configOrigin: 'default',
   useFileSystemPublicRoutes: true,
-  pageExtensions: ['jsx', 'js'], // jsx before js because otherwise regex matching will match js first
-  exportPathMap: async () => {
-    return {
-      '/': {page: '/'}
-    }
-  }
+  generateBuildId: () => uuid.v4(),
+  generateEtags: true,
+  pageExtensions: ['jsx', 'js']
 }
 
-export default function getConfig (phase, dir, customConfig) {
-  return loadConfig(phase, dir, customConfig)
-}
+type PhaseFunction = (phase: string, options: {defaultConfig: NextConfig}) => NextConfig
 
-export function loadConfig (phase, dir, customConfig) {
-  if (customConfig && typeof customConfig === 'object') {
+export default function loadConfig (phase: string, dir: string, customConfig?: NextConfig): NextConfig {
+  if (customConfig) {
     customConfig.configOrigin = 'server'
     return preparePlugins({...defaultConfig, ...customConfig})
   }
-  const path = findUp.sync(CONFIG_FILE, {
+  const path: string = findUp.sync(CONFIG_FILE, {
     cwd: dir
   })
 
-// If config file was found
+  // If config file was found
   if (path && path.length) {
+    // $FlowFixMe
     const userConfigModule = require(path)
-    const userConfigInitial = userConfigModule.default || userConfigModule
+    const userConfigInitial: NextConfig | PhaseFunction = userConfigModule.default || userConfigModule
     if (typeof userConfigInitial === 'function') {
       return preparePlugins({...defaultConfig, configOrigin: CONFIG_FILE, ...userConfigInitial(phase, {defaultConfig})})
     }
@@ -47,16 +61,17 @@ export function loadConfig (phase, dir, customConfig) {
 }
 
 function preparePlugins (config) {
-  if (config.plugins) {
-    let webpackConfig = {...config}
-    if (!Array.isArray(config.plugins)) {
-      throw new Error(`in ${CONFIG_FILE}, the plugins config value must is a Array, or empty`)
-    }
-
-    config.plugins.forEach(plugin => {
-      webpackConfig = plugin(webpackConfig)
-    })
-    return webpackConfig
+  if (!config.plugins) {
+    return config
   }
+
+  config = {...config}
+  if (!Array.isArray(config.plugins)) {
+    throw new Error(`in ${CONFIG_FILE}, the plugins config value must is a Array, or empty`)
+  }
+
+  config.plugins.forEach(plugin => {
+    config = plugin(config)
+  })
   return config
 }

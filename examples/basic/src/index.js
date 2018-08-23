@@ -1,14 +1,14 @@
-import React, { Component } from 'react'
-import { Switch, Route } from '@symph/joy/router'
+import React, {Component} from 'react'
+import {Switch, Route} from '@symph/joy/router'
 import dynamic from '@symph/joy/dynamic'
 
-export default class ClientRootComponent extends Component {
+const IndexController  = dynamic(import('./controllers/IndexController'));
 
-  render () {
+export default class Main extends Component {
+  render() {
     return (
       <Switch>
-        {/*<Route exact path="/" component={require('./controllers/IndexController').default}/>*/}
-        <Route exact path="/" component={dynamic(import('./controllers/IndexController'))}/>
+        <Route exact path="/" component={IndexController}/>
       </Switch>
     )
   }

@@ -1,19 +1,29 @@
-import {join} from 'path'
-import {createElement} from 'react'
-import {renderToString, renderToStaticMarkup} from 'react-dom/server'
+import { join } from 'path'
+import React from 'react'
+import { renderToString, renderToStaticMarkup } from 'react-dom/server'
 import send from 'send'
 import generateETag from 'etag'
 import fresh from 'fresh'
-// import requirePage from './require'
-// import { Router } from '../lib/router'
-import {loadGetInitialProps, isResSent} from '../lib/utils'
-import {getAvailableChunks} from './utils'
-import Head, {defaultHead} from '../lib/head'
-import App from '../lib/app'
+import { normalizePagePath } from './require'
+import { loadGetInitialProps, isResSent } from '../lib/utils'
+import Head, { defaultHead } from '../lib/head'
 import ErrorDebug from '../lib/error-debug'
-import {flushChunks, clearChunks} from '../lib/dynamic'
+import Loadable from 'react-loadable'
+import { BUILD_MANIFEST, REACT_LOADABLE_MANIFEST, SERVER_DIRECTORY, CLIENT_STATIC_FILES_PATH } from '../lib/constants'
+
 import * as DvaCore from '../lib/dva'
-import {createServerRouter} from '../lib/router'
+import { createServerRouter } from '../lib/router'
+
+// Based on https://github.com/jamiebuilds/react-loadable/pull/132
+function getDynamicImportBundles (manifest, moduleIds) {
+  return moduleIds.reduce((bundles, moduleId) => {
+    if (typeof manifest[moduleId] === 'undefined') {
+      return bundles
+    }
+
+    return bundles.concat(manifest[moduleId])
+  }, [])
+}
 
 const logger = console
 
@@ -44,9 +54,8 @@ async function doRender (req, res, pathname, query, {
   hotReloader,
   assetPrefix,
   runtimeConfig,
-  availableChunks,
-  dist,
-  dir = process.cwd(),
+  distDir,
+  dir,
   dev = false,
   staticMarkup = false,
   joyExport = false
@@ -59,117 +68,163 @@ async function doRender (req, res, pathname, query, {
   //   await ensurePage(page, { dir, hotReloader })
   // }
 
-  const documentPath = join(dir, dist, 'dist', 'bundles', 'pages', '_document')
+  const documentPath = join(distDir, SERVER_DIRECTORY, CLIENT_STATIC_FILES_PATH, buildId, 'pages', '_document')
+  // const appPath = join(distDir, SERVER_DIRECTORY, CLIENT_STATIC_FILES_PATH, buildId, 'pages', '_app')
+  let App = require('../lib/app')
+  let [buildManifest, reactLoadableManifest, Document] = await Promise.all([
+    require(join(distDir, BUILD_MANIFEST)),
+    require(join(distDir, REACT_LOADABLE_MANIFEST)),
+    require(documentPath)
+    // require(appPath)
+  ])
 
-  let Document = require(documentPath)
-
+  App = App.default || App
   Document = Document.default || Document
   const asPath = req.url
   const ctx = {err, req, res, pathname, query, asPath}
-  // const props = await loadGetInitialProps(Component, ctx)
+  // const props = await loadGetInitialProps(App, {Component, router, ctx})
   const props = {}
+  const files = [
+    ...new Set([
+      // ...buildManifest.pages[normalizePagePath(page)],
+      // ...buildManifest.pages[normalizePagePath('/_app')],
+      ...buildManifest.pages[normalizePagePath('/_error')]
+    ])
+  ]
 
   // the response might be finshed on the getinitialprops call
   if (isResSent(res)) return
 
-  const renderPage = async (enhancer = Comp => Comp) => {
-    // const Router = new Router(pathname, query, asPath)
+  let reactLoadableModules = []
+  const renderPage = async (options = Comp => Comp) => {
+    let EnhancedApp = App
     const Router = createServerRouter(pathname, query)
-
-    const createApp = function (Component, appProps) {
-      return createElement(App, {
-        Component,
-        props,
-        Router,
-        ...appProps
-      })
+    if (typeof options === 'object') {
+      if (options.enhanceApp) {
+        EnhancedApp = options.enhanceApp(App)
+      }
     }
-    const requireComp = function () {
+    const requireComp = async function () {
+      let EnhancedComponent = null
       let Component = require(ComponentPath)
       Component = Component.default || Component
-      return enhancer(Component)
+
+      // For backwards compatibility
+      if (typeof options === 'function') {
+        EnhancedComponent = options(Component)
+      } else if (typeof options === 'object') {
+        if (options.enhanceComponent) {
+          EnhancedComponent = options.enhanceComponent(Component)
+        }
+      }
+
+      await Loadable.preloadAll() // Make sure all dynamic imports are loaded
+
+      return EnhancedComponent
+    }
+
+    const createApp = (Component, appProps, isGatherModule) => {
+      return <Loadable.Capture report={moduleName => isGatherModule ? reactLoadableModules.push(moduleName) : false}>
+        <EnhancedApp {...{
+          Component: Component,
+          Router,
+          ...props,
+          ...appProps
+        }} />
+      </Loadable.Capture>
     }
 
     const render = staticMarkup ? renderToStaticMarkup : renderToString
+
     let html
     let head
     let errorHtml = ''
     let initStoreState
+
     try {
       if (err && dev) {
-        errorHtml = render(createElement(ErrorDebug, {error: err}))
+        errorHtml = render(<ErrorDebug error={err} />)
       } else if (err) {
         if (serverRender) {
-          const Component = requireComp()
-          errorHtml = render(createApp(Component, {isComponentDidPrepare: false}))
+          const Component = await requireComp()
+          errorHtml = render(createApp(Component, {isComponentDidPrepare: false}, true))
         } else {
           html = ''
-          clearChunks()
+          // clearChunks()
         }
       } else {
         if (serverRender) {
-          const Component = requireComp()
+          const Component = await requireComp()
           const dva = DvaCore.create({})
           dva.start()
           // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
           // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
-          renderToStaticMarkup(createApp(Component, {dva, isComponentDidPrepare: false}))
+          renderToStaticMarkup(createApp(Component, {dva, isComponentDidPrepare: false}, false))
 
           await dva.prepareManager.waitAllPrepareFinished()
           await dva._store.dispatch({
             type: '@@endAsyncBatch'
           })
           console.log('> app has prepared')
-          clearChunks()
-          const app = createApp(Component, {dva, isComponentDidPrepare: true})
+          // clearChunks()
+          const app = createApp(Component, {dva, isComponentDidPrepare: true}, true)
           // 第二次渲染，此时store的state已经获取数据完成
           html = render(app)
           initStoreState = dva._store.getState()
           console.log('> server render has finished')
         } else {
           html = ''
-          clearChunks()
+          // clearChunks()
         }
       }
+    } catch (e) {
+      console.error(e)
     } finally {
       head = Head.rewind() || defaultHead()
     }
-    const chunks = loadChunks({dev, dir, dist, availableChunks})
-    return {html, head, errorHtml, chunks, initStoreState}
+    // const chunks = loadChunks({dev, dir, dist, availableChunks})
+    return {html, head, errorHtml, buildManifest, initStoreState}
   }
 
   const docProps = await loadGetInitialProps(Document, {...ctx, renderPage})
+  const dynamicImports = getDynamicImportBundles(reactLoadableManifest, reactLoadableModules)
 
   if (isResSent(res)) return
 
-  if (!Document.prototype || !Document.prototype.isReactComponent) throw new Error('_document.js is not exporting a React element')
-  const doc = createElement(Document, {
-    __SYMPHONY_DATA__: {
-      props,
-      page, // the rendered page
-      pathname, // the requested path
-      query,
-      buildId,
-      assetPrefix,
-      runtimeConfig,
-      joyExport,
-      err: (err) ? serializeError(dev, err) : null,
+  if (!Document.prototype || !Document.prototype.isReactComponent) throw new Error('_document.js is not exporting a React component')
+  const doc = <Document {...{
+    __JOY_DATA__: {
+      // Used in development to replace paths for react-error-overlay
+      distDir: dev ? distDir : undefined,
+      props, // The result of getInitialProps
+      page, // The rendered page
+      pathname, // The requested path
+      query, // querystring parsed / passed by the user
+      buildId, // buildId is used to facilitate caching of page bundles, we send it to the client so that pageloader knows where to load bundles
+      assetPrefix: assetPrefix === '' ? undefined : assetPrefix, // send assetPrefix to the client side when configured, otherwise don't sent in the resulting HTML
+      runtimeConfig, // runtimeConfig if provided, otherwise don't sent in the resulting HTML
+      joyExport, // If this is a page exported by `next export`
+      err: (err) ? serializeError(dev, err) : undefined, // Error if one happened, otherwise don't sent in the resulting HTML
       initStoreState: docProps.initStoreState
     },
     dev,
     dir,
     staticMarkup,
+    buildManifest,
+    files,
+    dynamicImports,
+    assetPrefix, // We always pass assetPrefix as a top level property since _document needs it to render, even though the client side might not need it
     ...docProps
-  })
+  }} />
 
   return '<!DOCTYPE html>' + renderToStaticMarkup(doc)
 }
 
 export async function renderScriptError (req, res, page, error) {
   // Asks CDNs and others to not to cache the errored page
-  res.setHeader('Cache-Control', 'no-store, must-revalidate')
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
 
-  if (error.code === 'ENOENT') {
+  if (error.code === 'ENOENT' || error.message === 'INVALID_BUILD_ID') {
     res.statusCode = 404
     res.end('404 - Not Found')
     return
@@ -180,9 +235,9 @@ export async function renderScriptError (req, res, page, error) {
   res.end('500 - Internal Error')
 }
 
-export function sendHTML (req, res, html, method, {dev}) {
+export function sendHTML (req, res, html, method, {dev, generateEtags}) {
   if (isResSent(res)) return
-  const etag = generateETag(html)
+  const etag = generateEtags && generateETag(html)
 
   if (fresh(req.headers, {etag})) {
     res.statusCode = 304
@@ -196,21 +251,15 @@ export function sendHTML (req, res, html, method, {dev}) {
     res.setHeader('Cache-Control', 'no-store, must-revalidate')
   }
 
-  res.setHeader('ETag', etag)
+  if (etag) {
+    res.setHeader('ETag', etag)
+  }
+
   if (!res.getHeader('Content-Type')) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
   }
   res.setHeader('Content-Length', Buffer.byteLength(html))
   res.end(method === 'HEAD' ? null : html)
-}
-
-export function sendJSON (res, obj, method) {
-  if (isResSent(res)) return
-
-  const json = JSON.stringify(obj)
-  res.setHeader('Content-Type', 'application/json')
-  res.setHeader('Content-Length', Buffer.byteLength(json))
-  res.end(method === 'HEAD' ? null : json)
 }
 
 function errorToJSON (err) {
@@ -254,25 +303,3 @@ export function serveStatic (req, res, path) {
 //
 //   await hotReloader.ensurePage(page)
 // }
-
-function loadChunks ({dev, dir, dist, availableChunks}) {
-  const flushedChunks = flushChunks()
-  const response = {
-    names: [],
-    filenames: []
-  }
-
-  if (dev) {
-    availableChunks = getAvailableChunks(dir, dist)
-  }
-
-  for (var chunk of flushedChunks) {
-    const filename = availableChunks[chunk]
-    if (filename) {
-      response.names.push(chunk)
-      response.filenames.push(filename)
-    }
-  }
-
-  return response
-}

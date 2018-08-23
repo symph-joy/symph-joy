@@ -1,22 +1,16 @@
 /* global location */
 
-import Router from '../lib/router'
+// import Router from '../lib/router'
 import fetch from 'unfetch'
 
-const {
-  __SYMPHONY_DATA__: {
-    assetPrefix
-  }
-} = window
-
-export default () => {
-  Router.ready(() => {
-    Router.router.events.on('routeChangeComplete', ping)
-  })
+export default ({assetPrefix}) => {
+  // Router.ready(() => {
+  //   Router.events.on('routeChangeComplete', ping)
+  // })
 
   async function ping () {
     try {
-      const url = `${assetPrefix}/_symphony/on-demand-entries-ping?page=${Router.pathname}`
+      const url = `${assetPrefix || ''}/_joy/on-demand-entries-ping?page=/`
       const res = await fetch(url, {
         credentials: 'omit'
       })

@@ -5,7 +5,7 @@ const mkdirp = require('mkdirp')
 const isWindows = /^win/.test(process.platform)
 
 export async function compile (task) {
-  await task.parallel(['bin', 'server', 'lib', 'client'])
+  await task.parallel(['bin', 'server', 'nextbuild', 'lib', 'client'])
 }
 
 export async function bin (task, opts) {
@@ -23,17 +23,23 @@ export async function server (task, opts) {
   notify('Compiled server files')
 }
 
+export async function nextbuild (task, opts) {
+  await task.source(opts.src || 'build/**/*.js').babel().target('dist/build')
+  notify('Compiled build files')
+}
+
 export async function client (task, opts) {
   await task.source(opts.src || 'client/**/*.js').babel().target('dist/client')
   notify('Compiled client files')
 }
 
-// Create node_modules/symphony for the use of test apps
-export async function symlinkSymphonyForTesting () {
-  rimraf.sync('test/node_modules/symphony')
+// Create node_modules/next for the use of test apps
+export async function symlinkNextForTesting () {
+  rimraf.sync('test/node_modules/@symph')
   mkdirp.sync('test/node_modules')
+  mkdirp.sync('test/node_modules/@symph')
 
-  const symlinkCommand = isWindows ? 'mklink /D "symphony" "..\\..\\"' : 'ln -s ../../ symphony'
+  const symlinkCommand = isWindows ? 'mklink /D "@symph/joy" "..\\..\\"' : 'ln -s ../../ @symph/joy'
   childProcess.execSync(symlinkCommand, { cwd: 'test/node_modules' })
 }
 
@@ -42,7 +48,7 @@ export async function copy (task) {
 }
 
 export async function build (task) {
-  await task.serial(['symlinkSymphonyForTesting', 'copy', 'compile'])
+  await task.serial(['copy', 'compile'])
 }
 
 export default async function (task) {
@@ -50,6 +56,7 @@ export default async function (task) {
   await task.watch('bin/*', 'bin')
   await task.watch('pages/**/*.js', 'copy')
   await task.watch('server/**/*.js', 'server')
+  await task.watch('build/**/*.js', 'nextbuild')
   await task.watch('client/**/*.js', 'client')
   await task.watch('lib/**/*.js', 'lib')
 }
@@ -84,7 +91,7 @@ export async function posttest (task) {
 // notification helper
 function notify (msg) {
   return notifier.notify({
-    title: '▲ Symphony',
+    title: '▲ @symph/joy',
     message: msg,
     icon: false
   })

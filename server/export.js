@@ -1,37 +1,43 @@
 import del from 'del'
 import cp from 'recursive-copy'
 import mkdirp from 'mkdirp-then'
-import walk from 'walk'
 import { extname, resolve, join, dirname, sep } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
-import getConfig from './config'
-import {PHASE_EXPORT, CONFIG_FILE} from '../lib/constants'
+import loadConfig from './config'
+import {PHASE_EXPORT, SERVER_DIRECTORY, PAGES_MANIFEST, CONFIG_FILE, BUILD_ID_FILE, CLIENT_STATIC_FILES_PATH} from '../lib/constants'
 import { renderToHTML } from './render'
-import { getAvailableChunks } from './utils'
-import { printAndExit } from '../lib/utils'
 import { setAssetPrefix } from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
 
 export default async function (dir, options, configuration) {
   dir = resolve(dir)
-  const symphonyConfig = configuration || getConfig(PHASE_EXPORT, dir)
-  const symphonyDir = join(dir, symphonyConfig.distDir)
+  const nextConfig = configuration || loadConfig(PHASE_EXPORT, dir)
+  const distDir = join(dir, nextConfig.distDir)
 
-  log(`  using build directory: ${symphonyDir}`)
+  log(`> using build directory: ${distDir}`)
 
-  if (!existsSync(symphonyDir)) {
-    console.error(
-      `Build directory ${symphonyDir} does not exist. Make sure you run "joy build" before running "joy start" or "joy export".`
-    )
-    process.exit(1)
+  if (!existsSync(distDir)) {
+    throw new Error(`Build directory ${distDir} does not exist. Make sure you run "joy build" before running "joy start" or "joy export".`)
   }
 
-  const buildId = readFileSync(join(symphonyDir, 'BUILD_ID'), 'utf8')
+  const buildId = readFileSync(join(distDir, BUILD_ID_FILE), 'utf8')
+  const pagesManifest = require(join(distDir, SERVER_DIRECTORY, PAGES_MANIFEST))
+
+  const pages = Object.keys(pagesManifest)
+  const defaultPathMap = {}
+
+  for (const page of pages) {
+    // _document and _app are not real pages.
+    if (page === '/_document' || page === '/_app') {
+      continue
+    }
+    defaultPathMap[page] = { page }
+  }
 
   // Initialize the output directory
   const outDir = options.outdir
   await del(join(outDir, '*'))
-  await mkdirp(join(outDir, '_symphony', buildId))
+  await mkdirp(join(outDir, '_joy', buildId))
 
   // Copy static directory
   if (existsSync(join(dir, 'static'))) {
@@ -43,59 +49,48 @@ export default async function (dir, options, configuration) {
     )
   }
 
-  // Copy main.js
-  await cp(
-    join(symphonyDir, 'main.js'),
-    join(outDir, '_symphony', buildId, 'main.js')
-  )
-
-  // Copy .symphony/static directory
-  if (existsSync(join(symphonyDir, 'static'))) {
+  // Copy .next/static directory
+  if (existsSync(join(distDir, CLIENT_STATIC_FILES_PATH))) {
     log('  copying "static build" directory')
     await cp(
-      join(symphonyDir, 'static'),
-      join(outDir, '_symphony', 'static')
+      join(distDir, CLIENT_STATIC_FILES_PATH),
+      join(outDir, '_joy', CLIENT_STATIC_FILES_PATH)
     )
   }
 
   // Copy dynamic import chunks
-  if (existsSync(join(symphonyDir, 'chunks'))) {
+  if (existsSync(join(distDir, 'chunks'))) {
     log('  copying dynamic import chunks')
 
-    await mkdirp(join(outDir, '_symphony', 'webpack'))
+    await mkdirp(join(outDir, '_joy', 'webpack'))
     await cp(
-      join(symphonyDir, 'chunks'),
-      join(outDir, '_symphony', 'webpack', 'chunks')
+      join(distDir, 'chunks'),
+      join(outDir, '_joy', 'webpack', 'chunks')
     )
   }
 
-  await copyPages(symphonyDir, outDir, buildId)
-
-  // Get the exportPathMap from the `joy.config.js`
-  if (typeof symphonyConfig.exportPathMap !== 'function') {
-    printAndExit(
-      `> No "exportPathMap" found in "${CONFIG_FILE}"`
-    )
+  // Get the exportPathMap from the config file
+  if (typeof nextConfig.exportPathMap !== 'function') {
+    console.log(`> No "exportPathMap" found in "${CONFIG_FILE}". Generating map from "./pages"`)
+    nextConfig.exportPathMap = async (defaultMap) => {
+      return defaultMap
+    }
   }
-
-  const exportPathMap = await symphonyConfig.exportPathMap()
-  const exportPaths = Object.keys(exportPathMap)
 
   // Start the rendering process
   const renderOpts = {
-    ComponentPath: resolve(dir, symphonyConfig.distDir, './dist', './app-main.js'),
+    ComponentPath: resolve(dir, distDir, './dist', './app-main.js'),
     dir,
-    dist: symphonyConfig.distDir,
     buildId,
     joyExport: true,
-    assetPrefix: symphonyConfig.assetPrefix.replace(/\/$/, ''),
+    assetPrefix: nextConfig.assetPrefix.replace(/\/$/, ''),
+    distDir,
     dev: false,
     staticMarkup: false,
-    hotReloader: null,
-    availableChunks: getAvailableChunks(dir, symphonyConfig.distDir)
+    hotReloader: null
   }
 
-  const {serverRuntimeConfig, publicRuntimeConfig} = symphonyConfig
+  const {serverRuntimeConfig, publicRuntimeConfig} = nextConfig
 
   if (publicRuntimeConfig) {
     renderOpts.runtimeConfig = publicRuntimeConfig
@@ -106,21 +101,24 @@ export default async function (dir, options, configuration) {
     publicRuntimeConfig
   })
 
-  // set the assetPrefix to use for 'symphony/asset'
+  // set the assetPrefix to use for '@symph/joy/asset'
   setAssetPrefix(renderOpts.assetPrefix)
 
   // We need this for server rendering the Link component.
-  global.__SYMPHONY_DATA__ = {
+  global.__JOY_DATA__ = {
     joyExport: true
   }
 
+  const exportPathMap = await nextConfig.exportPathMap(defaultPathMap)
+  const exportPaths = Object.keys(exportPathMap)
+
   for (const path of exportPaths) {
-    log(`  exporting path: ${path}`)
+    log(`> exporting path: ${path}`)
     if (!path.startsWith('/')) {
       throw new Error(`path "${path}" doesn't start with a backslash`)
     }
 
-    const { page, query = {} } = exportPathMap[path] || {}
+    const { page, query = {} } = exportPathMap[path]
     const req = { url: path }
     const res = {}
 
@@ -148,41 +146,4 @@ export default async function (dir, options, configuration) {
     if (options.silent) return
     console.log(message)
   }
-}
-
-function copyPages (symphonyDir, outDir, buildId) {
-  // TODO: do some proper error handling
-  return new Promise((resolve, reject) => {
-    const symphonyBundlesDir = join(symphonyDir, 'bundles', 'pages')
-    const walker = walk.walk(symphonyBundlesDir, { followLinks: false })
-
-    walker.on('file', (root, stat, next) => {
-      const filename = stat.name
-      const fullFilePath = `${root}${sep}${filename}`
-      const relativeFilePath = fullFilePath.replace(symphonyBundlesDir, '')
-
-      // We should not expose this page to the client side since
-      // it has no use in the client side.
-      if (relativeFilePath === `${sep}_document.js`) {
-        next()
-        return
-      }
-
-      let destFilePath = null
-      if (relativeFilePath === `${sep}index.js`) {
-        destFilePath = join(outDir, '_symphony', buildId, 'page', relativeFilePath)
-      } else if (/index\.js$/.test(filename)) {
-        const newRelativeFilePath = relativeFilePath.replace(`${sep}index.js`, '.js')
-        destFilePath = join(outDir, '_symphony', buildId, 'page', newRelativeFilePath)
-      } else {
-        destFilePath = join(outDir, '_symphony', buildId, 'page', relativeFilePath)
-      }
-
-      cp(fullFilePath, destFilePath)
-        .then(next)
-        .catch(reject)
-    })
-
-    walker.on('end', resolve)
-  })
 }
