@@ -11,8 +11,15 @@ export default class ProductsModel {
     pageIndex: null,
     pageSize: 5,
     products: [],
+    details:{}
   }
 
+  /**
+   *  fetch product list from server
+   * @param pageIndex
+   * @param pageSize
+   * @returns {Promise<void>}
+   */
   async getProducts ({pageIndex = 1, pageSize = 5}) {
     //fetch data
     let data = await new Promise((resolve, reject) => {
@@ -22,7 +29,7 @@ export default class ProductsModel {
         for (let i = (pageIndex - 1) * pageSize; i < pageIndex * pageSize; i++) {
           resultData.push({
             id: i,
-            name: 'iphone 7',
+            name: 'iphone 8',
             price: 4999,
           })
         }
@@ -44,8 +51,39 @@ export default class ProductsModel {
     })
   }
 
+  /**
+   * fetch product detail info from server
+   * @param productId
+   * @returns {Promise<void>}
+   */
+  async getProduct ({productId}) {
+    let {details} = this.getState();
+
+    //fetch data
+    let data = await new Promise((resolve, reject) => {
+      //mock
+      setTimeout(() => {
+        resolve({
+          id: productId,
+          name: 'iphone 8',
+          price: 4999,
+        })
+      }, 1000)
+    })
+
+    this.setState({
+      details: {...details, [productId]: data}
+    })
+  }
+
+  /**
+   * add a new product
+   * @param product
+   * @returns {Promise<void>}
+   */
   async addProduct ({product}) {
     let {products} = this.getState()
+
     this.setState({
       products: [product, ...products]
     })

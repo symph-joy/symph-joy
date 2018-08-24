@@ -6,7 +6,7 @@ export default class MyDocument extends Document {
       <html>
         <Head>
           {/* add custom style file */}
-          <link rel='stylesheet' href='/_symphony/static/style.css' />
+          <link rel='stylesheet' href='/_joy/static/style.css' />
         </Head>
         <body>
           <Main />
