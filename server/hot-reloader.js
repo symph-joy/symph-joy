@@ -1,4 +1,4 @@
-import { join } from 'path'
+import { join, normalize } from 'path'
 import WebpackDevMiddleware from 'webpack-dev-middleware'
 import WebpackHotMiddleware from 'webpack-hot-middleware'
 import del from 'del'
@@ -192,39 +192,39 @@ export default class HotReloader {
 
   async prepareBuildTools (multiCompiler) {
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
-    // multiCompiler.compilers[1].hooks.done.tap('NextjsHotReloaderForServer', (stats) => {
-    //   if (!this.initialized) {
-    //     return
-    //   }
-    //
-    //   const {compilation} = stats
-    //
-    //   // We only watch `_document` for changes on the server compilation
-    //   // the rest of the files will be triggered by the client compilation
-    //   const documentChunk = compilation.chunks.find(c => c.name === normalize(`static/${this.buildId}/pages/_document.js`))
-    //   // If the document chunk can't be found we do nothing
-    //   if (!documentChunk) {
-    //     console.warn('_document.js chunk not found')
-    //     return
-    //   }
-    //
-    //   // Initial value
-    //   if (this.serverPrevDocumentHash === null) {
-    //     this.serverPrevDocumentHash = documentChunk.hash
-    //     return
-    //   }
-    //
-    //   // If _document.js didn't change we don't trigger a reload
-    //   if (documentChunk.hash === this.serverPrevDocumentHash) {
-    //     return
-    //   }
-    //
-    //   // Notify reload to reload the page, as _document.js was changed (different hash)
-    //   this.send('reload', '/_document')
-    //
-    //   this.serverPrevDocumentHash = documentChunk.hash
-    // })
-    //
+    multiCompiler.compilers[1].hooks.done.tap('NextjsHotReloaderForServer', (stats) => {
+      if (!this.initialized) {
+        return
+      }
+
+      const {compilation} = stats
+
+      // We only watch `_document` for changes on the server compilation
+      // the rest of the files will be triggered by the client compilation
+      const documentChunk = compilation.chunks.find(c => c.name === normalize(`static/${this.buildId}/pages/_document.js`))
+      // If the document chunk can't be found we do nothing
+      if (!documentChunk) {
+        console.warn('_document.js chunk not found')
+        return
+      }
+
+      // Initial value
+      if (this.serverPrevDocumentHash === null) {
+        this.serverPrevDocumentHash = documentChunk.hash
+        return
+      }
+
+      // If _document.js didn't change we don't trigger a reload
+      if (documentChunk.hash === this.serverPrevDocumentHash) {
+        return
+      }
+
+      // Notify reload to reload the page, as _document.js was changed (different hash)
+      this.send('reload', '/_document')
+
+      this.serverPrevDocumentHash = documentChunk.hash
+    })
+
     // multiCompiler.compilers[0].hooks.done.tap('NextjsHotReloaderForClient', (stats) => {
     //   const { compilation } = stats
     //   const chunkNames = new Set(
