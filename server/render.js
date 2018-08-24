@@ -60,7 +60,7 @@ async function doRender (req, res, pathname, query, {
   staticMarkup = false,
   joyExport = false
 } = {}) {
-  console.log(`> start doRender, pathname:${pathname}, err:${err || null}`)
+  console.log(`> start render, pathname:${pathname}, err:${err || null}`)
   page = page || pathname
 
   // 暂时不需要监听页面的编译情况 lane 2017-12-05
@@ -147,7 +147,7 @@ async function doRender (req, res, pathname, query, {
       } else if (err) {
         if (serverRender) {
           const Component = await requireComp()
-          errorHtml = render(createApp(Component, {isComponentDidPrepare: false}, true))
+          errorHtml = render(createApp(Component, {}, true))
         } else {
           html = ''
           // clearChunks()
@@ -159,26 +159,28 @@ async function doRender (req, res, pathname, query, {
           dva.start()
           // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
           // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
-          renderToStaticMarkup(createApp(Component, {dva, isComponentDidPrepare: false}, false))
+          renderToStaticMarkup(createApp(Component, {dva}, false))
 
           await dva.prepareManager.waitAllPrepareFinished()
-          await dva._store.dispatch({
-            type: '@@endAsyncBatch'
+
+          await dva.dispatch({
+            type: '@@joy/updatePrepareState',
+            isPrepared: true
           })
-          console.log('> app has prepared')
+          // console.log('> app has prepared')
           // clearChunks()
-          const app = createApp(Component, {dva, isComponentDidPrepare: true}, true)
+          const app = createApp(Component, {dva}, true)
           // 第二次渲染，此时store的state已经获取数据完成
           html = render(app)
           initStoreState = dva._store.getState()
-          console.log('> server render has finished')
+          // console.log('> server render has finished')
         } else {
           html = ''
           // clearChunks()
         }
       }
     } catch (e) {
-      console.error(e)
+      logger.error(e)
     } finally {
       head = Head.rewind() || defaultHead()
     }
