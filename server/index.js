@@ -13,18 +13,25 @@ import {
 import Router from './router'
 import { isInternalUrl } from './utils'
 import loadConfig from './config'
-import {PHASE_PRODUCTION_SERVER, PHASE_DEVELOPMENT_SERVER, BLOCKED_PAGES, BUILD_ID_FILE, CLIENT_STATIC_FILES_PATH, CLIENT_STATIC_FILES_RUNTIME} from '../lib/constants'
+import {
+  PHASE_PRODUCTION_SERVER,
+  PHASE_DEVELOPMENT_SERVER,
+  BLOCKED_PAGES,
+  BUILD_ID_FILE,
+  CLIENT_STATIC_FILES_PATH,
+  CLIENT_STATIC_FILES_RUNTIME
+} from '../lib/constants'
 import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
 import { isResSent } from '../lib/utils'
-import {createProxyApiMiddleware} from '../lib/fetch/proxy-api-middleware'
+import { createProxyApiMiddleware } from '../lib/fetch/proxy-api-middleware'
 import compression from 'compression'
 
 // We need to go up one more level since we are in the `dist` directory
 import pkg from '../../package'
 
 export default class Server {
-  constructor ({ dir = '.', dev = false, staticMarkup = false, quiet = false, conf = null } = {}) {
+  constructor ({dir = '.', dev = false, staticMarkup = false, quiet = false, conf = null} = {}) {
     this.dir = resolve(dir)
     this.dev = dev
     this.quiet = quiet
@@ -49,7 +56,7 @@ export default class Server {
     this.compression = compression()
 
     this.buildId = this.readBuildId(dev)
-    this.hotReloader = dev ? this.getHotReloader(this.dir, { config: this.nextConfig, buildId: this.buildId }) : null
+    this.hotReloader = dev ? this.getHotReloader(this.dir, {config: this.nextConfig, buildId: this.buildId}) : null
     this.renderOpts = {
       serverRender: this.nextConfig.serverRender,
       ComponentPath: resolve(this.distDir, 'server', 'app-main.js'),
@@ -162,6 +169,15 @@ export default class Server {
       '/static/:path*': async (req, res, params) => {
         const p = join(this.dir, 'static', ...(params.path || []))
         await this.serveStatic(req, res, p)
+      },
+
+      '/favicon.ico': async (req, res, params) => {
+        const p = join(this.dir, 'static', 'favicon.ico')
+        if (!fs.existsSync(p)) {
+          await this.send404(res)
+          return
+        }
+        await this.serveStatic(req, res, p)
       }
     }
 
@@ -174,7 +190,7 @@ export default class Server {
         for (const path in exportPathMap) {
           const {page, query = {}} = exportPathMap[path]
           routes[path] = async (req, res, params, parsedUrl) => {
-            const { query: urlQuery } = parsedUrl
+            const {query: urlQuery} = parsedUrl
 
             Object.keys(urlQuery)
               .filter(key => query[key] === undefined)
@@ -205,13 +221,8 @@ export default class Server {
       }
 
       routes['/:path*'] = async (req, res, params, parsedUrl) => {
-        const { pathname, query } = parsedUrl
+        const {pathname, query} = parsedUrl
         await this.render(req, res, pathname, query, parsedUrl)
-      }
-
-      routes['/favicon.ico'] = async (req, res, params) => {
-        const p = join(this.dir, 'static', 'favicon.ico')
-        await this.serveStatic(req, res, p)
       }
     }
 
@@ -332,7 +343,7 @@ export default class Server {
   }
 
   async render404 (req, res, parsedUrl = parseUrl(req.url, true)) {
-    const { pathname, query } = parsedUrl
+    const {pathname, query} = parsedUrl
     res.statusCode = 404
     return this.renderError(null, req, res, pathname, query)
   }
