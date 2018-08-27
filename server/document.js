@@ -67,9 +67,8 @@ export class Head extends Component {
     const { dynamicImports, assetPrefix } = this.context._documentProps
     return dynamicImports.map((bundle) => {
       return <link
+        rel='preload'
         key={bundle.file}
-        nonce={this.props.nonce}
-        rel='preload==='
         href={`${assetPrefix}/_joy/${bundle.file}`}
         as='script'
       />
@@ -109,7 +108,6 @@ export class Head extends Component {
   render () {
     const { head, styles, assetPrefix, __JOY_DATA__ } = this.context._documentProps
     const { buildId } = __JOY_DATA__
-    // const { pathname, buildId } = __JOY_DATA__
     // const pagePathname = getPagePathname(pathname)
 
     return <head {...this.props}>
@@ -184,29 +182,37 @@ export class JoyScript extends Component {
     })
   }
 
+  static getInlineScriptSource (documentProps) {
+    const { __JOY_DATA__ } = documentProps
+    const { page, pathname } = __JOY_DATA__
+
+    return `
+      __JOY_DATA__ = ${htmlescape(__JOY_DATA__)}
+      module={}
+      __JOY_LOADED_PAGES__ = []
+
+      __JOY_REGISTER_PAGE = function (route, fn) {
+        __JOY_LOADED_PAGES__.push({ route: route, fn: fn })
+      }${page === '_error' ? `
+
+      __JOY_REGISTER_PAGE(${htmlescape(pathname)}, function() {
+        var error = new Error('Page does not exist: ${htmlescape(pathname)}')
+        error.statusCode = 404
+
+        return { error: error }
+      })` : ''}
+    `
+  }
+
   render () {
-    const { staticMarkup, assetPrefix, __JOY_DATA__ } = this.context._documentProps
-    const { page, pathname, buildId } = __JOY_DATA__
+    const { staticMarkup, assetPrefix, devFiles, __JOY_DATA__ } = this.context._documentProps
+    const { buildId } = __JOY_DATA__
     // const pagePathname = getPagePathname(pathname)
 
     return <Fragment>
+      {devFiles ? devFiles.map((file) => <script key={file} src={`${assetPrefix}/_joy/${file}`} nonce={this.props.nonce} />) : null}
       {staticMarkup ? null : <script nonce={this.props.nonce} dangerouslySetInnerHTML={{
-        __html: `
-          __JOY_DATA__ = ${htmlescape(__JOY_DATA__)}
-          module={}
-          __JOY_LOADED_PAGES__ = []
-
-          __JOY_REGISTER_PAGE = function (route, fn) {
-            __JOY_LOADED_PAGES__.push({ route: route, fn: fn })
-          }${page === '_error' ? `
-
-          __JOY_REGISTER_PAGE(${htmlescape(pathname)}, function() {
-            var error = new Error('Page does not exist: ${htmlescape(pathname)}')
-            error.statusCode = 404
-
-            return { error: error }
-          })` : ''}
-        `
+        __html: JoyScript.getInlineScriptSource(this.context._documentProps)
       }} />}
       {/* {page !== '/_error' && <script async id={`__JOY_PAGE__${pathname}`} src={`${assetPrefix}/_joy/static/${buildId}/pages${pagePathname}`} nonce={this.props.nonce} />} */}
       {/* <script async id={`__JOY_PAGE__/_app`} src={`${assetPrefix}/_joy/static/${buildId}/pages/_app.js`} nonce={this.props.nonce} /> */}

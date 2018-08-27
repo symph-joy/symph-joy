@@ -34,7 +34,7 @@ export default class Index extends Component{
 
 然后运行`npm run dev` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `npm run dev -- -p <your port here>`
 
-到目前为止，一个简单完整的react app已经创建完成，例子[hello-world](./examples/hello)，到这儿我们拥有了什么功能呢？
+到目前为止，一个简单完整的react app已经创建完成，例子[hello-world](https://github.com/lnlfps/symph-joy/tree/master/examples/hello-world)，到这儿我们拥有了什么功能呢？
 
 - 一个应用入口（`./src/index.js`），这里通常会包含界面路由([react-router-4](https://reacttraining.com/react-router/web/guides/philosophy))和模块初始化等。
 - 启动了一个开发服务器，可以渲染界面和转发请求
@@ -515,7 +515,7 @@ export default () => <HelloBundle title="Dynamic Bundle" />
 
 ## 自定义 `<Document>`
 
-如果需要在后html文件引入额外的`<script>`或`<link>`等内容，需要自定义<Document>，例如在使用[@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)插件时，需要引入`/_symphony/static/style.css`样式文件。
+如果需要在后html文件引入额外的`<script>`或`<link>`等内容，需要自定义<Document>，例如在使用[@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)插件时，需要引入`/_joy/static/style.css`样式文件。
 
 在`@symph/joy`中，所有业务相关的代码都放在`src`目录中。`_document.js`只在服务端渲染使用，并不会在浏览器端加载，所以不能在这里放置任何的业务代码，如果希望在整个应用里共享一部分功能，请将它们放到`src/index.js`应用入口组件中。
 
@@ -529,7 +529,7 @@ export default class MyDocument extends Document {
       <html>
         <Head>
           {/* add custom style */}
-          <link rel='stylesheet' href='/_symphony/static/style.css' />
+          <link rel='stylesheet' href='/_joy/static/style.css' />
         </Head>
         <body>
           <Main />
