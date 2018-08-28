@@ -3,10 +3,10 @@
 
 ## 安装和开始
 
-运行`npm init`创建一个空工程，填写项目的基本信息，当然也可以在一个已有的项目中安装使用。
+运行`yarn init`创建一个空工程，填写项目的基本信息，当然也可以在一个已有的项目中安装使用。
 
 ```bash
-npm install --save @symph/joy react react-dom
+yarn install --save @symph/joy react react-dom
 ```
 > @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html)及以上版本
 
@@ -32,7 +32,7 @@ export default class Index extends Component{
 }
 ```
 
-然后运行`npm run dev` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `npm run dev -- -p <your port here>`
+然后运行`yarn run dev` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `yarn** run dev -- -p <your port here>`
 
 到目前为止，一个简单完整的react app已经创建完成，例子[hello-world](https://github.com/lnlfps/symph-joy/tree/master/examples/hello-world)，到这儿我们拥有了什么功能呢？
 
@@ -596,7 +596,7 @@ public class ViewController {
 {
   "scripts": {
     "build": "joy build",
-    "export": "npm run build && joy export"
+    "export": "yarn run build && joy export"
   }
 }
 ```
@@ -604,7 +604,7 @@ public class ViewController {
 现在执行下面命令，完成整个导出工作：
 
 ```bash
-npm run export
+yarn run export
 ```
 
 执行完成以后，静态版本需要的所有文件都放置在应用根目录下的`out`目录中，只需要将`out`目录部署到静态文件服务器就可以了。

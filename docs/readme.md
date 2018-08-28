@@ -22,10 +22,10 @@
 
 ## 安装和开始
 
-运行`npm init`创建一个空工程，并填写项目的基本信息，当然也可以在一个已有的项目中直接安装。
+运行`yarn init`创建一个空工程，并填写项目的基本信息，当然也可以在一个已有的项目中直接安装。
 
 ```bash
-npm install --save @symph/joy react react-dom
+yarn install --save @symph/joy react react-dom
 ```
 
 > @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html)及以上版本
@@ -48,7 +48,7 @@ npm install --save @symph/joy react react-dom
 export default () => <div>Welcome to @symph/joy!</div>
 ```
 
-最后运行`npm run dev`命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `npm run dev -- -p <your port here>`
+最后运行`yarn run dev`命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `yarn run dev -- -p <your port here>`
 
 到目前为止，一个简单完整的react app已经创建完成.
 
