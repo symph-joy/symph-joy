@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import controller, { requireModel } from '@symph/joy/controller'
 import ProductsModel from '../models/ProductsModel'
+import styles from './ProductDetailController.less'
 
 @requireModel(ProductsModel)
 @controller((state, ownProps) => {
@@ -40,11 +41,11 @@ export default class ProductDetailController extends Component {
     let {product} = this.props
     let {isLoading} = this.state
     return (
-      <div>
+      <div className={styles.root}>
         <h1>Product Detail</h1>
         {
           isLoading
-            ? <div>loading...</div>
+            ? <div className={styles.loading}>loading...</div>
             : <div>
               <div>ID: {product.id}</div>
               <div>Name: {product.name}</div>

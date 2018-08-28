@@ -7,7 +7,7 @@ export default class MyDocument extends Document {
       <html>
         <Head>
           {/* add custom style file, dev mode will use style-loader to load styles */}
-          {!dev ? <link rel='stylesheet' href='/_joy/static/style.css' /> : null }
+          {!dev ? <link rel='stylesheet' href='/_joy/static/styles/style.css' /> : null }
         </Head>
         <body>
           <Main />
