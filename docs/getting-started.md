@@ -466,14 +466,12 @@ server.listen(port, (err) => {
 
 `@symph/joy/dynamic`模块实现了分割代码、动态加载和加载动画等功能，下面展示了其2种用法：
 
-### 基础用法和配置：
-- ssr: bool: true, 设置是否开启服务端渲染
-- loading: Component: `<p>loading...</p>` 加载过程中，展示的组件
+### 基础用法:
 
 ```js
 import dynamic from '@symph/joy/dynamic'
 
-const DynamicComponent = dynamic(import('../components/hello'), {
+const DynamicComponent = dynamic({loader: () => import('../components/hello')}, {
    ssr: true,
    loading:<div>...</div>
 })
@@ -512,6 +510,10 @@ const HelloBundle = dynamic({
 
 export default () => <HelloBundle title="Dynamic Bundle" />
 ```
+
+配置参数：
+- ssr: bool: true, 设置是否开启服务端渲染
+- loading: Component: `<p>loading...</p>` 加载过程中，展示的动画组件
 
 ## 自定义 `<Document>`
 
