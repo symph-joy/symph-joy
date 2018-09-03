@@ -23,8 +23,12 @@ export default class ProductsController extends Component {
   }
 
   async componentPrepare () {
-    let dispatch = this.props.dispatch
-    await this.getProducts(1, 5)
+    let {products} = this.props
+
+    // fetch the first page data, when products is empty
+    if (products.length === 0) {
+      await this.getProducts(1, 5)
+    }
   }
 
   getProducts = async (pageIndex, pageSize) => {

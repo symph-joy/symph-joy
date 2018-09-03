@@ -2,7 +2,6 @@
   "name": "hello-word",
   "version": "1.0.0",
   "description": "for test",
-  "main": "index.js",
   "scripts": {
     "dev": "joy dev",
     "build": "joy build",
@@ -10,12 +9,9 @@
     "export": "npm run build && joy export"
   },
   "author": "",
-  "license": "ISC",
   "dependencies": {
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "@symph/joy": "latest"
-  },
-  "devDependencies": {
   }
 }
