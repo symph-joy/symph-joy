@@ -10,9 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@symph/joy": "^0.4.0",
-    "@symph/joy-css": "^0.4.0",
-    "@symph/joy-less": "^0.4.0",
+    "@symph/joy": "^0.4.5",
+    "@symph/joy-css": "^0.4.1",
+    "@symph/joy-less": "^0.4.4",
     "@symph/joy-image": "^0.4.0",
     "element-react": "^1.4.19",
     "element-theme-default": "^1.4.13",

@@ -11,13 +11,12 @@
     "install-node": "6.9.2"
   },
   "dependencies": {
-    "@symph/joy": "^0.4.3",
+    "@symph/joy": "^0.4.5",
     "@symph/joy-image": "^0.4.1",
     "@symph/joy-less": "^0.4.4",
     "less": "^3.8.1",
     "prop-types": "^15.6.2",
     "react": "^16.4.1",
-    "react-dom": "^16.4.1",
-    "style-loader": "^0.22.1"
+    "react-dom": "^16.4.1"
   }
 }
