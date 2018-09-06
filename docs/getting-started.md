@@ -38,7 +38,7 @@ export default class Index extends Component{
 
 - 应用入口（`./src/index.js`），一切都从这里开始，以后可以添加子路由、布局、Model等组件
 - 启动了一个服务器，支持服务端渲染和业务请求代理转发等
-- 一个零配置的webpack+babel编译器，确保在Node.js和浏览器上正确运行
+- 一个零配置的webpack+babel编译器，确保代码在Node.js和浏览器上正确运行
 - ES6、7、8等高级语法支持，如：`class`、`async`、`@`注解、`{...}`解构等
 - 热更新，调试模式下，在浏览器不刷新的情况下，使更改立即生效
 - 静态资源服务，在`/static/`目录下的静态资源，可通过`http://localhost:3000/static/`访问
@@ -111,8 +111,9 @@ export default () =>
   <img src={require('./image.png')}/>
 ```
 
+在css、less文件中使用
+
 ```css
-// in css
 .bg {
   background: url("./image.png");
 }
@@ -227,13 +228,13 @@ app.prepare()
 
 由于javascript语言的开放性，且标准在不断更新，在实际的开发工中，不同的开发人员，所编写的应用在结构和代码风格上往往存在较大的差异，为了让项目更适合多人协同开发，且易于迭代维护，@symph/joy提供了应用层组件([MVC组件](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=mvc%E7%9A%84%E6%80%9D%E8%80%83))来规范代码。
 
-- Model: 管理应用的行为和数据，Class类，有初始状态(Redux store中的一部分内容)，业务过程中更新model状态(更新store的状态)
-- View: 展示Model中的数据，继承React.Component，展示的数据来源于`props`
-- Controller: 控制View的展示，绑定Model数据到View，响应用户的操作，调用Model中的业务, 被`@controller`注释的React.Component
+- Model: 管理应用的行为和数据，普通class类，有初始状态，业务运行中更新model状态
+- View: 展示数据，继承React.Component
+- Controller: 控制View的展示，绑定Model数据到View，响应用户的操作，调用Model中的业务, 继承于React.Component
 
 ![app work flow](https://github.com/lnlfps/static/blob/master/symphony-joy/images/app-work-flow.jpeg?raw=true)
 
-图中蓝色的箭头表示数据流的方向，红色箭头表示控制流的方向，他们都是单向流，store中的`state`对象是不可修改其内部值的，状态发生改变后，都会生成一个新的state对象，且只将有变化的部分更新到界面上。
+图中蓝色的箭头表示数据流的方向，红色箭头表示控制流的方向，他们都是单向流，store中的`state`对象是不可修改其内部值的，状态发生改变后，都会生成一个新的state对象，且只将有变化的部分更新到界面上，这和[redux](https://redux.js.org/)的工作流程是一致的。
 
 > 这里其实只是对redux进行MVC层面的封装，并未添加新的技术，依然支持redux的原生用法，定制redux插件等，如果想深入了解redux，请阅读其详细文档：[redux](https://redux.js.org/)
 
@@ -326,7 +327,7 @@ model将会被注册到redux store中，由store统一管理model的状态，使
 
 ### Controller
 
-绑定Model数据到View，调用Model中的业务，并新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，该方法是一个异步函数，在服务端渲染时，会等待其执行完成后，才会渲染出html，然后浏览器会直接使用在服务端获取到的数据来展现界面，不再重复执行`componentPrepare`方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在客户端上运行，在一次页面请求的过程中，系统会保证该方法只执行一次，避免数据重复加载。
+绑定Model数据到View，调用Model中的业务，并新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，该方法是一个异步函数，在服务端渲染时，会等待其执行完成后，才会渲染出html，然后浏览器会直接使用在服务端获取到的数据来展现界面，不再重复执行`componentPrepare`方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在客户端上运行。在一次页面请求的过程中，系统会保证该方法只执行一次，避免数据重复加载。
 
 ```jsx
 import React, {Component} from 'react';
@@ -544,14 +545,11 @@ export default class MyDocument extends Document {
 
 ## 打包部署
 
-部署时，需要先使用`joy build`命令来编译源代码，生成`.joy`目标目录(或者使用[distDir](./configurations#distDir)设置自定义的目录名称)，然后将项目上传到生产机器上，在生产机器上执行`joy start`命令，启动应用。我们可以在`package.json`中添加以下内容：
+部署时，需要先使用`joy build`命令来编译代码，生成可在浏览器和node.js里直接运行的目标代码，放入`.joy`目录中([distDir](./configurations#distDir)配置项可自定义输出目录名称)，然后将`.joy`目录上传到生产机器上，在生产机器上执行`joy start`命令来启动应用。在`package.json`的`scripts`节点中加入以下命令脚本：
 
 ```json
+// package.json
 {
-  "name": "my-app",
-  "dependencies": {
-    "@symph/joy": "latest"
-  },
   "scripts": {
     "dev": "joy dev",
     "build": "joy build",
@@ -560,11 +558,11 @@ export default class MyDocument extends Document {
 }
 ```
 
-`@symph/joy` 可以部署到不同的域名或路径上，可参考[assetPrefix](./configurations#assetPrefix)的设置说明。
+`@symph/joy` 可以部署到不同的域名或路径上，这需要对应用内引用的资源路径进行配置，参考[assetPrefix](./configurations#assetPrefix)的设置说明。
 
 > 在运行`joy build`的时候，`NODE_ENV`被默认设置为`production`， 使用`joy dev`启动开发环境时，设置为`development`。如果你是在自定义的Server内启动应用，需要你自己设置`NODE_ENV=production`。
 
-## 静态HTML输出
+## 静态版本输出
 
 `joy export`用于将`@symph/joy` app输出为静态版本，只包含html、js、css等静态资源文件，可在浏览器上直接加载运行。静态版本仍然支持`@symph/joy`的大部分特性，比如：MVC组件、动态路由、按需加载等。
 
@@ -608,6 +606,6 @@ public class ViewController {
 yarn run export
 ```
 
-执行完成以后，静态版本需要的所有文件都放置在应用根目录下的`out`目录中，只需要将`out`目录部署到静态文件服务器就可以了。
+执行完成以后，静态版本生成的所有文件都放置在应用根目录下的`out`目录中，只需要将`out`目录部署到静态文件服务器即可。
 
 > 你可以定制`out`目录名称，请运行`joy export -h`指令，按提示操作。
