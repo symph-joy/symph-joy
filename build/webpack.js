@@ -19,6 +19,7 @@ import ChunkNamesPlugin from './webpack/plugins/chunk-names-plugin'
 import { ReactLoadablePlugin } from './webpack/plugins/react-loadable-plugin'
 import {SERVER_DIRECTORY, NEXT_PROJECT_ROOT, NEXT_PROJECT_ROOT_NODE_MODULES, NEXT_PROJECT_ROOT_DIST, DEFAULT_PAGES_DIR, REACT_LOADABLE_MANIFEST, CLIENT_STATIC_FILES_RUNTIME_WEBPACK, CLIENT_STATIC_FILES_RUNTIME_MAIN} from '../lib/constants'
 import AutoDllPlugin from 'autodll-webpack-plugin'
+import TerserPlugin from 'terser-webpack-plugin'
 import AppMainEntryPlugin from './webpack/plugins/app-main-entry-plugin'
 
 // The externals config makes sure that
@@ -82,6 +83,13 @@ function optimizationConfig ({dir, dev, isServer, totalPages}) {
     return config
   }
 
+  // Terser is a better uglifier
+  config.minimizer = [new TerserPlugin({
+    parallel: true,
+    sourceMap: false,
+    cache: true
+  })]
+
   // Only enabled in production
   // This logic will create a commons bundle
   // with modules that are used in 50% of all pages
@@ -126,7 +134,8 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
     .split(process.platform === 'win32' ? ';' : ':')
     .filter((p) => !!p)
 
-  const outputPath = path.join(dir, config.distDir, isServer ? SERVER_DIRECTORY : '')
+  const distDir = path.join(dir, config.distDir)
+  const outputPath = path.join(distDir, isServer ? SERVER_DIRECTORY : '')
   const pagesEntries = await getPages(dir, {nextPagesDir: DEFAULT_PAGES_DIR, dev, buildId, isServer, pageExtensions: config.pageExtensions.join('|')})
   const totalPages = Object.keys(pagesEntries).length
   const appEntryFilePath = path.join(dir, config.main)
@@ -153,8 +162,10 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
     }
   }
 
+  const webpackMode = dev ? 'development' : 'production'
+
   let webpackConfig = {
-    mode: dev ? 'development' : 'production',
+    mode: webpackMode,
     devtool: dev ? 'cheap-module-source-map' : false,
     name: isServer ? 'server' : 'client',
     cache: true,
@@ -180,11 +191,11 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
         }
         return '[name]'
       },
-      libraryTarget: 'commonjs2',
+      libraryTarget: isServer ? 'commonjs2' : 'jsonp',
       hotUpdateChunkFilename: 'static/webpack/[id].[hash].hot-update.js',
       hotUpdateMainFilename: 'static/webpack/[hash].hot-update.json',
       // This saves chunks with the name given via `import()`
-      chunkFilename: isServer ? `${dev ? '[name]' : '[contenthash]'}.js` : `static/chunks/${dev ? '[name]' : '[contenthash]'}.js`,
+      chunkFilename: isServer ? `${dev ? '[name]' : '[name].[contenthash]'}.js` : `static/chunks/${dev ? '[name]' : '[name].[contenthash]'}.js`,
       strictModuleExceptionHandling: true
     },
     performance: { hints: false },
@@ -216,7 +227,7 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
       // Precompile react / react-dom for development, speeding up webpack
       dev && !isServer && new AutoDllPlugin({
         filename: '[name]_[hash].js',
-        path: './static/dll',
+        path: './static/development/dll',
         context: dir,
         entry: {
           dll: [
@@ -225,6 +236,7 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
           ]
         },
         config: {
+          mode: webpackMode,
           resolve: resolveConfig
         }
       }),
@@ -253,6 +265,10 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
       }),
       new webpack.DefinePlugin({
         'process.env.NODE_ENV': JSON.stringify(dev ? 'development' : 'production')
+      }),
+      // This is used in client/dev-error-overlay/hot-dev-client.js to replace the dist directory
+      !isServer && dev && new webpack.DefinePlugin({
+        'process.env.__JOY_DIST_DIR': JSON.stringify(distDir)
       }),
       !dev && new webpack.optimize.ModuleConcatenationPlugin(),
       isServer && new PagesManifestPlugin(),

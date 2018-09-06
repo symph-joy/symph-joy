@@ -26,8 +26,6 @@ export default class AppMainEntryPlugin {
         }
         console.log(`> App main entry file is ${module.resource}`)
         const source = new ConcatSource()
-        // source.add(`
-        // var AppMain = `)
         source.add(moduleSource)
         source.add(`
         ;

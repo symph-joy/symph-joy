@@ -13,9 +13,9 @@ export default class Document extends Component {
   }
 
   static async getInitialProps ({ renderPage }) {
-    const { html, head, errorHtml, buildManifest, initStoreState } = await renderPage()
+    const { html, head, buildManifest, initStoreState } = await renderPage()
     const styles = flush()
-    return { html, head, errorHtml, styles, buildManifest, initStoreState }
+    return { html, head, styles, buildManifest, initStoreState }
   }
 
   getChildContext () {
@@ -130,11 +130,10 @@ export class Main extends Component {
   }
 
   render () {
-    const { html, errorHtml } = this.context._documentProps
+    const { html } = this.context._documentProps
     return (
       <Fragment>
         <div id='__joy' dangerouslySetInnerHTML={{ __html: html }} />
-        <div id='__joy-error' dangerouslySetInnerHTML={{ __html: errorHtml }} />
       </Fragment>
     )
   }
@@ -188,7 +187,6 @@ export class JoyScript extends Component {
 
     return `
       __JOY_DATA__ = ${htmlescape(__JOY_DATA__)}
-      module={}
       __JOY_LOADED_PAGES__ = []
 
       __JOY_REGISTER_PAGE = function (route, fn) {

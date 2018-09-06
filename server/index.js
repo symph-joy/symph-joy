@@ -186,7 +186,7 @@ export default class Server {
       // So that the user doesn't have to define a custom server reading the exportPathMap
       if (this.dev && this.nextConfig.exportPathMap) {
         console.log('Defining routes from exportPathMap')
-        const exportPathMap = await this.nextConfig.exportPathMap({}) // In development we can't give a default path mapping
+        const exportPathMap = await this.nextConfig.exportPathMap({}, {dev: true, dir: this.dir, outDir: null, distDir: this.distDir, buildId: this.buildId}) // In development we can't give a default path mapping
         for (const path in exportPathMap) {
           const {page, query = {}} = exportPathMap[path]
           routes[path] = async (req, res, params, parsedUrl) => {
@@ -209,15 +209,6 @@ export default class Server {
           const p = join(this.distDir, ...(params.path || []))
           await this.serveStatic(req, res, p)
         }
-      }
-
-      // It's very important keep this route's param optional.
-      // (but it should support as many as params, seperated by '/')
-      // Othewise this will lead to a pretty simple DOS attack.
-      // See more: https://github.com/zeit/next.js/issues/2617
-      routes['/_joy/:path*'] = async (req, res, params) => {
-        const p = join(__dirname, '..', 'client', ...(params.path || []))
-        await this.serveStatic(req, res, p)
       }
 
       routes['/:path*'] = async (req, res, params, parsedUrl) => {

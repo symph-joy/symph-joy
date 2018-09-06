@@ -1,3 +1,8 @@
+const env = process.env.NODE_ENV
+const isProduction = env === 'production'
+const isDevelopment = env === 'development'
+const isTest = env === 'test'
+
 // Resolve styled-jsx plugins
 function styledJsxOptions (opts) {
   if (!opts) {
@@ -25,15 +30,23 @@ function styledJsxOptions (opts) {
 
 module.exports = (context, opts = {}) => ({
   presets: [
-    [require('@babel/preset-env'), {
-      modules: false,
+    [require('@babel/preset-env').default, {
+      // In the test environment `modules` is often needed to be set to true, babel figures that out by itself using the `'auto'` option
+      // In production/development this option is set to `false` so that webpack can handle import/export with tree-shaking
+      modules: isDevelopment && isProduction ? false : 'auto',
       ...opts['preset-env']
     }],
-    require('@babel/preset-react')
+    [require('@babel/preset-react'), {
+      // This adds @babel/plugin-transform-react-jsx-source and
+      // @babel/plugin-transform-react-jsx-self automatically in development
+      development: isDevelopment || isTest,
+      ...opts['preset-react']
+    }]
   ],
   plugins: [
     require('babel-plugin-react-require'),
     require('@babel/plugin-syntax-dynamic-import'),
+    require('react-hot-loader/babel'),
     require('./plugins/react-loadable-plugin'),
     [require('@babel/plugin-proposal-decorators'), { 'legacy': true }],
     [require('@babel/plugin-proposal-class-properties'), opts['class-properties'] || {'loose': true}],

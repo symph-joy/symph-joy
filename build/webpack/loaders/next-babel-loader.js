@@ -2,8 +2,6 @@ import babelLoader from 'babel-loader'
 
 module.exports = babelLoader.custom(babel => {
   const presetItem = babel.createConfigItem(require('../../babel/preset'), {type: 'preset'})
-  const reactJsxSourceItem = babel.createConfigItem(require('@babel/plugin-transform-react-jsx-source'), {type: 'plugin'})
-  // const reactHotLoaderPlugin = babel.createConfigItem(require('react-hot-loader/babel'), {type: 'plugin'})
 
   const configs = new Set()
 
@@ -36,12 +34,6 @@ module.exports = babelLoader.custom(babel => {
         // Add our default preset if the no "babelrc" found.
         options.presets = [...options.presets, presetItem]
       }
-
-      options.plugins = [
-        ...options.plugins,
-        dev && reactJsxSourceItem,
-        dev && 'react-hot-loader/babel'
-      ].filter(Boolean)
 
       return options
     }

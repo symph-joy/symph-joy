@@ -1,7 +1,3 @@
-/**
- * 该文件用于处理客户端发来的页面代码状态请求（/_symphony/on-demand-entries-ping?page=/idx）
- * DynamicEntryPlugin 如果有添加的新页面， 改插件负责动态的添加入口到webpack中。
- */
 import DynamicEntryPlugin from 'webpack/lib/DynamicEntryPlugin'
 import { EventEmitter } from 'events'
 import { join } from 'path'

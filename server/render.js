@@ -8,7 +8,8 @@ import { normalizePagePath } from './require'
 import { loadGetInitialProps, isResSent } from '../lib/utils'
 import Head, { defaultHead } from '../lib/head'
 import ErrorDebug from '../lib/error-debug'
-import Loadable from 'react-loadable'
+import Loadable from '../lib/loadable'
+import LoadableCapture from '../lib/loadable-capture'
 import { BUILD_MANIFEST, REACT_LOADABLE_MANIFEST, SERVER_DIRECTORY, CLIENT_STATIC_FILES_PATH } from '../lib/constants'
 
 import * as DvaCore from '../lib/dva'
@@ -134,31 +135,30 @@ async function doRender (req, res, pathname, query, {
       return EnhancedComponent
     }
 
-    const createApp = (Component, appProps, isGatherModule) => {
-      return <Loadable.Capture report={moduleName => isGatherModule ? reactLoadableModules.push(moduleName) : false}>
+    const createApp = (Component, appProps, shouldGatherModules) => {
+      return <LoadableCapture report={moduleName => shouldGatherModules ? reactLoadableModules.push(moduleName) : undefined}>
         <EnhancedApp {...{
           Component: Component,
           Router,
           ...props,
           ...appProps
         }} />
-      </Loadable.Capture>
+      </LoadableCapture>
     }
 
     const render = staticMarkup ? renderToStaticMarkup : renderToString
 
     let html
     let head
-    let errorHtml = ''
     let initStoreState
 
     try {
       if (err && dev) {
-        errorHtml = render(<ErrorDebug error={err} />)
+        html = render(<ErrorDebug error={err} />)
       } else if (err) {
         if (serverRender) {
           const Component = await requireComp()
-          errorHtml = render(createApp(Component, {}, true))
+          html = render(createApp(Component, {}, true))
         } else {
           html = ''
           // clearChunks()
@@ -196,7 +196,7 @@ async function doRender (req, res, pathname, query, {
       head = Head.rewind() || defaultHead()
     }
     // const chunks = loadChunks({dev, dir, dist, availableChunks})
-    return {html, head, errorHtml, buildManifest, initStoreState}
+    return {html, head, buildManifest, initStoreState}
   }
 
   const docProps = await loadGetInitialProps(Document, {...ctx, renderPage})
@@ -207,8 +207,6 @@ async function doRender (req, res, pathname, query, {
   if (!Document.prototype || !Document.prototype.isReactComponent) throw new Error('_document.js is not exporting a React component')
   const doc = <Document {...{
     __JOY_DATA__: {
-      // Used in development to replace paths for react-error-overlay
-      distDir: dev ? distDir : undefined,
       props, // The result of getInitialProps
       page, // The rendered page
       pathname, // The requested path
@@ -236,7 +234,7 @@ async function doRender (req, res, pathname, query, {
 
 export async function renderScriptError (req, res, page, error) {
   // Asks CDNs and others to not to cache the errored page
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+  res.setHeader('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
 
   if (error.code === 'ENOENT' || error.message === 'INVALID_BUILD_ID') {
     res.statusCode = 404

@@ -70,5 +70,3 @@ export default class ProductsController extends Component {
   }
 }
 
-
-

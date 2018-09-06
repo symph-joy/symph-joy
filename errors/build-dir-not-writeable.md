@@ -21,7 +21,7 @@ When using a custom server with a server file, for example called `server.js`, m
 and the custom server starts @symph/joy in production mode when `NODE_ENV` is `production`
 
 ```js
-const symphony = require('@symph/joy')
+const joy = require('@symph/joy')
 
 const dev = process.env.NODE_ENV !== 'production'
 const app = joy({ dev })

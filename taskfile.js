@@ -5,7 +5,7 @@ const mkdirp = require('mkdirp')
 const isWindows = /^win/.test(process.platform)
 
 export async function compile (task) {
-  await task.parallel(['bin', 'server', 'nextbuild', 'lib', 'client'])
+  await task.parallel(['bin', 'server', 'nextbuild', 'nextbuildstatic', 'lib', 'client'])
 }
 
 export async function bin (task, opts) {
@@ -31,6 +31,12 @@ export async function nextbuild (task, opts) {
 export async function client (task, opts) {
   await task.source(opts.src || 'client/**/*.js').babel().target('dist/client')
   notify('Compiled client files')
+}
+
+// export is a reserved keyword for functions
+export async function nextbuildstatic (task, opts) {
+  await task.source(opts.src || 'export/**/*.js').babel().target('dist/export')
+  notify('Compiled export files')
 }
 
 // Create node_modules/next for the use of test apps
