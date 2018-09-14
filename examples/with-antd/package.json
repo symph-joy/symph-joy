@@ -1,0 +1,21 @@
+{
+  "name": "5.antd-demo",
+  "version": "1.0.0",
+  "description": "使用@symph-joy框架， 集成*antd-design* UI框架例子",
+  "main": "joy.config.js",
+  "dependencies": {
+    "@symph/joy": "^0.4.4",
+    "@symph/joy-css": "^0.4.1",
+    "@symph/joy-less": "^0.4.1",
+    "antd": "^3.8.4",
+    "react": "^16.4.2",
+    "react-dom": "^16.4.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "joy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
