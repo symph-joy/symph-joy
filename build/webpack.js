@@ -261,7 +261,7 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
       // Even though require.cache is server only we have to clear assets from both compilations
       // This is because the client compilation generates the build manifest that's used on the server side
       dev && new NextJsRequireCacheHotReloader(),
-      dev && !isServer && new webpack.HotModuleReplacementPlugin(),
+      dev && !isServer && new webpack.HotModuleReplacementPlugin({multiStep: true}),
       dev && new webpack.NoEmitOnErrorsPlugin(),
       dev && new UnlinkFilePlugin(),
       dev && new CaseSensitivePathPlugin(), // Since on macOS the filesystem is case-insensitive this will make sure your path are case-sensitive
