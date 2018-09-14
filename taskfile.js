@@ -63,6 +63,7 @@ export default async function (task) {
   await task.watch('pages/**/*.js', 'copy')
   await task.watch('server/**/*.js', 'server')
   await task.watch('build/**/*.js', 'nextbuild')
+  await task.watch('export/**/*.js', 'nextbuildstatic')
   await task.watch('client/**/*.js', 'client')
   await task.watch('lib/**/*.js', 'lib')
 }

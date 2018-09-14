@@ -5,15 +5,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "joy dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "NODE_ENV=production joy build",
+    "export": "yarn run build && joy export",
+    "start": "joy start"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@symph/joy": "^0.4.5",
-    "@symph/joy-css": "^0.4.1",
-    "@symph/joy-less": "^0.4.4",
-    "@symph/joy-image": "^0.4.0",
+    "@symph/joy": "latest",
+    "@symph/joy-css": "latest",
+    "@symph/joy-less": "latest",
+    "@symph/joy-image": "latest",
     "element-react": "^1.4.19",
     "element-theme-default": "^1.4.13",
     "less": "^3.0.4",

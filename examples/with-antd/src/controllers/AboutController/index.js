@@ -1,7 +1,7 @@
 export default () => {
   return (
     <React.Fragment>
-      <p>这是关于页</p>
+      <div>这是关于页</div>
     </React.Fragment>
   );
 }

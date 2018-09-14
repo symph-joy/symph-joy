@@ -106,15 +106,15 @@ export class Head extends Component {
   }
 
   render () {
-    const { head, styles, assetPrefix, __JOY_DATA__ } = this.context._documentProps
-    const { buildId } = __JOY_DATA__
+    const { head, styles } = this.context._documentProps
+    // const { buildId } = __JOY_DATA__
     // const pagePathname = getPagePathname(pathname)
 
     return <head {...this.props}>
       {(head || []).map((h, i) => React.cloneElement(h, { key: h.key || i }))}
       {/* {page !== '/_error' && <link rel='preload' href={`${assetPrefix}/_joy/static/${buildId}/pages${pagePathname}`} as='script' nonce={this.props.nonce} />} */}
       {/* <link rel='preload' href={`${assetPrefix}/_joy/static/${buildId}/pages/_app.js`} as='script' nonce={this.props.nonce} /> */}
-      <link rel='preload' href={`${assetPrefix}/_joy/static/${buildId}/pages/_error.js`} as='script' nonce={this.props.nonce} />
+      {/* <link rel='preload' href={`${assetPrefix}/_joy/static/${buildId}/pages/_error.js`} as='script' nonce={this.props.nonce} /> */}
       {this.getPreloadDynamicChunks()}
       {this.getPreloadMainLinks()}
       {this.getCssLinks()}
@@ -203,8 +203,8 @@ export class JoyScript extends Component {
   }
 
   render () {
-    const { staticMarkup, assetPrefix, devFiles, __JOY_DATA__ } = this.context._documentProps
-    const { buildId } = __JOY_DATA__
+    const { staticMarkup, assetPrefix, devFiles } = this.context._documentProps
+    // const { buildId } = __JOY_DATA__
     // const pagePathname = getPagePathname(pathname)
 
     return <Fragment>
@@ -214,7 +214,7 @@ export class JoyScript extends Component {
       }} />}
       {/* {page !== '/_error' && <script async id={`__JOY_PAGE__${pathname}`} src={`${assetPrefix}/_joy/static/${buildId}/pages${pagePathname}`} nonce={this.props.nonce} />} */}
       {/* <script async id={`__JOY_PAGE__/_app`} src={`${assetPrefix}/_joy/static/${buildId}/pages/_app.js`} nonce={this.props.nonce} /> */}
-      <script async id={`__JOY_PAGE__/_error`} src={`${assetPrefix}/_joy/static/${buildId}/pages/_error.js`} nonce={this.props.nonce} />
+      {/* <script async id={`__JOY_PAGE__/_error`} src={`${assetPrefix}/_joy/static/${buildId}/pages/_error.js`} nonce={this.props.nonce} /> */}
       {staticMarkup ? null : this.getDynamicChunks()}
       {staticMarkup ? null : this.getScripts()}
     </Fragment>

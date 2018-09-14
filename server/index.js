@@ -11,7 +11,7 @@ import {
   serveStatic
 } from './render'
 import Router from './router'
-import { isInternalUrl } from './utils'
+// import { isInternalUrl } from './utils'
 import loadConfig from './config'
 import {
   PHASE_PRODUCTION_SERVER,
@@ -263,9 +263,9 @@ export default class Server {
   }
 
   async render (req, res, pathname, query, parsedUrl) {
-    if (isInternalUrl(req.url)) {
-      return this.handleRequest(req, res, parsedUrl)
-    }
+    // if (isInternalUrl(req.url)) {
+    //   return this.handleRequest(req, res, parsedUrl)
+    // }
 
     if (BLOCKED_PAGES.indexOf(pathname) !== -1) {
       return await this.render404(req, res, parsedUrl)

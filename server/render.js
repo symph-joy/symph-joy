@@ -4,13 +4,13 @@ import { renderToString, renderToStaticMarkup } from 'react-dom/server'
 import send from 'send'
 import generateETag from 'etag'
 import fresh from 'fresh'
-import { normalizePagePath } from './require'
+// import { normalizePagePath } from './require'
 import { loadGetInitialProps, isResSent } from '../lib/utils'
 import Head, { defaultHead } from '../lib/head'
 import ErrorDebug from '../lib/error-debug'
 import Loadable from '../lib/loadable'
 import LoadableCapture from '../lib/loadable-capture'
-import { BUILD_MANIFEST, REACT_LOADABLE_MANIFEST, SERVER_DIRECTORY, CLIENT_STATIC_FILES_PATH } from '../lib/constants'
+import { BUILD_MANIFEST, REACT_LOADABLE_MANIFEST, SERVER_DIRECTORY } from '../lib/constants'
 
 import * as DvaCore from '../lib/dva'
 import { createServerRouter } from '../lib/router'
@@ -46,20 +46,20 @@ export function renderErrorToHTML (err, req, res, pathname, query, opts = {}) {
   return doRender(req, res, pathname, query, {...opts, err, page: '/_error'})
 }
 
-function getPageFiles (buildManifest, page) {
-  const normalizedPage = normalizePagePath(page)
-  const files = buildManifest.pages[normalizedPage]
-  if (!files) {
-    console.warn(`Could not find files for ${normalizedPage} in .joy/build-manifest.json`)
-    return []
-  }
-  return files
-}
+// function getPageFiles (buildManifest, page) {
+//   const normalizedPage = normalizePagePath(page)
+//   const files = buildManifest.pages[normalizedPage]
+//   if (!files) {
+//     console.warn(`Could not find files for ${normalizedPage} in .joy/build-manifest.json`)
+//     return []
+//   }
+//   return files
+// }
 
 async function doRender (req, res, pathname, query, {
   err,
   page,
-  serverRender,
+  serverRender = true,
   ComponentPath,
   buildId,
   hotReloader,
@@ -71,15 +71,15 @@ async function doRender (req, res, pathname, query, {
   staticMarkup = false,
   joyExport = false
 } = {}) {
-  console.log(`> start render, pathname:${pathname}, err:${err || null}`)
+  console.log(`> start render, pathname:${pathname}${err ? ', error:' + err : ''}`)
   page = page || pathname
 
-  // 暂时不需要监听页面的编译情况 lane 2017-12-05
+  // 暂时不需要监听页面的编译情况
   // if (hotReloader) { // In dev mode we use on demand entries to compile the page before rendering
   //   await ensurePage(page, { dir, hotReloader })
   // }
 
-  const documentPath = join(distDir, SERVER_DIRECTORY, CLIENT_STATIC_FILES_PATH, buildId, 'pages', '_document')
+  const documentPath = join(distDir, SERVER_DIRECTORY, '_document')
   // const appPath = join(distDir, SERVER_DIRECTORY, CLIENT_STATIC_FILES_PATH, buildId, 'pages', '_app')
   let App = require('../lib/app')
   let [buildManifest, reactLoadableManifest, Document] = await Promise.all([
@@ -98,9 +98,10 @@ async function doRender (req, res, pathname, query, {
   const devFiles = buildManifest.devFiles
   const files = [
     ...new Set([
+      ...buildManifest.files
       // ...getPageFiles(buildManifest, page),
       // ...getPageFiles(buildManifest, '/_app'),
-      ...getPageFiles(buildManifest, '/_error')
+      // ...getPageFiles(buildManifest, '/_error')
     ])
   ]
 
@@ -136,7 +137,8 @@ async function doRender (req, res, pathname, query, {
     }
 
     const createApp = (Component, appProps, shouldGatherModules) => {
-      return <LoadableCapture report={moduleName => shouldGatherModules ? reactLoadableModules.push(moduleName) : undefined}>
+      return <LoadableCapture
+        report={moduleName => shouldGatherModules ? reactLoadableModules.push(moduleName) : undefined}>
         <EnhancedApp {...{
           Component: Component,
           Router,
@@ -160,8 +162,7 @@ async function doRender (req, res, pathname, query, {
           const Component = await requireComp()
           html = render(createApp(Component, {}, true))
         } else {
-          html = ''
-          // clearChunks()
+          html = '500 - Internal Error'
         }
       } else {
         if (serverRender) {
@@ -179,7 +180,6 @@ async function doRender (req, res, pathname, query, {
             isPrepared: true
           })
           // console.log('> app has prepared')
-          // clearChunks()
           const app = createApp(Component, {dva}, true)
           // 第二次渲染，此时store的state已经获取数据完成
           html = render(app)
@@ -187,7 +187,6 @@ async function doRender (req, res, pathname, query, {
           // console.log('> server render has finished')
         } else {
           html = ''
-          // clearChunks()
         }
       }
     } catch (e) {

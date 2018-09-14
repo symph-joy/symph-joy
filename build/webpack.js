@@ -1,5 +1,5 @@
 // @flow
-import type {NextConfig} from '../server/config'
+import type { NextConfig } from '../server/config'
 import path from 'path'
 import webpack from 'webpack'
 import resolve from 'resolve'
@@ -7,7 +7,7 @@ import CaseSensitivePathPlugin from 'case-sensitive-paths-webpack-plugin'
 import WriteFilePlugin from 'write-file-webpack-plugin'
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin'
 import WebpackBar from 'webpackbar'
-import {getPages} from './webpack/utils'
+import { getErrorCompFilePath, getDocumentCompFilePath } from './webpack/utils'
 import PagesPlugin from './webpack/plugins/pages-plugin'
 import NextJsSsrImportPlugin from './webpack/plugins/nextjs-ssr-import'
 import NextJsSSRModuleCachePlugin from './webpack/plugins/nextjs-ssr-module-cache'
@@ -17,10 +17,19 @@ import PagesManifestPlugin from './webpack/plugins/pages-manifest-plugin'
 import BuildManifestPlugin from './webpack/plugins/build-manifest-plugin'
 import ChunkNamesPlugin from './webpack/plugins/chunk-names-plugin'
 import { ReactLoadablePlugin } from './webpack/plugins/react-loadable-plugin'
-import {SERVER_DIRECTORY, NEXT_PROJECT_ROOT, NEXT_PROJECT_ROOT_NODE_MODULES, NEXT_PROJECT_ROOT_DIST, DEFAULT_PAGES_DIR, REACT_LOADABLE_MANIFEST, CLIENT_STATIC_FILES_RUNTIME_WEBPACK, CLIENT_STATIC_FILES_RUNTIME_MAIN} from '../lib/constants'
+import {
+  SERVER_DIRECTORY,
+  NEXT_PROJECT_ROOT,
+  NEXT_PROJECT_ROOT_NODE_MODULES,
+  NEXT_PROJECT_ROOT_DIST,
+  DEFAULT_PAGES_DIR,
+  REACT_LOADABLE_MANIFEST,
+  CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
+  CLIENT_STATIC_FILES_RUNTIME_MAIN
+} from '../lib/constants'
 import AutoDllPlugin from 'autodll-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
-import AppMainEntryPlugin from './webpack/plugins/app-main-entry-plugin'
+import ClientGlobalComponentPlugin from './webpack/plugins/client-global-component-plugin'
 
 // The externals config makes sure that
 // on the server side when modules are
@@ -33,7 +42,7 @@ function externalsConfig (dir, isServer) {
   }
 
   externals.push((context, request, callback) => {
-    resolve(request, { basedir: dir, preserveSymlinks: true }, (err, res) => {
+    resolve(request, {basedir: dir, preserveSymlinks: true}, (err, res) => {
       if (err) {
         return callback()
       }
@@ -68,9 +77,6 @@ function optimizationConfig ({dir, dev, isServer, totalPages}) {
   }
 
   const config: any = {
-    runtimeChunk: {
-      name: CLIENT_STATIC_FILES_RUNTIME_WEBPACK
-    },
     splitChunks: {
       cacheGroups: {
         default: false,
@@ -136,18 +142,22 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
 
   const distDir = path.join(dir, config.distDir)
   const outputPath = path.join(distDir, isServer ? SERVER_DIRECTORY : '')
-  const pagesEntries = await getPages(dir, {nextPagesDir: DEFAULT_PAGES_DIR, dev, buildId, isServer, pageExtensions: config.pageExtensions.join('|')})
-  const totalPages = Object.keys(pagesEntries).length
+  // const pagesEntries = await getPages(dir, {nextPagesDir: DEFAULT_PAGES_DIR, dev, buildId, isServer, pageExtensions: config.pageExtensions.join('|')})
+  const totalPages = 1
   const appEntryFilePath = path.join(dir, config.main)
-  const clientEntries = !isServer ? {
+  const errorCompFilePath = getErrorCompFilePath({dir, nextPagesDir: DEFAULT_PAGES_DIR})
+  const documentCompFilePath = getDocumentCompFilePath({dir, nextPagesDir: DEFAULT_PAGES_DIR})
+  const entries = !isServer ? {
     // Backwards compatibility
-    'main.js': [],
     [CLIENT_STATIC_FILES_RUNTIME_MAIN]: [
+      appEntryFilePath,
       path.join(NEXT_PROJECT_ROOT_DIST, 'client', (dev ? `next-dev` : 'next')),
-      appEntryFilePath
+      errorCompFilePath
+
     ].filter(Boolean)
   } : {
-    'app-main.js': appEntryFilePath
+    'app-main.js': appEntryFilePath,
+    '_document.js': documentCompFilePath
   }
 
   const resolveConfig = {
@@ -177,9 +187,7 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
     // Kept as function to be backwards compatible
     entry: async () => {
       return {
-        ...clientEntries,
-        // Only _error and _document when in development. The rest is handled by on-demand-entries
-        ...pagesEntries
+        ...entries
       }
     },
     output: {
@@ -198,7 +206,7 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
       chunkFilename: isServer ? `${dev ? '[name]' : '[name].[contenthash]'}.js` : `static/chunks/${dev ? '[name]' : '[name].[contenthash]'}.js`,
       strictModuleExceptionHandling: true
     },
-    performance: { hints: false },
+    performance: {hints: false},
     resolve: resolveConfig,
     resolveLoader: {
       modules: [
@@ -273,7 +281,8 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
       !dev && new webpack.optimize.ModuleConcatenationPlugin(),
       isServer && new PagesManifestPlugin(),
       !isServer && new BuildManifestPlugin(),
-      !isServer && new AppMainEntryPlugin({appEntryFilePath: appEntryFilePath}),
+      !isServer && new ClientGlobalComponentPlugin({sourceFilePath: appEntryFilePath, globalName: '__JOY_APP_MAIN'}),
+      !isServer && new ClientGlobalComponentPlugin({sourceFilePath: errorCompFilePath, globalName: '__JOY_ERROR'}),
       !isServer && new PagesPlugin(),
       isServer && new NextJsSsrImportPlugin(),
       isServer && new NextJsSSRModuleCachePlugin({outputPath})
@@ -282,24 +291,6 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
 
   if (typeof config.webpack === 'function') {
     webpackConfig = config.webpack(webpackConfig, {dir, dev, isServer, buildId, config, defaultLoaders, totalPages})
-  }
-
-  // Backwards compat for `main.js` entry key
-  const originalEntry = webpackConfig.entry
-  webpackConfig.entry = async () => {
-    const entry: any = {...await originalEntry()}
-
-    // Server compilation doesn't have main.js
-    if (typeof entry['main.js'] !== 'undefined') {
-      entry[CLIENT_STATIC_FILES_RUNTIME_MAIN] = [
-        ...entry['main.js'],
-        ...entry[CLIENT_STATIC_FILES_RUNTIME_MAIN]
-      ]
-
-      delete entry['main.js']
-    }
-
-    return entry
   }
 
   return webpackConfig

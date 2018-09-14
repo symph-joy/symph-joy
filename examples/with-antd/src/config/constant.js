@@ -1,6 +1,3 @@
-import getConfig from '@symph/joy/config';
-
-const {publicRuntimeConfig: {env}} = getConfig();
 
 export const menus = [
   {
@@ -9,27 +6,21 @@ export const menus = [
     children: [
       {
         title: '项目仓库',
-        path: '/main/data/list'
+        path: '/data/list'
       },
       {
         title: '新增项目',
-        path: '/main/data/add'
+        path: '/data/add'
       }
     ]
   },
   {
     title: '关于',
     icon: 'info-circle-o',
-    path: '/main/about'
+    path: '/about'
   }
 ];
 
-// 请求远程服务器地址
-export const apiPath = env === 'production'
-  ? '/'  //生产环境地址
-  : '/';  // 非生产环境地址
-
 export default {
   menus,
-  apiPath
 }

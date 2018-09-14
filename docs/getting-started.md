@@ -6,7 +6,7 @@
 运行`yarn init`创建一个空工程，填写项目的基本信息，当然也可以在一个已有的项目中安装使用。
 
 ```bash
-yarn install --save @symph/joy react react-dom
+yarn add --save @symph/joy react react-dom
 ```
 > @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html)及以上版本
 
@@ -15,7 +15,7 @@ yarn install --save @symph/joy react react-dom
 ```json
 {
   "scripts": {
-    "dev": "joy"
+    "dev": "joy dev"
   }
 }
 ```
@@ -517,12 +517,12 @@ export default () => <HelloBundle title="Dynamic Bundle" />
 
 ## 自定义 `<Document>`
 
-如果需要在后html文件引入额外的`<script>`或`<link>`等内容，需要自定义<Document>，例如在使用[@symph/joy-css](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-css)插件时，需要引入`/_joy/static/style.css`样式文件。
+如果需要在html文件引入额外的`<script>`或`<link>`等内容，需要自定义<Document>。
 
 在`@symph/joy`中，所有业务相关的代码都放在`src`目录中。`_document.js`只在服务端渲染使用，并不会在浏览器端加载，所以不能在这里放置任何的业务代码，如果希望在整个应用里共享一部分功能，请将它们放到`src/index.js`应用入口组件中。
 
 ```jsx
-// /pages/_document.js
+// /src/_document.js
 import Document, { Head, Main, JoyScript } from '@symph/joy/document'
 
 export default class MyDocument extends Document {
@@ -539,6 +539,41 @@ export default class MyDocument extends Document {
         </body>
       </html>
     )
+  }
+}
+```
+
+## 自定义 Error 界面
+
+当出现错误时，我们希望能够友好的提示用户。创建`src/_error.js`文件，编写自定义的Error组件。
+
+```jsx
+import React from 'react'
+import PropTypes from 'prop-types'
+import Head from './head'
+
+// src/_error.js
+export default class Error extends React.Component {
+  static propTypes = {
+    statusCode: PropTypes.number
+  }
+
+  render () {
+    const { statusCode } = this.props
+    const title = statusCode === 404
+      ? 'This page could not be found'
+      : HTTPStatus[statusCode] || 'An unexpected error has occurred'
+
+    return <div style={styles.error}>
+      <Head>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+        <title>{statusCode}: {title}</title>
+      </Head>
+      <div>
+        <div>Sorry! </div>
+        <div>statusCode:{statusCode ? <h1 style={styles.h1}>{statusCode}</h1> : null}</div>
+      </div>
+    </div>
   }
 }
 ```

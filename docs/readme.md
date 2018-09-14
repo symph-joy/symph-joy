@@ -25,7 +25,7 @@
 运行`yarn init`创建一个空工程，并填写项目的基本信息，当然也可以在一个已有的项目中直接安装。
 
 ```bash
-yarn install --save @symph/joy react react-dom
+yarn add --save @symph/joy react react-dom
 ```
 
 > @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html)及以上版本
@@ -35,14 +35,12 @@ yarn install --save @symph/joy react react-dom
 ```json
 {
   "scripts": {
-    "dev": "joy",
-    "build": "joy build",
-    "start": "joy start"
+    "dev": "joy dev"
   }
 }
 ```
 
-然后就可以开始你的开发工作了，创建`./src/index.js`文件，并插入以下代码：
+然后就可以开始工作了，创建`./src/index.js`文件，编写第一个组件：
 
 ```jsx
 export default () => <div>Welcome to @symph/joy!</div>
@@ -61,6 +59,7 @@ export default () => <div>Welcome to @symph/joy!</div>
 - [使用指南](https://lnlfps.github.io/symph-joy/#/getting-started)
 - [配置文档](https://lnlfps.github.io/symph-joy/#/configurations)
 - [插件列表](https://lnlfps.github.io/symph-joy/#/plugins)
+- [升级日志](https://lnlfps.github.io/symph-joy/#/change-log)
 
 ## 联系我们
 

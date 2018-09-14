@@ -1,3 +1,3 @@
 export default () => {
-  return (<p>Loading</p>);
+  return (<div>Loading</div>);
 }

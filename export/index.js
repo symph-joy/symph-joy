@@ -48,7 +48,7 @@ export default async function (dir, options, configuration) {
   // Initialize the output directory
   const outDir = options.outdir
   await del(join(outDir, '*'))
-  await mkdirp(join(outDir, '_joy', buildId))
+  // await mkdirp(join(outDir, '_joy', buildId))
 
   // Copy static directory
   if (existsSync(join(dir, 'static'))) {
@@ -79,10 +79,11 @@ export default async function (dir, options, configuration) {
 
   // Start the rendering process
   const renderOpts = {
-    ComponentPath: resolve(dir, distDir, './dist', './app-main.js'),
+    ComponentPath: resolve(dir, distDir, SERVER_DIRECTORY, './app-main.js'),
     dir,
     buildId,
     joyExport: true,
+    serverRender: nextConfig.serverRender,
     assetPrefix: nextConfig.assetPrefix.replace(/\/$/, ''),
     distDir,
     dev: false,

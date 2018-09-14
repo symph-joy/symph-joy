@@ -3,11 +3,8 @@ import React, {PureComponent} from 'react';
 import Head from '@symph/joy/head';
 import {menus} from '../../config/constant';
 import {Layout} from 'antd';
-import dynamic from '@symph/joy/dist/lib/dynamic';
-
-// 加载业务
-const Sider = dynamic(import('../../components/Sider'));
-const Header = dynamic(import('../../components/Header'));
+import Sider from '../../components/Sider'
+import Header from '../../components/Header'
 
 export default class AppController extends PureComponent {
   static state = {
@@ -21,13 +18,12 @@ export default class AppController extends PureComponent {
   };
 
   render() {
-    console.log(this.props)
     return (
       <React.Fragment>
         <Head>
           <title>首页 - antd-design</title>
         </Head>
-        <Layout className={styles.page}>
+        <Layout className={styles.page} hasSider>
           <Layout.Sider className={styles.siderBox}>
             <Sider menus={menus} />
           </Layout.Sider>

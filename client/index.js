@@ -10,7 +10,7 @@ import * as DvaCore from '../lib/dva'
 import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
 import createHistory from 'history/createBrowserHistory'
-import { routerReducer, routerMiddleware } from 'react-router-redux'
+import { connectRouter, routerMiddleware } from 'connected-react-router'
 import ErrorBoundary from './error-boundary'
 import Loadable from '../lib/loadable'
 import App from '../lib/app'
@@ -55,7 +55,7 @@ envConfig.setConfig({
 const asPath = getURL()
 
 const pageLoader = new PageLoader(buildId, prefix)
-window.__JOY_LOADED_PAGES__.forEach(({ route, fn }) => {
+window.__JOY_LOADED_PAGES__.forEach(({route, fn}) => {
   pageLoader.registerPage(route, fn)
 })
 delete window.__JOY_LOADED_PAGES__
@@ -80,7 +80,7 @@ export default async ({
   if (process.env.NODE_ENV === 'development') {
     webpackHMR = passedWebpackHMR
   }
-  ErrorComponent = await pageLoader.loadPage('/_error')
+  ErrorComponent = window.__JOY_ERROR
   // App = await pageLoader.loadPage('/_app')
 
   let initialErr = err
@@ -101,12 +101,15 @@ export default async ({
 
   const history = createHistory()
   const routerMid = routerMiddleware(history)
-  const dva = DvaCore.create({initialState: initStoreState}, {
-    initialReducer: {
-      router: routerReducer
-    },
+  const dva = DvaCore.create({
+    initialState: initStoreState,
+    onReducer: (rootReduce) => {
+      return connectRouter(history)(rootReduce)
+    }
+  }, {
+    initialReducer: {},
     setupMiddlewares: (middlewares) => {
-      middlewares.push(routerMid)
+      middlewares.unshift(routerMid)
       return middlewares
     }
   })
@@ -157,6 +160,7 @@ export async function renderError (props) {
 }
 
 let isInitialRender = true
+
 function renderReactElement (reactEl, domEl) {
   // The check for `.hydrate` is there to support React alternatives like preact
   if (isInitialRender && typeof ReactDOM.hydrate === 'function') {
@@ -167,7 +171,7 @@ function renderReactElement (reactEl, domEl) {
   }
 }
 
-async function doRender ({ App, Component, props, hash, err, emitter: emitterProp = emitter, Router, dva, isComponentDidPrepare }) {
+async function doRender ({App, Component, props, hash, err, emitter: emitterProp = emitter, Router, dva, isComponentDidPrepare}) {
   // Usual getInitialProps fetching is handled in next/router
   // this is for when ErrorComponent gets replaced by Component by HMR
   // if (!props && Component &&
@@ -184,7 +188,7 @@ async function doRender ({ App, Component, props, hash, err, emitter: emitterPro
   // lastAppProps has to be set before ReactDom.render to account for ReactDom throwing an error.
   // lastAppProps = appProps
 
-  emitterProp.emit('before-reactdom-render', { Component, ErrorComponent, appProps })
+  emitterProp.emit('before-reactdom-render', {Component, ErrorComponent, appProps})
 
   // In development runtime errors are caught by react-error-overlay.
   if (process.env.NODE_ENV === 'development') {
@@ -207,5 +211,5 @@ async function doRender ({ App, Component, props, hash, err, emitter: emitterPro
     ), appContainer)
   }
 
-  emitterProp.emit('after-reactdom-render', { Component, ErrorComponent, appProps })
+  emitterProp.emit('after-reactdom-render', {Component, ErrorComponent, appProps})
 }

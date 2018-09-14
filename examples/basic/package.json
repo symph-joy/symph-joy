@@ -1,19 +1,19 @@
 {
-  "name": "dva-example",
+  "name": "basic",
   "private": true,
   "scripts": {
     "dev": "joy dev",
     "build": "NODE_ENV=production joy build",
-    "export": "npm run build && joy export",
+    "export": "yarn run build && joy export",
     "start": "joy start"
   },
   "engines": {
     "install-node": "6.9.2"
   },
   "dependencies": {
-    "@symph/joy": "^0.4.5",
+    "@symph/joy": "^0.5.0",
     "@symph/joy-image": "^0.4.1",
-    "@symph/joy-less": "^0.4.4",
+    "@symph/joy-less": "^0.5.0",
     "less": "^3.8.1",
     "prop-types": "^15.6.2",
     "react": "^16.4.1",

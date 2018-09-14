@@ -5,13 +5,14 @@
  */
 import { ConcatSource } from 'webpack-sources'
 
-export default class AppMainEntryPlugin {
-  constructor ({appEntryFilePath}) {
-    if (appEntryFilePath === undefined || appEntryFilePath === null || appEntryFilePath.length === 0) {
-      throw new Error('has not config app entry component')
+export default class ClientGlobalComponentPlugin {
+  constructor ({sourceFilePath, globalName}) {
+    if (sourceFilePath === undefined || sourceFilePath === null || sourceFilePath.length === 0) {
+      throw new Error('ClientGlobalComponentPlugin init error,  sourceFilePath is empty')
     }
-    this.appEntryFilePath = appEntryFilePath
-    console.log(`> App Main Component: ${appEntryFilePath}`)
+    this.sourceFilePath = sourceFilePath
+    this.globalName = globalName
+    console.log(`> ${this.globalName} source path is ${this.sourceFilePath}`)
   }
 
   apply (compiler) {
@@ -21,20 +22,19 @@ export default class AppMainEntryPlugin {
           module = module.rootModule
         }
 
-        if (!module.resource || module.resource !== this.appEntryFilePath) {
+        if (!module.resource || module.resource !== this.sourceFilePath) {
           return moduleSource
         }
-        console.log(`> App main entry file is ${module.resource}`)
         const source = new ConcatSource()
         source.add(moduleSource)
         source.add(`
         ;
         (function(Comp){
-          window.__JOY_APP_MAIN = Comp;
+          window.${this.globalName} = Comp;
           if (module.hot){
               module.hot.accept()
           }
-        })(__webpack_exports__)
+        })(module.exports || __webpack_exports__ )
         ;
         `)
         return source

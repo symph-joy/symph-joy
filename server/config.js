@@ -34,7 +34,12 @@ const defaultConfig: NextConfig = {
     return nanoid()
   },
   generateEtags: true,
-  pageExtensions: ['jsx', 'js']
+  pageExtensions: ['jsx', 'js'],
+  exportPathMap: async () => {
+    return {
+      '/': {page: '/'}
+    }
+  }
 }
 
 type PhaseFunction = (phase: string, options: {defaultConfig: NextConfig}) => NextConfig
