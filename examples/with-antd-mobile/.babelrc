@@ -1,0 +1,14 @@
+{
+  "presets": [
+    "@symph/joy/babel"
+  ],
+  "plugins": [
+    [
+      "import",
+      {
+        "libraryName": "antd-mobile",
+        "style": true
+      }
+    ]
+  ]
+}
