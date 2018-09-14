@@ -163,12 +163,13 @@ let isInitialRender = true
 
 function renderReactElement (reactEl, domEl) {
   // The check for `.hydrate` is there to support React alternatives like preact
-  if (isInitialRender && typeof ReactDOM.hydrate === 'function') {
+  if (initStoreState && initStoreState['@@joy']['isPrepared'] && isInitialRender && typeof ReactDOM.hydrate === 'function') {
     ReactDOM.hydrate(reactEl, domEl)
-    isInitialRender = false
   } else {
     ReactDOM.render(reactEl, domEl)
   }
+
+  isInitialRender = false
 }
 
 async function doRender ({App, Component, props, hash, err, emitter: emitterProp = emitter, Router, dva, isComponentDidPrepare}) {
