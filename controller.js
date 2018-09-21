@@ -1,1 +1,1 @@
-module.exports = require('./dist/lib/dva/controller')
+module.exports = require('./dist/lib/controller')

@@ -6,7 +6,7 @@ import { createClientRouter } from '../lib/router'
 import EventEmitter from '../lib/EventEmitter'
 import { loadGetInitialProps, getURL } from '../lib/utils'
 import PageLoader from '../lib/page-loader'
-import * as DvaCore from '../lib/dva'
+import {create as createTempo} from '@symph/tempo'
 import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
 import createHistory from 'history/createBrowserHistory'
@@ -101,7 +101,7 @@ export default async ({
 
   const history = createHistory()
   const routerMid = routerMiddleware(history)
-  const dva = DvaCore.create({
+  const tempo = createTempo({
     initialState: initStoreState,
     onReducer: (rootReduce) => {
       return connectRouter(history)(rootReduce)
@@ -113,12 +113,12 @@ export default async ({
       return middlewares
     }
   })
-  dva.start()
+  tempo.start()
 
   Router = createClientRouter(history)
 
   const hash = location.hash.substring(1)
-  render({App, Component, props, hash, err: initialErr, emitter, Router, dva, isComponentDidPrepare: !!initStoreState})
+  render({App, Component, props, hash, err: initialErr, emitter, Router, tempo, isComponentDidPrepare: !!initStoreState})
 
   return emitter
 }
@@ -172,7 +172,7 @@ function renderReactElement (reactEl, domEl) {
   isInitialRender = false
 }
 
-async function doRender ({App, Component, props, hash, err, emitter: emitterProp = emitter, Router, dva, isComponentDidPrepare}) {
+async function doRender ({App, Component, props, hash, err, emitter: emitterProp = emitter, Router, tempo, isComponentDidPrepare}) {
   // Usual getInitialProps fetching is handled in next/router
   // this is for when ErrorComponent gets replaced by Component by HMR
   // if (!props && Component &&
@@ -185,7 +185,7 @@ async function doRender ({App, Component, props, hash, err, emitter: emitterProp
   // Component = Component || lastAppProps.Component
   // props = props || lastAppProps.props
 
-  const appProps = {Component, hash, err, props, headManager, Router, dva, isComponentDidPrepare}
+  const appProps = {Component, hash, err, props, headManager, Router, tempo, isComponentDidPrepare}
   // lastAppProps has to be set before ReactDom.render to account for ReactDom throwing an error.
   // lastAppProps = appProps
 

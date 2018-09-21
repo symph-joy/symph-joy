@@ -12,7 +12,7 @@ import Loadable from '../lib/loadable'
 import LoadableCapture from '../lib/loadable-capture'
 import { BUILD_MANIFEST, REACT_LOADABLE_MANIFEST, SERVER_DIRECTORY } from '../lib/constants'
 
-import * as DvaCore from '../lib/dva'
+import {create as createTempo} from '@symph/tempo'
 import { createServerRouter } from '../lib/router'
 
 // Based on https://github.com/jamiebuilds/react-loadable/pull/132
@@ -167,23 +167,23 @@ async function doRender (req, res, pathname, query, {
       } else {
         if (serverRender) {
           const Component = await requireComp()
-          const dva = DvaCore.create({})
-          dva.start()
+          const tempo = createTempo({})
+          tempo.start()
           // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
           // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
-          renderToStaticMarkup(createApp(Component, {dva}, false))
+          renderToStaticMarkup(createApp(Component, {tempo}, false))
 
-          await dva.prepareManager.waitAllPrepareFinished()
+          await tempo.prepareManager.waitAllPrepareFinished()
 
-          await dva.dispatch({
+          await tempo.dispatch({
             type: '@@joy/updatePrepareState',
             isPrepared: true
           })
           // console.log('> app has prepared')
-          const app = createApp(Component, {dva}, true)
+          const app = createApp(Component, {tempo}, true)
           // 第二次渲染，此时store的state已经获取数据完成
           html = render(app)
-          initStoreState = dva._store.getState()
+          initStoreState = tempo._store.getState()
           // console.log('> server render has finished')
         } else {
           html = ''
