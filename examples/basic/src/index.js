@@ -9,7 +9,7 @@ export default class Main extends Component {
   render () {
     return (
       <div>
-        <h1>Example Basic</h1>
+        <h1>Example Basic - Header</h1>
         <Switch>
           <Route exact path="/products/:id" component={ProductDetailController}/>
           <Route exact path="/" component={ProductsController}/>

@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import styles from './ProductsController.less'
-import controller, { requireModel } from '@symph/joy/controller'
+import {controller, requireModel } from '@symph/joy/controller'
+import { routerRedux } from '@symph/joy/router'
 import { Link } from '@symph/joy/router'
 import ImageView from '../components/image-view'
 import ProductsModel from '../models/ProductsModel'
@@ -14,14 +15,6 @@ import ProductsModel from '../models/ProductsModel'
   }
 })
 export default class ProductsController extends Component {
-  static contextProps = {
-    isComponentDidPrepare: PropTypes.bool,
-  }
-
-  constructor (props, context) {
-    super(...arguments)
-  }
-
   async componentPrepare () {
     let {products} = this.props
 
@@ -33,7 +26,7 @@ export default class ProductsController extends Component {
 
   getProducts = async (pageIndex, pageSize) => {
     let {dispatch} = this.props
-    // call model's effect method
+    // call model's method
     await dispatch({
       type: 'products/getProducts',
       pageIndex,
@@ -52,19 +45,27 @@ export default class ProductsController extends Component {
     })
   }
 
+  onClickOpenByJs = () => {
+    const {dispatch} = this.props;
+    dispatch(routerRedux.push(`/products/0`))
+  }
+
   render () {
     let {products = [], pageIndex} = this.props
     return (
       <div className={styles.root}>
         <ImageView className={styles.logo}/>
-        <div>Product List</div>
-        <button onClick={this.addProduct}>add new product</button>
+        <h3>Product List</h3>
+        <div className={styles.actions}>
+          <button className={styles.action} onClick={this.addProduct}>Add New Product</button>
+          <button className={styles.action} onClick={this.onClickOpenByJs}>Open Detail</button>
+        </div>
         <div>
           {products.map((product, i) => {
             return <div className={styles.product} key={product.id} ><Link to={`/products/${product.id}`}>id:{product.id}, name:{product.name}, price: {product.price}￥</Link></div>
           })}
         </div>
-        <button onClick={this.getProducts.bind(this, pageIndex + 1, 5)}>next page</button>
+        <div className={styles.btnNextPage} onClick={this.getProducts.bind(this, pageIndex + 1, 5)}>next page &raquo;</div>
       </div>
     )
   }
