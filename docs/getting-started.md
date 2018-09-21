@@ -226,7 +226,7 @@ app.prepare()
 
 ## 应用组件
 
-由于javascript语言的开放性，且标准在不断更新，在实际的开发工中，不同的开发人员，所编写的应用在结构和代码风格上往往存在较大的差异，为了让项目更适合多人协同开发，且易于迭代维护，@symph/joy提供了应用层组件([MVC组件](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=mvc%E7%9A%84%E6%80%9D%E8%80%83))来规范代码。
+@symph/joy采用 [MVC组件](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=mvc%E7%9A%84%E6%80%9D%E8%80%83) 来规范应用各部分的职责，使逻辑更清晰，便于协同开发和维护。
 
 - Model: 管理应用的行为和数据，普通class类，有初始状态，业务运行中更新model状态
 - View: 展示数据，继承React.Component
@@ -236,11 +236,11 @@ app.prepare()
 
 图中蓝色的箭头表示数据流的方向，红色箭头表示控制流的方向，他们都是单向流，store中的`state`对象是不可修改其内部值的，状态发生改变后，都会生成一个新的state对象，且只将有变化的部分更新到界面上，这和[redux](https://redux.js.org/)的工作流程是一致的。
 
-> 这里其实只是对redux进行MVC层面的封装，并未添加新的技术，依然支持redux的原生用法，定制redux插件等，如果想深入了解redux，请阅读其详细文档：[redux](https://redux.js.org/)
+> 这里只是对redux进行MVC层面的封装，并未添加新的技术，依然可以使用redux的原生接口，如果想深入了解redux，请阅读其详细文档：[redux](https://redux.js.org/)
 
 ### Model
 
-Model管理应用的行为和数据，Model拥有初始状态`initState`和更新状态的方法`setState(nextState)`，这和Component的state概念类似，业务在执行的过程中，不断的更新`state`，当`state`发生改变时，和`state`绑定的View也会动态的更新。这里并没有什么魔法和创造新的东西，只是将redux的`action`、`actionCreator`、`reducer`、`thunk`、`saga`等复杂概念简化为业务方法和状态对象两个概念，让我们更专注于业务实现，代码也更简洁.
+Model管理应用的行为和数据，Model拥有初始状态`initState`和更新状态的方法`setState(nextState)`，这和Component的state概念类似，业务在执行的过程中，不断更新`state`，当`state`发生改变时，和`state`绑定的View也会动态的更新。这里并没有什么魔法和创造新的东西，只是将redux的`action`、`actionCreator`、`reducer`、`thunk`、`saga`等复杂概念简化为业务方法和业务数据两个概念，让我们更专注于业务实现，代码也更简洁.
 
 下面是一个简单的model示例：
 
@@ -327,7 +327,7 @@ model将会被注册到redux store中，由store统一管理model的状态，使
 
 ### Controller
 
-绑定Model数据到View，调用Model中的业务，并新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，该方法是一个异步函数，在服务端渲染时，会等待其执行完成后，才会渲染出html，然后浏览器会直接使用在服务端获取到的数据来展现界面，不再重复执行`componentPrepare`方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在客户端上运行。在一次页面请求的过程中，系统会保证该方法只执行一次，避免数据重复加载。
+Controller需要申明其依赖哪些Model，以及绑定Model的中的数据，和调用Model中的业务方法。它是一个React组件，可以像其它React组件一样创建和使用，新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，该方法是一个异步函数，在服务端渲染时，会等待其执行完成后，才会渲染出html，然后浏览器会直接使用在服务端获取到的数据来展现界面，不再重复执行`componentPrepare`方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在客户端上运行。在一次页面请求的过程中，系统会保证该方法只执行一次，避免数据重复加载。
 
 ```jsx
 import React, {Component} from 'react';
@@ -395,9 +395,9 @@ export default class IndexController extends Component {
  ```jsx
  import {routerRedux} from '@symph/joy/router'
 
-  ......
-  dispatch(routerRedux.push('/abount')))
-  ......
+ ......
+   dispatch(routerRedux.push('/abount')))
+ ......
   
  ```
 
