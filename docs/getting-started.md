@@ -378,6 +378,25 @@ export default class IndexController extends Component {
 
 - 每个controller的`props`都会被注入一个redux的`dispatch`方法，`dispatch`方法是controller调用model的唯一途径，该方法的返回值是业务方法的返回值(Promise对象)，这和redux的dispatch方法有差别。
 
+### View
+
+View是一个普通的React组件，其只负责界面展示，展示的数据来自父组件，通过`this.props`属性读取。 
+
+```javascript
+import React, {Component} from 'react'
+
+class TextView extends Component {
+  render() {
+    let {message} = this.props
+    return (
+      <div>
+        {message}
+      </div>
+    )
+  }
+}
+```
+
 ## Router
 
 请查看 [react-router-4 官方文档](https://reacttraining.com/react-router/web/example/basic)
