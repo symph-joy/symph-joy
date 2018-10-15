@@ -12,7 +12,7 @@
 ## 特征
 
 - 零配置可用，快速开发，已集成react、redux、react-router4和ES6、7语法支持等
-- 支持服务端渲染，只需在Component中添加[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/getting-started?id=controller)一个方法来获取数据
+- 支持服务端渲染，只需在Component中添加[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/getting-started?id=controller)一个方法来获取数据
 - 支持静态版本导出，脱离Node.js运行，也可单独导出静态页面
 - 使用MVC架构，应用结构清晰、依赖明确，创新式的Model类简化业务方法和数据管理
 - 支持aync语法来编排业务，监听业务执行结果
