@@ -1,28 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import HeadManager from './head-manager'
-// import { createRouter } from '../lib/router'
 import { createClientRouter } from '../lib/router'
 import EventEmitter from '../lib/EventEmitter'
-import { loadGetInitialProps, getURL } from '../lib/utils'
-import PageLoader from '../lib/page-loader'
+import { getURL, loadGetInitialProps } from '../lib/utils'
 import {create as createTempo} from '@symph/tempo'
-import * as asset from '../lib/asset'
-import * as envConfig from '../lib/runtime-config'
 import createHistory from 'history/createBrowserHistory'
 import { connectRouter, routerMiddleware } from 'connected-react-router'
 import ErrorBoundary from './error-boundary'
 import Loadable from '../lib/loadable'
 import App from '../lib/app'
-
-// Polyfill Promise globally
-// This is needed because Webpack's dynamic loading(common chunks) code
-// depends on Promise.
-// So, we need to polyfill it.
-// See: https://webpack.js.org/guides/code-splitting/#dynamic-imports
-if (!window.Promise) {
-  window.Promise = Promise
-}
 
 const {
   __JOY_DATA__: {
@@ -31,35 +18,15 @@ const {
     // page,
     pathname,
     query,
-    buildId,
-    assetPrefix,
-    runtimeConfig,
+    // buildId,
+    // assetPrefix,
+    // runtimeConfig,
     initStoreState
   },
   location
 } = window
 
-const prefix = assetPrefix || ''
-
-// With dynamic assetPrefix it's no longer possible to set assetPrefix at the build time
-// So, this is how we do it in the client side at runtime
-__webpack_public_path__ = `${prefix}/_joy/` //eslint-disable-line
-// Initialize next/asset with the assetPrefix
-asset.setAssetPrefix(prefix)
-// Initialize next/config with the environment configuration
-envConfig.setConfig({
-  serverRuntimeConfig: {},
-  publicRuntimeConfig: runtimeConfig
-})
-
 const asPath = getURL()
-
-const pageLoader = new PageLoader(buildId, prefix)
-window.__JOY_LOADED_PAGES__.forEach(({route, fn}) => {
-  pageLoader.registerPage(route, fn)
-})
-delete window.__JOY_LOADED_PAGES__
-window.__JOY_REGISTER_PAGE = pageLoader.registerPage.bind(pageLoader)
 
 const headManager = new HeadManager()
 const appContainer = document.getElementById('__joy')

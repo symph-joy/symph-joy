@@ -150,10 +150,10 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
   const entries = !isServer ? {
     // Backwards compatibility
     [CLIENT_STATIC_FILES_RUNTIME_MAIN]: [
+      path.join(NEXT_PROJECT_ROOT_DIST, 'client', 'init'),
       appEntryFilePath,
       path.join(NEXT_PROJECT_ROOT_DIST, 'client', (dev ? `next-dev` : 'next')),
       errorCompFilePath
-
     ].filter(Boolean)
   } : {
     'app-main.js': appEntryFilePath,

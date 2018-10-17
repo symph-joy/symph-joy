@@ -11,10 +11,12 @@
     "@symph/joy-css": "latest",
     "@symph/joy-less": "latest",
     "antd-mobile": "2.2.5",
-    "babel-plugin-import": "1.8.0",
     "less": "^3.8.1",
     "react": "^16.4.1",
     "react-dom": "^16.4.1"
+  },
+  "devDependencies": {
+    "babel-plugin-import": "1.8.0"
   },
   "scripts": {
     "dev": "joy dev",
