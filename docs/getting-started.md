@@ -34,7 +34,7 @@ export default class Index extends Component{
 
 然后运行`yarn run dev` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `yarn** run dev -- -p <your port here>`
 
-到目前为止，一个简单完整的react app已经创建完成，例子[hello-world](https://github.com/lnlfps/symph-joy/tree/master/examples/hello-world)，到这儿我们拥有了哪些功能呢？
+到目前为止，一个完整的前端应用已经创建完成，可以在上面进行业务开发了，例子[hello-world](https://github.com/lnlfps/symph-joy/tree/master/examples/hello-world)，到这儿我们拥有了哪些功能呢？
 
 - 应用入口（`./src/index.js`），一切都从这里开始，以后可以添加子路由、布局、Model等组件
 - 启动了一个服务器，支持服务端渲染和业务请求代理转发等
@@ -401,10 +401,24 @@ class TextView extends Component {
 
 请查看 [react-router-4 官方文档](https://reacttraining.com/react-router/web/example/basic)
  
-### 导入
+### 导入方法
 
  ```jsx
- import {Switch, Route, Link} from '@symph/joy/router'
+ import {  StaticRouter,
+           BrowserRouter,
+           Switch,
+           Route,
+           createServerRouter,
+           createClientRouter,
+           Link,
+           HashRouter,
+           NavLink,
+           Prompt,
+           MemoryRouter,
+           Redirect,
+           Router,
+           withRouter,
+           routerRedux } from '@symph/joy/router'
  ```
 
  ### react-router-redux
@@ -416,6 +430,12 @@ class TextView extends Component {
 
  ......
    dispatch(routerRedux.push('/abount')))
+   
+   //or
+   dispatch(routerRedux.push({
+     pathname: '/about',
+     search: `?x=xxx`
+   }))
  ......
   
  ```
@@ -481,7 +501,7 @@ server.listen(port, (err) => {
 
 ## 动态导入 import
 
-`@symph/joy`支持JavaScript的TC39 [dynamic import](https://github.com/tc39/proposal-dynamic-import)提议，意味着你可以将代码分割为多个代码块，在浏览器上运行时，按需导入`import`需要的模块。在服务端渲染时，依然使用同步的方式加载`import`的模块，保证渲染出整个页面的内容。
+`@symph/joy`支持JavaScript的TC39 [dynamic import](https://github.com/tc39/proposal-dynamic-import)提议，意味着你可以将代码分割为多个代码块，在浏览器上运行时，只加载当前需要的代码块。
 
 `@symph/joy/dynamic`模块实现了分割代码、动态加载和加载动画等功能，下面展示了其2种用法：
 
