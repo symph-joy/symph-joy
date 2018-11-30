@@ -225,8 +225,6 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
         },
         {
           test: /\.(js|jsx)$/,
-          include: [dir],
-          exclude: /node_modules/,
           use: defaultLoaders.babel
         }
       ].filter(Boolean)
