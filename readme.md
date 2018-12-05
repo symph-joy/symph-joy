@@ -3,22 +3,22 @@
 
 ## 介绍
 
-[https://lnlfps.github.io/symph-joy](https://lnlfps.github.io/symph-joy)
+官网：[https://lnlfps.github.io/symph-joy](https://lnlfps.github.io/symph-joy)
 
-@symph/joy让我们轻松的进行前端应用开发，无需复杂的配置，清晰的业务和数据管理，已集成大量的前端最佳实践和优化方案，即使你才刚接触React，也可以轻松创建高可用、可维护的前端应用。
+@symph/joy让我们轻松的进行前端应用开发，零配置可用，简单清晰的业务和数据管理模块，已集成大量最佳实践的优化方案，即使你才刚接触React，也可以轻松创建高可用、可维护的前端应用。
 
 > 该项目已在生产环境大量使用，如有任何疑问、使用帮助、bug反馈、特性讨论，请和我们联系(邮件：lnlfps@gmail.com; QQ群：929743297)，或者到github创建issue，欢迎加入。
 
 ## 特征
 
 - 零配置可用，优化的默认配置，快速开发，已集成react、redux、react-router4和ES6、7语法支持等
-- 支持服务端渲染，只需在Component中添加[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/getting-started?id=controller)一个方法来获取数据
+- 支持服务端渲染，在业务组件内部获取渲染数据，组件内聚更高，便于维护
 - 支持静态版本导出，脱离Node.js运行，也可单独导出静态页面
-- 使用MVC架构，应用结构清晰、依赖明确，创新式的Model类简化业务方法和数据管理
-- 支持aync语法来编排业务，监听业务执行结果
-- 使用`@`装饰器的方式，动态注册model和controller，不侵入业务代码
-- 内置业务请求代理服务，解决跨域和服务中转问题，前后端分离开发畅通无阻
-- 支持插件化配置
+- 使用MVC架构，应用结构清晰、依赖明确，创新Model类简化业务方法和数据管理，简化和规范redux的使用
+- 支持aync语法来编排业务，监听业务执行结果，再复杂的业务逻辑也能轻松找到解决方案
+- 使用`@`装饰器的方式，动态注册model和controller，不侵入业务代码，代码更干净
+- 内置网络请求代理服务，解决跨域和服务中转问题，前后端分离开发畅通无阻
+- 支持插件化配置，自定义配置插件也很容易
 
 ## 安装和开始
 
@@ -40,15 +40,66 @@ yarn add  @symph/joy react react-dom
 }
 ```
 
-然后就可以开始正式工作了，创建`./src/index.js`文件，编写第一个功能组件：
+然后就可以开始正式工作了，下面从`hello world`示例开始，首先编写一个Model组件来管理应用的数据和业务，如果没有复杂的数据需要管理，也可以省略这步。
 
-```jsx
-export default () => <div>Welcome to @symph/joy!</div>
+```javascript
+// /src/models/HelloModel.js
+
+import model from '@symph/joy/model'
+
+@model() // 标明这是一个Model。
+export default class HelloModel {
+  namespace = 'hello'
+  
+  // model的初始状态数据
+  initState = {
+    message: 'Welcome to @symph/joy!'
+  }
+  
+  // async业务方法，从服务端异步获取新的欢迎消息
+  async fetchMessage () {
+    let newMsg = await fetch('/hello_message');
+    //更新model的状态，界面的状态也会自动更新
+    this.setState({
+      message: newMsg
+    });
+  }
+ 
+}
 ```
 
-最后运行`yarn run dev`命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `yarn run dev -- -p <your port here>`
+接下来编写界面，展示欢迎消息。`@symph/joy`默认使用`/src/index.js`文件作为应用的启动入口组件，可以在这里初始化基础功能模块和设置子页面路由等。
 
-到目前为止，一个简单完整的前端已经创建完成，还有更多的让人惊讶的特性，等着你发现，请查看 [详细使用指南](https://lnlfps.github.io/symph-joy/#/getting-started)
+```javascript
+// /src/index.js
+import React, { Component } from 'react'
+import {controller, requireModel } from '@symph/joy/controller'
+import HelloModel from './models/HelloModel'
+
+
+@controller((store) => {             // 标明这是一个Controller
+  return {
+    message: store.hello.message,    // 绑定model中的数据
+  }
+})
+@requireModel(HelloModel)            // 注册依赖的Model
+export default class HelloController extends Component {
+  
+  async componentDidMount() {
+    await this.props.dispatch({
+      type: 'hello/fetchMessage'
+    })
+  }
+  
+  render(){
+    return <div>${this.props.message}</div>
+  }
+}
+```
+
+最后运行`yarn run dev`命令，在浏览器中输入访问地址`http://localhost:3000`，即可看到刚才写的页面。如果需要使用其它端口来启动应用 `yarn run dev -- -p <your port here>`
+
+到目前为止，一个简单完整的前端已经创建完成，还有更多神奇的特性，等着你发现哦，请查看 [详细使用指南](https://lnlfps.github.io/symph-joy/#/getting-started)
 
 ## 文档
 

@@ -1,7 +1,8 @@
 {
   "name": "@symph/joy",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Minimalistic framework for React SPA applications, inspiration comes from Next.js and Dva",
+  "keywords":["react", "redux", "ssr", "mvc", "mvvm"],
   "main": "./dist/server/joy.js",
   "license": "MIT",
   "repository": "https://github.com/lnlfps/symph-joy",
