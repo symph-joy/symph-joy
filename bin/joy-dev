@@ -13,7 +13,7 @@ const argv = parseArgs(process.argv.slice(2), {
   },
   boolean: ['h'],
   string: ['H'],
-  default: {p: 3000}
+  default: { p: 3000 }
 })
 
 if (argv.help) {
@@ -52,7 +52,7 @@ const dir = resolve(argv._[0] || '.')
 //   printAndExit('> Couldn\'t find a `pages` directory. Please create one under the project root')
 // }
 
-const srv = new Server({dir, dev: true})
+const srv = new Server({ dir, dev: true })
 srv.start(argv.port, argv.hostname)
   .then(async () => {
     if (!process.env.NOW) {

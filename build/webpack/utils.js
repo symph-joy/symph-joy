@@ -6,10 +6,10 @@ import fs from 'fs'
 
 // const glob = promisify(globModule)
 
-// export async function getPages (dir, {nextPagesDir, dev, buildId, isServer, pageExtensions}) {
+// export async function getPages (dir, {joyPagesDir, dev, buildId, isServer, pageExtensions}) {
 //   const pageFiles = await getPagePaths(dir, {dev, isServer, pageExtensions})
 //
-//   return getPageEntries(pageFiles, {nextPagesDir, buildId, isServer, pageExtensions})
+//   return getPageEntries(pageFiles, {joyPagesDir, buildId, isServer, pageExtensions})
 // }
 //
 // export async function getPagePaths (dir, {dev, isServer, pageExtensions}) {
@@ -49,7 +49,7 @@ import fs from 'fs'
 // }
 //
 // // Convert page paths into entries
-// export function getPageEntries (pagePaths, {nextPagesDir, buildId, isServer = false, pageExtensions} = {}) {
+// export function getPageEntries (pagePaths, {joyPagesDir, buildId, isServer = false, pageExtensions} = {}) {
 //   const entries = {}
 //
 //   for (const filePath of pagePaths) {
@@ -57,20 +57,20 @@ import fs from 'fs'
 //     entries[entry.name] = entry.files
 //   }
 //
-//   // const appPagePath = path.join(nextPagesDir, '_app.js')
+//   // const appPagePath = path.join(joyPagesDir, '_app.js')
 //   // const appPageEntry = createEntry(appPagePath, {buildId, name: 'pages/_app.js'}) // default app.js
 //   // if (!entries[appPageEntry.name]) {
 //   //   entries[appPageEntry.name] = appPageEntry.files
 //   // }
 //
-//   const errorPagePath = path.join(nextPagesDir, '_error.js')
+//   const errorPagePath = path.join(joyPagesDir, '_error.js')
 //   const errorPageEntry = createEntry(errorPagePath, {buildId, name: 'pages/_error.js'}) // default error.js
 //   if (!entries[errorPageEntry.name]) {
 //     entries[errorPageEntry.name] = errorPageEntry.files
 //   }
 //
 //   if (isServer) {
-//     const documentPagePath = path.join(nextPagesDir, '_document.js')
+//     const documentPagePath = path.join(joyPagesDir, '_document.js')
 //     const documentPageEntry = createEntry(documentPagePath, {buildId, name: 'pages/_document.js'}) // default _document.js
 //     if (!entries[documentPageEntry.name]) {
 //       entries[documentPageEntry.name] = documentPageEntry.files
@@ -80,7 +80,7 @@ import fs from 'fs'
 //   return entries
 // }
 
-export function getErrorCompFilePath ({dir, nextPagesDir}) {
+export function getErrorCompFilePath ({ dir, joyPagesDir }) {
   let filePath = null
   if (fs.existsSync(path.join(dir, 'src/_error.js'))) {
     filePath = path.join(dir, 'src/_error.js')
@@ -88,12 +88,12 @@ export function getErrorCompFilePath ({dir, nextPagesDir}) {
     // deprecation
     filePath = path.join(dir, 'pages/_error.js')
   } else {
-    filePath = path.join(nextPagesDir, '_error.js')
+    filePath = path.join(joyPagesDir, '_error.js')
   }
   return filePath
 }
 
-export function getDocumentCompFilePath ({dir, nextPagesDir}) {
+export function getDocumentCompFilePath ({ dir, joyPagesDir }) {
   let filePath = null
   if (fs.existsSync(path.join(dir, 'src/_document.js'))) {
     filePath = path.join(dir, 'src/_document.js')
@@ -101,7 +101,7 @@ export function getDocumentCompFilePath ({dir, nextPagesDir}) {
     // deprecation
     filePath = path.join(dir, 'pages/_document.js')
   } else {
-    filePath = path.join(nextPagesDir, '_document.js')
+    filePath = path.join(joyPagesDir, '_document.js')
   }
   return filePath
 }

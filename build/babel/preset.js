@@ -46,17 +46,18 @@ module.exports = (context, opts = {}) => ({
   plugins: [
     require('babel-plugin-react-require'),
     require('@babel/plugin-syntax-dynamic-import'),
-    process.env.NODE_ENV === 'development' && require('react-hot-loader/babel'),
+    isDevelopment && require('react-hot-loader/babel'),
     require('./plugins/react-loadable-plugin'),
-    [require('@babel/plugin-proposal-decorators'), { 'legacy': true }],
-    [require('@babel/plugin-proposal-class-properties'), opts['class-properties'] || {'loose': true}],
+    [require('@babel/plugin-proposal-decorators'), { decoratorsBeforeExport: true }],
+    [require('@babel/plugin-proposal-class-properties')],
     require('@babel/plugin-proposal-object-rest-spread'),
     [require('@babel/plugin-transform-runtime'), {
       helpers: false,
       regenerator: true,
       ...opts['transform-runtime']
     }],
-    [require('styled-jsx/babel'), styledJsxOptions(opts['styled-jsx'])],
-    process.env.NODE_ENV === 'production' && require('babel-plugin-transform-react-remove-prop-types')
+    [require('styled-jsx/babel'), styledJsxOptions(opts['styled-jsx'])]
+    // 暂时屏蔽该插件(版本：v0.4.21)，会导致编译错误 （Duplicate declaration "React"） 2018年12月18日
+    // isProduction && require('babel-plugin-transform-react-remove-prop-types')
   ].filter(Boolean)
 })

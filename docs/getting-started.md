@@ -512,7 +512,7 @@ import dynamic from '@symph/joy/dynamic'
 
 const DynamicComponent = dynamic({loader: () => import('../components/hello')}, {
    ssr: true,
-   loading:<div>...</div>
+   loading:() => <div>...</div>
 })
 
 export default () =>
@@ -584,34 +584,30 @@ export default class MyDocument extends Document {
 
 ## 自定义 Error 界面
 
-当出现错误时，我们希望能够友好的提示用户。创建`src/_error.js`文件，编写自定义的Error组件。
+渲染时出现未捕获的异常时，可以自定义错误展示组件，来提示或者引导用户，例如500错误。这只在`production`环境有效，在开发模式下，系统将展示详细的错误堆栈信息，来帮助开发人员定位问题。
+
+创建`src/_error.js`文件来替换默认的错误展示组件。
 
 ```jsx
+// src/_error.js
+
 import React from 'react'
-import PropTypes from 'prop-types'
 import Head from './head'
 
-// src/_error.js
-export default class Error extends React.Component {
-  static propTypes = {
-    statusCode: PropTypes.number
-  }
-
+export default class _Error extends React.Component {
   render () {
-    const { statusCode } = this.props
+    const { statusCode, message } = this.props
     const title = statusCode === 404
       ? 'This page could not be found'
-      : HTTPStatus[statusCode] || 'An unexpected error has occurred'
+      : 'An unexpected error has occurred'
 
-    return <div style={styles.error}>
+    return <div>
       <Head>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
         <title>{statusCode}: {title}</title>
       </Head>
-      <div>
-        <div>Sorry! </div>
-        <div>statusCode:{statusCode ? <h1 style={styles.h1}>{statusCode}</h1> : null}</div>
-      </div>
+
+       <h1>{statusCode}</div>
+       <div>{message}</div>
     </div>
   }
 }

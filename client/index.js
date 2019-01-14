@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom'
 import HeadManager from './head-manager'
 import { createClientRouter } from '../lib/router'
 import EventEmitter from '../lib/EventEmitter'
-import { getURL, loadGetInitialProps } from '../lib/utils'
-import {create as createTempo} from '@symph/tempo'
+import { create as createTempo } from '@symph/tempo'
 import createHistory from 'history/createBrowserHistory'
 import { connectRouter, routerMiddleware } from 'connected-react-router'
 import ErrorBoundary from './error-boundary'
@@ -17,7 +16,7 @@ const {
     err,
     // page,
     pathname,
-    query,
+    // query,
     // buildId,
     // assetPrefix,
     // runtimeConfig,
@@ -25,8 +24,6 @@ const {
   },
   location
 } = window
-
-const asPath = getURL()
 
 const headManager = new HeadManager()
 const appContainer = document.getElementById('__joy')
@@ -48,7 +45,7 @@ export default async ({
     webpackHMR = passedWebpackHMR
   }
   ErrorComponent = window.__JOY_ERROR
-  // App = await pageLoader.loadPage('/_app')
+  ErrorComponent = ErrorComponent.default || ErrorComponent
 
   let initialErr = err
 
@@ -69,12 +66,11 @@ export default async ({
   const history = createHistory()
   const routerMid = routerMiddleware(history)
   const tempo = createTempo({
-    initialState: initStoreState,
-    onReducer: (rootReduce) => {
-      return connectRouter(history)(rootReduce)
-    }
+    initialState: initStoreState
   }, {
-    initialReducer: {},
+    initialReducer: {
+      router: connectRouter(history)
+    },
     setupMiddlewares: (middlewares) => {
       middlewares.unshift(routerMid)
       return middlewares
@@ -85,7 +81,7 @@ export default async ({
   Router = createClientRouter(history)
 
   const hash = location.hash.substring(1)
-  render({App, Component, props, hash, err: initialErr, emitter, Router, tempo, isComponentDidPrepare: !!initStoreState})
+  render({ App, Component, appContentProps: props, hash, err: initialErr, emitter, Router, tempo, isComponentDidPrepare: !!initStoreState })
 
   return emitter
 }
@@ -99,7 +95,7 @@ export async function render (props) {
   try {
     await doRender(props)
   } catch (err) {
-    await renderError({...props, err})
+    await renderError({ ...props, err })
   }
 }
 
@@ -107,7 +103,7 @@ export async function render (props) {
 // 404 and 500 errors are special kind of errors
 // and they are still handle via the main render method.
 export async function renderError (props) {
-  const {App, err} = props
+  const { err } = props
 
   if (process.env.NODE_ENV !== 'production') {
     throw webpackHMR.prepareError(err)
@@ -119,11 +115,9 @@ export async function renderError (props) {
   // In production we do a normal render with the `ErrorComponent` as component.
   // If we've gotten here upon initial render, we can use the props from the server.
   // Otherwise, we need to call `getInitialProps` on `App` before mounting.
-  const initProps = props.props
-    ? props.props
-    : await loadGetInitialProps(App, {Component: ErrorComponent, Router, ctx: {err, pathname, query, asPath}})
+  const initAppContentProps = Object.assign({}, props.props, { ...err })
 
-  await doRender({...props, err, Component: ErrorComponent, props: initProps})
+  await doRender({ ...props, err, Component: ErrorComponent, appContentProps: initAppContentProps })
 }
 
 let isInitialRender = true
@@ -139,8 +133,8 @@ function renderReactElement (reactEl, domEl) {
   isInitialRender = false
 }
 
-async function doRender ({App, Component, props, hash, err, emitter: emitterProp = emitter, Router, tempo, isComponentDidPrepare}) {
-  // Usual getInitialProps fetching is handled in next/router
+async function doRender ({ App, Component, appContentProps, hash, err, emitter: emitterProp = emitter, Router, tempo, isComponentDidPrepare }) {
+  // Usual getInitialProps fetching is handled in @symph/joy/router
   // this is for when ErrorComponent gets replaced by Component by HMR
   // if (!props && Component &&
   //   Component !== ErrorComponent &&
@@ -152,11 +146,11 @@ async function doRender ({App, Component, props, hash, err, emitter: emitterProp
   // Component = Component || lastAppProps.Component
   // props = props || lastAppProps.props
 
-  const appProps = {Component, hash, err, props, headManager, Router, tempo, isComponentDidPrepare}
+  const appProps = { Component, hash, err, appContentProps, headManager, Router, tempo, isComponentDidPrepare }
   // lastAppProps has to be set before ReactDom.render to account for ReactDom throwing an error.
   // lastAppProps = appProps
 
-  emitterProp.emit('before-reactdom-render', {Component, ErrorComponent, appProps})
+  emitterProp.emit('before-reactdom-render', { Component, ErrorComponent, appProps })
 
   // In development runtime errors are caught by react-error-overlay.
   if (process.env.NODE_ENV === 'development') {
@@ -167,7 +161,7 @@ async function doRender ({App, Component, props, hash, err, emitter: emitterProp
     // In production we catch runtime errors using componentDidCatch which will trigger renderError.
     const onError = async (error) => {
       try {
-        await renderError({App, err: error})
+        await renderError({ App, err: error })
       } catch (err) {
         console.error('Error while rendering error page: ', err)
       }
@@ -179,5 +173,5 @@ async function doRender ({App, Component, props, hash, err, emitter: emitterProp
     ), appContainer)
   }
 
-  emitterProp.emit('after-reactdom-render', {Component, ErrorComponent, appProps})
+  emitterProp.emit('after-reactdom-render', { Component, ErrorComponent, appProps })
 }

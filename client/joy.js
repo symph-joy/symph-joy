@@ -1,8 +1,8 @@
-import initNext, * as next from './'
+import initJoy, * as joy from './'
 
-window.joy = next
+window.joy = joy
 
-initNext()
+initJoy()
   .catch((err) => {
     console.error(`${err.message}\n${err.stack}`)
   })

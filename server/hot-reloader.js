@@ -13,7 +13,7 @@ import pathMatch from './lib/path-match'
 import { renderScriptError } from './render'
 
 const route = pathMatch()
-const matchNextPageBundleRequest = route('/_joy/static/:buildId/pages/:path*.js(.map)?')
+const matchJoyPageBundleRequest = route('/_joy/static/:buildId/pages/:path*.js(.map)?')
 
 // Recursively look up the issuer till it ends up at the root
 function findEntryModule (issuer) {
@@ -24,11 +24,11 @@ function findEntryModule (issuer) {
   return issuer
 }
 
-function erroredPages (compilation, options = {enhanceName: (name) => name}) {
+function erroredPages (compilation, options = { enhanceName: (name) => name }) {
   const failedPages = {}
   for (const error of compilation.errors) {
     const entryModule = findEntryModule(error.origin)
-    const {name} = entryModule
+    const { name } = entryModule
     if (!name) {
       continue
     }
@@ -51,7 +51,7 @@ function erroredPages (compilation, options = {enhanceName: (name) => name}) {
 }
 
 export default class HotReloader {
-  constructor (dir, {config, buildId} = {}) {
+  constructor (dir, { config, buildId } = {}) {
     this.buildId = buildId
     this.dir = dir
     this.middlewares = []
@@ -73,7 +73,7 @@ export default class HotReloader {
     // With when the app runs for multi-zones support behind a proxy,
     // the current page is trying to access this URL via assetPrefix.
     // That's when the CORS support is needed.
-    const {preflight} = addCorsSupport(req, res)
+    const { preflight } = addCorsSupport(req, res)
     if (preflight) {
       return
     }
@@ -83,8 +83,8 @@ export default class HotReloader {
     // by adding the page to on-demand-entries, waiting till it's done
     // and then the bundle will be served like usual by the actual route in server/index.js
     const handlePageBundleRequest = async (req, res, parsedUrl) => {
-      const {pathname} = parsedUrl
-      const params = matchNextPageBundleRequest(pathname)
+      const { pathname } = parsedUrl
+      const params = matchJoyPageBundleRequest(pathname)
       if (!params) {
         return {}
       }
@@ -99,20 +99,20 @@ export default class HotReloader {
           await this.ensurePage(page)
         } catch (error) {
           await renderScriptError(req, res, page, error)
-          return {finished: true}
+          return { finished: true }
         }
 
         const errors = await this.getCompilationErrors(page)
         if (errors.length > 0) {
           await renderScriptError(req, res, page, errors[0])
-          return {finished: true}
+          return { finished: true }
         }
       }
 
       return {}
     }
 
-    const {finished} = await handlePageBundleRequest(req, res, parsedUrl)
+    const { finished } = await handlePageBundleRequest(req, res, parsedUrl)
 
     for (const fn of this.middlewares) {
       await new Promise((resolve, reject) => {
@@ -123,19 +123,19 @@ export default class HotReloader {
       })
     }
 
-    return {finished}
+    return { finished }
   }
 
   async clean () {
-    return del(join(this.dir, this.config.distDir), {force: true})
+    return del(join(this.dir, this.config.distDir), { force: true })
   }
 
   async start () {
     await this.clean()
 
     const configs = await Promise.all([
-      getBaseWebpackConfig(this.dir, {dev: true, isServer: false, config: this.config, buildId: this.buildId}),
-      getBaseWebpackConfig(this.dir, {dev: true, isServer: true, config: this.config, buildId: this.buildId})
+      getBaseWebpackConfig(this.dir, { dev: true, isServer: false, config: this.config, buildId: this.buildId }),
+      getBaseWebpackConfig(this.dir, { dev: true, isServer: true, config: this.config, buildId: this.buildId })
     ])
 
     const multiCompiler = webpack(configs)
@@ -164,8 +164,8 @@ export default class HotReloader {
     await this.clean()
 
     const configs = await Promise.all([
-      getBaseWebpackConfig(this.dir, {dev: true, isServer: false, config: this.config, buildId: this.buildId}),
-      getBaseWebpackConfig(this.dir, {dev: true, isServer: true, config: this.config, buildId: this.buildId})
+      getBaseWebpackConfig(this.dir, { dev: true, isServer: false, config: this.config, buildId: this.buildId }),
+      getBaseWebpackConfig(this.dir, { dev: true, isServer: true, config: this.config, buildId: this.buildId })
     ])
 
     const compiler = webpack(configs)
@@ -179,7 +179,7 @@ export default class HotReloader {
     await this.stop(oldWebpackDevMiddleware)
   }
 
-  assignBuildTools ({webpackDevMiddleware, webpackHotMiddleware, onDemandEntries}) {
+  assignBuildTools ({ webpackDevMiddleware, webpackHotMiddleware, onDemandEntries }) {
     this.webpackDevMiddleware = webpackDevMiddleware
     this.webpackHotMiddleware = webpackHotMiddleware
     this.onDemandEntries = onDemandEntries
@@ -192,12 +192,12 @@ export default class HotReloader {
 
   async prepareBuildTools (multiCompiler) {
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
-    multiCompiler.compilers[1].hooks.done.tap('NextjsHotReloaderForServer', (stats) => {
+    multiCompiler.compilers[1].hooks.done.tap('JoyHotReloaderForServer', (stats) => {
       if (!this.initialized) {
         return
       }
 
-      const {compilation} = stats
+      const { compilation } = stats
 
       // We only watch `_document` for changes on the server compilation
       // the rest of the files will be triggered by the client compilation
@@ -225,7 +225,7 @@ export default class HotReloader {
       this.serverPrevDocumentHash = documentChunk.hash
     })
 
-    // multiCompiler.compilers[0].hooks.done.tap('NextjsHotReloaderForClient', (stats) => {
+    // multiCompiler.compilers[0].hooks.done.tap('JoyHotReloaderForClient', (stats) => {
     //   const { compilation } = stats
     //   const chunkNames = new Set(
     //     compilation.chunks
@@ -301,7 +301,7 @@ export default class HotReloader {
       publicPath: `/_joy/static/webpack`,
       noInfo: true,
       logLevel: 'silent',
-      watchOptions: {ignored}
+      watchOptions: { ignored }
     }
 
     if (this.config.webpackDevMiddleware) {
@@ -346,7 +346,7 @@ export default class HotReloader {
     await this.onDemandEntries.waitUntilReloaded()
 
     if (this.stats.hasErrors()) {
-      const {compilation} = this.stats
+      const { compilation } = this.stats
       const failedPages = erroredPages(compilation, {
         enhanceName (name) {
           return '/' + ROUTE_NAME_REGEX.exec(name)[1]
@@ -366,7 +366,7 @@ export default class HotReloader {
   }
 
   send (action, ...args) {
-    this.webpackHotMiddleware.publish({action, data: args})
+    this.webpackHotMiddleware.publish({ action, data: args })
   }
 
   async ensurePage (page) {

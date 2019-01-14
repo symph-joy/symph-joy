@@ -1,7 +1,7 @@
 import babelLoader from 'babel-loader'
 
 module.exports = babelLoader.custom(babel => {
-  const presetItem = babel.createConfigItem(require('../../babel/preset'), {type: 'preset'})
+  const presetItem = babel.createConfigItem(require('../../babel/preset'), { type: 'preset' })
 
   const configs = new Set()
 
@@ -19,7 +19,7 @@ module.exports = babelLoader.custom(babel => {
 
       return { loader, custom }
     },
-    config (cfg, {customOptions: {isServer, dev}}) {
+    config (cfg, { customOptions: { isServer, dev } }) {
       const options = Object.assign({}, cfg.options)
       if (cfg.hasFilesystemConfig()) {
         for (const file of [cfg.babelrc, cfg.config]) {

@@ -5,8 +5,8 @@ import { parse } from 'url'
 import fs from 'fs'
 import promisify from '../lib/promisify'
 import globModule from 'glob'
-import {normalizePagePath, pageNotFoundError} from './require'
-import {createEntry} from '../build/webpack/utils'
+import { normalizePagePath, pageNotFoundError } from './require'
+import { createEntry } from '../build/webpack/utils'
 import { ROUTE_NAME_REGEX, IS_BUNDLED_PAGE_REGEX } from '../lib/constants'
 
 const ADDED = Symbol('added')
@@ -36,7 +36,7 @@ export default function onDemandEntryHandler (devMiddleware, compilers, {
   const currentBuilders = new Set()
 
   compilers.forEach(compiler => {
-    compiler.hooks.make.tapAsync('NextJsOnDemandEntries', function (compilation, done) {
+    compiler.hooks.make.tapAsync('JoyOnDemandEntries', function (compilation, done) {
       invalidator.startBuilding()
       currentBuilders.add(compiler.name)
 
@@ -62,7 +62,7 @@ export default function onDemandEntryHandler (devMiddleware, compilers, {
         .catch(done)
     })
 
-    compiler.hooks.done.tap('NextJsOnDemandEntries', function (stats) {
+    compiler.hooks.done.tap('JoyOnDemandEntries', function (stats) {
       // Wait until all the compilers mark the build as done.
       currentBuilders.delete(compiler.name)
       if (currentBuilders.size !== 0) return
@@ -154,7 +154,7 @@ export default function onDemandEntryHandler (devMiddleware, compilers, {
       }
 
       const extensions = pageExtensions.join('|')
-      const paths = await glob(`pages/{${normalizedPagePath}/index,${normalizedPagePath}}.+(${extensions})`, {cwd: dir})
+      const paths = await glob(`pages/{${normalizedPagePath}/index,${normalizedPagePath}}.+(${extensions})`, { cwd: dir })
 
       if (paths.length === 0) {
         throw pageNotFoundError(normalizedPagePath)
@@ -164,7 +164,7 @@ export default function onDemandEntryHandler (devMiddleware, compilers, {
 
       const pathname = join(dir, relativePathToPage)
 
-      const {name, files} = createEntry(relativePathToPage, {buildId, pageExtensions: extensions})
+      const { name, files } = createEntry(relativePathToPage, { buildId, pageExtensions: extensions })
 
       await new Promise((resolve, reject) => {
         const entryInfo = entries[page]

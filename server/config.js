@@ -1,12 +1,12 @@
 import findUp from 'find-up'
-import {CONFIG_FILE} from '../lib/constants'
+import { CONFIG_FILE } from '../lib/constants'
 
 type WebpackConfig = *
 
 type WebpackDevMiddlewareConfig = *
 
-export type NextConfig = {|
-  webpack: null | (webpackConfig: WebpackConfig, {dir: string, dev: boolean, isServer: boolean, buildId: string, config: NextConfig, defaultLoaders: {}, totalPages: number}) => WebpackConfig,
+export type JoyConfig = {|
+  webpack: null | (webpackConfig: WebpackConfig, {dir: string, dev: boolean, isServer: boolean, buildId: string, config: JoyConfig, defaultLoaders: {}, totalPages: number}) => WebpackConfig,
   webpackDevMiddleware: null | (WebpackDevMiddlewareConfig: WebpackDevMiddlewareConfig) => WebpackDevMiddlewareConfig,
   poweredByHeader: boolean,
   distDir: string,
@@ -18,7 +18,7 @@ export type NextConfig = {|
   pageExtensions: Array<string>
 |}
 
-const defaultConfig: NextConfig = {
+const defaultConfig: JoyConfig = {
   main: 'src/index.js',
   serverRender: true,
   webpack: null,
@@ -37,17 +37,17 @@ const defaultConfig: NextConfig = {
   pageExtensions: ['jsx', 'js'],
   exportPathMap: async () => {
     return {
-      '/': {page: '/'}
+      '/': { page: '/' }
     }
   }
 }
 
-type PhaseFunction = (phase: string, options: {defaultConfig: NextConfig}) => NextConfig
+type PhaseFunction = (phase: string, options: {defaultConfig: JoyConfig}) => JoyConfig
 
-export default function loadConfig (phase: string, dir: string, customConfig?: NextConfig): NextConfig {
+export default function loadConfig (phase: string, dir: string, customConfig?: JoyConfig): JoyConfig {
   if (customConfig) {
     customConfig.configOrigin = 'server'
-    return preparePlugins({...defaultConfig, ...customConfig})
+    return preparePlugins({ ...defaultConfig, ...customConfig })
   }
   const path: string = findUp.sync(CONFIG_FILE, {
     cwd: dir
@@ -57,12 +57,12 @@ export default function loadConfig (phase: string, dir: string, customConfig?: N
   if (path && path.length) {
     // $FlowFixMe
     const userConfigModule = require(path)
-    const userConfigInitial: NextConfig | PhaseFunction = userConfigModule.default || userConfigModule
+    const userConfigInitial: JoyConfig | PhaseFunction = userConfigModule.default || userConfigModule
     if (typeof userConfigInitial === 'function') {
-      return preparePlugins({...defaultConfig, configOrigin: CONFIG_FILE, ...userConfigInitial(phase, {defaultConfig})})
+      return preparePlugins({ ...defaultConfig, configOrigin: CONFIG_FILE, ...userConfigInitial(phase, { defaultConfig }) })
     }
 
-    return preparePlugins({...defaultConfig, configOrigin: CONFIG_FILE, ...userConfigInitial})
+    return preparePlugins({ ...defaultConfig, configOrigin: CONFIG_FILE, ...userConfigInitial })
   }
 
   return defaultConfig
@@ -73,7 +73,7 @@ function preparePlugins (config) {
     return config
   }
 
-  config = {...config}
+  config = { ...config }
   if (!Array.isArray(config.plugins)) {
     throw new Error(`in ${CONFIG_FILE}, the plugins config value must is a Array, or empty`)
   }

@@ -19,7 +19,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWAR
 */
 // Implementation of this PR: https://github.com/jamiebuilds/react-loadable/pull/132
-// Modified to strip out unneeded results for Next's specific use case
+// Modified to strip out unneeded results for Joy's specific use case
 
 import url from 'url'
 
@@ -32,7 +32,7 @@ function buildManifest (compiler, compilation) {
       for (const module of chunk.modulesIterable) {
         let id = module.id
         let name = typeof module.libIdent === 'function' ? module.libIdent({ context }) : null
-        // If it doesn't end in `.js` Next.js can't handle it right now.
+        // If it doesn't end in `.js` Joy can't handle it right now.
         if (!file.match(/\.js$/) || !file.match(/^static\/chunks\//)) {
           return
         }

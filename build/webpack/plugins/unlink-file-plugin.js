@@ -12,7 +12,7 @@ export default class UnlinkFilePlugin {
   }
 
   apply (compiler: any) {
-    compiler.hooks.afterEmit.tapAsync('NextJsUnlinkRemovedPages', (compilation, callback) => {
+    compiler.hooks.afterEmit.tapAsync('JoyUnlinkRemovedPages', (compilation, callback) => {
       const removed = Object.keys(this.prevAssets)
         .filter((a) => IS_BUNDLED_PAGE_REGEX.test(a) && !compilation.assets[a])
 

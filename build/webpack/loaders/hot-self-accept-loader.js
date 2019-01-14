@@ -12,11 +12,11 @@ module.exports = function (content: string, sourceMap: any) {
 
   const options: Options = loaderUtils.getOptions(this)
   if (!options.extensions) {
-    throw new Error('extensions is not provided to hot-self-accept-loader. Please upgrade all next-plugins to the latest version.')
+    throw new Error('extensions is not provided to hot-self-accept-loader. Please upgrade all joy-plugins to the latest version.')
   }
 
   if (!options.include) {
-    throw new Error('include option is not provided to hot-self-accept-loader. Please upgrade all next-plugins to the latest version.')
+    throw new Error('include option is not provided to hot-self-accept-loader. Please upgrade all joy-plugins to the latest version.')
   }
 
   const route = getRoute(this.resourcePath, options)

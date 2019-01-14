@@ -3,7 +3,7 @@
 // import Router from '../lib/router'
 import fetch from 'unfetch'
 
-export default ({assetPrefix}) => {
+export default ({ assetPrefix }) => {
   // Router.ready(() => {
   //   Router.events.on('routeChangeComplete', ping)
   // })

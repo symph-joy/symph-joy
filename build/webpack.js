@@ -1,5 +1,5 @@
 // @flow
-import type { NextConfig } from '../server/config'
+import type { JoyConfig } from '../server/config'
 import path from 'path'
 import webpack from 'webpack'
 import resolve from 'resolve'
@@ -9,9 +9,9 @@ import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin'
 import WebpackBar from 'webpackbar'
 import { getErrorCompFilePath, getDocumentCompFilePath } from './webpack/utils'
 import PagesPlugin from './webpack/plugins/pages-plugin'
-import NextJsSsrImportPlugin from './webpack/plugins/nextjs-ssr-import'
-import NextJsSSRModuleCachePlugin from './webpack/plugins/nextjs-ssr-module-cache'
-import NextJsRequireCacheHotReloader from './webpack/plugins/nextjs-require-cache-hot-reloader'
+import JoySsrImportPlugin from './webpack/plugins/joy-ssr-import'
+import JoySSRModuleCachePlugin from './webpack/plugins/joyjs-ssr-module-cache'
+import JoyRequireCacheHotReloader from './webpack/plugins/joy-require-cache-hot-reloader'
 import UnlinkFilePlugin from './webpack/plugins/unlink-file-plugin'
 import PagesManifestPlugin from './webpack/plugins/pages-manifest-plugin'
 import BuildManifestPlugin from './webpack/plugins/build-manifest-plugin'
@@ -19,9 +19,9 @@ import ChunkNamesPlugin from './webpack/plugins/chunk-names-plugin'
 import { ReactLoadablePlugin } from './webpack/plugins/react-loadable-plugin'
 import {
   SERVER_DIRECTORY,
-  NEXT_PROJECT_ROOT,
-  NEXT_PROJECT_ROOT_NODE_MODULES,
-  NEXT_PROJECT_ROOT_DIST,
+  JOY_PROJECT_ROOT,
+  JOY_PROJECT_ROOT_NODE_MODULES,
+  JOY_PROJECT_ROOT_DIST,
   DEFAULT_PAGES_DIR,
   REACT_LOADABLE_MANIFEST,
   CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
@@ -42,7 +42,7 @@ function externalsConfig (dir, isServer) {
   }
 
   externals.push((context, request, callback) => {
-    resolve(request, {basedir: dir, preserveSymlinks: true}, (err, res) => {
+    resolve(request, { basedir: dir, preserveSymlinks: true }, (err, res) => {
       if (err) {
         return callback()
       }
@@ -68,7 +68,7 @@ function externalsConfig (dir, isServer) {
   return externals
 }
 
-function optimizationConfig ({dir, dev, isServer, totalPages}) {
+function optimizationConfig ({ dir, dev, isServer, totalPages }) {
   if (isServer) {
     return {
       splitChunks: false,
@@ -113,20 +113,21 @@ type BaseConfigContext = {|
   dev: boolean,
   isServer: boolean,
   buildId: string,
-  config: NextConfig
+  config: JoyConfig
 |}
 
-export default async function getBaseWebpackConfig (dir: string, {dev = false, isServer = false, buildId, config}: BaseConfigContext) {
+export default async function getBaseWebpackConfig (dir: string, { dev = false, isServer = false, buildId, config }: BaseConfigContext) {
   const defaultLoaders = {
     babel: {
-      loader: 'next-babel-loader',
-      options: {dev, isServer}
+      loader: 'joy-babel-loader',
+      options: { dev, isServer }
     },
     hotSelfAccept: {
       loader: 'hot-self-accept-loader',
       options: {
         include: [
-          path.join(dir, 'pages')
+          path.join(dir, 'pages'),
+          path.join(dir, 'src')
         ],
         // All pages are javascript files. So we apply hot-self-accept-loader here to facilitate hot reloading of pages.
         // This makes sure plugins just have to implement `pageExtensions` instead of also implementing the loader
@@ -142,33 +143,34 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
 
   const distDir = path.join(dir, config.distDir)
   const outputPath = path.join(distDir, isServer ? SERVER_DIRECTORY : '')
-  // const pagesEntries = await getPages(dir, {nextPagesDir: DEFAULT_PAGES_DIR, dev, buildId, isServer, pageExtensions: config.pageExtensions.join('|')})
+  // const pagesEntries = await getPages(dir, {joyPagesDir: DEFAULT_PAGES_DIR, dev, buildId, isServer, pageExtensions: config.pageExtensions.join('|')})
   const totalPages = 1
   const appEntryFilePath = path.join(dir, config.main)
-  const errorCompFilePath = getErrorCompFilePath({dir, nextPagesDir: DEFAULT_PAGES_DIR})
-  const documentCompFilePath = getDocumentCompFilePath({dir, nextPagesDir: DEFAULT_PAGES_DIR})
+  const errorCompFilePath = getErrorCompFilePath({ dir, joyPagesDir: DEFAULT_PAGES_DIR })
+  const documentCompFilePath = getDocumentCompFilePath({ dir, joyPagesDir: DEFAULT_PAGES_DIR })
   const entries = !isServer ? {
     // Backwards compatibility
     [CLIENT_STATIC_FILES_RUNTIME_MAIN]: [
-      path.join(NEXT_PROJECT_ROOT_DIST, 'client', 'init'),
+      path.join(JOY_PROJECT_ROOT_DIST, 'client', 'init'),
       appEntryFilePath,
-      path.join(NEXT_PROJECT_ROOT_DIST, 'client', (dev ? `next-dev` : 'next')),
-      errorCompFilePath
+      errorCompFilePath,
+      path.join(JOY_PROJECT_ROOT_DIST, 'client', (dev ? `joy-dev` : 'joy'))
     ].filter(Boolean)
   } : {
     'app-main.js': appEntryFilePath,
-    '_document.js': documentCompFilePath
+    '_document.js': documentCompFilePath,
+    '_error.js': errorCompFilePath
   }
 
   const resolveConfig = {
     extensions: ['.wasm', '.mjs', '.js', '.jsx', '.json'],
     modules: [
-      NEXT_PROJECT_ROOT_NODE_MODULES,
+      JOY_PROJECT_ROOT_NODE_MODULES,
       'node_modules',
       ...nodePathList // Support for NODE_PATH environment variable
     ],
     alias: {
-      '@symph/joy': NEXT_PROJECT_ROOT
+      '@symph/joy': JOY_PROJECT_ROOT
     }
   }
 
@@ -181,7 +183,7 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
     cache: true,
     target: isServer ? 'node' : 'web',
     externals: externalsConfig(dir, isServer),
-    optimization: optimizationConfig({dir, dev, isServer, totalPages}),
+    optimization: optimizationConfig({ dir, dev, isServer, totalPages }),
     recordsPath: path.join(outputPath, 'records.json'),
     context: dir,
     // Kept as function to be backwards compatible
@@ -192,7 +194,7 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
     },
     output: {
       path: outputPath,
-      filename: ({chunk}) => {
+      filename: ({ chunk }) => {
         // Use `[name]-[contenthash].js` in production
         if (!dev && (chunk.name === CLIENT_STATIC_FILES_RUNTIME_MAIN || chunk.name === CLIENT_STATIC_FILES_RUNTIME_WEBPACK)) {
           return chunk.name.replace(/\.js$/, '-[contenthash].js')
@@ -206,13 +208,13 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
       chunkFilename: isServer ? `${dev ? '[name]' : '[name].[contenthash]'}.js` : `static/chunks/${dev ? '[name]' : '[name].[contenthash]'}.js`,
       strictModuleExceptionHandling: true
     },
-    performance: {hints: false},
+    performance: { hints: false },
     resolve: resolveConfig,
     resolveLoader: {
       modules: [
-        NEXT_PROJECT_ROOT_NODE_MODULES,
+        JOY_PROJECT_ROOT_NODE_MODULES,
         'node_modules',
-        path.join(__dirname, 'webpack', 'loaders'), // The loaders Next.js provides
+        path.join(__dirname, 'webpack', 'loaders'), // The loaders joy provides
         ...nodePathList // Support for NODE_PATH environment variable
       ]
     },
@@ -225,6 +227,8 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
         },
         {
           test: /\.(js|jsx)$/,
+          include: [dir],
+          exclude: /node_modules/,
           use: defaultLoaders.babel
         }
       ].filter(Boolean)
@@ -238,7 +242,11 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
         entry: {
           dll: [
             'react',
-            'react-dom'
+            'react-dom',
+            'redux',
+            'react-redux',
+            'react-router-dom',
+            'connected-react-router'
           ]
         },
         config: {
@@ -258,8 +266,8 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
       new webpack.IgnorePlugin(/(precomputed)/, /node_modules.+(elliptic)/),
       // Even though require.cache is server only we have to clear assets from both compilations
       // This is because the client compilation generates the build manifest that's used on the server side
-      dev && new NextJsRequireCacheHotReloader(),
-      dev && !isServer && new webpack.HotModuleReplacementPlugin({multiStep: true}),
+      dev && new JoyRequireCacheHotReloader(),
+      dev && !isServer && new webpack.HotModuleReplacementPlugin({ multiStep: true }),
       dev && new webpack.NoEmitOnErrorsPlugin(),
       dev && new UnlinkFilePlugin(),
       dev && new CaseSensitivePathPlugin(), // Since on macOS the filesystem is case-insensitive this will make sure your path are case-sensitive
@@ -279,16 +287,16 @@ export default async function getBaseWebpackConfig (dir: string, {dev = false, i
       !dev && new webpack.optimize.ModuleConcatenationPlugin(),
       isServer && new PagesManifestPlugin(),
       !isServer && new BuildManifestPlugin(),
-      !isServer && new ClientGlobalComponentPlugin({sourceFilePath: appEntryFilePath, globalName: '__JOY_APP_MAIN'}),
-      !isServer && new ClientGlobalComponentPlugin({sourceFilePath: errorCompFilePath, globalName: '__JOY_ERROR'}),
+      !isServer && new ClientGlobalComponentPlugin({ sourceFilePath: appEntryFilePath, globalName: '__JOY_APP_MAIN' }),
+      !isServer && new ClientGlobalComponentPlugin({ sourceFilePath: errorCompFilePath, globalName: '__JOY_ERROR' }),
       !isServer && new PagesPlugin(),
-      isServer && new NextJsSsrImportPlugin(),
-      isServer && new NextJsSSRModuleCachePlugin({outputPath})
+      isServer && new JoySsrImportPlugin(),
+      isServer && new JoySSRModuleCachePlugin({ outputPath })
     ].filter(Boolean)
   }
 
   if (typeof config.webpack === 'function') {
-    webpackConfig = config.webpack(webpackConfig, {dir, dev, isServer, buildId, config, defaultLoaders, totalPages})
+    webpackConfig = config.webpack(webpackConfig, { dir, dev, isServer, buildId, config, defaultLoaders, totalPages })
   }
 
   return webpackConfig

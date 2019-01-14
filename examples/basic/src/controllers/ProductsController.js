@@ -1,17 +1,18 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import styles from './ProductsController.less'
-import {controller, requireModel } from '@symph/joy/controller'
+import {controller , requireModel} from '@symph/joy/controller'
 import { routerRedux } from '@symph/joy/router'
 import { Link } from '@symph/joy/router'
 import ImageView from '../components/image-view'
 import ProductsModel from '../models/ProductsModel'
 
+
 @requireModel(ProductsModel)            // register model
-@controller((state) => {                // state is store's state
+@controller((state, ownProps, store) => {                // state is store's state
   return {
-    products: state.products.products,  // bind model's state to props
-    pageIndex: state.products.pageIndex
+    products:  state.products.products,  // bind model's state to props
+    pageIndex:  state.products.pageIndex
   }
 })
 export default class ProductsController extends Component {
@@ -46,7 +47,7 @@ export default class ProductsController extends Component {
   }
 
   onClickOpenByJs = () => {
-    const {dispatch} = this.props;
+    const {dispatch} = this.props
     dispatch(routerRedux.push(`/products/0`))
   }
 
@@ -62,12 +63,13 @@ export default class ProductsController extends Component {
         </div>
         <div>
           {products.map((product, i) => {
-            return <div className={styles.product} key={product.id} ><Link to={`/products/${product.id}`}>id:{product.id}, name:{product.name}, price: {product.price}￥</Link></div>
+            return <div className={styles.product} key={product.id}><Link to={`/products/${product.id}`}>id:{product.id},
+              name:{product.name}, price: {product.price}￥</Link></div>
           })}
         </div>
-        <div className={styles.btnNextPage} onClick={this.getProducts.bind(this, pageIndex + 1, 5)}>next page &raquo;</div>
+        <div className={styles.btnNextPage} onClick={this.getProducts.bind(this, pageIndex + 1, 5)}>next
+          page &raquo;</div>
       </div>
     )
   }
 }
-

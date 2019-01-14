@@ -11,7 +11,7 @@ export default class ChunkNamesPlugin {
     this.prevAssets = null
   }
   apply (compiler: any) {
-    compiler.hooks.afterEmit.tapAsync('NextJsRequireCacheHotReloader', (compilation, callback) => {
+    compiler.hooks.afterEmit.tapAsync('JoyRequireCacheHotReloader', (compilation, callback) => {
       const { assets } = compilation
 
       if (this.prevAssets) {

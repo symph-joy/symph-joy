@@ -6,7 +6,7 @@
 import { ConcatSource } from 'webpack-sources'
 
 export default class ClientGlobalComponentPlugin {
-  constructor ({sourceFilePath, globalName}) {
+  constructor ({ sourceFilePath, globalName }) {
     if (sourceFilePath === undefined || sourceFilePath === null || sourceFilePath.length === 0) {
       throw new Error('ClientGlobalComponentPlugin init error,  sourceFilePath is empty')
     }

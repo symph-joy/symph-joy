@@ -23,14 +23,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 // This file is based on https://github.com/facebook/create-react-app/blob/v1.1.4/packages/react-dev-utils/webpackHotDevClient.js
-// It's been edited to rely on webpack-hot-middleware and to be more compatible with SSR / Next.js
+// It's been edited to rely on webpack-hot-middleware and to be more compatible with SSR / Joy
 
 'use strict'
-import {getEventSourceWrapper} from './eventsource'
+import { getEventSourceWrapper } from './eventsource'
 import formatWebpackMessages from './format-webpack-messages'
 import * as ErrorOverlay from 'react-error-overlay'
 import stripAnsi from 'strip-ansi'
-import {rewriteStacktrace} from '../source-map-support'
+import { rewriteStacktrace } from '../source-map-support'
 import fetch from 'unfetch'
 
 // This alternative WebpackDevServer combines the functionality of:
@@ -104,7 +104,7 @@ export default function connect (options) {
       const error = new Error(err.message)
       error.name = err.name
       error.stack = err.stack
-      // __NEXT_DIST_DIR is provided by webpack
+      // __JOY_DIST_DIR is provided by webpack
       rewriteStacktrace(error, process.env.__JOY_DIST_DIR)
       return error
     }
@@ -220,7 +220,7 @@ function processMessage (e) {
       }
 
       if (obj.errors.length > 0) {
-        // When there is a compilation error coming from SSR we have to reload the page on next successful compile
+        // When there is a compilation error coming from SSR we have to reload the page on joy successful compile
         if (obj.action === 'sync') {
           hadRuntimeError = true
         }

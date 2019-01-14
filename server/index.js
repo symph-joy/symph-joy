@@ -8,7 +8,8 @@ import {
   renderToHTML,
   renderErrorToHTML,
   sendHTML,
-  serveStatic
+  serveStatic,
+  ErrorRender
 } from './render'
 import Router from './router'
 // import { isInternalUrl } from './utils'
@@ -31,19 +32,19 @@ import compression from 'compression'
 import pkg from '../../package'
 
 export default class Server {
-  constructor ({dir = '.', dev = false, staticMarkup = false, quiet = false, conf = null} = {}) {
+  constructor ({ dir = '.', dev = false, staticMarkup = false, quiet = false, conf = null } = {}) {
     this.dir = resolve(dir)
     this.dev = dev
     this.quiet = quiet
     this.router = new Router()
     this.http = null
     const phase = dev ? PHASE_DEVELOPMENT_SERVER : PHASE_PRODUCTION_SERVER
-    this.nextConfig = loadConfig(phase, this.dir, conf)
-    this.distDir = join(this.dir, this.nextConfig.distDir)
+    this.joyConfig = loadConfig(phase, this.dir, conf)
+    this.distDir = join(this.dir, this.joyConfig.distDir)
 
     // Only serverRuntimeConfig needs the default
     // publicRuntimeConfig gets it's default in client/index.js
-    const {serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, generateEtags} = this.nextConfig
+    const { serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, generateEtags } = this.joyConfig
 
     if (!dev && !fs.existsSync(resolve(this.distDir, BUILD_ID_FILE))) {
       console.error(`> Could not find a valid build in the '${this.distDir}' directory! Try building your app with 'joy build' before starting the server.`)
@@ -51,14 +52,15 @@ export default class Server {
     }
 
     // cross domain api request
-    this.apiProxy = createProxyApiMiddleware({dev, proxyPrefix: assetPrefix})
+    this.apiProxy = createProxyApiMiddleware({ dev, proxyPrefix: assetPrefix })
     // gzip
     this.compression = compression()
 
     this.buildId = this.readBuildId(dev)
-    this.hotReloader = dev ? this.getHotReloader(this.dir, {config: this.nextConfig, buildId: this.buildId}) : null
+    this.hotReloader = dev ? this.getHotReloader(this.dir, { config: this.joyConfig, buildId: this.buildId }) : null
     this.renderOpts = {
-      serverRender: this.nextConfig.serverRender,
+      dir,
+      serverRender: this.joyConfig.serverRender,
       ComponentPath: resolve(this.distDir, 'server', 'app-main.js'),
       dev,
       staticMarkup,
@@ -165,7 +167,6 @@ export default class Server {
       // It's very important keep this route's param optional.
       // (but it should support as many as params, seperated by '/')
       // Othewise this will lead to a pretty simple DOS attack.
-      // See more: https://github.com/zeit/next.js/issues/2617
       '/static/:path*': async (req, res, params) => {
         const p = join(this.dir, 'static', ...(params.path || []))
         await this.serveStatic(req, res, p)
@@ -181,22 +182,28 @@ export default class Server {
       }
     }
 
-    if (this.nextConfig.useFileSystemPublicRoutes) {
-      // Makes `next export` exportPathMap work in development mode.
+    if (this.joyConfig.useFileSystemPublicRoutes) {
+      // Makes `joy export` exportPathMap work in development mode.
       // So that the user doesn't have to define a custom server reading the exportPathMap
-      if (this.dev && this.nextConfig.exportPathMap) {
+      if (this.dev && this.joyConfig.exportPathMap) {
         console.log('Defining routes from exportPathMap')
-        const exportPathMap = await this.nextConfig.exportPathMap({}, {dev: true, dir: this.dir, outDir: null, distDir: this.distDir, buildId: this.buildId}) // In development we can't give a default path mapping
+        const exportPathMap = await this.joyConfig.exportPathMap({}, {
+          dev: true,
+          dir: this.dir,
+          outDir: null,
+          distDir: this.distDir,
+          buildId: this.buildId
+        }) // In development we can't give a default path mapping
         for (const path in exportPathMap) {
-          const {page, query = {}} = exportPathMap[path]
+          const { page, query = {} } = exportPathMap[path]
           routes[path] = async (req, res, params, parsedUrl) => {
-            const {query: urlQuery} = parsedUrl
+            const { query: urlQuery } = parsedUrl
 
             Object.keys(urlQuery)
               .filter(key => query[key] === undefined)
               .forEach(key => console.warn(`Url defines a query parameter '${key}' that is missing in exportPathMap`))
 
-            const mergedQuery = {...urlQuery, ...query}
+            const mergedQuery = { ...urlQuery, ...query }
 
             await this.render(req, res, page, mergedQuery, parsedUrl)
           }
@@ -212,7 +219,7 @@ export default class Server {
       }
 
       routes['/:path*'] = async (req, res, params, parsedUrl) => {
-        const {pathname, query} = parsedUrl
+        const { pathname, query } = parsedUrl
         await this.render(req, res, pathname, query, parsedUrl)
       }
     }
@@ -237,7 +244,7 @@ export default class Server {
 
   async run (req, res, parsedUrl) {
     if (this.hotReloader) {
-      const {finished} = await this.hotReloader.run(req, res, parsedUrl)
+      const { finished } = await this.hotReloader.run(req, res, parsedUrl)
       if (finished) {
         return
       }
@@ -276,7 +283,7 @@ export default class Server {
       return
     }
 
-    if (this.nextConfig.poweredByHeader) {
+    if (this.joyConfig.poweredByHeader) {
       res.setHeader('X-Powered-By', `@symph/joy ${pkg.version}`)
     }
     return sendHTML(req, res, html, req.method, this.renderOpts)
@@ -295,14 +302,27 @@ export default class Server {
       const out = await renderToHTML(req, res, pathname, query, this.renderOpts)
       return out
     } catch (err) {
-      if (err.code === 'ENOENT') {
-        res.statusCode = 404
-        return this.renderErrorToHTML(null, req, res, pathname, query)
+      if (err instanceof ErrorRender) {
+        let { statusCode, context, html } = err
+        if (context.url) {
+          // 301 302
+          res.setHeader('Location', context.url)
+          res.statusCode = statusCode || 302
+          return ''
+        } else if (statusCode === 404) {
+          res.statusCode = statusCode || 404
+          if (html) {
+            return html
+          }
+        } else {
+          res.statusCode = statusCode || 500
+        }
       } else {
-        if (!this.quiet) console.error(err)
         res.statusCode = 500
-        return this.renderErrorToHTML(err, req, res, pathname, query)
       }
+
+      if (!this.quiet) console.error(err)
+      return this.renderErrorToHTML(err, req, res, pathname, query)
     }
   }
 
@@ -334,9 +354,9 @@ export default class Server {
   }
 
   async render404 (req, res, parsedUrl = parseUrl(req.url, true)) {
-    const {pathname, query} = parsedUrl
+    const { pathname, query } = parsedUrl
     res.statusCode = 404
-    return this.renderError(null, req, res, pathname, query)
+    return this.renderError({ statusCode: 404, message: STATUS_CODES[404] }, req, res, pathname, query)
   }
 
   async serveStatic (req, res, path) {

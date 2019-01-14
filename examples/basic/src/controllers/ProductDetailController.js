@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import controller, { requireModel } from '@symph/joy/controller'
+import controller, {requireModel } from '@symph/joy/controller'
 import ProductsModel from '../models/ProductsModel'
 import styles from './ProductDetailController.less'
 
@@ -15,36 +15,25 @@ export default class ProductDetailController extends Component {
 
   constructor () {
     super(...arguments)
-    this.state = {
-      isLoading: false
-    }
   }
 
   async componentPrepare () {
     let {dispatch, productId} = this.props
-
-    this.setState({
-      isLoading: true
-    })
 
     await dispatch({
       type: 'products/getProduct',
       productId
     })
 
-    this.setState({
-      isLoading: false
-    })
   }
 
   render () {
     let {product} = this.props
-    let {isLoading} = this.state
     return (
       <div className={styles.root}>
         <h1>Product Detail</h1>
         {
-          isLoading
+          !product
             ? <div className={styles.loading}>loading...</div>
             : <div>
               <div>ID: {product.id}</div>

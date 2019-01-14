@@ -60,7 +60,7 @@ const handlers = {
   }
 }
 
-export default ({assetPrefix}) => {
+export default ({ assetPrefix }) => {
   const options = {
     path: `${assetPrefix}/_joy/webpack-hmr`
   }

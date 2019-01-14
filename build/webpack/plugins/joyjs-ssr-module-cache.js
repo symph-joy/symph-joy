@@ -1,7 +1,7 @@
 import webpack from 'webpack'
 import { RawSource } from 'webpack-sources'
 import { join, relative, dirname } from 'path'
-import {IS_BUNDLED_PAGE_REGEX} from '../../../lib/constants'
+import { IS_BUNDLED_PAGE_REGEX } from '../../../lib/constants'
 
 const SSR_MODULE_CACHE_FILENAME = 'ssr-module-cache.js'
 
@@ -15,20 +15,20 @@ const SSR_MODULE_CACHE_FILENAME = 'ssr-module-cache.js'
 // Because of Node.js's single instance modules this makes webpack share all initialized instances
 // Do note that this module is only geared towards the `node` compilation target.
 // For the client side compilation we use `runtimeChunk: 'single'`
-export default class NextJsSsrImportPlugin {
+export default class JoySsrImportPlugin {
   constructor (options) {
     this.options = options
   }
   apply (compiler) {
-    const {outputPath} = this.options
-    compiler.hooks.emit.tapAsync('NextJsSSRModuleCache', (compilation, callback) => {
+    const { outputPath } = this.options
+    compiler.hooks.emit.tapAsync('JoySSRModuleCache', (compilation, callback) => {
       compilation.assets[SSR_MODULE_CACHE_FILENAME] = new RawSource(`
       /* This cache is used by webpack for instantiated modules */
       module.exports = {}
       `)
       callback()
     })
-    compiler.hooks.compilation.tap('NextJsSSRModuleCache', (compilation) => {
+    compiler.hooks.compilation.tap('JoySSRModuleCache', (compilation) => {
       compilation.mainTemplate.hooks.localVars.intercept({
         register (tapInfo) {
           if (tapInfo.name === 'MainTemplate') {

@@ -4,7 +4,7 @@ import mkdirp from 'mkdirp-then'
 import { extname, resolve, join, dirname, sep } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import loadConfig from '../server/config'
-import {PHASE_EXPORT, SERVER_DIRECTORY, PAGES_MANIFEST, CONFIG_FILE, BUILD_ID_FILE, CLIENT_STATIC_FILES_PATH} from '../lib/constants'
+import { PHASE_EXPORT, SERVER_DIRECTORY, PAGES_MANIFEST, CONFIG_FILE, BUILD_ID_FILE, CLIENT_STATIC_FILES_PATH } from '../lib/constants'
 import { renderToHTML } from '../server/render'
 import { setAssetPrefix } from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
@@ -16,8 +16,8 @@ export default async function (dir, options, configuration) {
   }
 
   dir = resolve(dir)
-  const nextConfig = configuration || loadConfig(PHASE_EXPORT, dir)
-  const distDir = join(dir, nextConfig.distDir)
+  const joyConfig = configuration || loadConfig(PHASE_EXPORT, dir)
+  const distDir = join(dir, joyConfig.distDir)
 
   log(`> using build directory: ${distDir}`)
 
@@ -60,7 +60,7 @@ export default async function (dir, options, configuration) {
     )
   }
 
-  // Copy .next/static directory
+  // Copy .joy/static directory
   if (existsSync(join(distDir, CLIENT_STATIC_FILES_PATH))) {
     log('  copying "static build" directory')
     await cp(
@@ -70,9 +70,9 @@ export default async function (dir, options, configuration) {
   }
 
   // Get the exportPathMap from the config file
-  if (typeof nextConfig.exportPathMap !== 'function') {
+  if (typeof joyConfig.exportPathMap !== 'function') {
     console.log(`> No "exportPathMap" found in "${CONFIG_FILE}". Generating map from "./pages"`)
-    nextConfig.exportPathMap = async (defaultMap) => {
+    joyConfig.exportPathMap = async (defaultMap) => {
       return defaultMap
     }
   }
@@ -83,15 +83,15 @@ export default async function (dir, options, configuration) {
     dir,
     buildId,
     joyExport: true,
-    serverRender: nextConfig.serverRender,
-    assetPrefix: nextConfig.assetPrefix.replace(/\/$/, ''),
+    serverRender: joyConfig.serverRender,
+    assetPrefix: joyConfig.assetPrefix.replace(/\/$/, ''),
     distDir,
     dev: false,
     staticMarkup: false,
     hotReloader: null
   }
 
-  const {serverRuntimeConfig, publicRuntimeConfig} = nextConfig
+  const { serverRuntimeConfig, publicRuntimeConfig } = joyConfig
 
   if (publicRuntimeConfig) {
     renderOpts.runtimeConfig = publicRuntimeConfig
@@ -110,7 +110,7 @@ export default async function (dir, options, configuration) {
     joyExport: true
   }
 
-  const exportPathMap = await nextConfig.exportPathMap(defaultPathMap, {dev: false, dir, outDir, distDir, buildId})
+  const exportPathMap = await joyConfig.exportPathMap(defaultPathMap, { dev: false, dir, outDir, distDir, buildId })
   const exportPaths = Object.keys(exportPathMap)
 
   for (const path of exportPaths) {

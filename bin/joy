@@ -2,7 +2,7 @@
 import { join } from 'path'
 import { spawn } from 'cross-spawn'
 import pkg from '../../package.json'
-import {CONFIG_FILE} from '../lib/constants'
+import { CONFIG_FILE } from '../lib/constants'
 
 if (pkg.peerDependencies) {
   Object.keys(pkg.peerDependencies).forEach(dependency => {
@@ -97,7 +97,7 @@ process.on('SIGTERM', wrapper)
 process.on('exit', wrapper)
 
 if (cmd === 'dev') {
-  const {watchFile} = require('fs')
+  const { watchFile } = require('fs')
   watchFile(`${process.cwd()}/${CONFIG_FILE}`, (cur, prev) => {
     if (cur.size > 0 || prev.size > 0) {
       console.log(`\n> Found a change in ${CONFIG_FILE}, restarting the server...`)

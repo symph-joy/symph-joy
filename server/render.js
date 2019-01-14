@@ -11,8 +11,9 @@ import ErrorDebug from '../lib/error-debug'
 import Loadable from '../lib/loadable'
 import LoadableCapture from '../lib/loadable-capture'
 import { BUILD_MANIFEST, REACT_LOADABLE_MANIFEST, SERVER_DIRECTORY } from '../lib/constants'
+import { stringify } from 'querystring'
 
-import {create as createTempo} from '@symph/tempo'
+import { create as createTempo } from '@symph/tempo'
 import { createServerRouter } from '../lib/router'
 
 // Based on https://github.com/jamiebuilds/react-loadable/pull/132
@@ -27,6 +28,15 @@ function getDynamicImportBundles (manifest, moduleIds) {
 }
 
 const logger = console
+
+export class ErrorRender extends Error {
+  constructor (staticRenderContext, html) {
+    super()
+    this.statusCode = staticRenderContext.status
+    this.context = staticRenderContext
+    this.html = html
+  }
+}
 
 export async function render (req, res, pathname, query, opts) {
   const html = await renderToHTML(req, res, pathname, query, opts)
@@ -43,7 +53,9 @@ export async function renderError (err, req, res, pathname, query, opts) {
 }
 
 export function renderErrorToHTML (err, req, res, pathname, query, opts = {}) {
-  return doRender(req, res, pathname, query, {...opts, err, page: '/_error'})
+  let { distDir } = opts
+  const errorPath = join(distDir, SERVER_DIRECTORY, '_error')
+  return doRender(req, res, pathname, query, { ...opts, err, ComponentPath: errorPath })
 }
 
 // function getPageFiles (buildManifest, page) {
@@ -73,6 +85,7 @@ async function doRender (req, res, pathname, query, {
 } = {}) {
   console.log(`> start render, pathname:${pathname}${err ? ', error:' + err : ''}`)
   page = page || pathname
+  const serializedErr = (err) ? serializeError(res, dev, err) : undefined
 
   // 暂时不需要监听页面的编译情况
   // if (hotReloader) { // In dev mode we use on demand entries to compile the page before rendering
@@ -92,9 +105,8 @@ async function doRender (req, res, pathname, query, {
   App = App.default || App
   Document = Document.default || Document
   const asPath = req.url
-  const ctx = {err, req, res, pathname, query, asPath}
+  const ctx = { err, req, res, pathname, query, asPath }
   // const props = await loadGetInitialProps(App, {Component, router, ctx})
-  const props = {}
   const devFiles = buildManifest.devFiles
   const files = [
     ...new Set([
@@ -108,10 +120,12 @@ async function doRender (req, res, pathname, query, {
   // the response might be finshed on the getinitialprops call
   if (isResSent(res)) return
 
+  let renderContext = {}
   let reactLoadableModules = []
   const renderPage = async (options = Comp => Comp) => {
     let EnhancedApp = App
-    const Router = createServerRouter(pathname, query)
+
+    const Router = createServerRouter({ pathname, search: (query ? stringify(query) : '') }, renderContext)
     if (typeof options === 'object') {
       if (options.enhanceApp) {
         EnhancedApp = options.enhanceApp(App)
@@ -136,15 +150,10 @@ async function doRender (req, res, pathname, query, {
       return EnhancedComponent
     }
 
-    const createApp = (Component, appProps, shouldGatherModules) => {
+    const createApp = (appProps, shouldGatherModules) => {
       return <LoadableCapture
         report={moduleName => shouldGatherModules ? reactLoadableModules.push(moduleName) : undefined}>
-        <EnhancedApp {...{
-          Component: Component,
-          Router,
-          ...props,
-          ...appProps
-        }} />
+        <EnhancedApp {...appProps} />
       </LoadableCapture>
     }
 
@@ -154,51 +163,43 @@ async function doRender (req, res, pathname, query, {
     let head
     let initStoreState
 
-    try {
-      if (err && dev) {
-        html = render(<ErrorDebug error={err} />)
-      } else if (err) {
-        if (serverRender) {
-          const Component = await requireComp()
-          html = render(createApp(Component, {}, true))
-        } else {
-          html = '500 - Internal Error'
+    if (err && dev) {
+      html = render(<ErrorDebug error={err} />)
+    } else {
+      if (serverRender) {
+        const Component = await requireComp()
+        const tempo = createTempo({})
+        tempo.start()
+
+        const appContentProps = {}
+        if (err) {
+          Object.assign(appContentProps, { ...serializedErr })
         }
+        const appProps = { Component, Router, tempo, appContentProps }
+
+        // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
+        // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
+        renderToStaticMarkup(createApp(appProps, false))
+
+        await tempo.prepareManager.waitAllPrepareFinished()
+        await tempo.dispatch({
+          type: '@@joy/updatePrepareState',
+          isPrepared: true
+        })
+
+        // 第二次渲染，此时store的state已经获取数据完成
+        html = render(createApp(appProps, true))
+        initStoreState = tempo._store.getState()
       } else {
-        if (serverRender) {
-          const Component = await requireComp()
-          const tempo = createTempo({})
-          tempo.start()
-          // 第一次渲染，执行当前页面中所有组件的componentWillMount事件，dispatch redux的action，开始执行操作，
-          // 等所有异步操作完成以后，redux state的状态已更新完成后，执行第二次渲染
-          renderToStaticMarkup(createApp(Component, {tempo}, false))
-
-          await tempo.prepareManager.waitAllPrepareFinished()
-
-          await tempo.dispatch({
-            type: '@@joy/updatePrepareState',
-            isPrepared: true
-          })
-          // console.log('> app has prepared')
-          const app = createApp(Component, {tempo}, true)
-          // 第二次渲染，此时store的state已经获取数据完成
-          html = render(app)
-          initStoreState = tempo._store.getState()
-          // console.log('> server render has finished')
-        } else {
-          html = ''
-        }
+        html = ''
       }
-    } catch (e) {
-      logger.error(e)
-    } finally {
-      head = Head.rewind() || defaultHead()
     }
-    // const chunks = loadChunks({dev, dir, dist, availableChunks})
-    return {html, head, buildManifest, initStoreState}
+    head = Head.rewind() || defaultHead()
+
+    return { html, head, buildManifest, initStoreState }
   }
 
-  const docProps = await loadGetInitialProps(Document, {...ctx, renderPage})
+  const docProps = await loadGetInitialProps(Document, { ...ctx, renderPage })
   const dynamicImports = getDynamicImportBundles(reactLoadableManifest, reactLoadableModules)
 
   if (isResSent(res)) return
@@ -206,15 +207,14 @@ async function doRender (req, res, pathname, query, {
   if (!Document.prototype || !Document.prototype.isReactComponent) throw new Error('_document.js is not exporting a React component')
   const doc = <Document {...{
     __JOY_DATA__: {
-      props, // The result of getInitialProps
       page, // The rendered page
       pathname, // The requested path
       query, // querystring parsed / passed by the user
       buildId, // buildId is used to facilitate caching of page bundles, we send it to the client so that pageloader knows where to load bundles
       assetPrefix: assetPrefix === '' ? undefined : assetPrefix, // send assetPrefix to the client side when configured, otherwise don't sent in the resulting HTML
       runtimeConfig, // runtimeConfig if provided, otherwise don't sent in the resulting HTML
-      joyExport, // If this is a page exported by `next export`
-      err: (err) ? serializeError(dev, err) : undefined, // Error if one happened, otherwise don't sent in the resulting HTML
+      joyExport, // If this is a page exported by `joy export`
+      err: serializedErr, // Error if one happened, otherwise don't sent in the resulting HTML
       initStoreState: docProps.initStoreState
     },
     dev,
@@ -228,7 +228,20 @@ async function doRender (req, res, pathname, query, {
     ...docProps
   }} />
 
-  return '<!DOCTYPE html>' + renderToStaticMarkup(doc)
+  const pageHtml = '<!DOCTYPE html>' + renderToStaticMarkup(doc)
+
+  checkRenderState(req, res, renderContext, pageHtml)
+
+  return pageHtml
+}
+
+function checkRenderState (req, res, staticContext, html) {
+  if (Object.keys(staticContext).length === 0 ||
+    (staticContext.status >= 200 && staticContext.status <= 299)) {
+    return false
+  } else {
+    throw new ErrorRender(staticContext, html)
+  }
 }
 
 export async function renderScriptError (req, res, page, error) {
@@ -246,11 +259,11 @@ export async function renderScriptError (req, res, page, error) {
   res.end('500 - Internal Error')
 }
 
-export function sendHTML (req, res, html, method, {dev, generateEtags}) {
+export function sendHTML (req, res, html, method, { dev, generateEtags }) {
   if (isResSent(res)) return
   const etag = generateEtags && generateETag(html)
 
-  if (fresh(req.headers, {etag})) {
+  if (fresh(req.headers, { etag })) {
     res.statusCode = 304
     res.end()
     return
@@ -274,24 +287,25 @@ export function sendHTML (req, res, html, method, {dev, generateEtags}) {
 }
 
 function errorToJSON (err) {
-  const {name, message, stack} = err
-  const json = {name, message, stack}
+  const { name, message, stack } = err
+  const json = { name, message, stack }
 
   if (err.module) {
     // rawRequest contains the filename of the module which has the error.
-    const {rawRequest} = err.module
-    json.module = {rawRequest}
+    const { rawRequest } = err.module
+    json.module = { rawRequest }
   }
 
   return json
 }
 
-function serializeError (dev, err) {
+function serializeError (res, dev, err) {
   if (dev) {
     return errorToJSON(err)
   }
-
-  return {message: '500 - Internal Server Error.'}
+  let statusCode = res.statusCode || err.statusCode || 500
+  let message = err.message || '500 - Internal Server Error.'
+  return { statusCode, message }
 }
 
 export function serveStatic (req, res, path) {
