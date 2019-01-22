@@ -2,13 +2,18 @@
 // This fixes https://github.com/webpack/webpack/issues/6598
 // This plugin is based on https://github.com/researchgate/webpack/commit/2f28947fa0c63ccbb18f39c0098bd791a2c37090
 export default class ChunkNamesPlugin {
+  constructor ({ dev }) {
+    this.dev = dev
+  }
+
   apply (compiler) {
+    const me = this
     compiler.hooks.compilation.tap('JoyChunkNamesPlugin', (compilation) => {
       compilation.chunkTemplate.hooks.renderManifest.intercept({
         register (tapInfo) {
           if (tapInfo.name === 'JavascriptModulesPlugin') {
             const originalMethod = tapInfo.fn
-            tapInfo.fn = (result, options) => {
+            tapInfo.fn = function (result, options) {
               let filenameTemplate
               const chunk = options.chunk
               const outputOptions = options.outputOptions
@@ -17,11 +22,13 @@ export default class ChunkNamesPlugin {
               } else if (chunk.hasEntryModule()) {
                 filenameTemplate = outputOptions.filename
               } else {
-                let topLevelModuleName = tryGetChunkEntryFileName(chunk)
-                if (chunk.name === null && topLevelModuleName) {
-                  options.chunk.name = topLevelModuleName
+                if (me.dev) {
+                  let topLevelModuleName = tryGetChunkEntryFileName(chunk)
+                  if (chunk.name === null && topLevelModuleName) {
+                    options.chunk.name = topLevelModuleName
+                  }
+                  filenameTemplate = outputOptions.chunkFilename
                 }
-                filenameTemplate = outputOptions.chunkFilename
               }
 
               options.chunk.filenameTemplate = filenameTemplate
@@ -46,8 +53,12 @@ function tryGetChunkEntryFileName (chunk) {
 
   let topLevelModules = modules.reduce((rst, module) => {
     if (module.depth === topLevel) {
-      if (module.id) { // module.id is the relative path of source file
-        let name = module.id.replace(/^[./]*/, '')
+      if (module.rootModule) {
+        module = module.rootModule
+      }
+      if (module.id) {
+        let name = module.id
+        name = name.replace(/^[./]*/, '')
         name = name.replace(/[/.]/g, '_')
         rst.push(name)
       }

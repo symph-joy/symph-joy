@@ -163,7 +163,7 @@ export default async function getBaseWebpackConfig (dir: string, { dev = false, 
   }
 
   const resolveConfig = {
-    extensions: ['.wasm', '.mjs', '.js', '.jsx', '.json'],
+    extensions: ['.wasm', '.mjs', '.js', '.jsx', '.json', '.ts', 'tsx'],
     modules: [
       JOY_PROJECT_ROOT_NODE_MODULES,
       'node_modules',
@@ -226,7 +226,7 @@ export default async function getBaseWebpackConfig (dir: string, { dev = false, 
           use: defaultLoaders.hotSelfAccept
         },
         {
-          test: /\.(js|jsx)$/,
+          test: /\.(js|jsx|ts|tsx)$/,
           include: [dir],
           exclude: /node_modules/,
           use: defaultLoaders.babel
@@ -255,7 +255,7 @@ export default async function getBaseWebpackConfig (dir: string, { dev = false, 
         }
       }),
       // This plugin makes sure `output.filename` is used for entry chunks
-      new ChunkNamesPlugin(),
+      new ChunkNamesPlugin({ dev }),
       !isServer && new ReactLoadablePlugin({
         filename: REACT_LOADABLE_MANIFEST
       }),

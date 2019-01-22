@@ -121,10 +121,14 @@ export default () =>
 
 ## 静态文件
 
-在工程根目录下创建`static`目录，将静态文件放入其中，例如：图片、第三方js、css等，也可以创建子目录管理文件，可以通过`{assetPrefix}/static/{file}`路径访问这些文件。
+在工程根目录下创建`static`目录，将静态文件放入其中，例如：图片、第三方js、css等，也可以创建子目录管理文件，可以通过`{assetPrefix}/static/{file}`访问这些文件，也可使用`asset`方法得到最终的访问路径 。
 
 ```jsx
 export default () => <img src="/static/my-image.png" />
+
+//or 
+import asset from '@symph/joy/asset'
+export default () => <img src={asset("/my-image.png")} />
 ```
 
 ## 自定义 Head
@@ -240,7 +244,7 @@ app.prepare()
 
 ### Model
 
-Model管理应用的行为和数据，Model拥有初始状态`initState`和更新状态的方法`setState(nextState)`，这和Component的state概念类似，业务在执行的过程中，不断更新`state`，当`state`发生改变时，和`state`绑定的View也会动态的更新。这里并没有什么魔法和创造新的东西，只是将redux的`action`、`actionCreator`、`reducer`、`thunk`、`saga`等复杂概念简化为业务方法和业务数据两个概念，让我们更专注于业务实现，代码也更简洁.
+Model管理应用的行为和数据，Model拥有初始状态`initState`和更新状态的方法`setState(nextState)`，这和Component的state概念类似，业务在执行的过程中，不断更新`state`，当`state`发生改变时，和`state`绑定的View也会自动的更新。这里并没有什么魔法和创造新的东西，只是将redux的`action`、`actionCreator`、`reducer`、`thunk`、`saga`等复杂概念简化为业务方法和业务数据两个概念，让我们更专注于业务实现，代码也更简洁.
 
 下面是一个简单的model示例：
 
@@ -249,34 +253,34 @@ import model from '@symph/joy/model'
 import fetch from '@symph/joy/fetch'
 
 @model()
-export default class ProductsModel {
+export default class TodosModel {
 
   // the mount point of store state tree, must unique in the app.
-  namespace = 'products';
+  namespace = 'todos';
 
-  // model has own state， this is the initial state
+  // this is the initial state of model
   initState = {
-    pageIndex: null,
     pageSize: 5,
-    products: [],
+    count: 0,
+    entities: [],
   };
 
-  async getProducts({pageIndex = 1, pageSize}) {
+  async getTodos(lastId=0, pageSize = 5) {
     // fetch remote data
-    let pagedProducts = await fetch('https://www.example.com/api/hello', 
-      {body:{pageIndex, pageSize}});
+    let pagedTodos = await fetch('https://www.example.com/api/hello', 
+      {body:{lastId, pageSize}});
 
-    let {products} = this.getState();
-    if (pageIndex === 1) {
-      products = data;
+    let {entities} = this.getState();
+    if (lastId === 0) {
+      // first page
+      entities = data;
     } else {
-      products = [...products, ...pagedProducts];
+      entities = [...entities, ...pagedTodos];
     }
     
     // update model's state
     this.setState({
-      products,
-      pageIndex,
+      entities,
       pageSize
     });
   }
@@ -327,40 +331,36 @@ model将会被注册到redux store中，由store统一管理model的状态，使
 
 ### Controller
 
-Controller需要申明其依赖哪些Model，以及绑定Model的中的数据，和调用Model中的业务方法。它是一个React组件，可以像其它React组件一样创建和使用，新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，该方法是一个异步函数，在服务端渲染时，会等待其执行完成后，才会渲染出html，然后浏览器会直接使用在服务端获取到的数据来展现界面，不再重复执行`componentPrepare`方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在客户端上运行。在一次页面请求的过程中，系统会保证该方法只执行一次，避免数据重复加载。
+Controller需要申明其依赖哪些Model，并绑定Model的中的状态，以及调用Model里定义的业务方法。它是一个React组件，可以像其它React组件一样创建和使用，新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，在组件创建完成后执行，在服务端渲染时，会等待其执行完成后，再渲染出html，接着在浏览器上运行是，会直接使用在服务端prepare得到的数据，不再执行该方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在组件初始化完成后，立即上运行。在一次页面请求的过程中，系统会保证该方法只执行一次，避免数据重复加载。
 
 ```jsx
 import React, {Component} from 'react';
-import ProductsModel from '../models/ProductsModel'
-import controller, {requireModel} from '@symph/joy/controller'
+import TodosModel from '../models/TodosModel'
+import {controller, autowire} from '@symph/joy/controller'
 
-
-@requireModel(ProductsModel)          // register model
 @controller((state) => {              // state is store's state
   return {
-    products: state.products.products // bind model's state to props
+    todos: state.todos.entities // bind model's state to props
   }
 })
 export default class IndexController extends Component {
 
+  @autowire()
+  todosModel: TodosModel              // register model
+
   async componentPrepare() {
-    let {dispatch} = this.props;
-    // call model's effect method
-    await dispatch({
-      type: 'products/getProducts', 
-      pageIndex: 1,
-      pageSize: 10,
-    });
+    // call model
+    await this.todosModel.getTodos(0, 5)
   }
 
   render() {
-    let {products = []} = this.props;
+    let {todos = []} = this.props;
     return (
       <div >
-        <div>Product List</div>
+        <div>Todo List</div>
         <div>
-          {products.map((product, i) => {
-            return <div key={product.id} onClick={this.onClickProduct.bind(product)}>{product.id}:{product.name}</div>
+          {todos.map((todo, i) => {
+            return <div key={todo.id} >{todo.id}:{todo.content}</div>
           })}
         </div>
       </div>
@@ -374,9 +374,9 @@ export default class IndexController extends Component {
 
 - 使用`@controller(mapStateToProps)`装饰器将一个普通的Component声明为一个Controller，参数`mapStateToProps`实现model状态和组件props属性绑定，当model的state发生改变时，会触发组件使用新数据重新渲染界面。
 
-- 使用`@requireModel(ModelClass)`注册controller需要依赖的model，这样可以将controller依赖的model打包到一个thunk中，只有在controller运行时，才会去加载依赖的model，通常只需要在第一次使用到model的时候加载一次即可，无需重复注册。
+- `@autowire(ModelClass)`声明该属性是一个model，运行时，`@symph/joy`将自动初始化该model，并绑定到该属性上。打包时，controller依赖的model将一起打包thunk中，这样在controller运行时，才会去加载依赖的model。
 
-- 每个controller的`props`都会被注入一个redux的`dispatch`方法，`dispatch`方法是controller调用model的唯一途径，该方法的返回值是业务方法的返回值(Promise对象)，这和redux的dispatch方法有差别。
+- 每个controller的`props`会被注入一个`dispatch`方法，`dispatch`是redux提供的方法，这样我们可以按照redux的方式来调用reducer、effect、thunk等模块。
 
 ### View
 
@@ -385,13 +385,11 @@ View是一个普通的React组件，其只负责界面展示，展示的数据�
 ```javascript
 import React, {Component} from 'react'
 
-class TextView extends Component {
+class ImageView extends Component {
   render() {
-    let {message} = this.props
+    let {src} = this.props
     return (
-      <div>
-        {message}
-      </div>
+      <img src={src} />
     )
   }
 }
@@ -510,9 +508,10 @@ server.listen(port, (err) => {
 ```js
 import dynamic from '@symph/joy/dynamic'
 
-const DynamicComponent = dynamic({loader: () => import('../components/hello')}, {
-   ssr: true,
-   loading:() => <div>...</div>
+const DynamicComponent = dynamic({
+  loader: () => import('../components/hello'),
+  ssr: true,
+  loading:() => <div>...</div>
 })
 
 export default () =>
@@ -529,13 +528,9 @@ export default () =>
 import dynamic from '@symph/joy/dynamic'
 
 const HelloBundle = dynamic({
-  modules: props => {
-    const components = {
-      Hello1: import('../components/hello1'),
-      Hello2: import('../components/hello2')
-    }
-    // Add remove components based on props
-    return components
+  modules: {
+      Hello1: () => import('../components/hello1'),
+      Hello2: () => import('../components/hello2')
   },
   render: (props, { Hello1, Hello2 }) =>
     <div>
@@ -551,6 +546,7 @@ export default () => <HelloBundle title="Dynamic Bundle" />
 ```
 
 配置参数：
+- loader: function: null, 加载器，定义动态加载的内容
 - ssr: bool: true, 设置是否开启服务端渲染
 - loading: Component: `<p>loading...</p>` 加载过程中，展示的动画组件
 
@@ -615,7 +611,7 @@ export default class _Error extends React.Component {
 
 ## 打包部署
 
-部署时，需要先使用`joy build`命令来编译代码，生成可在浏览器和node.js里直接运行的目标代码，放入`.joy`目录中([distDir](./configurations#distDir)配置项可自定义输出目录名称)，然后将`.joy`目录上传到生产机器上，在生产机器上执行`joy start`命令来启动应用。在`package.json`的`scripts`节点中加入以下命令脚本：
+部署时，需要先使用`joy build`命令来编译代码，生成可在浏览器和node.js里直接运行的目标代码，放入`.joy`目录中([distDir](./configurations#distDir)可自定义输出目录名称)，然后将`.joy`目录上传到生产机器上，在生产机器上执行`joy start`命令来启动应用。在`package.json`的`scripts`节点中加入以下命令脚本：
 
 ```json
 // package.json

@@ -116,7 +116,6 @@ export async function renderError (props) {
   // If we've gotten here upon initial render, we can use the props from the server.
   // Otherwise, we need to call `getInitialProps` on `App` before mounting.
   const initAppContentProps = Object.assign({}, props.props, { ...err })
-
   await doRender({ ...props, err, Component: ErrorComponent, appContentProps: initAppContentProps })
 }
 
@@ -133,22 +132,9 @@ function renderReactElement (reactEl, domEl) {
   isInitialRender = false
 }
 
-async function doRender ({ App, Component, appContentProps, hash, err, emitter: emitterProp = emitter, Router, tempo, isComponentDidPrepare }) {
-  // Usual getInitialProps fetching is handled in @symph/joy/router
-  // this is for when ErrorComponent gets replaced by Component by HMR
-  // if (!props && Component &&
-  //   Component !== ErrorComponent &&
-  //   lastAppProps.Component === ErrorComponent) {
-  //   const { pathname, query, asPath } = router
-  //   props = await loadGetInitialProps(App, {Component, router, ctx: {err, pathname, query, asPath}})
-  // }
-
-  // Component = Component || lastAppProps.Component
-  // props = props || lastAppProps.props
-
+async function doRender (options) {
+  const { App, Component, appContentProps, hash, err, emitter: emitterProp = emitter, Router, tempo, isComponentDidPrepare } = options
   const appProps = { Component, hash, err, appContentProps, headManager, Router, tempo, isComponentDidPrepare }
-  // lastAppProps has to be set before ReactDom.render to account for ReactDom throwing an error.
-  // lastAppProps = appProps
 
   emitterProp.emit('before-reactdom-render', { Component, ErrorComponent, appProps })
 
@@ -161,7 +147,7 @@ async function doRender ({ App, Component, appContentProps, hash, err, emitter: 
     // In production we catch runtime errors using componentDidCatch which will trigger renderError.
     const onError = async (error) => {
       try {
-        await renderError({ App, err: error })
+        await renderError({ ...options, err: error })
       } catch (err) {
         console.error('Error while rendering error page: ', err)
       }

@@ -18,28 +18,38 @@ async function get$ (path, query) {
 
 export default (context) => {
   describe('dynamic load', () => {
-    test('should render dynamic import components', async () => {
+    test('[server]should render dynamic import components', async () => {
       let html = await renderViaHTTP(context.getUrl('/dynamic/loadComponent'))
-      expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello/)
+      if(context.isDev){
+        expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello/)
+      }
       expect(html).toMatch(/hello world/)
     })
 
-    test('should render dynamic import components using a function as first parameter', async () => {
+    test('[server]should render dynamic import components using a function as first parameter', async () => {
       let html = await renderViaHTTP(context.getUrl('/dynamic/function'))
-      expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello/)
+      if(context.isDev) {
+        expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello/)
+      }
       expect(html).toMatch(/hello world/)
     })
 
-    test('custom chunk file name', async () => {
+    test('[server]custom chunk file name', async () => {
       let html = await renderViaHTTP(context.getUrl('/dynamic/chunkFileName'))
-      expect(html).toMatch('custom-hello-world.js')
+      expect(html).toMatch(/custom-hello-world(\.[a-z0-9]*)*.js/i)
     })
 
+    test('[server]should render the component Head content', async () => {
+      let html = await renderViaHTTP(context.getUrl('/dynamic/withHead'))
+      expect(html).toMatch('<title class="joy-head">title from dynamic component</title>')
+    })
     test('should render the component Head content', async () => {
-      await page.goto(context.getUrl('/dynamic/withHead'))
+      await page.goto(context.getUrl('/'))
+      await expect(page).toClick('[href="/dynamic/withHead"]')
       let title = await page.evaluate(() => document.title)
       expect(title).toMatch('title from dynamic component')
     })
+
     describe('ssr:false option', () => {
       test('should render loading on the server side', async () => {
         let html = await renderViaHTTP(context.getUrl('/dynamic/noSSR'))
@@ -68,9 +78,11 @@ export default (context) => {
     describe('bundle imports', () => {
       it('should render dynamic imports bundle', async () => {
         let html = await renderViaHTTP(context.getUrl('/dynamic/bundle'))
-        expect(html).toMatch(/src[\/\._\-]component[\/\._\-]HelloContext/)
-        expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello1/)
-        expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello2/)
+        if(context.isDev){
+          expect(html).toMatch(/src[\/\._\-]component[\/\._\-]HelloContext/)
+          expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello1/)
+          expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello2/)
+        }
         expect(html).toMatch('Dynamic Bundle')
         expect(html).toMatch('hello world 1')
         expect(html).not.toMatch('hello world 2')
@@ -78,9 +90,11 @@ export default (context) => {
 
       it('should render dynamic imports bundle with additional components', async () => {
         let html = await renderViaHTTP(context.getUrl('/dynamic/bundle?showMore=1'))
-        expect(html).toMatch(/src[\/\._\-]component[\/\._\-]HelloContext/)
-        expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello1/)
-        expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello2/)
+        if(context.isDev) {
+          expect(html).toMatch(/src[\/\._\-]component[\/\._\-]HelloContext/)
+          expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello1/)
+          expect(html).toMatch(/src[\/\._\-]component[\/\._\-]Hello2/)
+        }
         expect(html).toMatch('Dynamic Bundle')
         expect(html).toMatch('hello world 1')
         expect(html).toMatch('hello world 2')

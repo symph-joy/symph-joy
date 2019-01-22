@@ -35,13 +35,22 @@ export default (context) => {
       const resp = await fetchViaHTTP(context.getUrl('/err500'))
       expect(resp.status).toBe(500)
       const html = await resp.text()
-      expect(html).toMatch('{"name":"Error","message":"i am error"') // error object in __JOY_DATA__
+      if(context.isDev){
+        expect(html).toMatch('{"name":"Error","message":"i am error"') // error object in __JOY_DATA__
+      } else {
+        expect(html).toMatch('"err":{"statusCode":500,"message":"i am error"}') // error object in __JOY_DATA__
+      }
     })
 
     test('[browser, dev]status 500, throw an error in render of component', async () => {
       await page.goto(context.getUrl('/'))
       await expect(page).toClick('[href="/err500"]')
-      await expect(page).toMatch('Error: i am error')
+      if(context.isDev){
+        await expect(page).toMatch('Error: i am error')
+      } else {
+        await expect(page).toMatch('An unexpected error has occurred')
+      }
+
     })
   })
 }

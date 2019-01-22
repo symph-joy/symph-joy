@@ -7,19 +7,13 @@
     "export": "yarn run build && joy export",
     "start": "joy start"
   },
-  "engines": {
-    "install-node": "6.9.2"
-  },
   "dependencies": {
-    "@symph/joy": "^0.5.0",
-    "@symph/joy-image": "^0.4.1",
-    "@symph/joy-less": "^0.5.0",
+    "@symph/joy": "latest",
+    "@symph/joy-image": "latest",
+    "@symph/joy-less": "latest",
     "less": "^3.8.1",
     "prop-types": "^15.6.2",
     "react": "^16.5.2",
     "react-dom": "^16.5.2"
-  },
-  "devDependencies": {
-    "react-redux": "6.0.0"
   }
 }

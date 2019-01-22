@@ -16,12 +16,12 @@ export default (context) => {
     describe('server render', () => {
       let html, $
       beforeAll(async () => {
-        html = await renderViaHTTP(context.getUrl('/controller'))
+        html = await renderViaHTTP(context.getUrl('/controller/basic'))
         $ = cheerio.load(html)
       })
 
       test('component should has prepared', async () => {
-        expect($('#location_pathname').text()).toBe('/controller')
+        expect($('#location_pathname').text()).toBe('/controller/basic')
       })
 
       test('bind props in mapStateToProps', async () => {
@@ -30,7 +30,7 @@ export default (context) => {
       })
 
       test('bind dispatch function', async () => {
-        expect($('#location_pathname').text()).toBe('/controller')
+        expect($('#location_pathname').text()).toBe('/controller/basic')
         expect($('#dispatch').text()).toBe('function')
       })
 
@@ -47,11 +47,11 @@ export default (context) => {
     describe('browser render', () => {
       beforeAll(async () => {
         await page.goto(context.getUrl('/'))
-        await expect(page).toClick('[href="/controller"]')
+        await expect(page).toClick('[href="/controller/basic"]')
       })
 
       test('has controller props', async () => {
-        await expect(page).toMatchElement('#location_pathname', { text: '/controller' })
+        await expect(page).toMatchElement('#location_pathname', { text: '/controller/basic' })
         await expect(page).toMatchElement('#dispatch', { text: 'function' })
       })
 
@@ -78,8 +78,49 @@ export default (context) => {
     if (context.isDev) {
       test('[dev] reject setState in componentPrepare', async () => {
         await page.goto(context.getUrl('/controller/setStateOnPrepare'))
-        await expect(page).toMatch('can\'t setState during componentPrepare, this will not work on ssr')
+        await expect(page).toMatch('can\'t call setState during componentPrepare, this will not work on ssr')
       })
     }
+
+    describe('autowire', () => {
+      test('[server]define model type by typescript syntax', async() => {
+        const html = await renderViaHTTP(context.getUrl('/controller/autowire'))
+        expect(html).toMatch('"hello":{"message":"hello from HelloModel"}')
+        expect(html).toMatch('<div>message:hello from HelloModel</div>')
+      })
+
+      test('define model type by typescript syntax', async () => {
+        await page.goto(context.getUrl('/'))
+        await expect(page).toClick(`[href="/controller/autowire"]`)
+        await expect(page).toMatch('message:hello from HelloModel')
+      })
+
+      test('[server]define model type by parameter of decorator', async() => {
+        const html = await renderViaHTTP(context.getUrl('/controller/autowireWithType'))
+        expect(html).toMatch('"hello":{"message":"hello from HelloModel"}')
+        expect(html).toMatch('<div>message:hello from HelloModel</div>')
+      })
+
+      test('define model type by parameter of decorator', async () => {
+        await page.goto(context.getUrl('/'))
+        await expect(page).toClick(`[href="/controller/autowireWithType"]`)
+        await expect(page).toMatch('message:hello from HelloModel')
+      })
+    })
+
+    describe('componentPrepare', () => {
+      test('[server] call model\`s method in componentPrepare', async() => {
+        const html = await renderViaHTTP(context.getUrl('/controller/prepare'))
+        expect(html).toMatch('"hello":{"message":"hello from componentPrepare"}')
+        expect(html).toMatch('<div>message:hello from componentPrepare</div>')
+      })
+
+      test('define model type by typescript syntax', async () => {
+        await page.goto(context.getUrl('/'))
+        await expect(page).toClick(`[href="/controller/prepare"]`)
+        await expect(page).toMatch('message:hello from componentPrepare')
+      })
+    })
+
   })
 }

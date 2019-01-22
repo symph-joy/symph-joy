@@ -41,9 +41,11 @@ module.exports = (context, opts = {}) => ({
       // @babel/plugin-transform-react-jsx-self automatically in development
       development: isDevelopment || isTest,
       ...opts['preset-react']
-    }]
+    }],
+    [require('@babel/preset-typescript'), { isTSX: true, allExtensions: true }]
   ],
   plugins: [
+    [require('./plugins/joy-autowire-label-plugin'), { autoBinding: false }],
     require('babel-plugin-react-require'),
     require('@babel/plugin-syntax-dynamic-import'),
     isDevelopment && require('react-hot-loader/babel'),

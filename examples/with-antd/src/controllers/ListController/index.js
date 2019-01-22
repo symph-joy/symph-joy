@@ -1,16 +1,18 @@
 import styles from './index.less';
 import React, {PureComponent} from 'react';
 import DataModel from '../../models/model';
-import controller, {requireModel} from '@symph/joy/controller';
+import {controller, autowire} from '@symph/joy/controller';
 import {Table, Breadcrumb, Button} from 'antd'
 
-@requireModel(DataModel)
 @controller(state => ({model: state.model}))
 export default class ListController extends PureComponent {
+
+  @autowire()
+  dataModel: DataModel
+
   // 删除
-  del = index => {
-    const {dispatch} = this.props;
-    dispatch({type: 'model/del', index});
+  del = async index => {
+    await  this.dataModel.del({index});
   };
 
   render() {

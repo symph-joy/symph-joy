@@ -2,9 +2,16 @@ import React from 'react'
 import { Switch, Route } from '@symph/joy/router'
 import dynamic from '@symph/joy/dynamic'
 import IndexController from './controller/IndexController'
+
 import BasicController from './controller/controller/BasicController'
 import ControllerSetStateOnPrepareCtl from './controller/controller/SetStateOnPrepareCtl'
-import ModelController from './controller/ModelController'
+import AutowireCtl from './controller/controller/AutowireCtl'
+import AutowireWithTypeCtl from './controller/controller/AutowireWithTypeCtl'
+import PrepareCtl from './controller/controller/PrepareCtl'
+
+import ModelController from './controller/model/ModelController'
+import CallModelCtl from './controller/model/CallModelCtl'
+
 import ERR404 from './controller/error/err_404'
 import ERR302 from './controller/error/err_302'
 import ERR302Target from './controller/error/err_302_target'
@@ -18,7 +25,7 @@ import ComponentPrepareCtl from './controller/dva/ComponentPrepareCtl'
 const DynamicLoadComponent = dynamic({ loader: () => import('./component/Hello') }, { ssr: true })
 const DynamicFunctionLoadComponent = dynamic(() => import('./component/Hello'))
 const DynamicChunkFileName = dynamic({ loader: () => import(/* webpackChunkName: 'custom-hello-world' */'./component/ChunkFileName') })
-const DynamicWithHeadCtl = dynamic({ loader: () => import('./controller/dynamic/WithHeadCtl'), ssr: false })
+const DynamicWithHeadCtl = dynamic({ loader: () => import('./controller/dynamic/WithHeadCtl'), ssr: true })
 const DynamicNoSSR = dynamic({ loader: () => import('./component/Hello') }, {
   ssr: false,
   loading: () => <div>...</div>
@@ -32,9 +39,14 @@ export default class Main extends React.Component {
   render () {
     return (
       <Switch>
-        <Route exact path={'/controller'} component={BasicController} />
+        <Route exact path={'/controller/basic'} component={BasicController} />
         <Route exact path={'/controller/setStateOnPrepare'} component={ControllerSetStateOnPrepareCtl} />
+        <Route exact path={'/controller/autowire'} component={AutowireCtl} />
+        <Route exact path={'/controller/autowireWithType'} component={AutowireWithTypeCtl} />
+        <Route exact path={'/controller/prepare'} component={PrepareCtl} />
+
         <Route exact path={'/model'} component={ModelController} />
+        <Route exact path={'/model/call'} component={CallModelCtl} />
         <Route exact path={'/dva/model'} component={ModelCtl} />
         <Route exact path={'/dva/prepare'} component={ComponentPrepareCtl} />
 

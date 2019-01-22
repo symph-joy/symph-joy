@@ -14,7 +14,7 @@ import {
 import cheerio from 'cheerio'
 
 export default (context) => {
-  describe('model', () => {
+  describe('require model', () => {
     describe('server render', () => {
       let html, $
       beforeAll(async () => {
@@ -77,6 +77,18 @@ export default (context) => {
       test('dispatch, should return a promise with the value of target method', async () => {
         await expect(page).toMatchElement('#dispatchResult', 'todo-auto-add-by-model')
       })
+    })
+  })
+
+  describe('autowire model', () => {
+    test('call model method', async () => {
+      await page.goto(context.getUrl('/'))
+      await expect(page).toClick('[href="/model/call"]')
+      await expect(page).toMatch('count:0')
+      await expect(page).toMatch('stateCount:0')
+      await expect(page).toClick('#addCount')
+      await expect(page).toMatch('count:1')
+      await expect(page).toMatch('stateCount:1')
     })
   })
 }

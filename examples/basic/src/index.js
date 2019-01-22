@@ -1,27 +1,10 @@
 import React, { Component } from 'react'
 import { Switch, Route, Redirect } from '@symph/joy/router'
 import dynamic from '@symph/joy/dynamic'
+import NotFound from './components/NotFound'
+import TodoListController from './controllers/TodoListController.js'
 
-const ProductsController = dynamic({loader: () => import('./controllers/ProductsController')})
-const ProductDetailController = dynamic({loader: () => import('./controllers/ProductDetailController')})
-
-const Status = ({ code, children }) => (
-  <Route
-    render={({ staticContext }) => {
-      if (staticContext) staticContext.status = code;
-      return children;
-    }}
-  />
-)
-
-const NotFound = () => (
-  <Status code={404}>
-    <div>
-      <h1>Sorry, can’t find that.</h1>
-    </div>
-  </Status>
-)
-
+const TodoDetailController = dynamic({loader: () => import('./controllers/TodoDetailController.js')})
 
 export default class Main extends Component {
   render () {
@@ -29,9 +12,8 @@ export default class Main extends Component {
       <div>
         <h1>Example Basic - Header</h1>
         <Switch>
-          <Route exact path="/products/:id" component={ProductDetailController}/>
-          <Redirect exact from="/redirect" to={"/"}/>
-          <Route exact path="/" component={ProductsController}/>
+          <Route exact path="/" component={TodoListController}/>
+          <Route exact path="/todos/:id" component={TodoDetailController}/>
           <Route component={NotFound}/>
         </Switch>
       </div>

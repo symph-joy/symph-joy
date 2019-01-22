@@ -40,7 +40,7 @@ yarn add  @symph/joy react react-dom
 }
 ```
 
-然后就可以开始正式工作了，下面从`hello world`示例开始，首先编写一个Model组件来管理应用的数据和业务，如果没有复杂的数据需要管理，也可以省略这步。
+然后就可以开始正式工作了，下面从`hello world`示例开始，首先编写一个Model组件来管理应用的数据和业务。
 
 ```javascript
 // /src/models/HelloModel.js
@@ -73,7 +73,7 @@ export default class HelloModel {
 ```javascript
 // /src/index.js
 import React, { Component } from 'react'
-import {controller, requireModel } from '@symph/joy/controller'
+import {controller, autowire } from '@symph/joy/controller'
 import HelloModel from './models/HelloModel'
 
 
@@ -82,13 +82,13 @@ import HelloModel from './models/HelloModel'
     message: store.hello.message,    // 绑定model中的数据
   }
 })
-@requireModel(HelloModel)            // 注册依赖的Model
 export default class HelloController extends Component {
+
+  @autowire()                       // 声明依赖的Model
+  helloModel: HelloModel      
   
   async componentDidMount() {
-    await this.props.dispatch({
-      type: 'hello/fetchMessage'
-    })
+    await this.helloModel.fetchMessage() //调用model
   }
   
   render(){
@@ -99,7 +99,7 @@ export default class HelloController extends Component {
 
 最后运行`yarn run dev`命令，在浏览器中输入访问地址`http://localhost:3000`，即可看到刚才写的页面。如果需要使用其它端口来启动应用 `yarn run dev -- -p <your port here>`
 
-到目前为止，一个简单完整的前端已经创建完成，还有更多神奇的特性，等着你发现哦，请查看 [详细使用指南](https://lnlfps.github.io/symph-joy/#/getting-started)
+到目前为止，一个简单完整的前端应用已经创建完成，可以开始工作了。还有很多神奇的特性，请查看 [详细使用指南](https://lnlfps.github.io/symph-joy/#/getting-started)
 
 ## 文档
 

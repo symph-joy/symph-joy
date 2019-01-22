@@ -1,6 +1,6 @@
 import React from 'react'
-import { controller, requireModel } from '../../../../../controller'
-import BasicModel from '../model/BasicModel'
+import { controller, requireModel } from '../../../../../../controller'
+import BasicModel from '../../model/BasicModel'
 
 @requireModel(BasicModel)
 @controller((store, ownProps) => {
@@ -9,6 +9,7 @@ import BasicModel from '../model/BasicModel'
   }
 })
 export default class Hello extends React.Component {
+
   async componentPrepare () {
     let {dispatch} = this.props
     await dispatch({

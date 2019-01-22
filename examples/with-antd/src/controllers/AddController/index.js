@@ -2,12 +2,15 @@ import React, {PureComponent} from 'react';
 import styles from './index.less';
 import DataModel from '../../models/model';
 import {routerRedux} from '@symph/joy/router';
-import controller, {requireModel} from '@symph/joy/controller';
+import {controller, autowire} from '@symph/joy/controller';
 import {Form, Input, Breadcrumb, DatePicker, Button, notification} from 'antd';
 
-@requireModel(DataModel)
 @controller(state => ({model: state.model}))
 class AddController extends PureComponent {
+
+  @autowire()
+  dataModel: DataModel
+
   // 提交表单
   onSubmit = e => {
     const {form: {validateFields}, dispatch} = this.props;
@@ -16,7 +19,7 @@ class AddController extends PureComponent {
       if (err) {
         return;
       }
-      await dispatch({type: 'model/add', data});
+      await this.dataModel.add({data})
       notification.success({
         duration: 2,
         message: '添加成功提醒',
