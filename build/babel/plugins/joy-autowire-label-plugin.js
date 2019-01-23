@@ -5,13 +5,15 @@ import * as BabelTypes from '@babel/types'
 export default function ({ types: t }: { types: typeof BabelTypes }, { autoBingding = false }): PluginObj {
   return {
     pre: (file) => {
-      let importController; let decorController; let decorAutowire; let identifyAutowire = t.identifier('autowire')
+      let importController
+      let decorAutowire
+      let identifyAutowire = t.identifier('autowire')
       file.path.traverse({
         ImportDeclaration (importPath) {
-          if (importPath.node.source.value !== '@symph/joy/controller') return
-          importController = importPath
-          decorController = importPath.get('specifiers').find(item => item.get('type').node === 'ImportDefaultSpecifier' || item.get('imported.name').node === 'controller')
-          decorAutowire = importPath.get('specifiers').find(item => item.node.imported && item.get('imported.name').node === 'autowire')
+          if (importPath.node.source.value === '@symph/joy/autowire' || importPath.node.source.value === '@symph/tempo/autowire') {
+            importController = importPath
+            decorAutowire = importPath.get('specifiers').find(item => item.node.imported && item.get('imported.name').node === 'autowire')
+          }
         }
       })
       if (!importController) return // this file has no controller
@@ -26,8 +28,6 @@ export default function ({ types: t }: { types: typeof BabelTypes }, { autoBingd
       // add '@autowire()' decoration on model props, if not exist
       file.path.traverse({
         ClassDeclaration (clazz: NodePath<BabelTypes.ClassDeclaration>) {
-          const classDeco = clazz.get('decorators').find(item => item.get('expression.callee.name').node === decorController.node.local.name)
-          if (!classDeco) return // does not decorated as a controller class
           clazz.traverse({
             ClassProperty (classProperty: NodePath<BabelTypes.ClassProperty>) {
               if (classProperty.get('decorators').length && classProperty.get('decorators').find(function (item) {

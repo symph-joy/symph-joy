@@ -1,5 +1,6 @@
 import React from 'react'
-import { controller, autowire } from '@symph/joy/controller'
+import { controller } from '@symph/joy/controller'
+import { autowire } from '@symph/joy/autowire'
 import HelloModel from '../../model/HelloModel'
 
 @controller((store, ownProps) => {
@@ -9,7 +10,7 @@ import HelloModel from '../../model/HelloModel'
 })
 export default class AutowireCtl extends React.Component {
 
-  @autowire({type:HelloModel})
+  @autowire({type: HelloModel})
   helloModel: HelloModel
 
   render () {

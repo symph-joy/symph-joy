@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
-import {controller, autowire } from '@symph/joy/controller'
+import { controller } from '@symph/joy/controller'
+import { autowire } from '@symph/joy/autowire'
 import TodosModel from '../models/TodosModel'
 import styles from './TodoDetailController.less'
 

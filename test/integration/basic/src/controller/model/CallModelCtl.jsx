@@ -1,5 +1,6 @@
 import React from 'react'
-import { controller, autowire } from '@symph/joy/controller'
+import { controller } from '@symph/joy/controller'
+import { autowire } from '@symph/joy/autowire'
 import CallModel from '../../model/CallModel'
 
 @controller((store, ownProps) => {

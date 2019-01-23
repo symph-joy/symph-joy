@@ -1,4 +1,6 @@
 import model from '@symph/joy/model'
+import { autowire } from '@symph/joy/autowire'
+import UserModel from './UserModel'
 
 @model()
 export default class TodosModel {
@@ -14,13 +16,19 @@ export default class TodosModel {
     details: {}
   }
 
+  @autowire()
+  userModel: UserModel
+
   /**
-   *  fetch todos list from server
-   * @param lastId the last todoId of fetched data
+   *  fetch todos from server
+   * @param lastId the last todoId of has fetched
    * @param pageSize
    * @returns {Promise<void>}
    */
   async getTodos ({lastId, pageSize = 5}) {
+    if (!await this.userModel.hasLogin()) {
+      throw new Error('has not login')
+    }
     //fetch data from server
     let {list, count} = await new Promise((resolve, reject) => {
       //mock data
@@ -49,8 +57,8 @@ export default class TodosModel {
   }
 
   /**
-   * fetch product detail info from server
-   * @param productId
+   * fetch to-do detail info from server
+   * @param todoId
    * @returns {Promise<void>}
    */
   async getTodo (todoId) {
@@ -70,8 +78,8 @@ export default class TodosModel {
   }
 
   /**
-   * add a new product
-   * @param product
+   * add a new todo
+   * @param todo
    * @returns {Promise<void>}
    */
   async addTodo (todo) {
@@ -93,7 +101,7 @@ export default class TodosModel {
     })
   }
 
-  async setHasFinished(todoId, hasFinished){
+  async setHasFinished (todoId, hasFinished) {
     //update data to server
     await new Promise((resolve, reject) => {
       //mock
@@ -109,7 +117,7 @@ export default class TodosModel {
     let lcoalTodo = entities.find(item => item.id === todoId)
     lcoalTodo.hasFinished = hasFinished
     this.setState({
-      entities : [...entities]
+      entities: [...entities]
     })
   }
 

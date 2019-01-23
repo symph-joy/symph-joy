@@ -21,7 +21,7 @@ import error from './error.subtest'
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000 * 60 * 5
 
-describe('Basic Features', () => {
+describe('[dev]basic feature', () => {
   const context = new Context()
   beforeAll(async () => {
     let port = await findPort()

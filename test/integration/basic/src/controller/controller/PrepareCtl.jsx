@@ -1,5 +1,6 @@
 import React from 'react'
-import { controller, autowire } from '@symph/joy/controller'
+import { controller } from '@symph/joy/controller'
+import { autowire } from '@symph/joy/autowire'
 import HelloModel from '../../model/HelloModel'
 
 @controller((store, ownProps) => {
@@ -12,7 +13,7 @@ export default class PrepareCtl extends React.Component {
   @autowire()
   helloModel: HelloModel
 
-  async componentPrepare() {
+  async componentPrepare () {
     await this.helloModel.sayHello('hello from componentPrepare')
   }
 

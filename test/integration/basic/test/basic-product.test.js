@@ -24,7 +24,7 @@ import error from './error.subtest'
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000 * 60 * 5
 
-describe('Basic Features', () => {
+describe('[prod]basic feature', () => {
   const context = new Context()
   beforeAll(async () => {
     const appDir = join(__dirname, '../')

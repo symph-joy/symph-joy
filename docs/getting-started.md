@@ -242,6 +242,32 @@ app.prepare()
 
 > 这里只是对redux进行MVC层面的封装，并未添加新的技术，依然可以使用redux的原生接口，如果想深入了解redux，请阅读其详细文档：[redux](https://redux.js.org/)
 
+### 依赖注入 @autowire
+
+组件在创建的时候，系统自动将其所依赖的对象的引用传递给它。Controller依赖于Model实现业务调用，Model也可能需要其它Model共同完成一件事情，系统将在需要的时候加载Model并初始化它。
+
+如何在Controller中申明依赖的Model呢？
+
+```jsx
+import React from 'react'
+import {controller} from '@symph/joy/controller'
+import {autowire} from '@symph/joy/autowire'
+import UserModel from './UserModel'
+
+@controller()
+export default class Comp extends React.Component{
+
+  @autowire()
+  userModel: UserModel
+
+  onClickBtnLogin = () => {
+    this.userModel.login()
+  }
+}
+```
+`@autowire()`装饰器申明一个属性需要依赖注入，`userModel: UserModel`是ES6申明类实例属性的语法，在组件内部通过`this.userModel`来访问该属值。`: UserModel`部分是TypeScript的类型申明语法，声明该属性的类型为`UserModel`。系统将在初始化组件的时候，自动注入`UserModel`的实例到该属性上，之后就可以通过`this.userModel.login()`的方式调用model中定义的业务方法。
+
+
 ### Model
 
 Model管理应用的行为和数据，Model拥有初始状态`initState`和更新状态的方法`setState(nextState)`，这和Component的state概念类似，业务在执行的过程中，不断更新`state`，当`state`发生改变时，和`state`绑定的View也会自动的更新。这里并没有什么魔法和创造新的东西，只是将redux的`action`、`actionCreator`、`reducer`、`thunk`、`saga`等复杂概念简化为业务方法和业务数据两个概念，让我们更专注于业务实现，代码也更简洁.
@@ -265,7 +291,7 @@ export default class TodosModel {
     entities: [],
   };
 
-  async getTodos(lastId=0, pageSize = 5) {
+  async getTodos({lastId: 0, pageSize: 5}) {
     // fetch remote data
     let pagedTodos = await fetch('https://www.example.com/api/hello', 
       {body:{lastId, pageSize}});
@@ -322,7 +348,11 @@ model将会被注册到redux store中，由store统一管理model的状态，使
 
 #### 业务方法
 
-`async service(action)` 业务方法是`async`函数，内部支持`await`指令调用其它异步方法。在controller或者其他model中通过`dispatch(action)`方法调用业务方法并获得其返回值。
+在Model中定义实体方法来实现业务逻辑，例如：`async getTodos()` ，该方法是一个`async`函数，所以我们可以轻松的使用`await`指令来实现异步逻辑调用，以及调用其它业务方法。
+
+调用方式：
+1. `todosModel.getTodos({lastId: 0, pagesSize:5})` 在Model的实例上直接调用
+2. `dispatch({type:"todos/getTodos", lastId: 0, pageSize: 5})` 通过redux的dispatch方法，调用当前store中已注册的model实例上的方法。
 
 #### Dva Model
 
@@ -336,7 +366,8 @@ Controller需要申明其依赖哪些Model，并绑定Model的中的状态，以
 ```jsx
 import React, {Component} from 'react';
 import TodosModel from '../models/TodosModel'
-import {controller, autowire} from '@symph/joy/controller'
+import {controller} from '@symph/joy/controller'
+import {autowire} from '@symph/joy/autowire'
 
 @controller((state) => {              // state is store's state
   return {

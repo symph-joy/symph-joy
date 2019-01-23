@@ -1,5 +1,5 @@
-* [首页](/)
-* [使用指南](getting-started.md)
+* [首页](readme.md)
+* [使用指南](/)
 * [配置文档](configurations.md)
 * [插件列表](plugins.md)
 * [示例](examples.md)

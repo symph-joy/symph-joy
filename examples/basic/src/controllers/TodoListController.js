@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
-import { controller, autowire, requireModel } from '@symph/joy/controller'
+import { controller, requireModel } from '@symph/joy/controller'
+import { autowire } from '@symph/joy/autowire'
 import asset from '@symph/joy/asset'
 import { routerRedux } from '@symph/joy/router'
 import { Link } from '@symph/joy/router'
@@ -28,10 +29,10 @@ export default class TodoListController extends Component {
 
   nextPage = async () => {
     let {todos} = this.props
-    if(todos.length === 0){
+    if (todos.length === 0) {
       return
     }
-    await this.todosModel.getTodos({lastId: todos[todos.length -1].id, pageSize: 5})
+    await this.todosModel.getTodos({lastId: todos[todos.length - 1].id, pageSize: 5})
   }
 
   addTodo = async () => {
@@ -42,13 +43,13 @@ export default class TodoListController extends Component {
     await this.todosModel.addTodo(newTodo)
   }
 
-  onChangeHasFinished = async (todo, event)=> {
+  onChangeHasFinished = async (todo, event) => {
     this.todosModel.setHasFinished(todo.id, event.target.checked)
   }
 
   onClickOpenByJs = async () => {
-    let {dispatch,  todos} = this.props
-    if(todos.lenght == 0 ){
+    let {dispatch, todos} = this.props
+    if (todos.lenght == 0) {
       return
     }
     dispatch(routerRedux.push(`/todos/${todos[0].id}`))
@@ -59,7 +60,7 @@ export default class TodoListController extends Component {
     return (
       <div className={styles.root}>
         <img className={styles.logo} src={asset('/test.jpg')}/>
-        <h3>Todo List Total:{count}</h3>
+        <h3>Todo List Total :{count}</h3>
         <div className={styles.actions}>
           <button className={styles.action} onClick={this.addTodo}>Add New</button>
           <button className={styles.action} onClick={this.onClickOpenByJs}>Open LastTodo</button>
