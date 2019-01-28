@@ -1,6 +1,6 @@
 {
   "name": "@symph/joy",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Minimalistic framework for React SPA applications, inspiration comes from Next.js and Dva",
   "keywords": [
     "react",
@@ -45,7 +45,7 @@
     "posttestonly": "taskr posttest",
     "testall": "npm run testonly -- --forceExit --reporters=default --reporters=jest-junit --config='./jest.config.js'",
     "pretest": "npm run lint",
-    "test": "cross-env npm run testall",
+    "test": "npm run testall",
     "coveralls": "nyc --instrument=false --source-map=false report --temp-directory=./coverage --reporter=text-lcov | coveralls",
     "flow": "flow check",
     "lint": "standard 'bin/*' 'client/**/*.js' 'examples/**/*.js' 'lib/**/*.js' 'pages/**/*.js' 'server/**/*.js' 'build/**/*.js' 'test/**/*.js'",
@@ -83,7 +83,7 @@
     "@babel/runtime": "7.3.1",
     "@babel/runtime-corejs2": "7.3.1",
     "@babel/template": "7.2.2",
-    "@symph/tempo": "1.0.0",
+    "@symph/tempo": "^1.1.0",
     "ansi-html": "0.0.7",
     "autodll-webpack-plugin": "0.4.2",
     "babel-core": "7.0.0-bridge.0",
@@ -177,15 +177,13 @@
     "node-sass": "4.11.0",
     "nyc": "13.1.0",
     "puppeteer": "^1.11.0",
-    "react": "16.6.3",
-    "react-dom": "16.6.3",
     "rimraf": "2.6.2",
     "standard": "12.0.1",
     "taskr": "1.1.0",
     "wait-port": "0.2.2"
   },
   "peerDependencies": {
-    "react": "^16.5.2",
-    "react-dom": "^16.5.2"
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0"
   }
 }
