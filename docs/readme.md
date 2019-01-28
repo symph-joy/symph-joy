@@ -13,20 +13,20 @@
 
 - 零配置可用，优化的默认配置，快速开发，已集成react、redux、react-router4和ES6、7语法支持等
 - MVC架构，模块化设计，使用Model简化redux的使用
-- 依赖自动注入，专注组件内部实现，依赖关系更明确，切方便调用
+- 依赖自动注入，专注组件内部实现，依赖关系更明确，方便调用
 - 支持服务端渲染，在业务组件内部获取渲染数据，组件内聚更高，便于维护
 - 支持静态版本导出，脱离Node.js运行，也可单独导出静态页面
-- 支持aync语法来编排业务，监听业务执行结果，再复杂的业务逻辑也能轻松找到解决方案
-- 使用`@`装饰器的方式，将普通Class申明为Controller或Model等，不侵入业务代码，代码更干净
+- 全局支持aync语法，复杂的业务逻辑也能轻松找到解决方案
+- 使用`@`装饰器将普通Class申明为Controller或Model等，不侵入业务代码
 - 内置网络请求代理服务，解决跨域和服务中转问题，前后端分离开发畅通无阻
 - 支持插件化配置，便于功能扩展
 
 ## 安装和开始
 
-运行`yarn init`创建一个空工程，并填写项目的基本信息，当然也可以在一个已有的项目中直接安装。
+运行`npm init`创建一个空工程，并填写项目的基本信息，当然也可以在一个已有的项目中直接安装。
 
 ```bash
-yarn add  @symph/joy react react-dom
+npm install --save  @symph/joy react react-dom
 ```
 
 > @symph/joy 只支持 [React 16](https://reactjs.org/blog/2017/09/26/react-v16.0.html)及以上版本
@@ -98,7 +98,7 @@ export default class HelloController extends Component {
 }
 ```
 
-最后运行`yarn run dev`命令，在浏览器中输入访问地址`http://localhost:3000`，即可看到刚才写的页面。如果需要使用其它端口来启动应用 `yarn run dev -- -p <your port here>`
+最后运行`npm run dev`命令，在浏览器中输入访问地址`http://localhost:3000`，即可看到刚才写的页面。如果需要使用其它端口来启动应用 `npm run dev -- -p <your port here>`
 
 到目前为止，一个简单完整的前端应用已经创建完成，可以开始工作了。还有很多神奇的特性，请查看 [详细使用指南](https://lnlfps.github.io/symph-joy/#/getting-started)
 
