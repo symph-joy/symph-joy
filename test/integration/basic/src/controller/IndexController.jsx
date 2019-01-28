@@ -21,6 +21,13 @@ export default class IndexController extends React.Component {
       <div><Link to={'/dynamic/bundle'}>/dynamic/bundle</Link></div>
       <div><Link to={'/dynamic/bundle?showMore=1'}>/dynamic/bundle?showMore=1</Link></div>
       <div><Link to={'/dynamic/withHead'}>/dynamic/withHead</Link></div>
+
+      <div><Link to={'/hmr/editFile'}>/hmr/editFile</Link></div>
+      <div><Link to={'/hmr/count'}>/hmr/count</Link></div>
+      <div><Link to={'/hmr/hello'}>/hmr/hello</Link></div>
+      <div><Link to={'/hmr/editStyle'}>/hmr/editStyle</Link></div>
+      <div><Link to={'/hmr/dynamicComp'}>/hmr/dynamicComp</Link></div>
+
       <div><Link to={'/redirect'}>/redirect</Link></div>
       <div><Link to={'/err500'}>/err500</Link></div>
     </div>

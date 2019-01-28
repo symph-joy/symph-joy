@@ -34,7 +34,7 @@ const defaultConfig: JoyConfig = {
     return nanoid()
   },
   generateEtags: true,
-  pageExtensions: ['jsx', 'js'],
+  pageExtensions: ['jsx', 'js', 'ts', 'tsx'],
   exportPathMap: async () => {
     return {
       '/': { page: '/' }

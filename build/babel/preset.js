@@ -36,23 +36,25 @@ module.exports = (context, opts = {}) => ({
       modules: isDevelopment || isProduction ? false : 'auto',
       ...opts['preset-env']
     }],
+    [require('@babel/preset-typescript'), { isTSX: true, allExtensions: true }],
     [require('@babel/preset-react'), {
       // This adds @babel/plugin-transform-react-jsx-source and
       // @babel/plugin-transform-react-jsx-self automatically in development
       development: isDevelopment || isTest,
       ...opts['preset-react']
-    }],
-    [require('@babel/preset-typescript'), { isTSX: true, allExtensions: true }]
+    }]
+
   ],
   plugins: [
     [require('./plugins/joy-autowire-label-plugin'), { autoBinding: false }],
+    (isDevelopment || isTest) && [require('./plugins/joy-controller-react-hot-loader-label-plugin')],
     require('babel-plugin-react-require'),
     require('@babel/plugin-syntax-dynamic-import'),
-    isDevelopment && require('react-hot-loader/babel'),
     require('./plugins/react-loadable-plugin'),
     [require('@babel/plugin-proposal-decorators'), { decoratorsBeforeExport: true }],
     [require('@babel/plugin-proposal-class-properties')],
     require('@babel/plugin-proposal-object-rest-spread'),
+    (isDevelopment || isTest) && require('react-hot-loader/babel'),
     [require('@babel/plugin-transform-runtime'), {
       helpers: false,
       regenerator: true,

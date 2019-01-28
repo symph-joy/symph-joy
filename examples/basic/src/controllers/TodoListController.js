@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { controller, requireModel } from '@symph/joy/controller'
+import controller from '@symph/joy/controller'
 import { autowire } from '@symph/joy/autowire'
 import asset from '@symph/joy/asset'
 import { routerRedux } from '@symph/joy/router'

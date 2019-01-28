@@ -18,6 +18,7 @@ import controller from './controller.subtest'
 import head from './head.subtest'
 import dynamic from './dynaimc.subtest'
 import error from './error.subtest'
+import hmr from './hmr.subtest'
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000 * 60 * 5
 
@@ -42,5 +43,6 @@ describe('[dev]basic feature', () => {
   dva(context)
   head(context)
   dynamic(context)
+  hmr(context)
   error(context)
 })

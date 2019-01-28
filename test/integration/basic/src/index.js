@@ -12,6 +12,12 @@ import PrepareCtl from './controller/controller/PrepareCtl'
 import ModelController from './controller/model/ModelController'
 import CallModelCtl from './controller/model/CallModelCtl'
 
+import EditFileCtl from './controller/hmr/EditFileCtl'
+import CounterCtl from './controller/hmr/CounterCtl'
+import HMRHelloCtl from './controller/hmr/HMRHelloCtl'
+import EditStyledJSXCtl from './controller/hmr/EditStyledJSXCtl'
+import DynamicComponentCtl from './controller/hmr/DynamicComponentCtl'
+
 import ERR404 from './controller/error/err_404'
 import ERR302 from './controller/error/err_302'
 import ERR302Target from './controller/error/err_302_target'
@@ -58,6 +64,12 @@ export default class Main extends React.Component {
         <Route exact path={'/dynamic/noSSR'} component={DynamicNoSSR} />
         <Route exact path={'/dynamic/customLoading'} component={DynamicCustomLoading} />
         <Route exact path={'/dynamic/bundle'} component={DynamicBundleCtl} />
+
+        <Route exact path={'/hmr/editFile'} component={EditFileCtl} />
+        <Route exact path={'/hmr/counter'} component={CounterCtl} />
+        <Route exact path={'/hmr/hello'} component={HMRHelloCtl} />
+        <Route exact path={'/hmr/editStyle'} component={EditStyledJSXCtl} />
+        <Route exact path={'/hmr/dynamicComp'} component={DynamicComponentCtl} />
 
         <Route exact path={'/head/renderTitle'} component={HeadRenderTitleCtl} />
         <Route exact path={'/head/duplicateTitle'} component={HeadDuplicateTitleCtl} />
