@@ -1,5 +1,5 @@
 import { PluginObj } from '@babel/core'
-import template from 'babel-template'
+import template from '@babel/template'
 import { NodePath } from '@babel/traverse'
 import * as BabelTypes from '@babel/types'
 
