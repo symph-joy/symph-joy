@@ -60,7 +60,7 @@ export default (context) => {
       })
 
       test('change state in componentDidMount', async () => {
-        waitFor(50)
+        await waitFor(50)
         await expect(page).toMatchElement('#state', { text: 'changed by componentDidMount' })
       })
 

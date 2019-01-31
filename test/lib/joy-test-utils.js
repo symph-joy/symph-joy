@@ -271,14 +271,15 @@ export function getBrowserBodyText (browser) {
 }
 
 export class Context {
-  constructor (server, port) {
+  constructor (initValues) {
+    this.init(initValues)
   }
 
   server = null
   port = null
   isDev = true // is development mode
 
-  init (initValues) {
+  init (initValues={}) {
     for (let key of Object.getOwnPropertyNames(initValues)) {
       this[key] = initValues[key]
     }

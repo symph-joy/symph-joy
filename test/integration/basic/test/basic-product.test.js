@@ -25,7 +25,7 @@ import error from './error.subtest'
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000 * 60 * 5
 
 describe('[prod]basic feature', () => {
-  const context = new Context()
+  const context = new Context({isDev: false})
   beforeAll(async () => {
     const appDir = join(__dirname, '../')
     await joyBuild(appDir)
@@ -37,7 +37,7 @@ describe('[prod]basic feature', () => {
 
     const server = await startApp(app)
     const port = server.address().port
-    context.init({ server, port, isDev: false })
+    context.init({ server, port})
   })
 
   afterAll(async () => {

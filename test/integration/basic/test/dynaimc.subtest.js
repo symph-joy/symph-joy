@@ -47,6 +47,7 @@ export default (context) => {
       test('should render the component Head content', async () => {
         await page.goto(context.getUrl('/'))
         await expect(page).toClick('[href="/dynamic/withHead"]')
+        await waitFor(1000)
         let title = await page.evaluate(() => document.title)
         expect(title).toMatch('title from dynamic component')
       })

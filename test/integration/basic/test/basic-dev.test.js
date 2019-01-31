@@ -23,11 +23,11 @@ import hmr from './hmr.subtest'
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000 * 60 * 5
 
 describe('[dev]basic feature', () => {
-  const context = new Context()
+  const context = new Context({isDev: true})
   beforeAll(async () => {
     let port = await findPort()
     let server = await launchApp(join(__dirname, '../'), port)
-    context.init({ server, port, isDev: true })
+    context.init({server, port})
 
     await Promise.all([
       renderViaHTTP(context.getUrl('/'))
