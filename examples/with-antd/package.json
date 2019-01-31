@@ -10,10 +10,13 @@
     "@symph/joy": "latest",
     "@symph/joy-css": "latest",
     "@symph/joy-less": "latest",
-    "antd": "^3.9.2",
-    "less": "^3.8.1",
-    "react": "^16.4.1",
-    "react-dom": "^16.4.1"
+    "antd": "^3.13.0",
+    "less": "^3.9.0",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0"
+  },
+  "devDependencies": {
+    "babel-plugin-import": "^1.11.0"
   },
   "scripts": {
     "dev": "joy dev",

@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import 'antd/dist/antd.css'
 import Head from '@symph/joy/head'
 import { LocaleProvider } from 'antd'
 import dynamic from '@symph/joy/dynamic'
