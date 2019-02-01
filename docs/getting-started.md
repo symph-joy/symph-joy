@@ -354,11 +354,6 @@ model将会被注册到redux store中，由store统一管理model的状态，使
 1. `todosModel.getTodos({lastId: 0, pagesSize:5})` 在Model的实例上直接调用
 2. `dispatch({type:"todos/getTodos", lastId: 0, pageSize: 5})` 通过redux的dispatch方法，调用当前store中已注册的model实例上的方法。
 
-#### Dva Model
-
-兼容dva风格的model对象，使用方法：[Dva Concepts](https://github.com/dvajs/dva/blob/master/docs/Concepts_zh-CN.md) ;
-
-
 ### Controller
 
 Controller需要申明其依赖哪些Model，并绑定Model的中的状态，以及调用Model里定义的业务方法。它是一个React组件，可以像其它React组件一样创建和使用，新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，在组件创建完成后执行，在服务端渲染时，会等待其执行完成后，再渲染出html，接着在浏览器上运行是，会直接使用在服务端prepare得到的数据，不再执行该方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在组件初始化完成后，立即上运行。在一次页面请求的过程中，系统会保证该方法只执行一次，避免数据重复加载。
@@ -381,7 +376,9 @@ export default class IndexController extends Component {
 
   async componentPrepare() {
     // call model
-    await this.todosModel.getTodos(0, 5)
+    await this.todosModel.getTodos({lastId: 0, pageSize: 5})
+    // or use dispatch to call model
+    // await this.props.dispath({type: 'todos/getTodos', lastId: 0, pageSize: 5})
   }
 
   render() {
@@ -407,7 +404,7 @@ export default class IndexController extends Component {
 
 - `@autowire(ModelClass)`声明该属性是一个model，运行时，`@symph/joy`将自动初始化该model，并绑定到该属性上。打包时，controller依赖的model将一起打包thunk中，这样在controller运行时，才会去加载依赖的model。
 
-- 每个controller的`props`会被注入一个`dispatch`方法，`dispatch`是redux提供的方法，这样我们可以按照redux的方式来调用reducer、effect、thunk等模块。
+- 每个controller的`props`会被注入一个`dispatch`方法，`dispatch`是redux提供的方法，我们可以由此来调用model、reducer、effect等redux支持的方法。
 
 ### View
 
@@ -425,6 +422,29 @@ class ImageView extends Component {
   }
 }
 ```
+
+#### 兼容 Dva
+
+@symph/joy兼容dva的Model开发模式，[Dva概念 官方文档](https://dvajs.com/guide/concepts.html#models) 
+
+```javascript
+  import {controller, requireModel} from '@symph/joy/controller'
+  import MyDvaModel from './MyDvaModel'
+  
+  @requireModel(MyDvaModel)
+  @controller()
+  class MyComponent extends Component {
+  
+    componentDidMount(){
+      this.props.dispatch({
+        type: 'myDvaModel/getData',
+      })
+    }
+   
+  }
+```
+
+使用`@requireModel()`注册dva的model，其它使用方法和dva保持一致
 
 ## Router
 
