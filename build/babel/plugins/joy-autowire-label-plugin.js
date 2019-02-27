@@ -5,25 +5,20 @@ import * as BabelTypes from '@babel/types'
 export default function ({ types: t }: { types: typeof BabelTypes }, { autoBingding = false }): PluginObj {
   return {
     pre: (file) => {
-      let importController
+      let importAutowire
       let decorAutowire
       let identifyAutowire = t.identifier('autowire')
       file.path.traverse({
         ImportDeclaration (importPath) {
           if (importPath.node.source.value === '@symph/joy/autowire' || importPath.node.source.value === '@symph/tempo/autowire') {
-            importController = importPath
-            decorAutowire = importPath.get('specifiers').find(item => item.node.imported && item.get('imported.name').node === 'autowire')
+            importAutowire = importPath
+            decorAutowire = importPath.get('specifiers').find(item =>
+              item.node.type === 'ImportDefaultSpecifier' || (item.node.imported && item.get('imported.name').node === 'autowire')
+            )
           }
         }
       })
-      if (!importController) return // this file has no controller
-
-      if (!decorAutowire) {
-        const spec = t.importSpecifier(identifyAutowire, identifyAutowire)
-        importController.node.specifiers.unshift(spec)
-        decorAutowire = importController.get('specifiers.0')
-        file.scope.registerDeclaration(decorAutowire)
-      }
+      if (!importAutowire) return // this file has no autowire
 
       // add '@autowire()' decoration on model props, if not exist
       file.path.traverse({
