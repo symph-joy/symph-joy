@@ -291,7 +291,7 @@ export default class TodosModel {
     entities: [],
   };
 
-  async getTodos({lastId: 0, pageSize: 5}) {
+  async getTodos({lastId = 0, pageSize = 5}) {
     // fetch remote data
     let pagedTodos = await fetch('https://www.example.com/api/hello', 
       {body:{lastId, pageSize}});
@@ -299,7 +299,7 @@ export default class TodosModel {
     let {entities} = this.getState();
     if (lastId === 0) {
       // first page
-      entities = data;
+      entities = pagedTodos;
     } else {
       entities = [...entities, ...pagedTodos];
     }
@@ -603,9 +603,7 @@ export default () => <HelloBundle title="Dynamic Bundle" />
 
 ## 自定义 `<Document>`
 
-如果需要在html文件引入额外的`<script>`或`<link>`等内容，需要自定义<Document>。
-
-在`@symph/joy`中，所有业务相关的代码都放在`src`目录中。`_document.js`只在服务端渲染使用，并不会在浏览器端加载，所以不能在这里放置任何的业务代码，如果希望在整个应用里共享一部分功能，请将它们放到`src/index.js`应用入口组件中。
+如果需要定制html文档的内容，例如引入额外的`<script>`或`<link>`等，可在src目录中新建`_document.js`文件，参考下面的示例加入自定义的内容。
 
 ```jsx
 // /src/_document.js
@@ -628,6 +626,9 @@ export default class MyDocument extends Document {
   }
 }
 ```
+
+`_document.js`只在服务端渲染使用，并不会在浏览器端加载，所以不能在这里放置任何的业务代码，如果希望在整个应用里共享一部分功能，请将它们放到`src/index.js`应用入口组件中。
+
 
 ## 自定义 Error 界面
 
