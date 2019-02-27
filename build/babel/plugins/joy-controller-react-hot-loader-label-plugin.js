@@ -25,6 +25,10 @@ export default function ({ types: t }: { types: typeof BabelTypes }): PluginObj 
       // add 'hotLoader' to @controller(mapStateToProps, {hotLoader}), if not exist
       file.path.traverse({
         ClassDeclaration (clazz: NodePath<BabelTypes.ClassDeclaration>) {
+          if (!clazz.node.decorators || clazz.node.decorators.length === 0) {
+            return
+          }
+
           let decoController
           clazz.get('decorators').forEach((path, i) => {
             if (path.node.expression.callee && path.node.expression.callee.name === controller.node.local.name) {
