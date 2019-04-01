@@ -21,7 +21,7 @@
   "scripts": {
     "dev": "joy dev",
     "build": "NODE_ENV=production joy build",
-    "export": "yarn run build && joy export",
-    "start": "joy start"
+    "start": "joy start",
+    "export": "npm run build && joy export"
   }
 }

@@ -1,0 +1,19 @@
+{
+  "name": "basic",
+  "private": true,
+  "scripts": {
+    "dev": "NODE_PATH=/Users/lane/work/jdjr/libraries/symphony-joy/examples/basic-hooks/node_modules joy dev",
+    "build": "NODE_ENV=production joy build",
+    "export": "yarn run build && joy export",
+    "start": "joy start"
+  },
+  "dependencies": {
+    "@symph/joy": "latest",
+    "@symph/joy-image": "latest",
+    "@symph/joy-less": "latest",
+    "less": "^3.8.1",
+    "prop-types": "^15.6.2",
+    "react": "^16.8.5",
+    "react-dom": "^16.8.5"
+  }
+}

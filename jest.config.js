@@ -8,6 +8,6 @@ module.exports = {
   bail: true,
   rootDir: 'test',
   modulePaths: ['<rootDir>/lib'],
-  coverageReporters: ['text', 'lcov', 'cobertura'],
-  setupTestFrameworkScriptFile: 'expect-puppeteer'
+  coverageReporters: ['text', 'lcov', 'cobertura']
+  // setupTestFrameworkScriptFile: 'expect-puppeteer'
 }

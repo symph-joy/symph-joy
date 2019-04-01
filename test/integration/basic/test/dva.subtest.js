@@ -20,15 +20,15 @@ export default (context) => {
         await expect(page).toClick('[href="/dva/model"]')
       })
       test('init state', async () => {
-        await expect(page).toMatch('msg:hello from dav model')
+        await expect(page).toMatch('msg:hello from dav model',  {timeout: 3000})
       })
       test('call reducer', async () => {
         await expect(page).toClick('#callReducer')
-        await expect(page).toMatch('reducer:set by reducer')
+        await expect(page).toMatch('reducer:set by reducer',  {timeout: 3000})
       })
       test('call effect', async () => {
         await expect(page).toClick('#callEffect')
-        await expect(page).toMatch('count:1')
+        await expect(page).toMatch('count:1',  {timeout: 3000})
       })
     })
     describe('component prepare', () => {
@@ -39,7 +39,7 @@ export default (context) => {
       test('component prepare', async () => {
         await page.goto(context.getUrl('/'))
         await expect(page).toClick('[href="/dva/prepare"]')
-        await expect(page).toMatch('prepare:1')
+        await expect(page).toMatch('prepare:1',  {timeout: 3000})
       })
     })
   })

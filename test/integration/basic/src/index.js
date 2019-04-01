@@ -28,6 +28,8 @@ import DynamicBundleCtl from './controller/dynamic/BundleCtl'
 import ModelCtl from './controller/dva/ModelCtl'
 import ComponentPrepareCtl from './controller/dva/ComponentPrepareCtl'
 
+import Hooks from './controller/hooks/Hooks'
+
 const DynamicLoadComponent = dynamic({ loader: () => import('./component/Hello') }, { ssr: true })
 const DynamicFunctionLoadComponent = dynamic(() => import('./component/Hello'))
 const DynamicChunkFileName = dynamic({ loader: () => import(/* webpackChunkName: 'custom-hello-world' */'./component/ChunkFileName') })
@@ -51,11 +53,12 @@ export default class Main extends React.Component {
         <Route exact path={'/controller/autowireWithType'} component={AutowireWithTypeCtl} />
         <Route exact path={'/controller/prepare'} component={PrepareCtl} />
 
+        <Route exact path={'/hook/api'} component={Hooks} />
+
         <Route exact path={'/model'} component={ModelController} />
         <Route exact path={'/model/call'} component={CallModelCtl} />
         <Route exact path={'/dva/model'} component={ModelCtl} />
         <Route exact path={'/dva/prepare'} component={ComponentPrepareCtl} />
-
 
         <Route exact path={'/dynamic/loadComponent'} component={DynamicLoadComponent} />
         <Route exact path={'/dynamic/function'} component={DynamicFunctionLoadComponent} />

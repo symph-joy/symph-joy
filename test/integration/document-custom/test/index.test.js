@@ -18,6 +18,7 @@ const context = new Context()
 
 describe('custom document', () => {
   beforeAll(async () => {
+    jest.setTimeout(20000)
     let port = await findPort()
     let server = await launchApp(join(__dirname, '../'), port)
     context.init({ server, port, isDev: true })

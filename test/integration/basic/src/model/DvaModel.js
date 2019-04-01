@@ -9,11 +9,11 @@ export default {
   effects: {
     *prepare ( action, {call, put}) {
       const newPrepareValue = yield call(() => new Promise((resolve, reject) => setTimeout(() => resolve(1), 10)))
-      yield put({type: 'dva/callReducer', payload: {prepare: newPrepareValue}})
+      yield put({type: 'callReducer', payload: {prepare: newPrepareValue}})
     },
     * callEffect ({count, add}, {call, put}) {
       const newCount = yield call(() => new Promise((resolve, reject) => setTimeout(() => resolve(count + add), 10)))
-      yield put({type: 'dva/callReducer', payload: {count: newCount}})
+      yield put({type: 'callReducer', payload: {count: newCount}})
     }
   },
   reducers: {

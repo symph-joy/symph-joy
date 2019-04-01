@@ -4,7 +4,7 @@ import HeadManager from './head-manager'
 import { createClientRouter } from '../lib/router'
 import EventEmitter from '../lib/EventEmitter'
 import { create as createTempo } from '@symph/tempo'
-import createHistory from 'history/createBrowserHistory'
+import { createBrowserHistory } from 'history'
 import { connectRouter, routerMiddleware } from 'connected-react-router'
 import ErrorBoundary from './error-boundary'
 import Loadable from '../lib/loadable'
@@ -63,7 +63,7 @@ export default async ({
 
   await Loadable.preloadReady()
 
-  const history = createHistory()
+  const history = createBrowserHistory()
   const routerMid = routerMiddleware(history)
   const tempo = createTempo({
     initialState: initStoreState

@@ -10,6 +10,8 @@ export default class IndexController extends React.Component {
       <div><Link to={'/controller/autowireWithType'}>/controller/autowireWithType</Link></div>
       <div><Link to={'/controller/prepare'}>/controller/prepare</Link></div>
 
+      <div><Link to={'/hook/api'}>/hook/api</Link></div>
+
       <div><Link to={'/model'}>/model</Link></div>
       <div><Link to={'/model/call'}>/model/call</Link></div>
       <div><Link to={'/dva/model'}>/dva/model</Link></div>

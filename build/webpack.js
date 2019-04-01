@@ -230,6 +230,11 @@ export default async function getBaseWebpackConfig (dir: string, { dev = false, 
           include: [dir],
           exclude: /node_modules/,
           use: defaultLoaders.babel
+        },
+        {
+          test: /\.jsx?$/,
+          include: /node_modules/,
+          use: ['react-hot-loader/webpack']
         }
       ].filter(Boolean)
     },

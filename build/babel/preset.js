@@ -47,6 +47,7 @@ module.exports = (context, opts = {}) => ({
   ],
   plugins: [
     [require('./plugins/joy-autowire-label-plugin'), { autoBinding: false }],
+    [require('./plugins/joy-use-effects-plugin')],
     (isDevelopment || isTest) && [require('./plugins/joy-controller-react-hot-loader-label-plugin')],
     require('babel-plugin-react-require'),
     require('@babel/plugin-syntax-dynamic-import'),

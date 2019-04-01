@@ -15,6 +15,7 @@ import {
 import model from './model.subtest'
 import dva from './dva.subtest'
 import controller from './controller.subtest'
+import hook from './hook.subtest'
 import head from './head.subtest'
 import dynamic from './dynaimc.subtest'
 import error from './error.subtest'
@@ -39,6 +40,7 @@ describe('[dev]basic feature', () => {
   })
 
   controller(context)
+  hook(context)
   model(context)
   dva(context)
   head(context)

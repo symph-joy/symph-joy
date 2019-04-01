@@ -32,12 +32,12 @@ export default (context) => {
       await expect(page).toMatch('the target page of 302')
     })
 
-    if(context.isDev){
+    if (context.isDev) {
       test('[server, dev]status 500, throw an error in render of component', async () => {
         const resp = await fetchViaHTTP(context.getUrl('/err500'))
         expect(resp.status).toBe(500)
         const html = await resp.text()
-        if(context.isDev){
+        if (context.isDev) {
           expect(html).toMatch('{"name":"Error","message":"i am error"') // error object in __JOY_DATA__
         } else {
           expect(html).toMatch('"err":{"statusCode":500,"message":"i am error"}') // error object in __JOY_DATA__
@@ -47,10 +47,14 @@ export default (context) => {
       test('[browser, dev]status 500, throw an error in render of component', async () => {
         await page.goto(context.getUrl('/'))
         await expect(page).toClick('[href="/err500"]')
-        if(context.isDev){
-          await expect(page).toMatch('Error: i am error')
+        if (context.isDev) {
+          await waitFor(500)
+          const html = await page.evaluate(() =>
+            document.getElementsByTagName('iframe')[0].contentWindow.document.body.innerHTML)
+          expect(html).toMatch('Error: i am error')
+          // await expect(page).toMatch('Error: i am error', {timeout: 3000}) 错误信息在iframe中，所以不能使用该方法来判断
         } else {
-          await expect(page).toMatch('An unexpected error has occurred')
+          await expect(page).toMatch('An unexpected error has occurred', {timeout: 3000})
         }
 
       })
