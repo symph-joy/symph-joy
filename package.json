@@ -1,6 +1,6 @@
 {
   "name": "@symph/joy",
-  "version": "1.1.2",
+  "version": "1.2.0-alpha.1",
   "description": "Minimalistic framework for React SPA applications, inspiration comes from Next.js and Dva",
   "keywords": [
     "react",
