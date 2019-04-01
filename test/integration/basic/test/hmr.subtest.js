@@ -63,7 +63,7 @@ export default (context) => {
         const editedContent = originalContent.replace('100px', '200px')
         writeFileSync(filePath, editedContent, 'utf8')
 
-        await waitFor(6000)
+        await waitFor(1500)
         fontSize = await page.$eval('#hello', el => el.computedStyleMap().get('font-size').value)
 
         try { expect(fontSize).toBe(200)} finally {

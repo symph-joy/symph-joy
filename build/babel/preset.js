@@ -55,14 +55,14 @@ module.exports = (context, opts = {}) => ({
     [require('@babel/plugin-proposal-decorators'), { decoratorsBeforeExport: true }],
     [require('@babel/plugin-proposal-class-properties')],
     require('@babel/plugin-proposal-object-rest-spread'),
-    (isDevelopment || isTest) && require('react-hot-loader/babel'),
     [require('@babel/plugin-transform-runtime'), {
       helpers: false,
       regenerator: true,
       ...opts['transform-runtime']
     }],
-    [require('styled-jsx/babel'), styledJsxOptions(opts['styled-jsx'])]
+    [require('styled-jsx/babel'), styledJsxOptions(opts['styled-jsx'])],
     // 暂时屏蔽该插件(版本：v0.4.21)，会导致编译错误 （Duplicate declaration "React"） 2018年12月18日
     // isProduction && require('babel-plugin-transform-react-remove-prop-types')
+    (!isProduction) && require('react-hot-loader/babel')
   ].filter(Boolean)
 })

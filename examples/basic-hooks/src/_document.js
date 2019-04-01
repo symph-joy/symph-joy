@@ -1,4 +1,4 @@
-import Document, { Head, Main, JoyScript } from '../../../document'
+import Document, { Head, Main, JoyScript } from '@symph/joy/document'
 
 export default class MyDocument extends Document {
   render () {
