@@ -22,7 +22,7 @@ npm install --save @symph/joy react react-dom
 
 创建`./src/index.js`文件，并插入以下代码：
 
-```jsx
+```javascript
 import React, {Component} from 'react'
 
 export default class Index extends Component{
@@ -34,12 +34,14 @@ export default class Index extends Component{
 
 然后运行`npm run dev` 命令，在浏览器中输入访问地址`http://localhost:3000`。如果需要使用其它端口来启动应用 `npm run dev -- -p <your port here>`
 
-到目前为止，一个完整的前端应用已经创建完成，可以在上面进行业务开发了，例子[hello-world](https://github.com/lnlfps/symph-joy/tree/master/examples/hello-world)，到这儿我们拥有了哪些功能呢？
+到目前为止，一个简单且完整的前端应用已经创建完成，接下来，我们可以开始进行业务开发了。例子完整工程：[hello-world](https://github.com/lnlfps/symph-joy/tree/master/examples/hello-world)。
+
+到这儿我们拥有了哪些功能呢？
 
 - 应用入口（`./src/index.js`），一切都从这里开始，以后可以添加子路由、布局、Model等组件
-- 启动了一个服务器，支持服务端渲染和业务请求代理转发等
+- 启动了一个调试服务器，支持服务端渲染和业务请求代理转发等
 - 一个零配置的webpack+babel编译器，确保代码在Node.js和浏览器上正确运行
-- ES6、7、8等高级语法支持，如：`class`、`async`、`@`注解、`{...}`解构等
+- ES6、7、8等高级语法支持，如：`import`、`class`、`async`、`@`注解、`{...}`解构等
 - 热更新，调试模式下，在浏览器不刷新的情况下，使更改立即生效
 - 静态资源服务，在`/static/`目录下的静态资源，可通过`http://localhost:3000/static/`访问
 
@@ -50,9 +52,11 @@ export default class Index extends Component{
 
 内建了 [styled-jsx](https://github.com/zeit/styled-jsx) 模块，无需配置，可直接使用。支持Component内独立域的CSS样式，不会和其他组件的同名样式冲突。
 
-```jsx
+```javascript
+import React from 'react'
+
 export default () =>
-  <div>
+  (<div>
     Hello world
     <p>scoped!</p>
     <style jsx>{`
@@ -73,10 +77,10 @@ export default () =>
         background: black;
       }
     `}</style>
-  </div>
+  </div>)
 ```
 
-查看  [styled-jsx 文档](https://www.npmjs.com/package/styled-jsx) ，获取详细信息。
+查看  [styled-jsx 详细使用文档](https://www.npmjs.com/package/styled-jsx) 
 
 
 ### Import CSS / LESS 文件
@@ -90,8 +94,8 @@ export default () =>
 
 [@symph/joy-image](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)插件提供图片导入功能，详细的配置请参见[插件主页](https://github.com/lnlfps/joy-plugins/tree/master/packages/joy-image)。
 
-```js
-  // joy.config.js
+```javascript
+// joy.config.js
 const withLess = require('@symph/joy-less')
 const withImageLoader = require('@symph/joy-image')
 
@@ -105,7 +109,7 @@ module.exports = {
 
 使用方法
 
-```js
+```javascript
 // in jsx
 export default () =>
   <img src={require('./image.png')}/>
@@ -123,7 +127,7 @@ export default () =>
 
 在工程根目录下创建`static`目录，将静态文件放入其中，例如：图片、第三方js、css等，也可以创建子目录管理文件，可以通过`{assetPrefix}/static/{file}`访问这些文件，也可使用`asset`方法得到最终的访问路径 。
 
-```jsx
+```javascript
 export default () => <img src="/static/my-image.png" />
 
 //or 
@@ -135,7 +139,7 @@ export default () => <img src={asset("/my-image.png")} />
 
 @symph/joy 提供了`Head` Component来设置html页面的`<head>`标签中的内容
 
-```jsx
+```javascript
 import Head from '@symph/joy/head'
 
 export default () =>
@@ -150,7 +154,7 @@ export default () =>
 
 在`head`中重复添加多个相同标签，可以给标签添加`key`属性， 相同的key只会在head中输出一次。
 
-```jsx
+```javascript
 import Head from '@symph/joy/head'
 export default () => (
   <div>
@@ -166,92 +170,98 @@ export default () => (
 )
 ```
 
-在上面的例子中，只有第二个`<meta key="viewport" />`被渲染和添加到页面。
+在上面的例子中，只有第二个`<meta key="viewport" />`被渲染和添加到最终页面。
 
 ## 获取数据 fetch
 
-`@symph/joy/fetch`用于发送数据请求，该方法在浏览器和Node.js上都可以正常执行。其调用参数和浏览器提供的[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)方法一样。
+`@symph/joy/fetch`用于发送数据请求，该方法在浏览器和Node.js上都可以正常执行。其调用参数和浏览器的[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)方法一致。
 
-```jsx
+```javascript
 import fetch from '@symph/joy/fetch'
 
 fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET'})
-  .then(respone = >{
+  .then(respone => {
       // do something...
-  });
+    }
+  );
+
+// or
+let response = fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET'})
+ 
 ```
 
-`@symph/joy/fetch` 支持跨域请求，跨域请求会先发送到Node.js服务端，服务端再转发请求到远程业务服务器上。
+`@symph/joy/fetch` 方法内部如果检查到当前请求跨域了，会先将请求转发到Node.js服务端，再由服务端发送请求到远程业务服务器上。这在本地调试，或者前后端分离开发时非常有用。
 
-TODO 插入流程图
+如果需要关闭代理转发功能，例如使用cors来完成跨域请求，可以在fetch的options参数上设定`options.mode='cors'`
 
-如果想关闭改内建行为，使用jsonp来完成跨域请求，可以在fetch的options参数上设定`options.mode='cors'`
-
-```jsx
+```javascript
 import fetch from '@symph/joy/fetch'
 
-fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET', mode:'cors})
-  .then(respone = >{
+fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET', mode:'cors'})
+  .then(respone => {
       // do something...
-  });
+    }
+  );
 ```
 
-> 也可以使用其它的类似解决方案，例如：[node-http-proxy](https://github.com/nodejitsu/node-http-proxy#using-https)、[express-http-proxy](https://github.com/villadora/express-http-proxy)等。我们内建了这个服务，是为了让开发人员像原生端开发人员一样，更专注于业务开发，不再为跨域、代理路径、代理配置等问题困扰。
+> 也可以使用其它的类似解决方案，例如：[node-http-proxy](https://github.com/nodejitsu/node-http-proxy#using-https)、[express-http-proxy](https://github.com/villadora/express-http-proxy)等。我们内建了这个服务，是为了可以像原生端开发人员一样，更专注于业务开发，避免跨域、代理等问题。
 
-如果使用`joy dev`或`joy start`来启动应用，不需要任何配置，即可使用跨域服务。如果项目采用了自定义Server，需要开发者将`@symph/joy/proxy-api-middleware`代理服务注册到自定义的Server中。
+如果项目采用了自定义Server，例如`express`，需要开发者将`@symph/joy/proxy-api-middleware`代理服务注册到自定义的Server中。
 
-```jsx
+```javascript
 const express = require('express')
-const symph = require('@symph/joy')
+const joy = require('@symph/joy')
 const {createProxyApiMiddleware} = require('@symph/joy/proxy-api-middleware')
+const dev = process.env.NODE_ENV !== 'production'
 
-const app = symph({ dev })
+const app = joy({ dev })
 const handle = app.getRequestHandler()
+const preparedApp = app.prepare()
 
-app.prepare()
-.then(() => {
-  const server = express()
-  server.use(createProxyApiMiddleware())  //register proxy, 
-  server.get('*', (req, res) => {
-    return handle(req, res)
+const server = express()
+server.use(createProxyApiMiddleware())  //register proxy, 
+server.use((req, res, next)=>{
+  preparedApp.then(()=> {
+    handle(req, res)
   })
 })
+server.listen(3000)
+
 ```
 
-`createProxyApiMiddleware(options)`支持下列参数，。
-
-- proxyPrefix = ''， 用于设置proxy在服务器上的访问路径，当应用不是部署在host根路径下时，这非常有用。
+`createProxyApiMiddleware(options)`支持下列参数：
+- proxyPrefix = ""， 设置代理服务的访问路径，对应的在调用`fetch`的时候也需要设置`fecth(url, {proxyPrefix})`。
 - onReq = (req, res, reqBody, next) => {}, 浏览器的请求到达proxy时的事件，可以在这里拦截请求或者加工原始请求。
 - onProxyReq = ((proxyReq, req, res, options)) => {}, 代理服务器发送请求到业务服务器上时的事件。
 - onProxyRes = (proxyRes, req, res, body) => {}, 代理服务器从业务服务器上得到响应。
-- onProxyResBody = (proxyRes, req, res, body) => {}, 代理服务器从业务服务器上得到完整的响应body是的时间，可以对body部分进行修改。
+- onProxyResBody = (proxyRes, req, res, body) => {}, 代理服务器从业务服务器上得到完整的响应body的事件，可以对body部分进行修改。
 - onError = onError(err, req, res) => {}, 发送错误时的回调，一般用打印日志，给客户端返回错误信息等。
 - dev = false， 开启调试模式后，会打印详细的请求日志。
 
 ## 应用组件
 
-@symph/joy采用 [MVC组件](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=mvc%E7%9A%84%E6%80%9D%E8%80%83) 来规范应用各部分的职责，使逻辑更清晰，便于协同开发和维护。
+@symph/joy采用 [MVC组件](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=mvc%E7%9A%84%E6%80%9D%E8%80%83) 来规范应用各组件的职责。
 
-- Model: 管理应用的行为和数据，普通class类，有初始状态，业务运行中更新model状态
-- View: 展示数据，继承React.Component
-- Controller: 控制View的展示，绑定Model数据到View，响应用户的操作，调用Model中的业务, 继承于React.Component
+- Model类: 管理应用行为，其内部状态保存着应用数据，业务运行中不断更新内部状态，控制业务流和数据流的流转。
+- View组件: 负责展示应用数据，继承React.Component
+- Controller组件: 控制和协调View和Model，绑定Model数据到View，响应用户的操作，调用Model中的业务, 其继承于React.Component，或是实现了hook的函数组件。
 
 ![app work flow](https://github.com/lnlfps/static/blob/master/symphony-joy/images/app-work-flow.jpeg?raw=true)
 
-图中蓝色的箭头表示数据流的方向，红色箭头表示控制流的方向，他们都是单向流，store中的`state`对象是不可修改其内部值的，状态发生改变后，都会生成一个新的state对象，且只将有变化的部分更新到界面上，这和[redux](https://redux.js.org/)的工作流程是一致的。
+图中蓝色的箭头表示数据流的方向，红色箭头表示控制流的方向，他们都是单向流。和[redux](https://redux.js.org/)的运行流程一样，store中的`state`对象是不可修改的，状态发生改变后，都会生成一个新的state对象，且只将有变化的部分更新到界面上。
 
 > 这里只是对redux进行MVC层面的封装，并未添加新的技术，依然可以使用redux的原生接口，如果想深入了解redux，请阅读其详细文档：[redux](https://redux.js.org/)
 
 ### 依赖注入 @autowire
 
-组件在创建的时候，系统自动将其所依赖的对象的引用传递给它。Controller依赖于Model实现业务调用，Model也可能需要其它Model共同完成一件事情，系统将在需要的时候加载Model并初始化它。
+依赖注入是指，组件在创建的时候，系统自动将其所依赖的其它组件对象传递给它，这使组件内部不再负责其它依赖组件的引用和初始化，系统将保证其内部各组件以正确的顺序初始化，并管理初始化后的组件。在@symph/joy中，Controller依赖于Model实现业务调用，Model也可能需要其它Model共同完成一件事情，系统将在需要的时候加载Model并初始化它。
 
-如何在Controller中申明依赖的Model呢？
+下面简单介绍下如何在Controller中申明依赖的Model，以及如何调用Model中的业务方法，本文稍后将详细接受Controller和Model组件。
 
-```jsx
+```javascript
 import React from 'react'
-import {controller} from '@symph/joy/controller'
-import {autowire} from '@symph/joy/autowire'
+import controller from '@symph/joy/controller'
+import autowire from '@symph/joy/autowire'
 import UserModel from './UserModel'
 
 @controller()
@@ -263,18 +273,22 @@ export default class Comp extends React.Component{
   onClickBtnLogin = () => {
     this.userModel.login()
   }
+  
+  render(){
+    // ...
+  }
 }
 ```
-`@autowire()`装饰器申明一个属性需要依赖注入，`userModel: UserModel`是ES6申明类实例属性的语法，在组件内部通过`this.userModel`来访问该属值。`: UserModel`部分是TypeScript的类型申明语法，声明该属性的类型为`UserModel`。系统将在初始化组件的时候，自动注入`UserModel`的实例到该属性上，之后就可以通过`this.userModel.login()`的方式调用model中定义的业务方法。
+`@autowire()`装饰器申明一个属性需要依赖注入，`userModel: UserModel`是ES6申明类实例属性的语法，`: UserModel`部分是TypeScript的类型申明语法，声明该属性的类型为`UserModel`。系统将在初始化该组件的时候，自动注入`UserModel`的实例到该属性上，之后就可以通过`this.userModel.login()`的方式调用model中定义的业务方法。
 
 
 ### Model
 
-Model管理应用的行为和数据，Model拥有初始状态`initState`和更新状态的方法`setState(nextState)`，这和Component的state概念类似，业务在执行的过程中，不断更新`state`，当`state`发生改变时，和`state`绑定的View也会自动的更新。这里并没有什么魔法和创造新的东西，只是将redux的`action`、`actionCreator`、`reducer`、`thunk`、`saga`等复杂概念简化为业务方法和业务数据两个概念，让我们更专注于业务实现，代码也更简洁.
+Model管理应用的行为和数据，Model拥有初始状态`initState`和更新状态的方法`setState(nextState)`，这和Component的state概念类似，业务在执行的过程中，不断更新`state`，当`state`发生改变时，和`state`绑定的View也会自动的更新。这里并没有什么魔法和创造新的东西，只是将redux的`action`、`actionCreator`、`reducer`、`thunk`、`saga`等复杂概念简化为业务方法和业务数据两个概念，让我们更专注于业务实现.
 
 下面是一个简单的model示例：
 
-```jsx
+```javascript
 import model from '@symph/joy/model'
 import fetch from '@symph/joy/fetch'
 
@@ -291,10 +305,11 @@ export default class TodosModel {
     entities: [],
   };
 
-  async getTodos({lastId = 0, pageSize = 5}) {
+  async getTodos({pageIndex = 0, pageSize = 5}) {
     // fetch remote data
-    let pagedTodos = await fetch('https://www.example.com/api/hello', 
-      {body:{lastId, pageSize}});
+    let reponse = await fetch('https://www.example.com/api/hello', 
+      {body:{pageIndex, pageSize}});
+    let pagedTodos = await response.json()
 
     let {entities} = this.getState();
     if (lastId === 0) {
@@ -307,6 +322,7 @@ export default class TodosModel {
     // update model's state
     this.setState({
       entities,
+      pageIndex,
       pageSize
     });
   }
@@ -344,11 +360,11 @@ model将会被注册到redux store中，由store统一管理model的状态，使
 
 在model中使用`await this.dispatch(action)`调用其它业务方法，这和redux的`store.dispatch(action)`的使用一样，由系统分发`action`到指定的model业务方法中, `action.type`的格式为`modelNamespace/serviceFunction`。
 
-如果是调用model自身的业务方法，可以使用`await this.otherService({option})`的方式，`this`指的是model本身。
+如果是调用model自身的业务方法，可以使用`await this.otherService(options)`的方式，`this`指的是model本身。
 
 #### 业务方法
 
-在Model中定义实体方法来实现业务逻辑，例如：`async getTodos()` ，该方法是一个`async`函数，所以我们可以轻松的使用`await`指令来实现异步逻辑调用，以及调用其它业务方法。
+我们可以在Model中定义任意的实例方法来实现业务逻辑，例如：`async getTodos()` ，该方法是一个`async`函数，所以可以轻松的使用`await`指令来实现异步逻辑调用，以及调用其它业务方法。
 
 调用方式：
 1. `todosModel.getTodos({lastId: 0, pagesSize:5})` 在Model的实例上直接调用
@@ -356,9 +372,9 @@ model将会被注册到redux store中，由store统一管理model的状态，使
 
 ### Controller
 
-Controller需要申明其依赖哪些Model，并绑定Model的中的状态，以及调用Model里定义的业务方法。它是一个React组件，可以像其它React组件一样创建和使用，新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，在组件创建完成后执行，在服务端渲染时，会等待其执行完成后，再渲染出html，接着在浏览器上运行是，会直接使用在服务端prepare得到的数据，不再执行该方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在组件初始化完成后，立即上运行。在一次页面请求的过程中，系统会保证该方法只执行一次，避免数据重复加载。
+Controller需要申明其依赖哪些Model，并绑定Model的中的状态，以及调用Model里的业务方法。它是一个React组件，可以像其它React组件一样创建和使用，新增了[`async componentPrepare()`](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=componentprepare-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)生命周期方法，在组件执行完构造方法后执行，在服务端渲染时，会等待其执行完成后，再渲染出html，接着在浏览器上运行时，会直接使用在服务端prepare得到的数据，不再执行该方法。如果没有启用服务端渲染，或者在浏览器上动态加载Controller组件时，该方法将在组件初始化完成后，立即上运行。在一次页面请求的过程中，系统会保证该方法只执行一次，避免重复加载数据。
 
-```jsx
+```javascript
 import React, {Component} from 'react';
 import TodosModel from '../models/TodosModel'
 import {controller} from '@symph/joy/controller'
@@ -402,7 +418,7 @@ export default class IndexController extends Component {
 
 - 使用`@controller(mapStateToProps)`装饰器将一个普通的Component声明为一个Controller，参数`mapStateToProps`实现model状态和组件props属性绑定，当model的state发生改变时，会触发组件使用新数据重新渲染界面。
 
-- `@autowire(ModelClass)`声明该属性是一个model，运行时，`@symph/joy`将自动初始化该model，并绑定到该属性上。打包时，controller依赖的model将一起打包thunk中，这样在controller运行时，才会去加载依赖的model。
+- `@autowire()`声明该属性的类型是一个Model，运行时，`@symph/joy`将自动初始化该Model，并绑定到该属性上。打包时，Controller依赖的Model也将一起打包thunk中，这样在controller运行时，才会去加载依赖的Model。
 
 - 每个controller的`props`会被注入一个`dispatch`方法，`dispatch`是redux提供的方法，我们可以由此来调用model、reducer、effect等redux支持的方法。
 
@@ -413,7 +429,7 @@ View是一个普通的React组件，其只负责界面展示，展示的数据�
 ```javascript
 import React, {Component} from 'react'
 
-class ImageView extends Component {
+export default class ImageView extends Component {
   render() {
     let {src} = this.props
     return (
@@ -422,6 +438,123 @@ class ImageView extends Component {
   }
 }
 ```
+
+### Hooks
+
+`@symph/joy/hooks`提供了一些hook，以便在React函数组件中，获取Model的状态，以及调用Model中的业务方法。
+
+`React.useEffect` hook是在render以后执行，类似于`componentDidMount`和`componentDidUpdate`生命周期，在服务端渲染时，`React.useEffect`不会被执行，因此我们也无法获取到应用数据，渲染出需要的界面。 所以在编译期，`@symph/joy`所以使用了`@symph/joy/hook`中的同名方法`useEffect`方法替换了`React.useEffect`，使其支持服务端渲染，以及防止数据重复加载等问题。如果你想保持其默认行为，可以在代码中直接使用用`@symph/joy/hook`中的`useReactEffect`，它只是`React.useEffect`的别名。
+
+下面示例了如果在函数组件中使用hook
+
+```javascript
+import React, { useCallback, useEffect } from 'react'
+import { useMappedState, useModel } from '@symph/tempo/hook'
+import TodosModel from '../models/TodosModel'
+
+export default function TodoDetailController ({match}) {
+  const todoId = Number(match.params.id)
+  const [todosModel] = useModel([TodosModel])
+
+  // Declare your memoized mapState function
+  const mapState = useCallback(
+    (state) => {                // state is store's state
+      return {
+        todo: state.todos.details[todoId]
+      }
+    },
+    [todoId],
+  )
+  // Get data from and subscribe to the store
+  let {todo} = useMappedState(mapState)
+
+  useEffect(() => {
+    todosModel.getTodo(todoId)
+  }, [todoId])
+
+  if(todo){
+    return  <div>loading...</div>
+  }
+  return (
+    <div className={styles.root}>
+      <h1>Todo Detail</h1>
+      <div>
+         <div>ID: {todo.id}</div>
+         <div>content: {todo.content}</div>
+      </div>
+    </div>
+  )
+}
+```
+#### Hooks API
+
+##### useMappedState(mapState)
+
+mapState: `useCallback((state) => newState, inputs)` 和mapStateToProps方法类似，用于获取和绑定model中的状态，返回供组件使用的状态对象。
+
+这里需要使用`React.useCallback`对状态映射函数进行包装，可避免每次render都执行一次状态绑定。
+
+```javascript
+  // Declare your memoized mapState function
+  const mapState = useCallback(
+    (state) => {                // state is store's state
+      return {
+        todo: state.todos.details[todoId]
+      }
+    },
+    [todoId],
+  )
+  // Get data from and subscribe to the store
+  let {todo} = useMappedState(mapState)
+```
+
+##### useModel(modelArray)
+
+modelArray: 数组类型，元素为需要使用的Model的class。
+
+返回值: 数组类型，返回Model类的实例，和modelArray参数中传入的class列表一一对应。
+
+我们传入Model的class类，得到Model的实例，这里依然使用了依赖注入的部分概念，不用关系Model如何被加载和初始化的，系统会在适当的时候处理这些，我们在业务组件里，只需要关心拿到Model实例，以及调用他们。
+
+```javascript
+import UserModel from './UserModel'
+import TodoModel from './TodoModel'
+
+const [userModel, todoModel] = useModel([UserModel, TodoModel])
+```
+
+##### useDispatch()
+
+返回值: 返回`dispatch`方法，用于调用`redux`的原生api。
+
+```javascript
+const dispatch = useDispatch()
+```
+
+##### useEffect(effect, inputs)
+
+和[`React.useEffect`](https://reactjs.org/docs/hooks-reference.html#useeffect)和用途和用法一样，但该方法支持服务端渲染。开发者一般不会直接调用该方法，`@symph/joy`在编译期间，会使用该方法替换`React.useEffect`，以保证应用内的`useEffect`在服务端渲染时，被正确的执行。
+
+**effect**: 副作用函数
+
+**inputs**: 数组类型，只有当数组内的元素值发生改变后，`effect`才会被重新执行。 等于`[]`空数组时，`effect`函数只执行一次， 等于`undefined`时，`effect`每次都会执行。
+
+```javascript
+useReactEffect(
+  () => {
+    const subscription = props.source.subscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
+  },
+  [props.source],
+);
+```
+
+##### useReactEffect(effect, inputs)
+
+等于react原生提供的`React.useEffect`，`@symph/joy`默认会对`React.useEffect`进行封装，以便其支持服务端渲染，如果需要屏蔽该默认行为，请在代码中直接使用该方法替换`React.useEffect`。
+
 
 #### 兼容 Dva
 
@@ -440,6 +573,8 @@ class ImageView extends Component {
         type: 'myDvaModel/getData',
       })
     }
+    
+    // ...
    
   }
 ```
@@ -452,7 +587,7 @@ class ImageView extends Component {
  
 ### 导入方法
 
- ```jsx
+ ```javascript
  import {  StaticRouter,
            BrowserRouter,
            Switch,
@@ -474,10 +609,10 @@ class ImageView extends Component {
 
  在代码中控制页面跳转
 
- ```jsx
+ ```javascript
  import {routerRedux} from '@symph/joy/router'
 
- ......
+ ...
    dispatch(routerRedux.push('/abount')))
    
    //or
@@ -485,16 +620,16 @@ class ImageView extends Component {
      pathname: '/about',
      search: `?x=xxx`
    }))
- ......
+ ...
   
  ```
 
 
 ## 代码启动 Server
 
-一个独立的`@symph/joy`应用，通常我们使用`joy start`来启动应用。如果想把`@symph/joy`集成到`express`、`koa`等服务端框架中，可以使用代码启动`@symph/joy`应用。
+如果需要把`@symph/joy`集成到`express`、`koa`等服务端框架中，可以使用代码启动`@symph/joy`应用。
 
-下面例子展示了，如何集成到express中，并且修改路由`\a`到`\b`.
+下面例子展示如何集成到express中，并且修改路由`\a`到`\b`.
 
 ```js
 // server.js
@@ -546,13 +681,13 @@ server.listen(port, (err) => {
 }
 ```
 
-> 如果express作为业务服务器时，可以将@symph/joy当作express的View模块来使用，用来替代html模板渲染模块。
+> 如果express作为业务服务器时，可以将@symph/joy当作express的View模块来使用。
 
-## 动态导入 import
+## 按需加载 dynamic
 
 `@symph/joy`支持JavaScript的TC39 [dynamic import](https://github.com/tc39/proposal-dynamic-import)提议，意味着你可以将代码分割为多个代码块，在浏览器上运行时，只加载当前需要的代码块。
 
-`@symph/joy/dynamic`模块实现了分割代码、动态加载和加载动画等功能，下面展示了其2种用法：
+`@symph/joy/dynamic`模块实现了分割代码、动态加载等功能，下面展示了其2种用法：
 
 ### 基础用法:
 
@@ -561,15 +696,15 @@ import dynamic from '@symph/joy/dynamic'
 
 const DynamicComponent = dynamic({
   loader: () => import('../components/hello'),
-  ssr: true,
+  ssr: true, // 如果关闭，服务端渲染时，该组件将不会被渲染。
   loading:() => <div>...</div>
 })
 
 export default () =>
   <div>
     <Header />
-    <DynamicComponent />
     <p>HOME PAGE is here!</p>
+    <DynamicComponent />
   </div>
 ```
 
@@ -605,7 +740,7 @@ export default () => <HelloBundle title="Dynamic Bundle" />
 
 如果需要定制html文档的内容，例如引入额外的`<script>`或`<link>`等，可在src目录中新建`_document.js`文件，参考下面的示例加入自定义的内容。
 
-```jsx
+```javascript
 // /src/_document.js
 import Document, { Head, Main, JoyScript } from '@symph/joy/document'
 
@@ -627,16 +762,16 @@ export default class MyDocument extends Document {
 }
 ```
 
-`_document.js`只在服务端渲染使用，并不会在浏览器端加载，所以不能在这里放置任何的业务代码，如果希望在整个应用里共享一部分功能，请将它们放到`src/index.js`应用入口组件中。
+`_document.js`只在服务端渲染时使用，不会在浏览器端加载，所以不能在这里放置任何的业务代码，如果希望在整个应用里共享一部分功能，请将它们放到`src/index.js`应用入口组件中。
 
 
 ## 自定义 Error 界面
 
-渲染时出现未捕获的异常时，可以自定义错误展示组件，来提示或者引导用户，例如500错误。这只在`production`环境有效，在开发模式下，系统将展示详细的错误堆栈信息，来帮助开发人员定位问题。
+渲染时出现未捕获的异常时，可以自定义错误展示组件，来友好的提示或者引导用户，例如500错误。这只在`process.env.NODE_ENV="production"`环境有效，在开发模式下，系统将展示详细的错误堆栈信息，来帮助开发人员定位问题。
 
 创建`src/_error.js`文件来替换默认的错误展示组件。
 
-```jsx
+```javascript
 // src/_error.js
 
 import React from 'react'
@@ -654,7 +789,7 @@ export default class _Error extends React.Component {
         <title>{statusCode}: {title}</title>
       </Head>
 
-       <h1>{statusCode}</div>
+       <h1>{statusCode}</h1>
        <div>{message}</div>
     </div>
   }
@@ -663,10 +798,10 @@ export default class _Error extends React.Component {
 
 ## 打包部署
 
-部署时，需要先使用`joy build`命令来编译代码，生成可在浏览器和node.js里直接运行的目标代码，放入`.joy`目录中([distDir](./configurations#distDir)可自定义输出目录名称)，然后将`.joy`目录上传到生产机器上，在生产机器上执行`joy start`命令来启动应用。在`package.json`的`scripts`节点中加入以下命令脚本：
+在package.json中配置一下脚本，用于打包和启动应用
 
-```json
 // package.json
+```json
 {
   "scripts": {
     "dev": "joy dev",
@@ -676,15 +811,85 @@ export default class _Error extends React.Component {
 }
 ```
 
+1. 编译：运行`npm run build`命令，启动编译流程，生成可在浏览器和node.js里直接运行的目标代码，并对生成的代码进行压缩、混淆、分割等优化处理。编译后的代码放在`.joy`([distDir](./configurations#distDir)可自定义输出目录名称)目录中。
+2. 部署：将项目目录下的`.joy`、`package.json`、`node_modules`、`joy.config.js`文件复制到生产机器上。
+3. 启动应用：在生产机器上，运行`npm run start`启动应用。
+
 `@symph/joy` 可以部署到不同的域名或路径上，这需要对应用内引用的资源路径进行配置，参考[assetPrefix](./configurations#assetPrefix)的设置说明。
 
 > 在运行`joy build`的时候，`NODE_ENV`被默认设置为`production`， 使用`joy dev`启动开发环境时，设置为`development`。如果你是在自定义的Server内启动应用，需要你自己设置`NODE_ENV=production`。
 
-## 静态版本输出
+## 静态版本部署
 
-`joy export`用于将`@symph/joy` app输出为静态版本，只包含html、js、css等静态资源文件，可在浏览器上直接加载运行。静态版本仍然支持`@symph/joy`的大部分特性，比如：MVC组件、动态路由、按需加载等。
+`joy export`用于将`@symph/joy` app输出为静态版本，只包含html、js、css等静态资源文件，不需要node作为服务器，可直接部署在cCDN或者静态资源服务器上，浏览器端直接加载运行。静态版本仍然支持`@symph/joy`的大部分特性，比如：MVC组件、动态路由、按需加载等。
 
-`joy export`的原理是提前假设用户的请求，预先渲染为HTML文件，这和当来自浏览器的request到达Node.js服务器上时，实时渲染的工作流程类似。默认只渲染根路径`/`对应的`index.html`文件，浏览器加载该文件后，[Router](https://reacttraining.com/react-router/web/example/basic)组件再根据当前url，加载相应的页面。这要求我们在业务服务器上，例如JAVA的Spring MVC中，使用正则路由来匹配应用内部的所有路径，并都返回`index.js`这个文件，例如：`@RequestMapping(path="/**", method=RequestMethod.GET)`。
+`joy export`的原理是提前假设用户的请求，预先将React应用渲染为HTML文件，这和当请求到达Node.js服务器上时，实时渲染的工作流程类似。
+
+### 导出配置
+
+默认只导出首页，即url `/` 根路径对应的页面，如果需要导出其它页面，请先在`joy.config.js`中设置[`exportPathMap`](./configurations#exportPathMap)。
+
+下面是一个简单的配置示例，配置了导出首页`index.html`和`about.html`这两个页面，且最终应用会部署到`http:www.example-cdn.com/my-app`这个静态url路径下。
+```js
+// joy.config.js
+module.exports = {
+  assetPath: 'http://www.example-cdn.com/my-app',
+  exportPathMap: async function () {
+    return {
+      '/': null, // 导出首页
+      '/about.html': request // 导出about.html页面，request为渲染页面的request参数对象，可以这样{query:{pageIndex:1}}设置query参数
+    }
+  }
+}
+```
+
+### 导出步骤
+
+在package.json中添加NPM脚本
+
+// package.json
+```json
+{
+  "scripts": {
+    "build": "joy build",
+    "export": "npm run build && joy export"
+  }
+}
+```
+
+执行 `npm run export` 执行导出过程，导出过程分为两步：
+1. 编译源码：运行`npm run build`命令，生成可在浏览器和node.js里直接运行的目标代码，并对生成的代码进行压缩、混淆、分割等优化处理。编译后的代码放在`.joy`([distDir](./configurations#distDir)可自定义输出目录名称)目录中。
+2. 导出静态版本: `joy export`命令，启动一个用于导出的Node服务器，导出`exportPathMap`中配置的页面。
+
+最终生成目录结构
+```
+project
+|   .joy.config.js
+└---.joy
+|  |  server/
+|  |  static/
+|  |  build-manifest.json
+└---out
+|  |  _joy/
+|  |  static/
+|  |  index.html
+|  |  about.html
+|  ...
+```
+
+执行完导出操作后，应用根目录下将会生成`out`目录，其中包含在浏览器上运行时需要的所有文件。
+
+### 部署
+
+只需要将`out`目录中的内容部署到静态文件服务器，最终通过`http://www.example-cdn.com/my-app/about.html` url路径，访问导出的`about.html`文件。
+
+> 你可以定制`out`目录名称，请运行`joy export -h`指令，按提示操作。
+
+### 应用服务器配置
+
+默认只渲染输出`index.html`文件，这也是单页面应用常见的入口页面，浏览器加载该文件后，由浏览器端的路由组件[Router](https://reacttraining.com/react-router/web/example/basic)根据当前完整`window.location.href`路径，渲染具体的页面内容。
+
+这要求我们在业务服务器上，例如JAVA的Spring MVC中，使用正则路由来匹配应用内部的所有的页面路径，并都返回`index.js`这个文件，例如：`@RequestMapping(path="/**", method=RequestMethod.GET)`。
 
 ```java
 @Controller
@@ -699,31 +904,15 @@ public class ViewController {
 }
 ```
 
-### 导出步骤
+也可以在nginx中配置反向代理路由，当任何页面请求到达时，返回`index.html`文件给浏览器。
 
-`joy export`提供默认的导出配置[`exportPathMap`](./configurations#exportPathMap)，如果需要导出其它页面，请先在`joy.config.js`中设置[`exportPathMap`](./configurations#exportPathMap)。
-
-接下来我们分两步进行导出操作：
-1. 编译源代码 `joy build`
-2. 预渲染需要导出的页面 `joy export`
-
-添加NPM脚本到`package.json`文件中：
-
-```json
-{
-  "scripts": {
-    "build": "joy build",
-    "export": "npm run build && joy export"
-  }
-}
+下面的nginx配置例子展示了，在nginx服务器上，将`http://www.nginx-example.com/frontend-app/todo/1`请求代理到静态资源服务器`http://www.static-example.com/static-app/index.html`文件上。
 ```
-
-现在执行下面命令，完成整个导出工作：
-
-```bash
-npm run export
+location ^~ /frontend-app/ {
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-http_x_forwarded_for $proxy_add_x_forwarded_for;
+            proxy_set_header Host $http_host;
+            rewrite /frontend-app/(.+)$ /static-app break;
+            proxy_pass http://www.static-example.com ;
+        }
 ```
-
-执行完成以后，静态版本生成的所有文件都放置在应用根目录下的`out`目录中，只需要将`out`目录部署到静态文件服务器即可。
-
-> 你可以定制`out`目录名称，请运行`joy export -h`指令，按提示操作。

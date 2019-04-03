@@ -29,6 +29,7 @@
     "error.js",
     "fetch.js",
     "head.js",
+    "hook.js",
     "model.js",
     "prefetch.js",
     "proxy-api-middleware.js",
