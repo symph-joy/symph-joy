@@ -48,7 +48,7 @@ export default (context) => {
         await page.goto(context.getUrl('/'))
         await expect(page).toClick('[href="/err500"]')
         if (context.isDev) {
-          await waitFor(500)
+          await waitFor(2000)
           const html = await page.evaluate(() =>
             document.getElementsByTagName('iframe')[0].contentWindow.document.body.innerHTML)
           expect(html).toMatch('Error: i am error')

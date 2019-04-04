@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react'
-import { useMappedState, useModel } from '@symph/tempo/hook'
+import { useMappedState, useModel } from '@symph/joy/hook'
 import TodosModel from '../models/TodosModel'
 import styles from './TodoDetailController.less'
 

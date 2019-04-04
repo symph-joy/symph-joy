@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react'
-import { useDispatch, useMappedState, useModel, useReactEffect } from '@symph/tempo/hook'
+import { useDispatch, useMappedState, useModel, useReactEffect } from '@symph/joy/hook'
 import HooksModel from './HooksModel'
 
 export default function Hooks (props) {
