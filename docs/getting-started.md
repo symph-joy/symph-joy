@@ -392,9 +392,9 @@ export default class IndexController extends Component {
 
   async componentPrepare() {
     // call model
-    await this.todosModel.getTodos({lastId: 0, pageSize: 5})
+    await this.todosModel.getTodos({pageIndex: 0, pageSize: 5})
     // or use dispatch to call model
-    // await this.props.dispath({type: 'todos/getTodos', lastId: 0, pageSize: 5})
+    // await this.props.dispath({type: 'todos/getTodos', pageIndex: 0, pageSize: 5})
   }
 
   render() {

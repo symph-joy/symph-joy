@@ -1,6 +1,12 @@
 
 # 升级日志
 
+## 1.2.0
+
+- 支持react hook。提供hook和model链接
+- fix: react-hot-loader 热更新时componentPrepare被重复调用
+- fix: n个常规问题
+
 ## 0.5.0
 
 - 优化webpack配置，使其更适合单页渐进式应用，减少首屏js加载大小。将`_app.js` `_error.js` `runtime/webapck.[hash].js`合并到`main.js`中
