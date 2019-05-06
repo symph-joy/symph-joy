@@ -1,19 +1,16 @@
 {
-  "name": "with-antd",
+  "name": "with-antd-mobile",
   "private": true,
-  "version": "1.0.0",
-  "description": "集成*antd-design* UI框架示例",
-  "engines": {
-    "install-node": "6.9.2"
-  },
+  "version": "1.0.1",
+  "description": "集成*antd-design-mobile* UI框架示例",
   "dependencies": {
     "@symph/joy": "latest",
     "@symph/joy-css": "latest",
     "@symph/joy-less": "latest",
-    "antd-mobile": "2.2.5",
+    "antd-mobile": "^2.2.5",
     "less": "^3.8.1",
-    "react": "^16.4.1",
-    "react-dom": "^16.4.1"
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
   },
   "devDependencies": {
     "babel-plugin-import": "1.8.0"
