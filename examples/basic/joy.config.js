@@ -1,9 +1,11 @@
+const withCss = require('@symph/joy-css')
 const withLess = require('@symph/joy-less')
 const withImageLoader = require('@symph/joy-image')
 
 module.exports = {
   serverRender: true,
   plugins: [
+    withCss(),
     withLess({cssModules: true}),
     withImageLoader({limit: 8192})
   ],
