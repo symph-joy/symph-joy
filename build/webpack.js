@@ -163,7 +163,7 @@ export default async function getBaseWebpackConfig (dir: string, { dev = false, 
   }
 
   const resolveConfig = {
-    extensions: ['.wasm', '.mjs', '.js', '.jsx', '.json', '.ts', 'tsx'],
+    extensions: ['.wasm', '.mjs', '.js', '.jsx', '.json', '.ts', '.tsx'],
     modules: [
       JOY_PROJECT_ROOT_NODE_MODULES,
       'node_modules',
