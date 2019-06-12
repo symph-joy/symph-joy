@@ -44,6 +44,7 @@ export default class ChunkNamesPlugin {
 
 function tryGetChunkEntryFileName (chunk) {
   const modules = chunk.getModules()
+  // 找到入口module，depth越大，表示引入的深度越深。
   let topLevel = modules.reduce((rst, module) => {
     if (module.depth < rst) {
       return module.depth
@@ -56,12 +57,14 @@ function tryGetChunkEntryFileName (chunk) {
       if (module.rootModule) {
         module = module.rootModule
       }
-      if (module.id) {
-        let name = module.id
-        name = name.replace(/^[./]*/, '')
-        name = name.replace(/[/.]/g, '_')
-        rst.push(name)
+      if (!module.id || module.id.includes('node_modules')) {
+        return rst
       }
+
+      let name = module.id
+      name = name.replace(/^[./]*/, '')
+      name = name.replace(/[/.]/g, '_')
+      rst.push(name)
     }
     return rst
   }, [])
