@@ -52,7 +52,7 @@ export default class Server {
     }
 
     // cross domain api request
-    this.apiProxy = createProxyApiMiddleware({ dev, proxyPrefix: assetPrefix })
+    this.apiProxy = createProxyApiMiddleware(this.joyConfig.proxy)
     // gzip
     this.compression = compression()
 
@@ -250,9 +250,11 @@ export default class Server {
       }
     }
 
-    if (await this.apiProxy(req, res)) {
-      // the request has be handled by proxy
-      return
+    if (this.apiProxy) {
+      if (await this.apiProxy(req, res)) {
+        // the request has be handled by proxy
+        return
+      }
     }
 
     const fn = this.router.match(req, res, parsedUrl)

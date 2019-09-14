@@ -63,7 +63,9 @@
     "ignore": [
       "**/node_modules/**",
       "**/examples/**",
-      "**/test/**"
+      "**/test/**",
+      "**/.joy/**",
+      "**/out/**"
     ]
   },
   "lint-staged": {

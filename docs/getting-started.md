@@ -172,41 +172,28 @@ export default () => (
 
 在上面的例子中，只有第二个`<meta key="viewport" />`被渲染和添加到最终页面。
 
-## 获取数据 fetch
+## 代理服务
 
-`@symph/joy/fetch`用于发送数据请求，该方法在浏览器和Node.js上都可以正常执行。其调用参数和浏览器的[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)方法一致。
+`@symph/joy`内建了代理转发服务器，支持`web`和`websocket`转发，请求由浏览器发送到代理服务器，再由代理服务器发送到业务服务器。
 
-```javascript
-import fetch from '@symph/joy/fetch'
-
-fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET'})
-  .then(respone => {
-      // do something...
-    }
-  );
-
-// or
-let response = fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET'})
- 
-```
-
-`@symph/joy/fetch` 方法内部如果检查到当前请求跨域了，会先将请求转发到Node.js服务端，再由服务端发送请求到远程业务服务器上。这在本地调试，或者前后端分离开发时非常有用。
-
-如果需要关闭代理转发功能，例如使用cors来完成跨域请求，可以在fetch的options参数上设定`options.mode='cors'`
+在`joy.config.js`中配置代理服务器，下面实例如何开启代理服务器，并转发`/api`路径上的请求。
 
 ```javascript
-import fetch from '@symph/joy/fetch'
-
-fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET', mode:'cors'})
-  .then(respone => {
-      // do something...
-    }
-  );
+module.exports = {
+  proxy: {
+    enable: true,
+    routes:[
+      {
+        type: 'web',
+        path: '/api/',
+        target: 'https://news-at.zhihu.com'
+      }
+    ]         
+  }
+}
 ```
 
-> 也可以使用其它的类似解决方案，例如：[node-http-proxy](https://github.com/nodejitsu/node-http-proxy#using-https)、[express-http-proxy](https://github.com/villadora/express-http-proxy)等。我们内建了这个服务，是为了可以像原生端开发人员一样，更专注于业务开发，避免跨域、代理等问题。
-
-如果项目采用了自定义Server，例如`express`，需要开发者将`@symph/joy/proxy-api-middleware`代理服务注册到自定义的Server中。
+和自定义server服务器集成，例如`express`，需要开发者将`@symph/joy/proxy-api-middleware`中间件注册到`express`中。
 
 ```javascript
 const express = require('express')
@@ -214,30 +201,214 @@ const joy = require('@symph/joy')
 const {createProxyApiMiddleware} = require('@symph/joy/proxy-api-middleware')
 const dev = process.env.NODE_ENV !== 'production'
 
+const server = express()
 const app = joy({ dev })
 const handle = app.getRequestHandler()
 const preparedApp = app.prepare()
-
-const server = express()
-server.use(createProxyApiMiddleware())  //register proxy, 
+const proxyOptions = {enable: true, dev: true}
+server.use(createProxyApiMiddleware(proxyOptions))  //register proxy, 
 server.use((req, res, next)=>{
   preparedApp.then(()=> {
     handle(req, res)
   })
 })
 server.listen(3000)
-
 ```
 
-`createProxyApiMiddleware(options)`支持下列参数：
-- proxyPrefix = ""， 设置代理服务的访问路径，对应的在调用`fetch`的时候也需要设置`fecth(url, {proxyPrefix})`。
-- onReq = (req, res, reqBody, next) => {}, 浏览器的请求到达proxy时的事件，可以在这里拦截请求或者加工原始请求。
-- onProxyReq = ((proxyReq, req, res, options)) => {}, 代理服务器发送请求到业务服务器上时的事件。
-- onProxyRes = (proxyRes, req, res, body) => {}, 代理服务器从业务服务器上得到响应。
-- onProxyResBody = (proxyRes, req, res, body) => {}, 代理服务器从业务服务器上得到完整的响应body的事件，可以对body部分进行修改。
-- onError = onError(err, req, res) => {}, 发送错误时的回调，一般用打印日志，给客户端返回错误信息等。
-- dev = false， 开启调试模式后，会打印详细的请求日志。
-
+`createProxyApiMiddleware(options)`支持的参数和在`joy.config.js`中配置`proxy`时一致。
+
+
+### 使用注意事项
+- 前端域名下的cookie会一起发送到目标服务器，如对目标服务器不信任，需采取措施来避免数据的泄露和冲突，例如监听`onProxyReq`事件，在proxy发送请求到目标服务器之前，去掉敏感数据。
+
+### proxy 配置
+    
+- **enable**: 类型`bool`，默认`true`， 如果为false，将关闭整个代理服务器。
+
+- **autoProxy**: 类型`bool`，开发环境(NODE_ENV=development)默认true，其它环境默认false。配置自动代理服务，在浏览器上使用[`@symph/joy/fetch`](#发送请求-fetch)发送请求，在浏览器上`@symph/joy/fetch`检测到请求跨域了，会将请求地址转为`${proxy.host}/__proxy/${pathname}`，请请求发送到代理服务器，再由代理发送请求到目标服务器。
+
+> 注意：在生产环境，要谨慎使用`autoProxy`自动代理服务器，以防被人恶意利用，例如试探内部网络和接口、或者转发恶意非法请求、网络攻击等。在生产环境，建议使用`proxy.routes`配置，明确定义每个代理点的行为，避免越界使用。
+
+- **routes**: 类型`ProxyRoute`的数组，默认空，设置各个代理点。
+
+- **dev**: 类型`bool`，默认`false`，开启调试模式后，会打印一些代理日志。
+
+#### ProxyRoute 配置
+
+- **path**: 类型`string`，不能为空，定义该代理点能处理的客户端请求路径，支持正则字符串，最终由RegExp生成正则表达式，和`request.path`进行匹配。
+
+- **target**: 类型`string`, 不能为空，目标服务器地址，包含协议、域名、端口，也可以包含部分公共路径。例如：`https://service.com:8080/api/v1`。
+
+- **type**: 类型`string`, 不能为空，支持`web`和`websocket`。
+
+- **xfwd**: 类型`bool`，默认`true`，在转发请求时，是否在发往目标服务器的请求里追加`x-forwarded-xxx`协议头。
+
+- **secure**: 类型`bool`，默认`false`，是否验证SSL证书。
+
+- **ssl**: 类型`Object`，默认`null`，配置https连接，将会被传入https.createServer()中。
+
+- **ignorePath**: 类型`bool`，默认`false`，是否忽略客户端请求的path部分，如果为true，则代理服务器发送请求到目标服务器上时，将不会包含原始请求的path部分。
+
+- **pathRewrite**: 类型`Object`，默认`null`, 重写客户端请求路径，可配置的值:
+  -  Object, 但在对应关系替换，只替换第一次匹配到的路径。例如：
+
+```javascript
+{
+  "/old_path/": "/new_path/",  // 替换为新的path
+  "/path/": "/",               // 删除path
+  "/": "/path/"                // 在路径前面添加新的path
+}
+```
+
+- **prependPath**: 类型`bool`，默认`true`，将target定义path部分，添加到客户端请求path的前面。
+
+- **localAddress**: 类型`string`，默认`null`, 本地连接到远程的接口地址。
+
+- **changeOrigin**: 类型`bool`，默认`true`，改变客户端请求header中的host值，如果为false，客户端在发送请求时，必须确保header中设置正确目标的host，否则浏览器默认添加为代理服务器的host地址，这可能导致最终请求失败。
+
+- **preserveHeaderKeyCase**: 类型`bool`，默认`true`, 设置是否需要保持客户端请求header字段名称的大小写，默认会将header中的字段转换为全小写。
+
+- **auth**: 类型`string`，默认`null`, 在发往目标服务器的请求中添加基本认证信息。例如：'user:password'。
+
+- **hostRewrite**: 类型`string`，默认`null`，当 (201/301/302/307/308) 时，使用该值重写业务服务器响应headers["location"]里的hostname。
+
+- **autoRewrite**: 类型`bool`，默认`false`, 当 (201/301/302/307/308) 时，基于客户端的原始请求，自动重写业务服务器响应headers["location"]里的host/port。
+
+- **protocolRewrite**: 类型`string`，默认`null`，使用该值重写业务服务器响应headers["location"]里的协议部分，例如：http或者https。
+
+- **cookieDomainRewrite**: 类型`bool|string|object`，默认`false`，重写'set-cookie'头中的domain，可配置的值:
+
+  - bool, 默认false， 关闭cookie重写
+  - string，新的domain，例如：`cookieDomainRewrite: "new.domain"`。如果需要删除domain，使用`cookieDomainRewrite: ""`
+  - object, 按照对应关系替换，使用`"*"`匹配所有的domain，例如：
+```javascript
+cookieDomainRewrite: {
+  "unchanged.domain": "unchanged.domain", //保存不变
+  "old.domain": "new.domain",             // 替换为新的domain
+  "*": ""                                 // 删除其它的domain
+}
+```
+
+- **cookiePathRewrite**: 类型`bool|string|object`，默认`false`，重写'set-cookie'头中的路径，可配置的值:
+
+  - bool, 默认false， 关闭cookie重写， TODO 支持true选项，代表auto选项，自动根据原始请求设置该值
+  - string，新的path，例如：`cookiePathRewrite: "/newPath/"`。删除path `cookiePathRewrite: ""`，设置为根路径`cookiePathRewrite: "/"`
+  - object, 按照对应关系替换，使用`"*"`匹配所有的path，例如：
+```javascript
+cookiePathRewrite: {
+  "/unchanged_path/": "/unchanged_path/",   //保存不变
+  "/old_path/": "/new_path/",               // 替换为新的path
+  "*": ""                                   // 删除其它的path
+}
+```
+
+- **headers**: 类型`object`，默认`null`, 设置额外的请求头到目标请求上。
+
+- **proxyTimeout**: 类型`number`，默认`0`, 单位毫秒，发往目标服务器请求socket超时时间。
+
+- **timeout**: 类型`number`，默认`0`, 单位毫秒，接收客户端请求socket超时时间。
+
+- **followRedirects**: 类型`bool`，默认`false`, 和目标服务器通信是自动处理重定向。
+
+- **onError**: 当发生异常时触发该事件。代理内部不会处理任何的异常信息，包括客户端和代理之间通信时发现的异常，以及代理和目标服务器通信时发现的异常，所以我们建议由你来监听和处理异常。
+
+```javascript
+function (err, req, res) {
+  res.writeHead(500, {
+    'Content-Type': 'text/plain'
+  });
+
+  res.end('Something went wrong. And we are reporting a custom error message.');
+ }
+```
+
+- **onProxyReq**: 代理向目标服务器发送数据之前触发该事件，可以在这里修改proxyReq请求对象，适用于websocket类型的连接。
+
+```javascript
+function (proxyReq, req, res) {
+  console.log('Target path', proxyReq.path);
+}
+```
+
+- **onProxyReqWs**: 代理向目标服务器发送数据之前触发该事件，可以在这里修改proxyReq请求对象。适用于websocket类型的连接。
+
+```javascript
+function (proxyReq, req, res) {
+  console.log('Target path', proxyReq.path);
+}
+```
+
+- **onProxyRes**: 当从目标服务器得到响应时触发，可以在这里得到响应的数据，对数据进行编辑，然后输出给客户端。
+
+```javascript
+function (proxyRes, req, res) {
+  console.log('RAW Response from the target', JSON.stringify(proxyRes.headers, true, 2));
+}
+```
+
+- **onOpen**: 当代理和目标服务器的websocket创建完成，并且管道建立连接时触发一次。
+
+```javascript
+function (proxySocket) {
+  // listen for messages coming FROM the target here
+  proxySocket.on('data', hybiParseAndLogMessage);
+}
+```
+
+- **onClose**: 当代理的websocket关闭时触发一次。
+
+```javascript
+function (res, socket, head) {
+  // view disconnected websocket connections
+  console.log('Client disconnected');
+}
+```
+
+
+## 发送请求 fetch
+
+和浏览器端的[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)完全兼容，`@sympy/joy/fetch`提供了额外功能：
+
+- 在浏览器和node.js都可以正常运行，可实现一份代码多处运行，如果启动服务器渲染时，这是必须的。
+- 自动代理，当检测到跨域请求，请求将被自动转发到[接口代理服务器](#代理服务)上，在代理上完成数据请求，再将数据返回给客户端。如果使用`joy dev`运行应用，该特性默认开启，方便前后端分离开发
+
+```javascript
+import fetch from '@symph/joy/fetch'
+
+fetch('https://news-at.zhihu.com/api/3/news/hot')
+  .then(respone => {
+      // 处理数据
+    }
+  );
+
+// or
+async function fetchData(){
+  let response = await fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET'})
+}
+```
+
+如果关闭代理转发功能，例如使用cors来完成跨域请求，可以在fetch的options参数明确设定`mode='cors'`
+
+```javascript
+import fetch from '@symph/joy/fetch'
+
+async function fetchData(){
+  let response = await fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET',  mode:'cors'})
+}
+```
+
+当`@symph/joy`应用启动时，默认代理路径为`http://my_host.com/__proxy/`，如我们将其部署在`http://my_host.com/h5/__new_proxy/`时，需要通过`proxyPath`参数设置代理访问路径，例如：
+
+```javascript
+import fetch from '@symph/joy/fetch'
+
+async function fetchData(){
+  let response = await fetch('https://news-at.zhihu.com/api/3/news/hot', {method: 'GET', proxyPath: '/h5/__new_proxy/'})
+}
+```
+
+> 也可以使用其它的类似解决方案，例如：[node-http-proxy](https://github.com/nodejitsu/node-http-proxy#using-https)、[express-http-proxy](https://github.com/villadora/express-http-proxy)等。我们内建了这个服务，是为了可以像原生端开发人员一样，更专注于业务开发。
+
 ## 应用组件
 
 @symph/joy采用 [MVC组件](https://lnlfps.github.io/symph-joy/#/thinking-in-joy?id=mvc%E7%9A%84%E6%80%9D%E8%80%83) 来规范应用各组件的职责。

@@ -1,9 +1,10 @@
 
-# 升级日志
+# 主要版本升级日志
 
 ## 1.2.0
 
 - 支持react hook。提供hook和model链接
+- 升级了各主要依赖库
 - fix: react-hot-loader 热更新时componentPrepare被重复调用
 - fix: n个常规问题
 
