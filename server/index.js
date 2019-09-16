@@ -25,7 +25,7 @@ import {
 import * as asset from '../lib/asset'
 import * as envConfig from '../lib/runtime-config'
 import { isResSent } from '../lib/utils'
-import { createProxyApiMiddleware } from '../lib/fetch/proxy-api-middleware'
+import { createProxyMiddleware } from '../lib/fetch/proxy-middleware'
 import compression from 'compression'
 
 // We need to go up one more level since we are in the `dist` directory
@@ -52,7 +52,7 @@ export default class Server {
     }
 
     // cross domain api request
-    this.apiProxy = createProxyApiMiddleware(this.joyConfig.proxy)
+    this.apiProxy = createProxyMiddleware(this.joyConfig.proxy)
     // gzip
     this.compression = compression()
 

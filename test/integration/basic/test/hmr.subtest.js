@@ -4,7 +4,8 @@ import {
   findPort,
   launchApp,
   killApp,
-  waitFor
+  waitFor,
+  check
 } from 'joy-test-utils'
 import { join } from 'path'
 import { readFileSync, writeFileSync, renameSync, existsSync } from 'fs'
@@ -63,25 +64,31 @@ export default (context) => {
         const editedContent = originalContent.replace('100px', '200px')
         writeFileSync(filePath, editedContent, 'utf8')
 
-        await waitFor(1500)
-        fontSize = await page.$eval('#hello', el => el.computedStyleMap().get('font-size').value)
+        // await waitFor(1500)
+        // fontSize = await page.$eval('#hello', el => el.computedStyleMap().get('font-size').value)
+        //
+        // try { expect(fontSize).toBe(200)} finally {
+        //   writeFileSync(filePath, originalContent, 'utf8')
+        // }
 
-        try { expect(fontSize).toBe(200)} finally {
+        try {
+          check(async () => await page.$eval('#hello', el => el.computedStyleMap().get('font-size').value + ''), /200/)
+        } finally {
           writeFileSync(filePath, originalContent, 'utf8')
         }
       })
 
       test('dynamic load controller should refresh', async () => {
         await page.goto(context.getUrl('/hmr/dynamicComp'))
-        await expect(page).toMatch('hello from DynamicComponentCtl')
-        await expect(page).toMatch('hello from EditFileCtl')
+        await expect(page).toMatch('hello from DynamicComponentCtl', {timeout: 5000})
+        await expect(page).toMatch('hello from EditFileCtl', {timeout: 5000})
 
         const filePath = join(__dirname, '../src/controller/hmr/EditFileCtl.js')
         const originalContent = readFileSync(filePath, 'utf8')
         const editedContent = originalContent.replace('hello from EditFileCtl', 'cool controller')
         writeFileSync(filePath, editedContent, 'utf8')
 
-        try { await expect(page).toMatch('cool controller', {timeout: 3000})} finally {
+        try { await expect(page).toMatch('cool controller', {timeout: 10000})} finally {
           writeFileSync(filePath, originalContent, 'utf8')
         }
 

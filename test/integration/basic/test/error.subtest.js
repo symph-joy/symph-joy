@@ -49,8 +49,13 @@ export default (context) => {
         await expect(page).toClick('[href="/err500"]')
         if (context.isDev) {
           await waitFor(2000)
-          const html = await page.evaluate(() =>
-            document.getElementsByTagName('iframe')[0].contentWindow.document.body.innerHTML)
+            const html = await page.evaluate(() =>{
+              try {
+                return document.getElementsByTagName('iframe')[0].contentWindow.document.body.innerHTML
+              } catch (e) {
+                return ''
+              }
+          })
           expect(html).toMatch('Error: i am error')
           // await expect(page).toMatch('Error: i am error', {timeout: 3000}) 错误信息在iframe中，所以不能使用该方法来判断
         } else {

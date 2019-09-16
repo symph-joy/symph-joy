@@ -139,13 +139,13 @@ export async function killApp (instance) {
   await fkill(instance.pid)
 }
 
-export async function startApp (app) {
+export async function startApp (app, port) {
   await app.prepare()
   const handler = app.getRequestHandler()
   const server = http.createServer(handler)
   server.__app = app
 
-  await promiseCall(server, 'listen')
+  await promiseCall(server, 'listen', port)
   return server
 }
 
