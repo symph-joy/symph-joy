@@ -1,6 +1,6 @@
 {
   "name": "@symph/joy",
-  "version": "1.2.1",
+  "version": "1.2.3",
   "description": "Minimalistic framework for React SPA applications, inspiration comes from Next.js and Dva",
   "keywords": [
     "react",
@@ -33,6 +33,7 @@
     "model.js",
     "prefetch.js",
     "proxy-api-middleware.js",
+    "proxy-middleware.js",
     "router.js"
   ],
   "bin": {
