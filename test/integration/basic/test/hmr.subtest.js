@@ -20,14 +20,14 @@ export default (context) => {
 
       test('controller should refresh', async () => {
         await page.goto(context.getUrl('/hmr/editFile'))
-        await expect(page).toMatch('hello from EditFileCtl')
+        await expect(page).toMatch('hello from EditFileCtl', {timeout: 2000})
 
         const filePath = join(__dirname, '../src/controller/hmr/EditFileCtl.js')
         const originalContent = readFileSync(filePath, 'utf8')
         const editedContent = originalContent.replace('hello from EditFileCtl', 'cool controller')
         writeFileSync(filePath, editedContent, 'utf8')
 
-        try { await expect(page).toMatch('cool controller', {timeout: 3000})} finally {
+        try { await expect(page).toMatch('cool controller', {timeout: 5000})} finally {
           writeFileSync(filePath, originalContent, 'utf8')
         }
       })
@@ -44,7 +44,7 @@ export default (context) => {
         writeFileSync(filePath, editedContent, 'utf8')
 
         let hasNotMatch = false
-        try { await expect(page).toMatch('hello from HMRHelloCtl', {timeout: 2000})} catch (e) {
+        try { await expect(page).toMatch('hello from HMRHelloCtl', {timeout: 5000})} catch (e) {
           hasNotMatch = true
         } finally {
           writeFileSync(filePath, originalContent, 'utf8')
@@ -91,9 +91,7 @@ export default (context) => {
         try { await expect(page).toMatch('cool controller', {timeout: 10000})} finally {
           writeFileSync(filePath, originalContent, 'utf8')
         }
-
       })
-
     })
   })
 }
