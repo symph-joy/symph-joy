@@ -22,31 +22,48 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWAR
 // Modified to strip out unneeded results for Joy's specific use case
 
 import url from 'url'
+import filePath from 'path'
+import crypto from 'crypto'
+const dev = process.env.NODE_ENV === 'development'
 
 function buildManifest (compiler, compilation) {
-  let context = compiler.options.context
-  let manifest = {}
+  const context = compiler.options.context
+  const manifest = {}
 
   compilation.chunks.forEach(chunk => {
     chunk.files.forEach(file => {
       for (const module of chunk.modulesIterable) {
-        let id = module.id
-        let name = typeof module.libIdent === 'function' ? module.libIdent({ context }) : null
+        const id = module.id
+        const name = typeof module.libIdent === 'function' ? module.libIdent({ context }) : null
         // If it doesn't end in `.js` Joy can't handle it right now.
         if (!file.match(/\.js$/) || !file.match(/^static\/chunks\//)) {
           return
         }
-        let publicPath = url.resolve(compilation.outputOptions.publicPath || '', file)
+
+        // eslint-disable-next-line
+        const publicPath = url.resolve(compilation.outputOptions.publicPath || '', file)
 
         let currentModule = module
         if (module.constructor.name === 'ConcatenatedModule') {
           currentModule = module.rootModule
         }
-        if (!manifest[currentModule.rawRequest]) {
-          manifest[currentModule.rawRequest] = []
+
+        if (!currentModule.resource) {
+          // 不是原始module，例如：css提取插件生成的module
+          return
         }
 
-        manifest[currentModule.rawRequest].push({ id, name, file, publicPath })
+        // 这里需要和loader组件的module里定义的名字一致，该属性由react-loadable-plugin.js babel插件自动生成，
+        // 不一致将导致无法将页面依赖的的module注入到index.html中。
+        const resource = filePath.parse(currentModule.resource)
+        let moduleId = `${resource.dir}${filePath.sep}${resource.name}`
+        if (!dev) {
+          moduleId = crypto.createHash('md5').update(moduleId).digest('hex')
+        }
+        if (!manifest[moduleId]) {
+          manifest[moduleId] = []
+        }
+        manifest[moduleId].push({ id, name, file, publicPath })
       }
     })
   })

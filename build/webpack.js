@@ -27,7 +27,7 @@ import {
   CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
   CLIENT_STATIC_FILES_RUNTIME_MAIN
 } from '../lib/constants'
-import AutoDllPlugin from 'autodll-webpack-plugin'
+import HardSourceWebpackPlugin from 'hard-source-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
 import ClientGlobalComponentPlugin from './webpack/plugins/client-global-component-plugin'
 
@@ -154,7 +154,7 @@ export default async function getBaseWebpackConfig (dir: string, { dev = false, 
       path.join(JOY_PROJECT_ROOT_DIST, 'client', 'init'),
       appEntryFilePath,
       errorCompFilePath,
-      path.join(JOY_PROJECT_ROOT_DIST, 'client', (dev ? `joy-dev` : 'joy'))
+      path.join(JOY_PROJECT_ROOT_DIST, 'client', (dev ? 'joy-dev' : 'joy'))
     ].filter(Boolean)
   } : {
     'app-main.js': appEntryFilePath,
@@ -234,26 +234,7 @@ export default async function getBaseWebpackConfig (dir: string, { dev = false, 
       ].filter(Boolean)
     },
     plugins: [
-      // Precompile react / react-dom for development, speeding up webpack
-      dev && !isServer && new AutoDllPlugin({
-        filename: '[name]_[hash].js',
-        path: './static/development/dll',
-        context: dir,
-        entry: {
-          dll: [
-            'react',
-            'react-dom',
-            'redux',
-            'react-redux',
-            'react-router-dom',
-            'connected-react-router'
-          ]
-        },
-        config: {
-          mode: webpackMode,
-          resolve: resolveConfig
-        }
-      }),
+      dev && !isServer && new HardSourceWebpackPlugin({}),
       // This plugin makes sure `output.filename` is used for entry chunks
       new ChunkNamesPlugin({ dev }),
       !isServer && new ReactLoadablePlugin({

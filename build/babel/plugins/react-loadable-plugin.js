@@ -26,15 +26,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWAR
 import { PluginObj } from '@babel/core'
 import { NodePath } from '@babel/traverse'
 import * as BabelTypes from '@babel/types'
+import filePath from 'path'
+import crypto from 'crypto'
+const dev = process.env.NODE_ENV === 'development'
 
 export default function ({ types: t }: {types: typeof BabelTypes}): PluginObj {
   return {
     visitor: {
-      ImportDeclaration (path: NodePath<BabelTypes.ImportDeclaration>) {
-        let source = path.node.source.value
+      ImportDeclaration (path: NodePath<BabelTypes.ImportDeclaration>, state) {
+        const source = path.node.source.value
         if (source !== '@symph/joy/dynamic' && source !== 'react-loadable') return
+        const filename = state.filename
 
-        let defaultSpecifier = path.get('specifiers').find(specifier => {
+        const defaultSpecifier = path.get('specifiers').find(specifier => {
           return specifier.isImportDefaultSpecifier()
         })
 
@@ -88,8 +92,8 @@ export default function ({ types: t }: {types: typeof BabelTypes}): PluginObj {
 
           if (!options.isObjectExpression()) return
 
-          let properties = options.get('properties')
-          let propertiesMap: {[key: string]: NodePath<BabelTypes.ObjectProperty | BabelTypes.ObjectMethod | BabelTypes.SpreadProperty>} = {}
+          const properties = options.get('properties')
+          const propertiesMap: {[key: string]: NodePath<BabelTypes.ObjectProperty | BabelTypes.ObjectMethod | BabelTypes.SpreadProperty>} = {}
 
           properties.forEach(property => {
             const key: any = property.get('key')
@@ -112,6 +116,7 @@ export default function ({ types: t }: {types: typeof BabelTypes}): PluginObj {
             return
           }
           const dynamicImports: BabelTypes.StringLiteral[] = []
+          const modules: BabelTypes.StringLiteral[] = []
 
           loader.traverse({
             Import (path) {
@@ -119,6 +124,20 @@ export default function ({ types: t }: {types: typeof BabelTypes}): PluginObj {
               if (!Array.isArray(args)) return
               const node: any = args[0].node
               dynamicImports.push(node)
+
+              const dirname = filePath.dirname(filename)
+              let moduleId = filePath.resolve(dirname, node.value)
+              if (filePath.extname(moduleId).length > 0) {
+                const parseModuleId = filePath.parse(moduleId)
+                moduleId = `${parseModuleId.dir}${filePath.sep}${parseModuleId.name}`
+              }
+              if (!dev) {
+                moduleId = crypto.createHash('md5').update(moduleId).digest('hex')
+              }
+              modules.push({
+                type: 'StringLiteral',
+                value: moduleId
+              })
             }
           })
 
@@ -147,7 +166,7 @@ export default function ({ types: t }: {types: typeof BabelTypes}): PluginObj {
               t.objectProperty(
                 t.identifier('modules'),
                 t.arrayExpression(
-                  dynamicImports
+                  modules
                 )
               )
             ])
