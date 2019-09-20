@@ -18,7 +18,7 @@ export default async function build (dir, conf = null) {
   try {
     await access(dir, (fs.constants || fs).W_OK)
   } catch (err) {
-    console.error(`> Failed, build directory is not writeable.`)
+    console.error('> Failed, build directory is not writeable.')
     throw err
   }
 
@@ -32,14 +32,14 @@ export default async function build (dir, conf = null) {
 
     await writeBuildId(distDir, buildId)
   } catch (err) {
-    console.error(`> Failed to build`)
+    console.error('> Failed to build')
     throw err
   }
 }
 
 function runCompiler (compiler) {
-  return new Promise(async (resolve, reject) => {
-    const webpackCompiler = await webpack(await compiler)
+  return new Promise((resolve, reject) => {
+    const webpackCompiler = webpack(compiler)
     webpackCompiler.run((err, stats) => {
       if (err) return reject(err)
 
@@ -51,7 +51,6 @@ function runCompiler (compiler) {
         error.warnings = jsonStats.warnings
         return reject(error)
       }
-
       resolve()
     })
   })

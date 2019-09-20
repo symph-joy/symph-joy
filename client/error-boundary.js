@@ -16,6 +16,7 @@ class ErrorBoundary extends React.Component<Props> {
     // onError is required
     onError(error, info)
   }
+
   render () {
     const { children } = this.props
     return React.Children.only(children)

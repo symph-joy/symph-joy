@@ -19,6 +19,7 @@ export default class JoySsrImportPlugin {
   constructor (options) {
     this.options = options
   }
+
   apply (compiler) {
     const { outputPath } = this.options
     compiler.hooks.emit.tapAsync('JoySSRModuleCache', (compilation, callback) => {

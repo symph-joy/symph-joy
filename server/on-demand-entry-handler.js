@@ -1,6 +1,7 @@
 import DynamicEntryPlugin from 'webpack/lib/DynamicEntryPlugin'
 import { EventEmitter } from 'events'
 import { join } from 'path'
+// eslint-disable-next-line
 import { parse } from 'url'
 import fs from 'fs'
 import promisify from '../lib/promisify'
@@ -25,8 +26,8 @@ export default function onDemandEntryHandler (devMiddleware, compilers, {
   maxInactiveAge = 1000 * 60,
   pagesBufferLength = 2
 }) {
-  let entries = {}
-  let lastAccessPages = ['']
+  const entries = {}
+  const lastAccessPages = ['']
   let doneCallbacks = new EventEmitter()
   const invalidator = new Invalidator(devMiddleware)
   let reloading = false

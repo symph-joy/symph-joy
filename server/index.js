@@ -1,5 +1,6 @@
 /* eslint-disable import/first, no-return-await */
 import { resolve, join, sep } from 'path'
+// eslint-disable-next-line
 import { parse as parseUrl } from 'url'
 import { parse as parseQs } from 'querystring'
 import fs from 'fs'
@@ -305,7 +306,7 @@ export default class Server {
       return out
     } catch (err) {
       if (err instanceof ErrorRender) {
-        let { statusCode, context, html } = err
+        const { statusCode, context, html } = err
         if (context.url) {
           // 301 302
           res.setHeader('Location', context.url)

@@ -26,7 +26,7 @@ module.exports = babelLoader.custom(babel => {
           // We only log for client compilation otherwise there will be double output
           if (file && !isServer && !configs.has(file)) {
             configs.add(file)
-            console.log(`> Using external babel configuration`)
+            console.log('> Using external babel configuration')
             console.log(`> Location: "${file}"`)
           }
         }

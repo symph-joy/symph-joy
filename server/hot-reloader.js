@@ -298,7 +298,7 @@ export default class HotReloader {
     ]
 
     let webpackDevMiddlewareConfig = {
-      publicPath: `/_joy/static/webpack`,
+      publicPath: '/_joy/static/webpack',
       noInfo: true,
       logLevel: 'silent',
       watchOptions: { ignored }

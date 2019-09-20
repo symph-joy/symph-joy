@@ -18,13 +18,23 @@ import { createServerRouter } from '../lib/router'
 
 // Based on https://github.com/jamiebuilds/react-loadable/pull/132
 function getDynamicImportBundles (manifest, moduleIds) {
-  return moduleIds.reduce((bundles, moduleId) => {
-    if (typeof manifest[moduleId] === 'undefined') {
-      return bundles
+  const filesMap = {}
+  const bundles = []
+  moduleIds.forEach((moduleId) => {
+    const moduleBundles = manifest[moduleId]
+    if (typeof moduleBundles === 'undefined' || moduleBundles.length === 0) {
+      return
     }
-
-    return bundles.concat(manifest[moduleId])
-  }, [])
+    for (let i = 0; i < moduleBundles.length; i++) {
+      const bundle = moduleBundles[i]
+      if (filesMap[bundle.file]) {
+        continue
+      }
+      filesMap[bundle.file] = bundle
+      bundles.push(bundle)
+    }
+  })
+  return bundles
 }
 
 const logger = console
@@ -53,7 +63,7 @@ export async function renderError (err, req, res, pathname, query, opts) {
 }
 
 export function renderErrorToHTML (err, req, res, pathname, query, opts = {}) {
-  let { distDir } = opts
+  const { distDir } = opts
   const errorPath = join(distDir, SERVER_DIRECTORY, '_error')
   return doRender(req, res, pathname, query, { ...opts, err, ComponentPath: errorPath })
 }
@@ -120,8 +130,8 @@ async function doRender (req, res, pathname, query, {
   // the response might be finshed on the getinitialprops call
   if (isResSent(res)) return
 
-  let renderContext = {}
-  let reactLoadableModules = []
+  const renderContext = {}
+  const reactLoadableModules = []
   const renderPage = async (options = Comp => Comp) => {
     let EnhancedApp = App
 
@@ -151,16 +161,17 @@ async function doRender (req, res, pathname, query, {
     }
 
     const createApp = (appProps, shouldGatherModules) => {
-      return <LoadableCapture
-        report={moduleName => shouldGatherModules ? reactLoadableModules.push(moduleName) : undefined}>
-        <EnhancedApp {...appProps} />
-      </LoadableCapture>
+      return (
+        <LoadableCapture
+          report={moduleName => shouldGatherModules ? reactLoadableModules.push(moduleName) : undefined}
+        >
+          <EnhancedApp {...appProps} />
+        </LoadableCapture>)
     }
 
     const render = staticMarkup ? renderToStaticMarkup : renderToString
 
     let html
-    let head
     let initStoreState
 
     if (err && dev) {
@@ -194,7 +205,7 @@ async function doRender (req, res, pathname, query, {
         html = ''
       }
     }
-    head = Head.rewind() || defaultHead()
+    const head = Head.rewind() || defaultHead()
 
     return { html, head, buildManifest, initStoreState }
   }
@@ -205,28 +216,30 @@ async function doRender (req, res, pathname, query, {
   if (isResSent(res)) return
 
   if (!Document.prototype || !Document.prototype.isReactComponent) throw new Error('_document.js is not exporting a React component')
-  const doc = <Document {...{
-    __JOY_DATA__: {
-      page, // The rendered page
-      pathname, // The requested path
-      query, // querystring parsed / passed by the user
-      buildId, // buildId is used to facilitate caching of page bundles, we send it to the client so that pageloader knows where to load bundles
-      assetPrefix: assetPrefix === '' ? undefined : assetPrefix, // send assetPrefix to the client side when configured, otherwise don't sent in the resulting HTML
-      runtimeConfig, // runtimeConfig if provided, otherwise don't sent in the resulting HTML
-      joyExport, // If this is a page exported by `joy export`
-      err: serializedErr, // Error if one happened, otherwise don't sent in the resulting HTML
-      initStoreState: docProps.initStoreState
-    },
-    dev,
-    dir,
-    staticMarkup,
-    buildManifest,
-    devFiles,
-    files,
-    dynamicImports,
-    assetPrefix, // We always pass assetPrefix as a top level property since _document needs it to render, even though the client side might not need it
-    ...docProps
-  }} />
+  const doc = (
+    <Document {...{
+      __JOY_DATA__: {
+        page, // The rendered page
+        pathname, // The requested path
+        query, // querystring parsed / passed by the user
+        buildId, // buildId is used to facilitate caching of page bundles, we send it to the client so that pageloader knows where to load bundles
+        assetPrefix: assetPrefix === '' ? undefined : assetPrefix, // send assetPrefix to the client side when configured, otherwise don't sent in the resulting HTML
+        runtimeConfig, // runtimeConfig if provided, otherwise don't sent in the resulting HTML
+        joyExport, // If this is a page exported by `joy export`
+        err: serializedErr, // Error if one happened, otherwise don't sent in the resulting HTML
+        initStoreState: docProps.initStoreState
+      },
+      dev,
+      dir,
+      staticMarkup,
+      buildManifest,
+      devFiles,
+      files,
+      dynamicImports,
+      assetPrefix, // We always pass assetPrefix as a top level property since _document needs it to render, even though the client side might not need it
+      ...docProps
+    }}
+    />)
 
   const pageHtml = '<!DOCTYPE html>' + renderToStaticMarkup(doc)
 
@@ -303,8 +316,8 @@ function serializeError (res, dev, err) {
   if (dev) {
     return errorToJSON(err)
   }
-  let statusCode = res.statusCode || err.statusCode || 500
-  let message = err.message || '500 - Internal Server Error.'
+  const statusCode = res.statusCode || err.statusCode || 500
+  const message = err.message || '500 - Internal Server Error.'
   return { statusCode, message }
 }
 

@@ -14,7 +14,7 @@ export default class Main extends Component {
         <Switch>
           <Route exact path="/" component={TodoListController}/>
           <Route exact path="/todos/:id" component={TodoDetailController}/>
-          <Route component={NotFound}/>
+          <Route component={NotFound} />
         </Switch>
       </div>
     )

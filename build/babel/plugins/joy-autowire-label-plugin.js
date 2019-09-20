@@ -7,7 +7,7 @@ export default function ({ types: t }: { types: typeof BabelTypes }, { autoBingd
     pre: (file) => {
       let importAutowire
       let decorAutowire
-      let identifyAutowire = t.identifier('autowire')
+      const identifyAutowire = t.identifier('autowire')
       file.path.traverse({
         ImportDeclaration (importPath) {
           if (importPath.node.source.value === '@symph/joy/autowire' || importPath.node.source.value === '@symph/tempo/autowire') {

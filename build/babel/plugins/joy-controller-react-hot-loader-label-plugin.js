@@ -4,7 +4,7 @@ import { NodePath } from '@babel/traverse'
 import * as BabelTypes from '@babel/types'
 
 const requireRHL = template(
-  `require('react-hot-loader/root').hot`
+  'require(\'react-hot-loader/root\').hot'
 )()
 
 export default function ({ types: t }: { types: typeof BabelTypes }): PluginObj {
@@ -52,7 +52,7 @@ export default function ({ types: t }: { types: typeof BabelTypes }): PluginObj 
             arg1 = decoController.get('expression.arguments.1')
           }
 
-          let optHotLoader = arg1.get('properties').find(item => item.node.key.name === 'hotLoader')
+          const optHotLoader = arg1.get('properties').find(item => item.node.key.name === 'hotLoader')
           if (!optHotLoader) {
             arg1.node.properties.push(t.objectProperty(t.identifier('hotLoader'), requireRHL.expression))
             // optHotLoader = arg1.get('properties').find(item => item.node.key.name === 'hotLoader')

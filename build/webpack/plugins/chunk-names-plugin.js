@@ -23,7 +23,7 @@ export default class ChunkNamesPlugin {
                 filenameTemplate = outputOptions.filename
               } else {
                 if (me.dev) {
-                  let topLevelModuleName = tryGetChunkEntryFileName(chunk)
+                  const topLevelModuleName = tryGetChunkEntryFileName(chunk)
                   if (chunk.name === null && topLevelModuleName) {
                     options.chunk.name = topLevelModuleName
                   }
@@ -45,14 +45,14 @@ export default class ChunkNamesPlugin {
 function tryGetChunkEntryFileName (chunk) {
   const modules = chunk.getModules()
   // 找到入口module，depth越大，表示引入的深度越深。
-  let topLevel = modules.reduce((rst, module) => {
+  const topLevel = modules.reduce((rst, module) => {
     if (module.depth < rst) {
       return module.depth
     }
     return rst
   }, Number.MAX_VALUE)
 
-  let topLevelModules = modules.reduce((rst, module) => {
+  const topLevelModules = modules.reduce((rst, module) => {
     if (module.depth === topLevel) {
       if (module.rootModule) {
         module = module.rootModule
