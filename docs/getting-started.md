@@ -228,7 +228,7 @@ server.use((req, res, next)=>{
 server.listen(3000)
 ```
 
-`createProxyApiMiddleware(options)`支持的参数和在`joy.config.js`中配置`proxy`时一致。
+`createProxyMiddleware(options)`支持的参数和在`joy.config.js`中配置`proxy`时一致。
 
 
 ### 使用注意事项
