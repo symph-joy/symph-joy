@@ -148,7 +148,8 @@
     "webpack-hot-middleware": "2.25.0",
     "webpack-sources": "1.4.3",
     "webpackbar": "4.0.0",
-    "write-file-webpack-plugin": "4.5.1"
+    "write-file-webpack-plugin": "4.5.1",
+    "hard-source-webpack-plugin": "0.13.1"
   },
   "devDependencies": {
     "@babel/preset-flow": "7.0.0-beta.43",
@@ -168,7 +169,6 @@
     "flatten": "1.0.2",
     "flow-bin": "0.107.0",
     "get-port": "5.0.0",
-    "hard-source-webpack-plugin": "0.13.1",
     "husky": "3.0.5",
     "jest-cli": "24.9.0",
     "jest-junit": "8.0.0",
