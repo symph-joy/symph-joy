@@ -1,6 +1,6 @@
 {
   "name": "@symph/joy",
-  "version": "1.2.4",
+  "version": "1.2.6",
   "description": "Minimalistic framework for React SPA applications, inspiration comes from Next.js and Dva",
   "keywords": [
     "react",
@@ -87,7 +87,7 @@
     "@babel/runtime": "7.6.0",
     "@babel/runtime-corejs2": "7.6.0",
     "@babel/template": "7.6.0",
-    "@symph/tempo": "1.2.3",
+    "@symph/tempo": "1.2.4",
     "ansi-html": "0.0.7",
     "babel-core": "7.0.0-bridge.0",
     "babel-loader": "8.0.6",
@@ -106,6 +106,7 @@
     "friendly-errors-webpack-plugin": "1.7.0",
     "glob": "7.1.4",
     "global": "4.4.0",
+    "hard-source-webpack-plugin": "0.13.1",
     "hoist-non-react-statics": "3.3.0",
     "htmlescape": "1.1.1",
     "http-errors": "1.7.3",
@@ -148,8 +149,7 @@
     "webpack-hot-middleware": "2.25.0",
     "webpack-sources": "1.4.3",
     "webpackbar": "4.0.0",
-    "write-file-webpack-plugin": "4.5.1",
-    "hard-source-webpack-plugin": "0.13.1"
+    "write-file-webpack-plugin": "4.5.1"
   },
   "devDependencies": {
     "@babel/preset-flow": "7.0.0-beta.43",
