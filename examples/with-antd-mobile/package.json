@@ -1,0 +1,24 @@
+{
+  "name": "with-antd-mobile",
+  "private": true,
+  "version": "1.0.1",
+  "description": "集成*antd-design-mobile* UI框架示例",
+  "dependencies": {
+    "@symph/joy": "latest",
+    "@symph/joy-css": "latest",
+    "@symph/joy-less": "latest",
+    "antd-mobile": "^2.2.5",
+    "less": "^3.8.1",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "devDependencies": {
+    "babel-plugin-import": "1.8.0"
+  },
+  "scripts": {
+    "dev": "joy dev",
+    "build": "NODE_ENV=production joy build",
+    "export": "yarn run build && joy export",
+    "start": "joy start"
+  }
+}
