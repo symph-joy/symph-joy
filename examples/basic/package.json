@@ -1,0 +1,18 @@
+{
+  "name": "basic",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "joy dev",
+    "build": "NODE_ENV=production joy build",
+    "export": "yarn run build && joy export",
+    "start": "joy start"
+  },
+  "dependencies": {
+    "@symph/joy": "latest",
+    "@symph/joy-image": "latest",
+    "@symph/joy-less": "latest",
+    "less": "^3.8.1",
+    "react": "^16.11.0",
+    "react-dom":  "^16.11.0"
+  }
+}

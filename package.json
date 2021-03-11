@@ -1,0 +1,107 @@
+{
+  "name": "symph-projects",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "examples/basic"
+  ],
+  "description": "React SPA applications, inspiration comes from Next.js、nest.js and umi",
+  "license": "MIT",
+  "repository": "https://github.com/lnlfps/symph-joy",
+  "bugs": "",
+  "homepage": "https://lnlfps.github.io/symph-joy",
+  "scripts": {
+    "lerna": "lerna",
+    "_dev": "lerna build:dev",
+    "_copy": "gulp copy-package:joy-boot --dist node_modules/@symph",
+    "build": "lerna build",
+    "clean": "lerna clean",
+    "publish:canary": "npm run clean && npm run build && npx lerna publish --npm-tag=beta --access public -m \"publish %s release\"",
+
+    "testonly": "jest --no-watchman",
+    "testall": "yarn run testonly -- --ci --reporters=default --reporters=jest-junit --forceExit --runInBand --no-watchman",
+    "_pretest": "yarn run lint",
+    "test": "yarn run testall",
+    "lint": "concurrently 'npm run lint:packages' 'npm run lint:integration' 'npm run lint:spec'",
+    "lint:integration": "eslint 'integration/*/{,!(node_modules)/**/}/*.ts' -c '.eslintrc.spec.js' --fix",
+    "lint:packages": "eslint 'packages/**/**.ts' --fix --ignore-pattern 'packages/**/*.spec.ts'",
+    "lint:spec": "eslint 'packages/**/**.spec.ts' -c '.eslintrc.spec.js' --fix",
+    "format": "prettier \"**/*.ts\" --ignore-path ./.prettierignore --write && git status",
+    "prettier-fix": "prettier --write \"**/*.{js,jsx,json,ts,tsx,md,mdx,css,html,yml,yaml,scss,sass}\" && npm lint-fix",
+    "types": "lerna run types --stream",
+    "typescript": "lerna run typescript",
+    "prepublish": "lerna run prepublish",
+    "publish-canary": "lerna version prerelease --preid canary --force-publish && release --pre",
+    "publish-stable": "lerna version --force-publish",
+    "lint-staged": "lint-staged",
+    "joy": "./packages/joy/dist/bin/joy"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -c .commitlintrc.json -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "packages/**/*.{js,jsx,ts,tsx,md,json}": [
+      "prettier --ignore-path ./.prettierignore --write"
+    ]
+  },
+  "dependencies": {
+    "reflect-metadata": "0.1.13"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^12.0.1",
+    "@commitlint/config-angular": "^12.0.1",
+    "@types/sinon": "^9.0.11",
+    "@types/express": "4.17.8",
+    "@typescript-eslint/eslint-plugin": "^3.8.0",
+    "@typescript-eslint/parser": "^3.8.0",
+    "babel-jest": "26.6.3",
+    "benchmark": "2.1.4",
+    "cheerio": "0.22.0",
+    "clone": "2.1.2",
+    "coveralls": "3.0.6",
+    "cross-env": "5.2.1",
+    "delete-empty": "3.0.0",
+    "eslint": "7.21.0",
+    "eslint-config-prettier": "6.11.0",
+    "express": "4.17.1",
+    "fancy-log": "1.3.3",
+    "fkill": "7.1.0",
+    "flatten": "1.0.2",
+    "flow-bin": "0.107.0",
+    "get-port": "5.0.0",
+    "gulp": "4.0.2",
+    "gulp-clean": "0.4.0",
+    "gulp-sourcemaps": "2.6.5",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "gulp-ignore": "3.0.0",
+    "husky": "3.0.5",
+    "jest": "^26.6.3",
+    "jest-cli": "^26.6.3",
+    "jest-junit": "^12.0.0",
+    "jest-puppeteer": "^4.4.0",
+    "jsdom": "^16.5.0",
+    "lerna": "~4.0.0",
+    "lint-staged": "9.2.5",
+    "micro": "9.3.4",
+    "mkdirp": "0.5.1",
+    "node-fetch": "2.6.0",
+    "node-notifier": "5.4.3",
+    "nyc": "14.1.1",
+    "prettier": "2.0.5",
+    "puppeteer": "8.0.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "rimraf": "3.0.0",
+    "sinon": "^9.2.4",
+    "standard": "14.3.0",
+    "taskr": "1.1.0",
+    "ts-jest": "26.3.0",
+    "ts-loader": "7.0.4",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3",
+    "wait-port": "0.2.9"
+  }
+}

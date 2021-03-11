@@ -1,0 +1,5 @@
+!node_modules
+**/yarn.lock
+**/yarn-error.log
+**/.symphony
+**/node_modules

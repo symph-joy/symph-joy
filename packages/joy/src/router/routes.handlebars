@@ -1,0 +1,13 @@
+export const joyReactAutoGenRoutes = {
+  id: "joyReactAutoGenRoutes",
+  type: Array,
+  useValue: [
+    {{#routes}}
+    {
+      path: "{{path}}",
+      providerId: "{{providerId}}",
+      component: {{#if dynamic}}()=>import("{{{filePath}}}"){{else}}require("{{{filePath}}}"){{/if}},
+    },
+    {{/routes}}
+  ]
+}

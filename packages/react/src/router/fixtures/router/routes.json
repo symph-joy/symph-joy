@@ -1,0 +1,12 @@
+[
+  {
+    "providerId": "hello1",
+    "path": "/hello1",
+    "filePath": "/pages/hello1.tsx"
+  },
+  {
+    "providerId": "hello2",
+    "path": "/hello2",
+    "filePath": "/pages/hello2.tsx"
+  }
+]

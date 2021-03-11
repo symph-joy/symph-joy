@@ -1,0 +1,17 @@
+{
+  "name": "hello-word",
+  "version": "1.0.0",
+  "description": "for test",
+  "scripts": {
+    "dev": "joy dev",
+    "build": "joy build",
+    "start": "npm run build && joy start",
+    "export": "npm run build && joy export"
+  },
+  "author": "",
+  "dependencies": {
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "@symph/joy": "latest"
+  }
+}

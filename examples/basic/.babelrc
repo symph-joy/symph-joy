@@ -1,0 +1,5 @@
+{
+  "presets": [
+    "@symph/joy/babel"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2015",
+//    "module": "ESNext",
+    "module": "CommonJS",
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "jsx": "react",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "declaration": true,
+    "removeComments": false,
+    "noLib": false,
+    "resolveJsonModule": true,
+    "strictPropertyInitialization": false
+  },
+  "include": ["packages/**/*", "integration/**/*", "./.eslintrc.js"],
+  "exclude": ["node_modules",  "dist", "test", "**/*.d.ts", "**/*.spec.ts[x]"]
+}
