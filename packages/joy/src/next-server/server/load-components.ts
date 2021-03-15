@@ -35,6 +35,10 @@ export type LoadComponentsReturnType = {
   // getServerSideProps?: GetServerSideProps
 };
 
+export function loadComponent<T = any>(distDir: string, pathname: string): T {
+  return requirePage(pathname, distDir);
+}
+
 export async function loadComponents(
   distDir: string,
   pathname: string,
@@ -53,20 +57,10 @@ export async function loadComponents(
   //   } as LoadComponentsReturnType
   // }
 
-  const DocumentMod = requirePage("/_document", distDir, serverless);
-  const AppMod = requirePage("/_app", distDir, serverless);
+  const DocumentMod = requirePage("/_document", distDir);
+  const AppMod = requirePage("/_app", distDir);
   // const ComponentMod = requirePage(pathname, distDir, serverless) // todo 不在需要加载页面组件了，去掉该操作
   // const ComponentMod = requirePage('/_app', distDir, serverless) // todo 不在需要加载页面组件了，去掉该操作。 先用_app占位， 后续流程中已经不在需要ComponentMod了
-
-  const genServerModulesPath = join(distDir, "./server/gen-server-modules.js");
-  const requireGenModules = async () => {
-    if (await fileExists(genServerModulesPath)) {
-      const modules = require(genServerModulesPath);
-      return modules.default || modules;
-    } else {
-      return [];
-    }
-  };
 
   const [
     buildManifest,

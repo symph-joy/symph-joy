@@ -36,7 +36,8 @@ export function Controller<T>(
 
     // react-controller is instanced by react, so it's scope must be transient
     options = Object.assign(
-      { type: constructor, useClass: ExtReactControllerDeco },
+      // { type: ExtReactControllerDeco, useClass: ExtReactControllerDeco },
+      {},
       options,
       { scope: Scope.TRANSIENT }
     );

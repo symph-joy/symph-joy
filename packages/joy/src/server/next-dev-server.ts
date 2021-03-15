@@ -75,7 +75,7 @@ export class NextDevServer extends NextServer {
   ) {
     super(joyAppConfig, serverConfig);
     this.renderOpts.dev = true;
-    (this.renderOpts as any).ErrorDebug = ReactDevOverlay;
+    (this.renderOpts as any).ErrorComponent = ReactDevOverlay;
     this.devReady = new Promise((resolve) => {
       this.setDevReady = resolve;
     });

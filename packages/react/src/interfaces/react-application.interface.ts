@@ -1,6 +1,7 @@
 import React, { DOMElement, ReactElement } from "react";
 import { IReactRoute } from "./react-route.interface";
 import { IJoyContext } from "@symph/core";
+import { TReactAppComponent } from "../react-app-component";
 
 /**
  * Interface defining the core Joy ReactApplication object.
@@ -8,17 +9,9 @@ import { IJoyContext } from "@symph/core";
  * @publicApi
  */
 export interface IReactApplication extends IJoyContext {
+  start(rootComponent?: TReactAppComponent): ReactElement;
   start(
-    rootComponent?: React.ComponentType<{
-      routes?: IReactRoute[];
-      [key: string]: unknown;
-    }>
-  ): ReactElement;
-  start(
-    rootComponent: React.ComponentType<{
-      routes?: IReactRoute[];
-      [key: string]: unknown;
-    }>,
+    rootComponent: TReactAppComponent,
     domContainer?: DOMElement<any, any> | string
   ): ReactElement;
 

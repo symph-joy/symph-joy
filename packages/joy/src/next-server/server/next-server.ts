@@ -50,7 +50,11 @@ import { __ApiPreviewProps } from "./api-utils";
 import { isTargetLikeServerless } from "./config";
 import pathMatch from "../lib/router/utils/path-match";
 import { recursiveReadDirSync } from "./lib/recursive-readdir-sync";
-import { loadComponents, LoadComponentsReturnType } from "./load-components";
+import {
+  loadComponent,
+  loadComponents,
+  LoadComponentsReturnType,
+} from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import { RenderOpts, RenderOptsPartial, renderToHTML } from "./render";
 import { getPagePath, requireFontManifest } from "./require";
@@ -86,6 +90,7 @@ import { JoyAppConfig } from "./joy-config/joy-app-config";
 import { ServerConfig } from "./server-config";
 import { JoyReactAppServerConfig } from "../lib/joy-react-app-server-config";
 import { ApplicationConfig, ReactApplicationContext } from "@symph/react";
+import React from "react";
 
 const getCustomRouteMatcher = pathMatch(true);
 
@@ -718,9 +723,9 @@ export class NextServer implements ProviderLifecycle {
   private async getPagePath(pathname: string): Promise<string> {
     return getPagePath(
       pathname,
-      this.distDir,
-      this._isLikeServerless,
-      this.renderOpts.dev
+      this.distDir
+      // this._isLikeServerless,
+      // this.renderOpts.dev
     );
   }
 
@@ -989,6 +994,18 @@ export class NextServer implements ProviderLifecycle {
     return null;
   }
 
+  protected async findErrorComponent(): Promise<
+    React.ComponentType<{ error: Error }>
+  > {
+    return loadComponent(this.distDir, "/_error");
+  }
+
+  protected async find404ErrorComponent(): Promise<
+    React.ComponentType<{ error: Error }>
+  > {
+    return loadComponent(this.distDir, "/_error");
+  }
+
   protected async getStaticPaths(
     pathname: string
   ): Promise<{
@@ -1018,9 +1035,9 @@ export class NextServer implements ProviderLifecycle {
     req: IncomingMessage,
     res: ServerResponse,
     pathname: string,
+    reactAppContext: ReactApplicationContext,
     { components, query }: FindComponentsResult,
-    opts: RenderOptsPartial,
-    reactAppContext?: ReactApplicationContext // todo renderError 还没有处理；将参数位置移动前面的关键位置。
+    opts: RenderOptsPartial
   ): Promise<string | null> {
     // we need to ensure the status code if /404 is visited directly
     if (pathname === "/404") {
@@ -1373,9 +1390,9 @@ export class NextServer implements ProviderLifecycle {
             req,
             res,
             pathname,
+            reactAppContext,
             result,
-            { ...this.renderOpts },
-            reactAppContext
+            { ...this.renderOpts }
           );
         } catch (err) {
           if (!(err instanceof NoFallbackError)) {
@@ -1402,9 +1419,9 @@ export class NextServer implements ProviderLifecycle {
                 req,
                 res,
                 dynamicRoute.page,
+                reactAppContext,
                 dynamicRouteResult,
-                { ...this.renderOpts, params },
-                reactAppContext
+                { ...this.renderOpts, params }
               );
             } catch (err) {
               if (!(err instanceof NoFallbackError)) {
@@ -1459,28 +1476,31 @@ export class NextServer implements ProviderLifecycle {
     query: ParsedUrlQuery = {}
   ) {
     let result: null | FindComponentsResult = null;
+    result = await this.findPageComponents("/_error", query);
+    let ErrorComponent = null;
 
     const is404 = res.statusCode === 404;
-    let using404Page = false;
+    // let using404Page = false;
 
     // use static 404 page if available and is 404 response
     if (is404) {
-      result = await this.findPageComponents("/404");
-      using404Page = result !== null;
+      ErrorComponent = await this.find404ErrorComponent();
+    } else {
+      ErrorComponent = await this.findErrorComponent();
     }
 
-    if (!result) {
-      result = await this.findPageComponents("/_error", query);
-    }
+    //
+    // if (
+    //   process.env.NODE_ENV !== "production" &&
+    //   !using404Page &&
+    //   (await this.hasPage("/_error")) &&
+    //   !(await this.hasPage("/404"))
+    // ) {
+    //   this.customErrorNo404Warn();
+    // }
 
-    if (
-      process.env.NODE_ENV !== "production" &&
-      !using404Page &&
-      (await this.hasPage("/_error")) &&
-      !(await this.hasPage("/404"))
-    ) {
-      this.customErrorNo404Warn();
-    }
+    // const reactAppContext: ReactApplicationContext = null;
+    const reactAppContext: any = undefined;
 
     let html: string | null;
     try {
@@ -1488,11 +1508,13 @@ export class NextServer implements ProviderLifecycle {
         html = await this.renderToHTMLWithComponents(
           req,
           res,
-          using404Page ? "/404" : "/_error",
+          is404 ? "/404" : "/_error",
+          reactAppContext,
           result!,
           {
             ...this.renderOpts,
             err,
+            ErrorComponent,
           }
         );
       } catch (maybeFallbackError) {

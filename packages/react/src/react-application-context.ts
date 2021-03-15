@@ -1,11 +1,12 @@
 import { ApplicationConfig } from "./application-config";
-import { renderComponent } from "./application-component";
+import { renderComponent } from "./react-app-container";
 import React, { DOMElement, ReactElement } from "react";
 import reactDom from "react-dom";
 import { ReduxStore } from "./redux/redux-store";
 import { IReactRoute } from "./interfaces/react-route.interface";
 import { EntryType, JoyContainer, Logger, CoreContext } from "@symph/core";
 import { IReactApplication } from "./interfaces";
+import { TReactAppComponent } from "./react-app-component";
 
 /**
  * @publicApi
@@ -68,14 +69,9 @@ export class ReactApplicationContext extends CoreContext
     return this.reduxStore.store.getState();
   }
 
+  start(rootComponent?: TReactAppComponent): ReactElement;
   start(
-    rootComponent?: React.ComponentType<{ [key: string]: unknown }>
-  ): ReactElement;
-  start(
-    rootComponent: React.ComponentType<{
-      routes?: IReactRoute[];
-      [key: string]: unknown;
-    }>,
+    rootComponent: TReactAppComponent,
     domContainer?: DOMElement<any, any> | string
   ): ReactElement {
     // return createApplicationComponent(this);
@@ -83,6 +79,7 @@ export class ReactApplicationContext extends CoreContext
       appContext: this,
       Component: rootComponent,
     });
+
     if (domContainer) {
       if (window === undefined) {
         throw new Error("只能在浏览器上渲染应用dom");

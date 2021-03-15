@@ -201,12 +201,13 @@ export class JoyContainer {
   }
 
   public addCustomClass(provider: ClassProvider): InstanceWrapper {
-    const { id, useClass, scope } = provider;
+    const { id, type, useClass, scope } = provider;
     return this.addWrapper(
       new InstanceWrapper({
         instanceBy: "class",
         name: id,
         type: useClass,
+        useClass: useClass || type,
         instance: null,
         isResolved: false,
         scope,

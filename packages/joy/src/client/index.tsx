@@ -24,7 +24,7 @@ import { JoyContainer } from "@symph/core";
 import { FileScanner } from "../next-server/server/scanner/file-scanner";
 import { JoyReactAppClientConfig } from "../next-server/lib/joy-react-app-client-config";
 import {
-  ApplicationComponent,
+  ReactAppContainer,
   ApplicationConfig,
   ReactApplicationContext,
 } from "@symph/react";
@@ -722,9 +722,9 @@ function doRender({
   const elem = (
     <Root callback={onCommit}>
       <AppContainer>
-        <ApplicationComponent
+        <ReactAppContainer
           appContext={reactApplicationContext}
-          Component={({ routes }) => <App {...appProps} routes={routes} />}
+          Component={App as any} // todo 定义参数的类型
         />
       </AppContainer>
     </Root>

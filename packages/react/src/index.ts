@@ -8,5 +8,6 @@ export * from "./router/react-router";
 export * from "./router/route-switch";
 export * from "./react-model.decorator";
 export * from "./application-config";
-export * from "./application-component";
+export * from "./react-app-container";
+export * from "./react-app-component";
 export * from "./react-application-config";

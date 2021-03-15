@@ -1,5 +1,5 @@
 import React, { ReactNode, Component } from "react";
-import { JoyReactContext } from "./application-component";
+import { JoyReactContext } from "./react-app-container";
 import { ModelStateChangeHandler, ReduxStore } from "./redux/redux-store";
 import { ReactModel } from "./react-model";
 import { PathVariable } from "./react-controller.decorator";

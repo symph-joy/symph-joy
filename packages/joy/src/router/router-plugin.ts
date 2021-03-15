@@ -103,6 +103,8 @@ export class RouterPlugin implements IJoyPlugin, JoyHooks {
   //   console.log('>>>> RouterPlugin. afterModuleLoad', moduleLoaded)
   // }
 
+  private async initErrorRoute() {}
+
   private plainRoutesTree(routes: TReactRoute[]): TReactRoute[] {
     const plainRoutes: any[] = [];
     const getRouteProviders = (rootRoutes: IReactRoute[]) => {

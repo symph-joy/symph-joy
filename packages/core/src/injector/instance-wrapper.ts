@@ -54,12 +54,13 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
   public readonly module?: any;
   public readonly scope?: Scope = Scope.DEFAULT;
   public type: Type<T>;
-  public factory?: (...args: any) => any;
+  public factory?: (...args: any) => any; // useFactory
   public inject?: (string | Type<any>)[];
   public forwardRef?: boolean;
 
   public autoReg: boolean;
   public instanceBy: InstanceBy;
+  public useClass?: Type<T>; // when instanceBy class, it's used to instance the object
 
   private readonly values = new WeakMap<ContextId, InstancePerContext<T>>();
   private readonly [INSTANCE_METADATA_SYMBOL]: InstanceMetadataStore = {};

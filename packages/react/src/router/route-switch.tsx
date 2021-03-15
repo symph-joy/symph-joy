@@ -7,13 +7,10 @@ import {
   RouteProps,
 } from "react-router-dom";
 import { useJoyContext } from "../hooks";
-
-interface IRoute extends RouteProps {
-  providerId: string;
-}
+import { IReactRoute } from "../interfaces";
 
 interface RouterContainerType extends SwitchProps {
-  routes: IRoute[];
+  routes: IReactRoute[];
   extraProps?: any;
 }
 

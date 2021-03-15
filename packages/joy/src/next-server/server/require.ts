@@ -15,16 +15,8 @@ export function pageNotFoundError(page: string): Error {
   return err;
 }
 
-export function getPagePath(
-  page: string,
-  distDir: string,
-  serverless: boolean,
-  dev?: boolean
-): string {
-  const serverBuildPath = join(
-    distDir,
-    serverless && !dev ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY
-  );
+export function getPagePath(page: string, distDir: string): string {
+  const serverBuildPath = join(distDir, SERVER_DIRECTORY);
   const pagesManifestPath = join(serverBuildPath, PAGES_MANIFEST);
   let pagesManifest: PagesManifest;
   if (process.env.NODE_ENV === "test") {
@@ -50,10 +42,10 @@ export function getPagePath(
 
 export function requirePage(
   page: string,
-  distDir: string,
-  serverless: boolean
+  distDir: string
+  // serverless: boolean
 ): any {
-  const pagePath = getPagePath(page, distDir, serverless);
+  const pagePath = getPagePath(page, distDir);
 
   if (pagePath.endsWith(".html")) {
     return promises.readFile(pagePath, "utf8");

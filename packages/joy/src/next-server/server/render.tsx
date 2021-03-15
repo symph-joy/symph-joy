@@ -31,7 +31,7 @@ import { FontManifest, getFontDefinitionFromManifest } from "./font-utils";
 import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
-import { ApplicationComponent, ReactApplicationContext } from "@symph/react";
+import { ReactAppContainer, ReactApplicationContext } from "@symph/react";
 
 function noRouter() {
   const message =
@@ -121,7 +121,7 @@ export type RenderOptsPartial = {
   ampPath?: string;
   inAmpMode?: boolean;
   hybridAmp?: boolean;
-  ErrorDebug?: React.ComponentType<{ error: Error }>;
+  ErrorComponent?: React.ComponentType<{ error: Error }>;
   ampValidator?: (html: string, pathname: string) => Promise<void>;
   ampSkipValidation?: boolean;
   ampOptimizerConfig?: { [key: string]: any };
@@ -274,7 +274,7 @@ export async function renderToHTML(
     buildManifest,
     fontManifest,
     reactLoadableManifest,
-    ErrorDebug,
+    ErrorComponent,
     // getStaticProps,
     // getStaticPaths,
     // getServerSideProps,
@@ -444,7 +444,7 @@ export async function renderToHTML(
       //     <App {...props} Component={Component} router={router} />
       //   </AppContainer>
       // )
-      return <AppContainer App={App} />;
+      return <AppContainer />;
     },
   };
   const props: any = {};
@@ -467,30 +467,31 @@ export async function renderToHTML(
   //   </RouterContext.Provider>
   // )
 
-  const AppContainer = ({ App }: { App: any }) => {
-    const ExtendComp = ({ routes }: any) => (
-      <AmpStateContext.Provider value={ampState}>
-        <HeadManagerContext.Provider
-          value={{
-            updateHead: (state) => {
-              head = state;
-            },
-            mountedInstances: new Set(),
-          }}
+  const ExtendAppComp = (props: any) => (
+    <AmpStateContext.Provider value={ampState}>
+      <HeadManagerContext.Provider
+        value={{
+          updateHead: (state) => {
+            head = state;
+          },
+          mountedInstances: new Set(),
+        }}
+      >
+        <LoadableContext.Provider
+          value={(moduleName) => reactLoadableModules.push(moduleName)}
         >
-          <LoadableContext.Provider
-            value={(moduleName) => reactLoadableModules.push(moduleName)}
-          >
-            <App routes={routes} />
-            {/*<RouteSwitch routes={routes} />*/}
-          </LoadableContext.Provider>
-        </HeadManagerContext.Provider>
-      </AmpStateContext.Provider>
-    );
+          <App {...props} />
+          {/*<RouteSwitch routes={routes} />*/}
+        </LoadableContext.Provider>
+      </HeadManagerContext.Provider>
+    </AmpStateContext.Provider>
+  );
+
+  const AppContainer = () => {
     return (
-      <ApplicationComponent
+      <ReactAppContainer
         appContext={reactApplicationContext!}
-        Component={ExtendComp}
+        Component={ExtendAppComp}
       />
     );
   };
@@ -710,8 +711,8 @@ export async function renderToHTML(
   const renderPage: RenderPage = (
     options: ComponentsEnhancer = {}
   ): { html: string; head: any } => {
-    if (ctx.err && ErrorDebug) {
-      return { html: renderToString(<ErrorDebug error={ctx.err} />), head };
+    if (ctx.err && ErrorComponent) {
+      return { html: renderToString(<ErrorComponent error={ctx.err} />), head };
     }
 
     if (dev && (props.router || props.Component)) {
@@ -726,7 +727,7 @@ export async function renderToHTML(
     // } = enhanceComponents(options, App, Component)
 
     const html = renderToString(
-      <AppContainer App={App} />
+      <AppContainer />
       // <AppContainer App={EnhancedApp} />
       // <AppContainer>
       //   <EnhancedApp Component={EnhancedComponent} router={router} {...props} />

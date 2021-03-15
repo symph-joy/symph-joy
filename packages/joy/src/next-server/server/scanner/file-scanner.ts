@@ -70,7 +70,6 @@ export class FileScanner {
         if (err) {
           reject(err);
         }
-        console.log(">>>> FileScanner files", err, files);
         if (files.length === 0) {
           resolve();
         }

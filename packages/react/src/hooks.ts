@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { JoyReactContext } from "./application-component";
+import { JoyReactContext } from "./react-app-container";
 import { IReactApplication } from "./interfaces";
 
 export function useJoyContext(): IReactApplication {

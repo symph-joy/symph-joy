@@ -1,11 +1,17 @@
 import React from "react";
-import { RouteSwitch } from "@symph/react";
+import { IReactApplication, ReactRouter, RouteSwitch } from "@symph/react";
 
-export default function App(props: any) {
+export default function App(props: { appContext: IReactApplication }) {
+  const { appContext } = props;
+  const reactRouter = appContext.syncGetProvider<ReactRouter>("reactRouter", {
+    optional: true,
+  });
+  const routes = reactRouter?.getRoutes() || [];
+
   return (
     <div>
       <h1>App Container</h1>
-      <RouteSwitch routes={props.routes} extraProps={{}} />
+      <RouteSwitch routes={routes} extraProps={{}} />
     </div>
   );
 }
