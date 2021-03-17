@@ -11,6 +11,7 @@ import http from "http";
 import { JoyAppConfig } from "../../next-server/server/joy-config/joy-app-config";
 import { FileGenerator } from "../../plugin/file-generator";
 import { RouterPlugin } from "../../router/router-plugin";
+import { JoyReactRouterService } from "../../router/joy-react-router.service";
 import { FileScanner } from "../../next-server/server/scanner/file-scanner";
 import { BuildDevConfig } from "../../server/build-dev-config";
 import { ServerConfigDev } from "../../server/server-config-dev";
@@ -44,6 +45,9 @@ export class JoyDevServerConfig {
 
   @Configuration.Provider()
   public routerPlugin: RouterPlugin;
+
+  @Configuration.Provider()
+  public joyReactRouterServerDev: JoyReactRouterService;
 
   // @Configuration.Provider({
   //   useFactory: function (config: JoyAppConfig) {

@@ -997,13 +997,15 @@ export class NextServer implements ProviderLifecycle {
   protected async findErrorComponent(): Promise<
     React.ComponentType<{ error: Error }>
   > {
-    return loadComponent(this.distDir, "/_error");
+    const ErrorComponent = loadComponent(this.distDir, "/_error");
+    return ErrorComponent.default || ErrorComponent;
   }
 
   protected async find404ErrorComponent(): Promise<
     React.ComponentType<{ error: Error }>
   > {
-    return loadComponent(this.distDir, "/_error");
+    const ErrorComponent = loadComponent(this.distDir, "/_error");
+    return ErrorComponent.default || ErrorComponent;
   }
 
   protected async getStaticPaths(

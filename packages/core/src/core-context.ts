@@ -17,7 +17,7 @@ import { RuntimeException } from "./errors/exceptions/runtime.exception";
 import { ThenableResult } from "./utils/task-thenable";
 import { IInjectableDependency } from "./interfaces/injectable-dependency.interface";
 import { ProviderScanner } from "./injector/provider-scanner";
-import { providerNameGenerate } from "./injector/provider-name-generator";
+import { providerNameGenerate } from "./injector/provider-name-generate";
 import { HookCenter } from "./hook/hook-center";
 import { HookResolver } from "./hook/hook-resolver";
 import { getInjectableMeta } from "./decorators/core";

@@ -1,4 +1,4 @@
-import { JoyReactRouterServer } from "../../router/joy-react-router-server";
+import { ReactRouterServer } from "../../router/react-router-server";
 import { Configuration } from "@symph/core";
 import {
   BrowserRouter,
@@ -20,6 +20,6 @@ export class JoyReactAppServerConfig extends ReactApplicationConfig {
     | typeof MemoryRouter
     | typeof HashRouter;
 
-  @Configuration.Provider({ type: JoyReactRouterServer })
-  public reactRouter: ReactRouter;
+  @Configuration.Provider({ type: ReactRouterServer })
+  public reactRouter: ReactRouterServer;
 }

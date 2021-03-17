@@ -3,7 +3,7 @@ import {
   SELF_DECLARED_DEPS_METADATA,
 } from "../../constants";
 import { isFunction, isUndefined } from "../../utils/shared.utils";
-import { providerNameGenerate } from "../../injector/provider-name-generator";
+import { providerNameGenerate } from "../../injector/provider-name-generate";
 import {
   IInjectableDependency,
   EnuInjectBy,

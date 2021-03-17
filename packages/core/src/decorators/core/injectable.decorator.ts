@@ -5,7 +5,7 @@ import {
 import { INJECTABLE_METADATA } from "../../constants";
 import "reflect-metadata";
 import { ClassProvider } from "../../interfaces";
-import { providerNameGenerate } from "../../injector/provider-name-generator";
+import { providerNameGenerate } from "../../injector/provider-name-generate";
 
 /**
  * Defines the injection scope.

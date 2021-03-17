@@ -5,7 +5,7 @@ import {
   PROPERTY_DEPS_METADATA,
   SELF_DECLARED_DEPS_METADATA,
 } from "../constants";
-import { Type } from "../interfaces";
+import { Scope, Type } from "../interfaces";
 import {
   isFunction,
   isNil,
@@ -27,15 +27,15 @@ import {
 } from "./instance-wrapper";
 import { TaskThenable, ThenableResult } from "../utils/task-thenable";
 import {
-  IInjectableDependency,
   EnuInjectBy,
+  IInjectableDependency,
 } from "../interfaces/injectable-dependency.interface";
 import { JoyContainer } from "./joy-container";
-import { providerNameGenerate } from "./provider-name-generator";
+import { providerNameGenerate } from "./provider-name-generate";
 import { getInjectableMeta } from "../decorators/core";
 import { isProviderInfoWareProvider } from "../interfaces/context/provider-info-ware.interface";
 import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dependency-type.exception";
-import { HookPipe, HookCenter } from "../hook/hook-center";
+import { HookCenter, HookPipe } from "../hook/hook-center";
 import { HookType } from "../hook/interface/hook.interface";
 // const SyncThenable = Promise
 // type SyncThenable<T> = Promise<T>
@@ -115,7 +115,7 @@ export class Injector {
       return TaskThenable.resolve(instanceHost.instance);
     }
 
-    if (instanceHost.loadTask) {
+    if (wrapper.scope === Scope.DEFAULT && instanceHost.loadTask) {
       return instanceHost.loadTask;
     }
 

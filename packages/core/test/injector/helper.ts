@@ -1,7 +1,7 @@
 import { Scope, Type } from "../../src/interfaces";
 import { InstanceWrapper } from "../../src/injector/instance-wrapper";
 import { JoyContainer } from "../../src/injector";
-import { providerNameGenerate } from "../../src/injector/provider-name-generator";
+import { providerNameGenerate } from "../../src/injector/provider-name-generate";
 
 export function createInstanceWrapper<T>(
   providerClazz: Type<T>,
