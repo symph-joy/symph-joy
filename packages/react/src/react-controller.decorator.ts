@@ -30,15 +30,16 @@ export function Controller<T>(
         return constructor.toString();
       }
 
-      static displayName = "RCTL_" + ((constructor as any).displayName || constructor.name);
+      static displayName =
+        "RCTL_" + ((constructor as any).displayName || constructor.name);
     }
 
     // react-controller is instanced by react, so it's scope must be transient
-    const clazzName = constructor.name
+    const clazzName = constructor.name;
     const id = clazzName.replace(clazzName[0], clazzName[0].toLowerCase());
     options = Object.assign(
       // { type: ExtReactControllerDeco, useClass: ExtReactControllerDeco },
-      {id},
+      { id },
       options,
       { scope: Scope.TRANSIENT }
     );
