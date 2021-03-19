@@ -6,22 +6,22 @@ import {
   Type,
   TypeOrTokenType,
 } from "./interfaces";
-import { Logger, LoggerService } from "./services/logger.service";
-import { isFunction, isNil } from "./utils/shared.utils";
-import { UnknownElementException } from "./errors/exceptions/unknown-element.exception";
-import { JoyContainer } from "./injector/joy-container";
-import { Injector } from "./injector/injector";
-import { STATIC_CONTEXT } from "./injector/constants";
-import { InstanceLoader } from "./injector/instance-loader";
-import { RuntimeException } from "./errors/exceptions/runtime.exception";
-import { ThenableResult } from "./utils/task-thenable";
-import { IInjectableDependency } from "./interfaces/injectable-dependency.interface";
-import { ProviderScanner } from "./injector/provider-scanner";
-import { providerNameGenerate } from "./injector/provider-name-generate";
-import { HookCenter } from "./hook/hook-center";
-import { HookResolver } from "./hook/hook-resolver";
-import { getInjectableMeta } from "./decorators/core";
-import { InstanceWrapper } from "./injector";
+import {Logger, LoggerService} from "./services/logger.service";
+import {isFunction, isNil} from "./utils/shared.utils";
+import {UnknownElementException} from "./errors/exceptions/unknown-element.exception";
+import {JoyContainer} from "./injector/joy-container";
+import {Injector} from "./injector/injector";
+import {STATIC_CONTEXT} from "./injector/constants";
+import {InstanceLoader} from "./injector/instance-loader";
+import {RuntimeException} from "./errors/exceptions/runtime.exception";
+import {ThenableResult} from "./utils/task-thenable";
+import {IInjectableDependency} from "./interfaces/injectable-dependency.interface";
+import {ProviderScanner} from "./injector/provider-scanner";
+import {providerNameGenerate} from "./injector/provider-name-generate";
+import {HookCenter} from "./hook/hook-center";
+import {HookResolver} from "./hook/hook-resolver";
+import {getInjectableMeta} from "./decorators/core";
+import {InstanceWrapper} from "./injector";
 
 /**
  * @publicApi
@@ -122,17 +122,29 @@ export class CoreContext implements IJoyContext {
     return instanceWrapper;
   }
 
-  public get<TInput = any>(
+  public tryGet<TInput = any>(
     typeOrToken: TypeOrTokenType<TInput>,
-    options: { optional?: boolean; strict?: boolean } = { optional: false }
+    options?: { strict?: boolean }
   ): Promise<TInput> | TInput | undefined {
-    const providerId = this.getProviderId(typeOrToken);
-
     const instanceWrapper = this.container.getProvider(typeOrToken);
     if (isNil(instanceWrapper)) {
-      if (options.optional) {
-        return undefined;
-      }
+      return undefined;
+    }
+
+    const provider = this.injector.loadProvider(
+      instanceWrapper,
+      this.container
+    );
+    return provider as Promise<TInput> | TInput;
+  }
+
+  public get<TInput = any>(
+    typeOrToken: TypeOrTokenType<TInput>,
+    options?: { strict?: boolean; }
+  ): Promise<TInput> | TInput {
+    const instanceWrapper = this.container.getProvider(typeOrToken);
+    if (isNil(instanceWrapper)) {
+      const providerId = this.getProviderId(typeOrToken);
       throw new UnknownElementException(providerId);
     }
 
@@ -143,13 +155,21 @@ export class CoreContext implements IJoyContext {
     return provider as Promise<TInput> | TInput;
   }
 
+  public syncTryGetProvider<TInput = any>(
+    typeOrToken: TypeOrTokenType<TInput>,
+    options?: { strict?: boolean }
+  ): TInput | undefined {
+    const loadRst = this.tryGet<TInput>(typeOrToken, options);
+    if (loadRst instanceof Promise) {
+      throw new RuntimeException("Its an async provider, can not load as sync");
+    }
+    return loadRst;
+  }
+
   public syncGetProvider<TInput = any>(
     typeOrToken: TypeOrTokenType<TInput>,
-    options: { strict?: boolean; optional?: boolean } = {
-      strict: false,
-      optional: false,
-    }
-  ): TInput | undefined {
+    options: { strict?: boolean; }
+  ): TInput {
     const loadRst = this.get<TInput>(typeOrToken, options);
     if (loadRst instanceof Promise) {
       throw new RuntimeException("Its an async provider, can not load as sync");

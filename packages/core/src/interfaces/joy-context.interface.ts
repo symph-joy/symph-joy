@@ -24,14 +24,25 @@ export interface IJoyContext {
    */
   loadModule(module: EntryType): Promise<void>;
 
+
   get<TInput = any>(
     typeOrToken: TypeOrTokenType<TInput>,
-    options?: { strict?: boolean; optional?: boolean }
-  ): Promise<TInput> | TInput | undefined;
+    options?: { strict?: boolean; }
+  ): Promise<TInput> | TInput;
+
+  tryGet<TInput = any>(
+    typeOrToken: TypeOrTokenType<TInput>,
+    options?: { strict?: boolean;}
+  ): Promise<TInput> | TInput| undefined;
 
   syncGetProvider<TInput = any>(
     typeOrToken: TypeOrTokenType<TInput>,
-    options?: { strict?: boolean; optional?: boolean }
+    options?: { strict?: boolean; }
+  ): TInput;
+
+  syncTryGetProvider<TInput = any>(
+    typeOrToken: TypeOrTokenType<TInput>,
+    options?: { strict?: boolean; }
   ): TInput | undefined;
 
   /**
