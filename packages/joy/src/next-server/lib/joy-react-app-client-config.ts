@@ -8,9 +8,11 @@ import {
 } from "react-router-dom";
 import { ReactApplicationConfig } from "@symph/react";
 
-// @ts-ignore
+
 @Configuration({
   imports: [
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     typeof window !== "undefined" ? window.__JOY_AUTOGEN : undefined,
   ].filter(Boolean),
 })

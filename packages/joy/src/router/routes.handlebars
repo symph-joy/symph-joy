@@ -6,7 +6,7 @@ export const joyReactAutoGenRoutes = {
     {
       path: "{{path}}",
       providerId: "{{providerId}}",
-      component: {{#if dynamic}}()=>import("{{{filePath}}}"){{else}}require("{{{filePath}}}"){{/if}},
+      component: {{#if dynamic}}()=>import({{json filePath}}){{else}}require({{json filePath}}){{/if}},
     },
     {{/routes}}
   ]

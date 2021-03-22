@@ -82,6 +82,7 @@ export type BaseContext = {
 };
 
 export type NEXT_DATA = {
+  initState: Record<string, any>;
   props: Record<string, any>;
   page: string;
   query: ParsedUrlQuery;

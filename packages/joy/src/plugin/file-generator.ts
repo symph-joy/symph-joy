@@ -26,6 +26,7 @@ for (const key of commonCtx.keys()) {
 
 const ctx = require.context('./client', true, /\.(jsx?|tsx?|json)$/i);
 for (const key of ctx.keys()) {
+console.log('>>>> gen-client-modules, key:', key);
   modules.push(ctx(key));
 }
 console.log('>>>> gen-client-modules, modules:', modules);

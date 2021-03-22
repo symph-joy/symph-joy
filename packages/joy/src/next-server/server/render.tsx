@@ -32,6 +32,8 @@ import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
 import { ReactAppContainer, ReactApplicationContext } from "@symph/react";
+import ReactAppInitManager from "@symph/react/src/react-app-init-manager";
+
 
 function noRouter() {
   const message =
@@ -145,6 +147,7 @@ function renderDocument(
   {
     buildManifest,
     docComponentsRendered,
+    initState,
     props,
     docProps,
     pathname,
@@ -174,6 +177,7 @@ function renderDocument(
     unstable_runtimeJS,
     devOnlyCacheBusterQueryString,
   }: RenderOpts & {
+    initState: any;
     props: any;
     docComponentsRendered: DocumentProps["docComponentsRendered"];
     docProps: DocumentInitialProps;
@@ -202,6 +206,7 @@ function renderDocument(
       <AmpStateContext.Provider value={ampState}>
         {Document.renderDocument(Document, {
           __NEXT_DATA__: {
+            initState,
             props, // The result of getInitialProps
             page: pathname, // The rendered page
             query, // querystring parsed / passed by the user
@@ -708,6 +713,30 @@ export async function renderToHTML(
     }
   }
 
+  const renderData = async () => {
+    if (ctx.err) {
+      return { };
+    }
+    if(!reactApplicationContext){
+      throw new Error('init controller data error, react application context is undefined.')
+    }
+
+    const initManager = await reactApplicationContext.get(ReactAppInitManager)
+    initManager.resetTask()
+
+    let state = reactApplicationContext.getState()
+
+    const html = renderToStaticMarkup( <AppContainer />)
+
+    await initManager.waitAllFinished()
+    initManager.setInitState(true, true)
+
+    state = reactApplicationContext.getState()
+    console.log(state)
+  }
+
+  await renderData();
+
   const renderPage: RenderPage = (
     options: ComponentsEnhancer = {}
   ): { html: string; head: any } => {
@@ -715,11 +744,11 @@ export async function renderToHTML(
       return { html: renderToString(<ErrorComponent error={ctx.err} />), head };
     }
 
-    if (dev && (props.router || props.Component)) {
-      throw new Error(
-        `'router' and 'Component' can not be returned in getInitialProps from _app.js https://err.sh/vercel/next.js/cant-override-next-props`
-      );
-    }
+    // if (dev && (props.router || props.Component)) {
+    //   throw new Error(
+    //     `'router' and 'Component' can not be returned in getInitialProps from _app.js https://err.sh/vercel/next.js/cant-override-next-props`
+    //   );
+    // }
 
     // const {
     //   App: EnhancedApp,
@@ -785,6 +814,7 @@ export async function renderToHTML(
         : undefined,
     dangerousAsPath: router.asPath,
     ampState,
+    initState: reactApplicationContext?.getState() || {},
     props,
     headTags: await headTags(documentCtx),
     isFallback,

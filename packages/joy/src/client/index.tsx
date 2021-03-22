@@ -62,6 +62,7 @@ window.__NEXT_DATA__ = data;
 export const version = process.env.__NEXT_VERSION;
 
 const {
+  initState: hydrateInitState,
   props: hydrateProps,
   err: hydrateErr,
   page,
@@ -339,7 +340,8 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   const reactApplicationContext = new ReactApplicationContext(
     JoyReactAppClientConfig,
     applicationConfig,
-    joyContainer
+    joyContainer,
+    hydrateInitState
   );
   await reactApplicationContext.init();
 

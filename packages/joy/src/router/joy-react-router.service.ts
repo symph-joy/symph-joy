@@ -12,20 +12,20 @@ import { ParsedUrlQuery } from "querystring";
 import { FileScanner } from "../next-server/server/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join } from "path";
-import handlebars from "handlebars";
+
 import { FileGenerator } from "../plugin/file-generator";
+import {handlebars} from "../lib/handlebars";
 
 interface IReactRouteDev extends IReactRoute {
   filePath?: string;
   isAdd?: boolean;
 }
 
-const routesTemplate = handlebars.compile(
-  readFileSync(join(__dirname, "./routes.handlebars"), "utf-8")
-);
-
 @Injectable()
 export class JoyReactRouterService extends ReactRouter<IReactRouteDev> {
+  private routesTemplate = handlebars.compile(
+    readFileSync(join(__dirname, "./routes.handlebars"), "utf-8")
+  );
   constructor(
     private joyDevServer: NextDevServer,
     private fileScanner: FileScanner,
@@ -149,7 +149,7 @@ export class JoyReactRouterService extends ReactRouter<IReactRouteDev> {
     // await this.fileGenerator.writeServerFile("./routes.js", serverFileContent);
 
     const clientRoutes = this.filterRoutes((route) => !!route.isAdd);
-    const clientFileContent = routesTemplate({ routes: clientRoutes });
+    const clientFileContent = this.routesTemplate({ routes: clientRoutes });
     await this.fileGenerator.writeCommonFile("./routes.js", clientFileContent);
 
     // await this.fileGenerator.writeServerFile("./routes.js", clientFileContent);

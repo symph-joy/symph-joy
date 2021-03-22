@@ -10,6 +10,10 @@ export default class HelloController extends ReactController {
   @Inject(HelloModel)
   private helloModel: HelloModel;
 
+  async initialModelState(context: any): Promise<void> {
+      this.helloModel.add(1)
+  }
+
   renderView(): ReactNode {
     const { status, count } = this.helloModel.state;
     return (
