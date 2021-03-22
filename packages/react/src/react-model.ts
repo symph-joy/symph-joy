@@ -1,4 +1,4 @@
-import { ReduxStore } from "./redux/redux-store";
+import { ReactReduxService } from "./redux/react-redux.service";
 import {
   Inject,
   IProviderInfoWare,
@@ -19,7 +19,7 @@ export abstract class ReactModel<TState>
   public abstract getInitState(): TState;
 
   @Inject()
-  private reduxStore: ReduxStore;
+  private reduxStore: ReactReduxService;
 
   private _namespace: string;
 

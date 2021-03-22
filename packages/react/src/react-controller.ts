@@ -1,6 +1,9 @@
 import React, { ReactNode, Component } from "react";
 import { JoyReactContext } from "./react-app-container";
-import { ModelStateChangeHandler, ReduxStore } from "./redux/redux-store";
+import {
+  ModelStateChangeHandler,
+  ReactReduxService,
+} from "./redux/react-redux.service";
 import { ReactModel } from "./react-model";
 import { PathVariable } from "./react-controller.decorator";
 import {
@@ -9,6 +12,8 @@ import {
 } from "./router/react-route.decorator";
 import { IInjectableDependency, IJoyContext } from "@symph/core";
 import { IReactRoute } from "./interfaces";
+import ReactAppInitManager from "./react-app-init-manager";
+import { any } from "prop-types";
 
 export type ControllerBaseStateType = {
   _modelStateVersion: number;
@@ -37,15 +42,20 @@ export abstract class ReactController<
   /**
    * 获取预渲染的状态
    */
-  async getStaticInitialModelState(): Promise<Record<string, any>> {
+  async getSub(): Promise<Record<string, any>> {
     return {};
   }
+
+  /**
+   * 获取预渲染的状态
+   */
+  async initialModelStaticState(urlParams: any): Promise<void> {}
 
   /**
    * 获取绑定model中的初始化状态。
    * @param context
    */
-  async getInitialModelState(context: any): Promise<void> {}
+  async initialModelState(context: any): Promise<void> {}
 
   /**
    * 向后兼容：
@@ -56,7 +66,7 @@ export abstract class ReactController<
 
   static contextType = JoyReactContext;
   protected appContext: IJoyContext;
-  protected reduxStore: ReduxStore;
+  protected reduxStore: ReactReduxService;
   protected isCtlMounted: boolean;
   protected routeMeta?: IReactRoute;
 
@@ -71,7 +81,7 @@ export abstract class ReactController<
     // this.hasInjectProps = false;
     this.isCtlMounted = false;
     this.appContext = context;
-    this.reduxStore = this.appContext.syncGetProvider(ReduxStore)!;
+    this.reduxStore = this.appContext.syncGetProvider(ReactReduxService)!;
 
     this.routeMeta = getRouteMeta(this.constructor);
     if (this.routeMeta) {
@@ -79,7 +89,7 @@ export abstract class ReactController<
     }
   }
 
-  protected init(): void {
+  protected async init(): Promise<void> {
     if (this.hasInitInvoked) {
       throw new Error("Controller init twice");
     }
@@ -92,6 +102,31 @@ export abstract class ReactController<
     };
 
     // todo prepare component
+    const initManager = await this.appContext.get(ReactAppInitManager);
+    const isRenderStatic = initManager.isRenderStatic;
+    const { hasInit, hasInitStatic } = initManager.state;
+
+    if (
+      !hasInitStatic &&
+      this.initialModelStaticState !==
+        ReactController.prototype.initialModelStaticState
+    ) {
+      const initStaticTask = this.initialModelStaticState({});
+      if (typeof window == "undefined") {
+        initManager.addTask(initStaticTask);
+      }
+    }
+
+    if (
+      !isRenderStatic &&
+      !hasInit &&
+      this.initialModelState !== ReactController.prototype.initialModelState
+    ) {
+      const initTask = this.initialModelState({});
+      if (typeof window !== "undefined") {
+        initManager.addTask(initTask);
+      }
+    }
   }
 
   /**

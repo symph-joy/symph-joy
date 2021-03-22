@@ -2,7 +2,7 @@ import { ApplicationConfig } from "./application-config";
 import { renderComponent } from "./react-app-container";
 import React, { DOMElement, ReactElement } from "react";
 import reactDom from "react-dom";
-import { ReduxStore } from "./redux/redux-store";
+import { ReactReduxService } from "./redux/react-redux.service";
 import { IReactRoute } from "./interfaces/react-route.interface";
 import { EntryType, JoyContainer, Logger, CoreContext } from "@symph/core";
 import { IReactApplication } from "./interfaces";
@@ -14,16 +14,17 @@ import { TReactAppComponent } from "./react-app-component";
 export class ReactApplicationContext extends CoreContext
   implements IReactApplication {
   private readonly logger = new Logger(ReactApplicationContext.name, true);
-  protected readonly reduxStore: ReduxStore;
+  protected readonly reduxStore: ReactReduxService;
   protected routes: IReactRoute[];
 
   constructor(
     protected readonly entry: EntryType,
     protected readonly appConfig: ApplicationConfig,
-    container?: JoyContainer
+    container?: JoyContainer,
+    initState: Record<string, any> = {}
   ) {
     super(entry, container);
-    this.reduxStore = new ReduxStore(this.appConfig);
+    this.reduxStore = new ReactReduxService(this.appConfig, initState);
 
     this.registerInternalModules({
       applicationConfig: {
@@ -33,7 +34,7 @@ export class ReactApplicationContext extends CoreContext
       },
       reduxStore: {
         id: "reduxStore",
-        type: ReduxStore,
+        type: ReactReduxService,
         useValue: this.reduxStore,
       },
     });

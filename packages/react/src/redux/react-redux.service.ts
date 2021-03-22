@@ -8,13 +8,12 @@ import {
   Reducer,
   ReducersMapObject,
   Store,
-} from "redux";
+} from "./index";
 import { ApplicationConfig } from "../application-config";
 // @ts-ignore
 import flatten from "flatten";
 import { IModel } from "../interfaces/model.interface";
 import { IJoyContext, RuntimeException } from "@symph/core";
-// import { isEmpty, isNil } from "../../utils/shared.utils";
 
 declare global {
   interface Window {
@@ -50,7 +49,7 @@ interface ActionSetState extends Action<any> {
 const noopReduxMiddleware = (store: any) => (next: any) => (action: any) =>
   next();
 
-export class ReduxStore {
+export class ReactReduxService {
   public app: IJoyContext;
   public store: Store;
   public models: { [namespace: string]: RegisteredModel } = {};
@@ -60,12 +59,15 @@ export class ReduxStore {
 
   private stateListenerIdCounter = 1;
 
-  constructor(public appConfig: ApplicationConfig) {
+  constructor(
+    public appConfig: ApplicationConfig,
+    initState: Record<string, any>
+  ) {
     // const modelMiddleware = createModelMiddleware(app)
 
     this.store = this.createStore({
       reducers: this.createReducer(),
-      initialState: appConfig.getInitStoreState() || {},
+      initialState: initState,
       middlewares: [],
     });
 

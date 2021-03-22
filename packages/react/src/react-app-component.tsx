@@ -16,10 +16,8 @@ export type TReactAppComponent = React.ComponentType<{
 export default function ReactAppComponent({
   appContext,
 }: TReactAppComponentProps) {
-  const reactRouter = appContext.syncGetProvider<ReactRouter>("reactRouter", {
-    optional: true,
-  });
-  const routes = reactRouter?.getRoutes() || [];
+  const reactRouter = appContext.syncGetProvider<ReactRouter>("reactRouter");
+  const routes = reactRouter.getRoutes() || [];
 
   return (
     <>

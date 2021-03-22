@@ -1,6 +1,7 @@
 export * from "./interfaces";
 export * from "./react-application-context";
 export * from "./react-controller";
+export * from "./react-app-init-manager";
 export * from "./react-model";
 export * from "./react-controller.decorator";
 export * from "./router/react-route.decorator";
