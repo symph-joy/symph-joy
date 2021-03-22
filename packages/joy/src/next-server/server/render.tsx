@@ -34,7 +34,6 @@ import optimizeAmp from "./optimize-amp";
 import { ReactAppContainer, ReactApplicationContext } from "@symph/react";
 import ReactAppInitManager from "@symph/react/src/react-app-init-manager";
 
-
 function noRouter() {
   const message =
     'No router instance found. you should only use "next/router" inside the client side of your app. https://err.sh/vercel/next.js/no-router-instance';
@@ -715,25 +714,27 @@ export async function renderToHTML(
 
   const renderData = async () => {
     if (ctx.err) {
-      return { };
+      return {};
     }
-    if(!reactApplicationContext){
-      throw new Error('init controller data error, react application context is undefined.')
+    if (!reactApplicationContext) {
+      throw new Error(
+        "init controller data error, react application context is undefined."
+      );
     }
 
-    const initManager = await reactApplicationContext.get(ReactAppInitManager)
-    initManager.resetTask()
+    const initManager = await reactApplicationContext.get(ReactAppInitManager);
+    initManager.resetTask();
 
-    let state = reactApplicationContext.getState()
+    let state = reactApplicationContext.getState();
 
-    const html = renderToStaticMarkup( <AppContainer />)
+    const html = renderToStaticMarkup(<AppContainer />);
 
-    await initManager.waitAllFinished()
-    initManager.setInitState(true, true)
+    await initManager.waitAllFinished();
+    initManager.setInitState(true, true);
 
-    state = reactApplicationContext.getState()
-    console.log(state)
-  }
+    state = reactApplicationContext.getState();
+    console.log(state);
+  };
 
   await renderData();
 

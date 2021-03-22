@@ -22,5 +22,4 @@ export class JoyReactAppServerConfig extends ReactApplicationConfig {
 
   @Configuration.Provider({ type: ReactRouterServer })
   public reactRouter: ReactRouterServer;
-
 }

@@ -8,7 +8,6 @@ import {
 } from "react-router-dom";
 import { ReactApplicationConfig } from "@symph/react";
 
-
 @Configuration({
   imports: [
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

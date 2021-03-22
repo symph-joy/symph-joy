@@ -11,7 +11,7 @@ export default class HelloController extends ReactController {
   private helloModel: HelloModel;
 
   async initialModelState(context: any): Promise<void> {
-      this.helloModel.add(1)
+    this.helloModel.add(1);
   }
 
   renderView(): ReactNode {

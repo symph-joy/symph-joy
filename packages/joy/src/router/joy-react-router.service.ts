@@ -14,7 +14,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 import { FileGenerator } from "../plugin/file-generator";
-import {handlebars} from "../lib/handlebars";
+import { handlebars } from "../lib/handlebars";
 
 interface IReactRouteDev extends IReactRoute {
   filePath?: string;
