@@ -65,7 +65,7 @@ export class CommandCenter implements InjectorHookTaps {
    * @param name command name
    * @param args custom args
    */
-  async runCommand({ name, args = {} }: { name: string; args?: any }) {
+  async runCommand(name: string, args: any = {}): Promise<any> {
     args._ = args._ || [];
     // shift the command itself
     if (args._[0] === name) args._.shift();

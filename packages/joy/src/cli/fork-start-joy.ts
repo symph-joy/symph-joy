@@ -1,9 +1,10 @@
 import chalk from "chalk";
-import {JoyBoot} from "../joy-boot";
-import {PresetJoyCore} from "../preset-joy-core";
+import { JoyBoot } from "../joy-boot";
+import { PresetJoyCore } from "../preset-joy-core";
 
 export const startTask = (async () => {
   let closed = false;
+
   function onSignal(signal: string) {
     if (closed) return;
     closed = true;
@@ -13,6 +14,7 @@ export const startTask = (async () => {
 
     process.exit(0);
   }
+
   // kill(2) Ctrl-C
   process.once("SIGINT", () => onSignal("SIGINT"));
   // kill(3) Ctrl-\
@@ -20,18 +22,19 @@ export const startTask = (async () => {
   // kill(15) default
   process.once("SIGTERM", () => onSignal("SIGTERM"));
 
-
-  let joyBoot: JoyBoot|undefined
+  let joyBoot: JoyBoot | undefined;
   try {
-    const command = process.argv.length >= 2 && process.argv[2] || 'help'
+    let command = (process.argv.length >= 2 && process.argv[2]) || "help";
+    if (!command || command.startsWith("-")) {
+      command = "help";
+    }
+
     joyBoot = new JoyBoot(PresetJoyCore);
     await joyBoot.init();
-
-    await joyBoot.runCommand({name: command});
+    await joyBoot.runCommand(command);
   } catch (e) {
     console.error(chalk.red(e.message));
     console.error(e.stack);
     process.exit(1);
   }
-
 })();

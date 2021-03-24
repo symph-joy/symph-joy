@@ -204,7 +204,8 @@ export class JoyDevCommand extends JoyCommand {
       await server.prepare();
     } catch (err) {
       console.error(err);
-      process.nextTick(() => printAndExit("", 1));
+      printAndExit(undefined, 1);
+      // process.nextTick(() => printAndExit("", 1));
     }
   }
 
