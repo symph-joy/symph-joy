@@ -1,7 +1,8 @@
 import { ICommandMeta } from "./command-meta.interface";
+import {JoyCommand} from "../command";
 
-export interface ICommandHandler {
+export interface ICommandHandler<T = any> {
   command: ICommandMeta;
-  provider?: Object;
-  methodKey: string;
+  provider?: T;
+  methodKey: keyof T;
 }

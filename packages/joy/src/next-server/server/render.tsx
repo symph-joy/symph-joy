@@ -31,8 +31,7 @@ import { FontManifest, getFontDefinitionFromManifest } from "./font-utils";
 import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
-import { ReactAppContainer, ReactApplicationContext } from "@symph/react";
-import ReactAppInitManager from "@symph/react/src/react-app-init-manager";
+import { ReactAppContainer, ReactApplicationContext, ReactAppInitManager } from "@symph/react";
 
 function noRouter() {
   const message =

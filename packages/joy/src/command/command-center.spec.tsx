@@ -14,7 +14,7 @@ describe("command-center", () => {
 
       options() {
         return {
-          message: { type: "string" as "string", default: "joy" },
+          message: { type: "string" as const, default: "joy" },
         };
       }
 
@@ -30,7 +30,7 @@ describe("command-center", () => {
     const commandCenter = await app.get(CommandCenter);
     // const helloCommand = await app.get(HelloCommand)
     expect(
-      await commandCenter!.runCommand({
+      await commandCenter.runCommand({
         name: "hello",
         args: { message: "joy" },
       })
@@ -62,7 +62,7 @@ describe("command-center", () => {
 
       options() {
         return {
-          message: { type: "string" as "string", default: "joy" },
+          message: { type: "string" as const, default: "joy" },
         };
       }
 

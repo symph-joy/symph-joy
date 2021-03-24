@@ -17,7 +17,7 @@ export class CommandCenter implements InjectorHookTaps {
   } = {};
 
   @Tap()
-  injectorAfterPropertiesSet<T>(
+  injectorAfterPropertiesSet<T = any>(
     instance: T,
     args: { instanceWrapper: IInstanceWrapper }
   ): T {
@@ -35,7 +35,7 @@ export class CommandCenter implements InjectorHookTaps {
     const commandHandler = getCommandMetadata(instanceWrapper.type);
     if (commandHandler && JoyCommand.isJoyCommand(instance)) {
       // this provider is a command handler
-      const handler: ICommandHandler = {
+      const handler: ICommandHandler<JoyCommand> = {
         command: {
           name: instance.getName(),
           alias: instance.alias(),
@@ -60,6 +60,11 @@ export class CommandCenter implements InjectorHookTaps {
     }
   }
 
+  /**
+   *
+   * @param name command name
+   * @param args custom args
+   */
   async runCommand({ name, args = {} }: { name: string; args?: any }) {
     args._ = args._ || [];
     // shift the command itself
@@ -69,20 +74,14 @@ export class CommandCenter implements InjectorHookTaps {
       typeof this.commands[name] === "string"
         ? this.commands[this.commands[name] as string]
         : this.commands[name];
-    assert(command, `run command failed, command ${name} does not exists.`);
+    assert(command, `run command failed, command "${name}" does not exists.`);
 
     const { provider, methodKey } = command as ICommandHandler;
-    if (!provider) {
+    if (provider === undefined || provider === null) {
       throw new Error(
-        `run command failed, command ${name} does not initialized`
+        `run command failed, command "${name}" does not initialized`
       );
     }
-    assert(
-      provider,
-      `run command failed, command ${name} does not initialized`
-    );
-
-    // @ts-ignore
     return provider[methodKey](args);
   }
 }

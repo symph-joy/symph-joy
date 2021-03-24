@@ -186,7 +186,9 @@ export class JoyDevCommand extends JoyCommand {
   }
 
   async run(args: JoyCommandOptionType<this>): Promise<any> {
-    console.log(">>>> args:", args);
+    // @ts-ignore
+    process.env.NODE_ENV = "development";
+
     const dir = args._[0] || ".";
     const { port, hostname } = args;
     const appUrl = `http://${hostname}:${port}`;
