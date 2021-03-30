@@ -12,8 +12,7 @@ import {
 } from "./router/react-route.decorator";
 import { IInjectableDependency, IJoyContext } from "@symph/core";
 import { IReactRoute } from "./interfaces";
-import ReactAppInitManager from "./react-app-init-manager";
-import { any } from "prop-types";
+import { ReactAppInitManager } from "./react-app-init-manager";
 
 export type ControllerBaseStateType = {
   _modelStateVersion: number;
@@ -65,6 +64,7 @@ export abstract class ReactController<
   async componentPrepare(context: any): Promise<void> {}
 
   static contextType = JoyReactContext;
+
   protected appContext: IJoyContext;
   protected reduxStore: ReactReduxService;
   protected isCtlMounted: boolean;

@@ -103,7 +103,7 @@ describe("react-application", () => {
       }
 
       const app = await SymphReactFactory.create();
-      const App = app.start(HelloController);
+      const App = app.start(() => <HelloController />);
       const { getByTestId, container, rerender } = render(App);
       const statusDom = getByTestId("status");
       expect(statusDom.innerHTML).toEqual("init");

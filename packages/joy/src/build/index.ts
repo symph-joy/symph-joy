@@ -513,7 +513,7 @@ export default async function build(
   hasNonStaticErrorPage =
     hasCustomErrorPage &&
     (await hasCustomGetInitialProps(
-      getPagePath("/_error", distDir, isLikeServerless),
+      getPagePath("/_error", distDir),
       runtimeEnvConfig,
       false
     ));
@@ -537,21 +537,17 @@ export default async function build(
       const nonReservedPage = !page.match(/^\/(_app|_error|_document|api)/);
 
       if (nonReservedPage) {
-        const serverBundle = getPagePath(page, distDir, isLikeServerless);
+        const serverBundle = getPagePath(page, distDir);
 
         if (customAppGetInitialProps === undefined) {
           customAppGetInitialProps = hasCustomGetInitialProps(
-            isLikeServerless
-              ? serverBundle
-              : getPagePath("/_app", distDir, isLikeServerless),
+            isLikeServerless ? serverBundle : getPagePath("/_app", distDir),
             runtimeEnvConfig,
             true
           );
 
           namedExports = getNamedExports(
-            isLikeServerless
-              ? serverBundle
-              : getPagePath("/_app", distDir, isLikeServerless),
+            isLikeServerless ? serverBundle : getPagePath("/_app", distDir),
             runtimeEnvConfig
           );
 
@@ -780,7 +776,7 @@ export default async function build(
 
     // remove server bundles that were exported
     for (const page of staticPages) {
-      const serverBundle = getPagePath(page, distDir, isLikeServerless);
+      const serverBundle = getPagePath(page, distDir);
       await promises.unlink(serverBundle);
     }
     const serverOutputDir = path.join(
@@ -797,7 +793,7 @@ export default async function build(
     ) => {
       file = `${file}.${ext}`;
       const orig = path.join(exportOptions.outdir, file);
-      const pagePath = getPagePath(originPage, distDir, isLikeServerless);
+      const pagePath = getPagePath(originPage, distDir);
 
       const relativeDest = path
         .relative(

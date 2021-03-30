@@ -1,5 +1,10 @@
 import React from "react";
-import { Controller, ReactController, Route, RouteParam } from "@symph/react";
+import {
+  Controller,
+  ReactController,
+  Route,
+  RouteParam,
+} from "../../../../index";
 
 @Route({ path: "/hello/:message/:count" })
 @Controller()

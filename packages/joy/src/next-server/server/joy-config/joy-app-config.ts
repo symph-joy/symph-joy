@@ -154,9 +154,10 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
 
     return instance;
   }
+
   [configKey: string]: any;
 
-  pagesDir = "src/client/pages";
+  pagesDir?: string = undefined;
 
   dir = "./";
   port = 3000;
@@ -230,13 +231,25 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
   }
 
   public resolvePagesDir(): string {
-    const pagesDir = this.resolveAppDir(this.pagesDir);
-    if (!existsSync(pagesDir)) {
-      throw new Error(
-        "> No `pages` directory found. Did you mean to run `next` in the parent ](`../`) directory?"
-      );
+    const maybePaths = ["src/pages", "src/client/pages"];
+    if (this.pagesDir === undefined) {
+      for (let i = 0; i < maybePaths.length; i++) {
+        const path = maybePaths[i];
+        const absPath = this.resolveAppDir(path);
+        if (existsSync(absPath)) {
+          this.pagesDir = absPath;
+          break;
+        }
+      }
+
+      if (!this.pagesDir) {
+        throw new Error(
+          "> No `pages` directory found. Did you mean to run `next` in the parent ](`../`) directory?"
+        );
+      }
     }
-    return pagesDir;
+
+    return this.pagesDir;
   }
 
   public resolveDistPagesDir(): string {
@@ -466,5 +479,3 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
     return this.addJoyConfigSchema.call({});
   }
 }
-
-type a = Partial<JoyAppConfig>;

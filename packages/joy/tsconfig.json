@@ -10,6 +10,10 @@
     "jsx": "react",
     "outDir": "dist"
   },
+  "files": [
+    "../../node_modules/jest-playwright-preset/types/global.d.ts",
+    "../../node_modules/expect-playwright/global.d.ts"
+  ],
   "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "node_modules",

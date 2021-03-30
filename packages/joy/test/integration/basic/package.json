@@ -1,18 +1,5 @@
 {
   "scripts": {
-    "joy": "node ../../../../../node_modules/@symph/joy-boot/dist/cli/cli.js dev"
-  },
-  "babel": {
-    "presets": [
-      "@symph/joy/src/build/babel/preset.ts"
-    ],
-    "plugins": [
-      [
-        "@babel/plugin-proposal-decorators",
-        {
-          "legacy": true
-        }
-      ]
-    ]
+    "joy": "node ../../../../../node_modules/@symph/joy/dist/cli/cli.js dev"
   }
 }

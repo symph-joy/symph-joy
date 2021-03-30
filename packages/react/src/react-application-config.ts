@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import { ReactRouter } from "./router/react-router";
 import { Configuration } from "@symph/core";
-import ReactAppInitManager from "./react-app-init-manager";
+import { ReactAppInitManager } from "./react-app-init-manager";
 
 @Configuration()
 export class ReactApplicationConfig {

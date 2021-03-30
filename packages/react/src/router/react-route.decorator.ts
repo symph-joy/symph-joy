@@ -112,8 +112,5 @@ export function bindRouteFromCompProps(
       routeCompInstance[propKey] = transformedValue;
     }
   }
-
-  console.log(">> params", parmas);
-
   return parmas;
 }

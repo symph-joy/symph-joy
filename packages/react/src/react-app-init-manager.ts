@@ -1,6 +1,6 @@
 import { ReactModel } from "./react-model";
 
-export default class ReactAppInitManager extends ReactModel<{
+export class ReactAppInitManager extends ReactModel<{
   hasInit: boolean;
   hasInitStatic: boolean;
 }> {

@@ -6,6 +6,7 @@ module.exports = {
     '<rootDir>/packages/core',
     '<rootDir>/packages/react',
     '<rootDir>/packages/joy',
+    '<rootDir>/packages/joy/jest.config.e2e.js',
   ],
   globalSetup: './test/lib/jest-setup.js',
 }

@@ -29,12 +29,9 @@ describe("command-center", () => {
     await app.init();
     const commandCenter = await app.get(CommandCenter);
     // const helloCommand = await app.get(HelloCommand)
-    expect(
-      await commandCenter.runCommand({
-        name: "hello",
-        args: { message: "joy" },
-      })
-    ).toBe("hello joy");
+    expect(await commandCenter.runCommand("hello", { message: "joy" })).toBe(
+      "hello joy"
+    );
   });
 
   test("parse args", async () => {

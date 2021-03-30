@@ -142,17 +142,12 @@ export class CoreContext implements IJoyContext {
     typeOrToken: TypeOrTokenType<TInput>,
     options?: { strict?: boolean }
   ): Promise<TInput> | TInput {
-    const instanceWrapper = this.container.getProvider(typeOrToken);
-    if (isNil(instanceWrapper)) {
+    const instance = this.tryGet<TInput>(typeOrToken, options);
+    if (isNil(instance)) {
       const providerId = this.getProviderId(typeOrToken);
       throw new UnknownElementException(providerId);
     }
-
-    const provider = this.injector.loadProvider(
-      instanceWrapper,
-      this.container
-    );
-    return provider as Promise<TInput> | TInput;
+    return instance as Promise<TInput> | TInput;
   }
 
   public syncTryGetProvider<TInput = any>(

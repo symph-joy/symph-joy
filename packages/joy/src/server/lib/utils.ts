@@ -9,20 +9,11 @@ export class ProcessError extends Error {
   }
 }
 
-export function printAndExit(message: string, code = 1) {
+export function printAndExit(message?: string, code = 1) {
   if (code === 0) {
     message && console.log(message);
   } else {
     message && console.error(message);
-  }
-  if (process.env.NODE_ENV === "test") {
-    // for jest test
-    if (code !== 0) {
-      throw new ProcessError(code, message);
-    } else {
-      //noop
-      return;
-    }
   }
   process.exit(code);
 }

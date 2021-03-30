@@ -5,23 +5,22 @@ import * as log from "fancy-log";
 import * as merge2 from "merge2";
 import { Simulate } from "react-dom/test-utils";
 import copy = Simulate.copy;
-const { exec } = require("child_process");
+const { spawn, exec } = require("child_process");
 
 const DIST_DIR = "dist";
 
 // ts project
-const tsProject = createProject("tsconfig.json", { emitDeclarationOnly: true });
+const tsProject = createProject("tsconfig.json", {
+  declaration: true,
+  declarationFiles: true,
+});
 
-/**
- * Watches the packages/* folder and
- * builds the package on file change
- */
-function defaultTask() {
-  log.info("Watching files..");
+function watchAsset() {
+  log.info("Watching asset files..");
   gulp.watch(
-    [`src/**/*.{ts,tsx,js,jsx}`],
+    [`src/**/*.{handlebars,json}`],
     { ignoreInitial: false },
-    gulp.series("build")
+    gulp.series([copyAsset])
   );
 }
 
@@ -41,29 +40,19 @@ function tsc() {
   return exec("tsc -d -p tsconfig.json");
 }
 
+function watchTsc() {
+  const childProcess = exec("tsc -d -w -p tsconfig.json --sourceMap");
+  childProcess.stdout?.on("data", (chunk) => {
+    console.log(chunk);
+  });
+  return childProcess;
+}
+
 function copyAsset() {
   return gulp.src([`src/**/*.{handlebars,json}`]).pipe(gulp.dest(DIST_DIR));
 }
 
-/**
- * Builds the src and adds sourcemaps
- */
-function buildPackageDev() {
-  return tsProject
-    .src()
-    .pipe(sourcemaps.init())
-    .pipe(tsProject())
-    .pipe(
-      sourcemaps.mapSources(
-        (sourcePath: string) => "./" + sourcePath.split("/").pop()
-      )
-    )
-    .pipe(sourcemaps.write(".", {}))
-    .pipe(gulp.dest(DIST_DIR));
-}
-
-// task('common:dev', series(modules.map(packageName => `${packageName}:dev`)));
-// glup.task('build', buildPackage);
+// gulp.task('build', buildPackage);
 gulp.task("build", gulp.series([tsc, copyAsset]));
-gulp.task("build:dev", () => buildPackageDev());
-gulp.task("watch", defaultTask);
+gulp.task("watch", gulp.parallel([watchTsc, watchAsset]));
+// gulp.task("watch", watch);

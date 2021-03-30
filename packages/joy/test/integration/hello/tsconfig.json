@@ -1,26 +1,8 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "module": "ESNext",
-    "target": "ES2017",
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "jsx": "preserve",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "declaration": true,
-    "removeComments": false,
-    "noLib": false,
-    //    "strictNullChecks": false,
-    //    "noImplicitAny": false,
-    "resolveJsonModule": true,
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "isolatedModules": true
-  },
+  "extends": "../../tsconfig.json",
   "include": ["./**/*"],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [".joy"],
+  "compilerOptions": {
+    "jsx": "preserve"
+  }
 }

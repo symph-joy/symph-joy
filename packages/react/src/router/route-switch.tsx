@@ -18,9 +18,7 @@ export function RouteSwitch({
   routes,
   location,
   extraProps,
-  ...restProp
 }: RouterContainerType) {
-  console.log(">>>restProp", restProp);
   const ctxLocation = useLocation();
   location = location || ctxLocation;
   const joyContext = useJoyContext();

@@ -23,14 +23,14 @@ export class JoyBoot extends CoreContext {
     // this.container.addProvider(getInjectableMeta(FileJoyAppConfig))
   }
 
-  async runCommand({ name, args = {} }: { name: string; args?: any }) {
-    console.log(">>>> runCommand ", name, args);
+  async runCommand(name: string, args: any = {}): Promise<any> {
+    console.log(">>>> runCommandd fa", name, args);
     const commandCenter = await this.get<CommandCenter>(CommandCenter);
     if (!commandCenter) {
       throw new Error(
         `run command ${name} failed, commandCenter provider is not provided`
       );
     }
-    return commandCenter.runCommand({ name, args });
+    return commandCenter.runCommand(name, args);
   }
 }

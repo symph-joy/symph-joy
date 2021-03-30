@@ -36,9 +36,9 @@ export async function verifyTypeScriptSetup(
 
     // Reconfigure (or create) the user's `tsconfig.json` for them:
     await writeConfigurationDefaults(ts, tsConfigPath, firstTimeSetup);
-    // Write out the necessary `next-env.d.ts` file to correctly register
-    // Next.js' types:
-    await writeAppTypeDeclarations(dir);
+    // // Write out the necessary `next-env.d.ts` file to correctly register
+    // // Next.js' types:
+    // await writeAppTypeDeclarations(dir);
 
     if (typeCheckPreflight) {
       // Verify the project passes type-checking before we go to webpack phase:

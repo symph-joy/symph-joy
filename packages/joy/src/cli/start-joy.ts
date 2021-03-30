@@ -1,3 +1,4 @@
+import "@babel/runtime/regenerator";
 import chalk from "chalk";
 import { JoyBoot } from "../joy-boot";
 import { PresetJoyCore } from "../preset-joy-core";

@@ -2,8 +2,7 @@
   "name": "symph-projects",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "examples/basic"
+    "packages/*"
   ],
   "description": "React SPA applications, inspiration comes from Next.js、nest.js and umi",
   "license": "MIT",
@@ -14,7 +13,7 @@
     "lerna": "lerna",
     "_dev": "lerna build:dev",
     "_copy": "gulp copy-package:joy-boot --dist node_modules/@symph",
-    "build": "lerna build",
+    "build": "lerna run build",
     "clean": "lerna clean",
     "publish:canary": "npm run clean && npm run build && npx lerna publish --npm-tag=beta --access public -m \"publish %s release\"",
 
@@ -81,7 +80,6 @@
     "jest": "^26.6.3",
     "jest-cli": "^26.6.3",
     "jest-junit": "^12.0.0",
-    "jest-puppeteer": "^4.4.0",
     "jsdom": "^16.5.0",
     "lerna": "~4.0.0",
     "lint-staged": "9.2.5",
@@ -91,7 +89,6 @@
     "node-notifier": "5.4.3",
     "nyc": "14.1.1",
     "prettier": "2.0.5",
-    "puppeteer": "8.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "rimraf": "3.0.0",

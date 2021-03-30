@@ -1,7 +1,7 @@
+import React from "react";
 import { Route } from "../../../react-route.decorator";
 import { Controller } from "../../../../react-controller.decorator";
 import { ReactController } from "../../../../react-controller";
-import React from "react";
 import { RouteSwitch } from "../../../route-switch";
 
 @Route({ path: "/" })

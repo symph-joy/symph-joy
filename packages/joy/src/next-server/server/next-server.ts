@@ -1371,6 +1371,7 @@ export class NextServer implements ProviderLifecycle {
     pathname: string,
     query: ParsedUrlQuery = {}
   ): Promise<string | null> {
+    console.dir(this.nextConfig);
     await this.onBeforeRender.call({ req, res, pathname, query });
 
     const reactAppContext = await this.getReactAppContext(

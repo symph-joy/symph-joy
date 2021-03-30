@@ -2,13 +2,13 @@
   "name": "@symph/joy",
   "version": "v2.0.0-alpha",
   "description": "The React Framework",
-  "_main": "./dist/joy-boot.js",
-  "main": "./src/joy-boot.ts",
+  "main": "dist/index.js",
+  "_main": "src/index.ts",
   "license": "MIT",
   "repository": "vercel/next.js",
   "bugs": "https://github.com/vercel/next.js/issues",
   "homepage": "https://nextjs.org",
-  "types": "types/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist",
     "app.js",
@@ -237,7 +237,9 @@
     "thread-loader": "2.1.3",
     "typescript": "^4.2.3",
     "unfetch": "4.1.0",
-    "unistore": "3.4.1"
+    "unistore": "3.4.1",
+    "playwright-chromium": "^1.10.0",
+    "jest-playwright-preset": "^1.5.1"
   },
   "engines": {
     "node": ">=10.13.0"

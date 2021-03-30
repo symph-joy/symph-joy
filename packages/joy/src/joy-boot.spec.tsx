@@ -22,8 +22,8 @@ describe("joy", () => {
     const app = new JoyBoot(AppConfig);
     await app.init();
 
-    expect(
-      await app.runCommand({ name: "sayHello", args: { message: "joy" } })
-    ).toBe("hello joy");
+    expect(await app.runCommand("sayHello", { message: "joy" })).toBe(
+      "hello joy"
+    );
   });
 });
