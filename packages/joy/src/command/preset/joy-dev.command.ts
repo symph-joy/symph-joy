@@ -9,25 +9,8 @@ import { Configuration, CoreContext, Inject } from "@symph/core";
 import { NextDevServer } from "../../server/next-dev-server";
 import http from "http";
 import { JoyAppConfig } from "../../next-server/server/joy-config/joy-app-config";
-import { FileGenerator } from "../../plugin/file-generator";
-import { RouterPlugin } from "../../router/router-plugin";
-import { JoyReactRouterService } from "../../router/joy-react-router.service";
-import { FileScanner } from "../../next-server/server/scanner/file-scanner";
-import { BuildDevConfig } from "../../server/build-dev-config";
 import { ServerConfigDev } from "../../server/server-config-dev";
-import { EmitSrcService } from "../../build/webpack/plugins/emit-src-plugin/emit-src-service";
-
-@Configuration()
-export class JoyBuildConfig {
-  @Configuration.Provider()
-  public fileGenerator: FileGenerator;
-
-  @Configuration.Provider()
-  public buildConfig: BuildDevConfig;
-
-  // @Configuration.Provider()
-  // public HotReloader: HotReloader
-}
+import { JoyBuildConfig } from "../../build/joy-build.config";
 
 @Configuration({ imports: [JoyBuildConfig] })
 export class JoyDevServerConfig {
@@ -36,26 +19,6 @@ export class JoyDevServerConfig {
 
   @Configuration.Provider()
   public joyDevServer: NextDevServer;
-
-  @Configuration.Provider()
-  public emitSrcService: EmitSrcService;
-
-  @Configuration.Provider()
-  public fileScanner: FileScanner;
-
-  @Configuration.Provider()
-  public routerPlugin: RouterPlugin;
-
-  @Configuration.Provider()
-  public joyReactRouterServerDev: JoyReactRouterService;
-
-  // @Configuration.Provider({
-  //   useFactory: function (config: JoyAppConfig) {
-  //     return new FileScanner()
-  //   },
-  //   inject: [JoyAppConfig]
-  // })
-  // public fileScanner:FileScanner
 }
 
 @CommandProvider()
@@ -193,19 +156,14 @@ export class JoyDevCommand extends JoyCommand {
     const { port, hostname } = args;
     const appUrl = `http://${hostname}:${port}`;
     this.joyAppConfig.mergeCustomConfig({ dir, hostname, port, dev: true });
-
-    // generate files
-    // await this.fileGenerator.generate(true)
-
+    this.preflight().catch(() => {});
     try {
       const server = await this.startDevServer(this.appContext);
       startedDevelopmentServer(appUrl);
-      this.preflight().catch(() => {});
       await server.prepare();
     } catch (err) {
       console.error(err);
       printAndExit(undefined, 1);
-      // process.nextTick(() => printAndExit("", 1));
     }
   }
 

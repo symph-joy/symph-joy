@@ -61,9 +61,9 @@ export class FileGenerator implements ProviderLifecycle {
   constructor(private joyAppConfig: JoyAppConfig) {}
 
   async afterPropertiesSet() {
-    // await this.cleanTempFiles()
-    // await this.mkTempDirs()
-    // await this.generateEntryModuleFiles()
+    await this.cleanTempFiles();
+    await this.mkTempDirs();
+    await this.generateEntryModuleFiles();
   }
 
   @Hook({ type: HookType.Traverse, async: true })
@@ -202,7 +202,7 @@ export class FileGenerator implements ProviderLifecycle {
     content: string,
     { skipTSCheck }: TWriteFileOptions
   ): Promise<void> {
-    // const absPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, path)
+    // const absPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.outDir, this.joyAppConfig.autoGenOutputDir, path)
     if (await fileExists(dirname(absPath))) {
       await mkdirp(dirname(absPath));
     }

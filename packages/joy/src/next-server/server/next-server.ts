@@ -25,6 +25,7 @@ import {
   CLIENT_PUBLIC_FILES_PATH,
   CLIENT_STATIC_FILES_PATH,
   CLIENT_STATIC_FILES_RUNTIME,
+  OUT_DIRECTORY,
   PAGES_MANIFEST,
   PHASE_PRODUCTION_SERVER,
   PRERENDER_MANIFEST,
@@ -47,7 +48,6 @@ import {
 } from "../lib/utils";
 // import { tryGetPreviewData, __ApiPreviewProps } from './api-utils'
 import { __ApiPreviewProps } from "./api-utils";
-import { isTargetLikeServerless } from "./config";
 import pathMatch from "../lib/router/utils/path-match";
 import { recursiveReadDirSync } from "./lib/recursive-readdir-sync";
 import {
@@ -130,6 +130,7 @@ export class NextServer implements ProviderLifecycle {
   quiet: boolean;
   nextConfig: NextConfig;
   distDir: string;
+  outDir: string;
   pagesDir?: string;
   publicDir: string;
   hasStaticDir: boolean;
@@ -183,7 +184,8 @@ export class NextServer implements ProviderLifecycle {
     loadEnvConfig(this.dir, dev);
 
     this.nextConfig = joyAppConfig;
-    this.distDir = joyAppConfig.resolveAppDir(distDir, "out");
+    this.distDir = joyAppConfig.resolveAppDir(distDir);
+    this.outDir = joyAppConfig.resolveAppDir(distDir, OUT_DIRECTORY);
     this.publicDir = joyAppConfig.resolveAppDir(CLIENT_PUBLIC_FILES_PATH);
     this.hasStaticDir = fs.existsSync(join(this.dir, "static"));
 
@@ -211,7 +213,7 @@ export class NextServer implements ProviderLifecycle {
       optimizeFonts: this.nextConfig.experimental.optimizeFonts && !dev,
       fontManifest:
         this.nextConfig.experimental.optimizeFonts && !dev
-          ? requireFontManifest(this.distDir, this._isLikeServerless)
+          ? requireFontManifest(this.outDir, this._isLikeServerless)
           : null,
       optimizeImages: this.nextConfig.experimental.optimizeImages,
     };
@@ -233,7 +235,7 @@ export class NextServer implements ProviderLifecycle {
     });
 
     this.serverBuildDir = join(
-      this.distDir,
+      this.outDir,
       this._isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY
     );
     const pagesManifestPath = join(this.serverBuildDir, PAGES_MANIFEST);
@@ -260,9 +262,9 @@ export class NextServer implements ProviderLifecycle {
 
     this.incrementalCache = new IncrementalCache({
       dev,
-      distDir: this.distDir,
+      distDir: this.outDir,
       pagesDir: join(
-        this.distDir,
+        this.outDir,
         this._isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
         "pages"
       ),
@@ -353,7 +355,7 @@ export class NextServer implements ProviderLifecycle {
   }
 
   protected getCustomRoutes(): CustomRoutes {
-    return require(join(this.distDir, ROUTES_MANIFEST));
+    return require(join(this.outDir, ROUTES_MANIFEST));
   }
 
   private _cachedPreviewManifest: PrerenderManifest | undefined;
@@ -362,7 +364,7 @@ export class NextServer implements ProviderLifecycle {
     if (this._cachedPreviewManifest) {
       return this._cachedPreviewManifest;
     }
-    const manifest = require(join(this.distDir, PRERENDER_MANIFEST));
+    const manifest = require(join(this.outDir, PRERENDER_MANIFEST));
     return (this._cachedPreviewManifest = manifest);
   }
 
@@ -435,7 +437,7 @@ export class NextServer implements ProviderLifecycle {
             this.setImmutableAssetCacheControl(res);
           }
           const p = join(
-            this.distDir,
+            this.outDir,
             CLIENT_STATIC_FILES_PATH,
             ...(params.path || [])
           );
@@ -723,7 +725,7 @@ export class NextServer implements ProviderLifecycle {
   private async getPagePath(pathname: string): Promise<string> {
     return getPagePath(
       pathname,
-      this.distDir
+      this.outDir
       // this._isLikeServerless,
       // this.renderOpts.dev
     );
@@ -971,7 +973,7 @@ export class NextServer implements ProviderLifecycle {
     for (const pagePath of paths) {
       try {
         const components = await loadComponents(
-          this.distDir,
+          this.outDir,
           pagePath!,
           !this.renderOpts.dev && this._isLikeServerless
         );
@@ -997,14 +999,14 @@ export class NextServer implements ProviderLifecycle {
   protected async findErrorComponent(): Promise<
     React.ComponentType<{ error: Error }>
   > {
-    const ErrorComponent = loadComponent(this.distDir, "/_error");
+    const ErrorComponent = loadComponent(this.outDir, "/_error");
     return ErrorComponent.default || ErrorComponent;
   }
 
   protected async find404ErrorComponent(): Promise<
     React.ComponentType<{ error: Error }>
   > {
-    const ErrorComponent = loadComponent(this.distDir, "/_error");
+    const ErrorComponent = loadComponent(this.outDir, "/_error");
     return ErrorComponent.default || ErrorComponent;
   }
 
@@ -1182,8 +1184,8 @@ export class NextServer implements ProviderLifecycle {
         // );
         // await reactApplicationContext.init();
         // // const fileScanner = await reactApplicationContext.get<FileScanner>(FileScanner)
-        // // await fileScanner!.scan(this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, 'dist/src'))
-        // // await fileScanner!.scan(this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir))
+        // // await fileScanner!.scan(this.joyAppConfig.resolveAppDir(this.joyAppConfig.outDir, 'dist/src'))
+        // // await fileScanner!.scan(this.joyAppConfig.resolveAppDir(this.joyAppConfig.outDir, this.joyAppConfig.autoGenOutputDir))
         // const autoGenModules = components.autoGenModules
         // await reactApplicationContext.loadModule([
         //     ...autoGenModules!,
@@ -1599,8 +1601,8 @@ export class NextServer implements ProviderLifecycle {
 
     let nextFilesStatic: string[] = [];
     nextFilesStatic = recursiveReadDirSync(
-      join(this.distDir, "static")
-    ).map((f) => join(".", relative(this.dir, this.distDir), "static", f));
+      join(this.outDir, "static")
+    ).map((f) => join(".", relative(this.dir, this.outDir), "static", f));
 
     return (this._validFilesystemPathSet = new Set<string>([
       ...nextFilesStatic,
@@ -1636,7 +1638,7 @@ export class NextServer implements ProviderLifecycle {
     // Check if .next/static, static and public are in the path.
     // If not the path is not available.
     if (
-      (untrustedFilePath.startsWith(join(this.distDir, "static") + sep) ||
+      (untrustedFilePath.startsWith(join(this.outDir, "static") + sep) ||
         untrustedFilePath.startsWith(join(this.dir, "static") + sep) ||
         untrustedFilePath.startsWith(join(this.dir, "public") + sep)) === false
     ) {
@@ -1650,13 +1652,13 @@ export class NextServer implements ProviderLifecycle {
   }
 
   protected async readBuildId(): Promise<string> {
-    const buildIdFile = join(this.distDir, BUILD_ID_FILE);
+    const buildIdFile = join(this.outDir, BUILD_ID_FILE);
     try {
       return fs.readFileSync(buildIdFile, "utf8").trim();
     } catch (err) {
       if (!fs.existsSync(buildIdFile)) {
         throw new Error(
-          `Could not find a valid build in the '${this.distDir}' directory! Try building your app with 'next build' before starting the server.`
+          `Could not find a valid build in the '${this.outDir}' directory! Try building your app with 'next build' before starting the server.`
         );
       }
       throw err;
@@ -1664,7 +1666,7 @@ export class NextServer implements ProviderLifecycle {
   }
 
   protected get _isLikeServerless(): boolean {
-    return isTargetLikeServerless(this.nextConfig.target);
+    return this.nextConfig.target === "serverless";
   }
 }
 

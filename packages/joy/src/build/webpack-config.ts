@@ -311,8 +311,6 @@ export default async function getBaseWebpackConfig(
   const clientEntries = !isServer
     ? () =>
         ({
-          // Backwards compatibility
-          "main.js": [],
           // 'genFiles': `joy-client-generate-file-loader?${stringify(
           //   {absolutePath: path.join(dir, '.genFiles')} // todo set dir from config
           // )}!`,
@@ -801,7 +799,7 @@ export default async function getBaseWebpackConfig(
         // Minify JavaScript
         new TerserPlugin({
           extractComments: false,
-          // cache: path.join(distDir, 'cache', 'next-minifier'), // webpack5 升级后不兼容，先屏蔽掉
+          // cache: path.join(outDir, 'cache', 'next-minifier'), // webpack5 升级后不兼容，先屏蔽掉
           parallel: config.experimental.cpus || true,
           terserOptions,
         }),
@@ -1187,7 +1185,7 @@ export default async function getBaseWebpackConfig(
           ].filter(Boolean),
         }),
       new WellKnownErrorsPlugin(),
-      // isServer && new EmitSrcPlugin({path: path.join(distDir, 'dist')})
+      // isServer && new EmitSrcPlugin({path: path.join(outDir, 'dist')})
     ].filter((Boolean as any) as ExcludesFalse),
   };
 

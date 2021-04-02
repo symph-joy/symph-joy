@@ -85,10 +85,10 @@ declare module "devalue" {
 //   export = m
 // }
 
-declare module "dotenv-expand" {
-  import m from "dotenv-expand";
-  export = m;
-}
+// declare module "dotenv-expand" {
+//   import m from "dotenv-expand";
+//   export = m;
+// }
 declare module "escape-string-regexp" {
   import m from "escape-string-regexp";
   export = m;

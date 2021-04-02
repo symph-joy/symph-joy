@@ -25,7 +25,7 @@ export async function loadStaticPaths(
   // // update work memory runtime-config
   // require('./../next-server/lib/runtime-config').setConfig(config)
   //
-  // const components = await loadComponents(distDir, pathname, serverless)
+  // const components = await loadComponents(outDir, pathname, serverless)
   //
   // if (!components.getStaticPaths) {
   //   // we shouldn't get to this point since the worker should

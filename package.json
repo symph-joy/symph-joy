@@ -13,6 +13,7 @@
     "lerna": "lerna",
     "_dev": "lerna build:dev",
     "_copy": "gulp copy-package:joy-boot --dist node_modules/@symph",
+    "watch": "lerna run watch",
     "build": "lerna run build",
     "clean": "lerna clean",
     "publish:canary": "npm run clean && npm run build && npx lerna publish --npm-tag=beta --access public -m \"publish %s release\"",

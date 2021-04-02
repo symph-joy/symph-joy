@@ -15,51 +15,43 @@ import { join } from "path";
 
 import { FileGenerator } from "../plugin/file-generator";
 import { handlebars } from "../lib/handlebars";
+import { IJoyReactRouteBuild, JoyReactRouter } from "./joy-react-router";
 
-interface IReactRouteDev extends IReactRoute {
+interface IReactRouteBuildDev extends IJoyReactRouteBuild {
   filePath?: string;
   isAdd?: boolean;
 }
 
 @Injectable()
-export class JoyReactRouterService extends ReactRouter<IReactRouteDev> {
-  private routesTemplate = handlebars.compile(
+export class JoyReactRouterDev extends JoyReactRouter<IReactRouteBuildDev> {
+  protected routesTemplate = handlebars.compile(
     readFileSync(join(__dirname, "./routes.handlebars"), "utf-8")
   );
   constructor(
-    private joyDevServer: NextDevServer,
-    private fileScanner: FileScanner,
-    private fileGenerator: FileGenerator
+    protected fileGenerator: FileGenerator,
+    protected fileScanner: FileScanner,
+    protected joyDevServer: NextDevServer
   ) {
-    super();
+    super(fileGenerator, fileScanner);
   }
 
-  extendRoute(route: IReactRoute): IReactRouteDev {
-    let filePath: string | undefined = undefined;
-    if (route.providerId) {
-      const srcFilePath = this.fileScanner.getSourceFileByProviderId(
-        route.providerId
-      );
-      if (srcFilePath) {
-        // is from file scanner
-        // const relativePath = this.config.getAppRelativeDir(srcFilePath)
-        const relativePath = srcFilePath; // todo 切换为，使用相对于项目根目录的相对路径
-        filePath = relativePath;
-      }
-    }
-
-    const devRoute: IReactRouteDev = {
+  protected extendBuildRoute(route: IJoyReactRouteBuild): IReactRouteBuildDev {
+    return {
       ...route,
-      filePath,
+      isAdd: false,
     };
-    return devRoute;
   }
 
-  protected mergeRouteExtendState(to: IReactRouteDev, from: IReactRouteDev) {
+  protected mergeRouteExtendState(
+    to: IReactRouteBuildDev,
+    from: IReactRouteBuildDev
+  ) {
     to.isAdd = from.isAdd;
   }
 
-  private plainRoutesTree(routes: IReactRouteDev[]): IReactRouteDev[] {
+  private plainRoutesTree(
+    routes: IReactRouteBuildDev[]
+  ): IReactRouteBuildDev[] {
     const plainRoutes: any[] = [];
     const getFromRoutes = (rootRoutes: IReactRoute[]) => {
       if (!rootRoutes?.length) {
@@ -83,7 +75,7 @@ export class JoyReactRouterService extends ReactRouter<IReactRouteDev> {
     }
 
     const usedRoutes = this.plainRoutesTree([matchedRoutes]);
-    const waitingRoutes: IReactRouteDev[] = [];
+    const waitingRoutes: IReactRouteBuildDev[] = [];
     usedRoutes.forEach((route) => {
       waitingRoutes.push(route);
       if (!route.isAdd) {
@@ -115,48 +107,15 @@ export class JoyReactRouterService extends ReactRouter<IReactRouteDev> {
   }
 
   @Tap()
-  private async onRegisterProviderAfter(
-    provider: Provider,
-    instanceWrapper: InstanceWrapper
-  ) {
-    if (!isClassProvider(provider)) {
-      return;
-    }
-    this.addRouteProvider(provider);
-    console.log(">>>> IReactRouteDev. onRegisterProviderAfter", provider);
-  }
-
-  @Tap()
-  private async onReplaceProviderAfter(
-    nextProvider: Provider,
-    preProvider: Provider
-  ) {
-    if (!isClassProvider(nextProvider)) {
-      return;
-    }
-    this.replaceRouteProvider(nextProvider, preProvider.id);
-    console.log(">>>> IReactRouteDev. onReplaceProviderAfter", nextProvider);
-  }
-
-  @Tap()
-  private async onGenerateFiles() {
+  protected async onGenerateFiles() {
     console.log(">>>> IReactRouteDev. onGenerateFiles");
-    // const routeList: IReactRouteDev[] = [];
-    // this.routes.forEach((route, key) => {
-    //   routeList.push(route);
-    // });
-    // const serverFileContent = routesTemplate({ routes: routeList });
-    // await this.fileGenerator.writeServerFile("./routes.js", serverFileContent);
-
     const clientRoutes = this.filterRoutes((route) => !!route.isAdd);
     const clientFileContent = this.routesTemplate({ routes: clientRoutes });
     await this.fileGenerator.writeCommonFile("./routes.js", clientFileContent);
-
-    // await this.fileGenerator.writeServerFile("./routes.js", clientFileContent);
   }
 
   @Tap()
-  private async addTmpGenerateWatcherPaths(watchPaths: string[]) {
+  protected async addTmpGenerateWatcherPaths(watchPaths: string[]) {
     watchPaths.push("./src");
     return watchPaths;
   }

@@ -117,17 +117,17 @@ export default class BuildManifestPlugin {
       ampFirstPages: [],
     };
 
-    const ampFirstEntryNames = ampFirstEntryNamesMap.get(compilation);
-    if (ampFirstEntryNames) {
-      for (const entryName of ampFirstEntryNames) {
-        const pagePath = getRouteFromEntrypoint(entryName);
-        if (!pagePath) {
-          continue;
-        }
-
-        assetMap.ampFirstPages.push(pagePath);
-      }
-    }
+    // const ampFirstEntryNames = ampFirstEntryNamesMap.get(compilation);
+    // if (ampFirstEntryNames) {
+    //   for (const entryName of ampFirstEntryNames) {
+    //     const pagePath = getRouteFromEntrypoint(entryName);
+    //     if (!pagePath) {
+    //       continue;
+    //     }
+    //
+    //     assetMap.ampFirstPages.push(pagePath);
+    //   }
+    // }
 
     const mainJsChunk = namedChunks.get(CLIENT_STATIC_FILES_RUNTIME_MAIN);
 
@@ -154,18 +154,18 @@ export default class BuildManifestPlugin {
     );
 
     for (const entrypoint of compilation.entrypoints.values()) {
-      const isAmpRuntime = entrypoint.name === CLIENT_STATIC_FILES_RUNTIME_AMP;
-
-      if (isAmpRuntime) {
-        for (const file of entrypoint.getFiles()) {
-          if (!(isJsFile(file) || file.endsWith(".css"))) {
-            continue;
-          }
-
-          assetMap.ampDevFiles.push(file.replace(/\\/g, "/"));
-        }
-        continue;
-      }
+      // const isAmpRuntime = entrypoint.name === CLIENT_STATIC_FILES_RUNTIME_AMP;
+      //
+      // if (isAmpRuntime) {
+      //   for (const file of entrypoint.getFiles()) {
+      //     if (!(isJsFile(file) || file.endsWith(".css"))) {
+      //       continue;
+      //     }
+      //
+      //     assetMap.ampDevFiles.push(file.replace(/\\/g, "/"));
+      //   }
+      //   continue;
+      // }
       const pagePath = getRouteFromEntrypoint(entrypoint.name);
 
       if (!pagePath) {
@@ -183,8 +183,8 @@ export default class BuildManifestPlugin {
         filesForEntry.push(file.replace(/\\/g, "/"));
       }
 
-      // assetMap.pages[pagePath] = [...mainJsFiles, ...filesForEntry]
-      assetMap.pages[pagePath] = [...filesForEntry];
+      assetMap.pages[pagePath] = [...mainJsFiles, ...filesForEntry];
+      // assetMap.pages[pagePath] = [...filesForEntry];
     }
 
     // Add the runtime build manifest file (generated later in this file)

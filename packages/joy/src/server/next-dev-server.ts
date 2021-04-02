@@ -157,7 +157,7 @@ export class NextDevServer extends NextServer {
           dev: true,
           dir: this.dir,
           outDir: null,
-          distDir: this.distDir,
+          distDir: this.outDir,
           buildId: this.buildId,
         }
       ); // In development we can't give a default path mapping
@@ -311,9 +311,9 @@ export class NextDevServer extends NextServer {
     await this.startWatcher();
     this.setDevReady!();
 
-    // const telemetry = new Telemetry({ distDir: this.distDir })
+    // const telemetry = new Telemetry({ outDir: this.outDir })
     // telemetry.record(
-    //   eventCliSession(PHASE_DEVELOPMENT_SERVER, this.distDir, {
+    //   eventCliSession(PHASE_DEVELOPMENT_SERVER, this.outDir, {
     //     cliCommand: 'dev',
     //     isSrcDir: relative(this.dir, this.pagesDir!).startsWith('src'),
     //     hasNowJson: !!(await findUp('now.json', { cwd: this.dir })),
@@ -452,7 +452,7 @@ export class NextDevServer extends NextServer {
       type: "route",
       name: "_next/development catchall",
       fn: async (req, res, params) => {
-        const p = pathJoin(this.distDir, ...(params.path || []));
+        const p = pathJoin(this.outDir, ...(params.path || []));
         await this.serveStatic(req, res, p);
         return {
           finished: true,
@@ -554,7 +554,7 @@ export class NextDevServer extends NextServer {
       const { publicRuntimeConfig, serverRuntimeConfig } = this.nextConfig;
 
       const paths = await this.staticPathsWorker.loadStaticPaths(
-        this.distDir,
+        this.outDir,
         pathname,
         !this.renderOpts.dev && this._isLikeServerless,
         {
@@ -764,8 +764,8 @@ export class NextDevServer extends NextServer {
     // Note that in development .next/server is available for error reporting purposes.
     // see `packages/next/next-server/server/next-server.ts` for more details.
     if (
-      untrustedFilePath.startsWith(pathJoin(this.distDir, "static") + sep) ||
-      untrustedFilePath.startsWith(pathJoin(this.distDir, "server") + sep) ||
+      untrustedFilePath.startsWith(pathJoin(this.outDir, "static") + sep) ||
+      untrustedFilePath.startsWith(pathJoin(this.outDir, "server") + sep) ||
       untrustedFilePath.startsWith(pathJoin(this.dir, "static") + sep) ||
       untrustedFilePath.startsWith(pathJoin(this.dir, "public") + sep)
     ) {

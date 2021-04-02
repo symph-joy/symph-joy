@@ -46,7 +46,7 @@ export function processEnv(loadedEnvFiles: LoadedEnvFiles, dir?: string) {
           typeof parsed[key] === "undefined" &&
           typeof origEnv[key] === "undefined"
         ) {
-          parsed[key] = result.parsed?.[key]!;
+          parsed[key] = result.parsed![key];
         }
       }
     } catch (err) {

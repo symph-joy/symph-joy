@@ -1,12 +1,5 @@
 import { Configuration } from "@symph/core";
-import { JoyDevCommand } from "./command/preset/joy-dev.command";
-import { JoyVersionCommand } from "./command/preset/joy-version.command";
+import { JoyPresetCommandsConfig } from "./command/preset/joy-preset-commands.config";
 
-@Configuration()
-export class PresetJoyCore {
-  @Configuration.Provider()
-  public joyDevCommand: JoyDevCommand;
-
-  @Configuration.Provider()
-  public joyVersionCommand: JoyVersionCommand;
-}
+@Configuration({ imports: [JoyPresetCommandsConfig] })
+export class PresetJoyCore {}

@@ -14,6 +14,15 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     this.routes = routes;
   }
 
+  /**
+   * 获取页面路由，不包含layout路由。
+   * 用于：
+   * 1. 页面渲染和统计。
+   */
+  public getPageRoutes(): T[] {
+    return this.routes;
+  }
+
   public hasExist(path: string): boolean {
     return !!this.routes.find((v) => v.path === path);
   }

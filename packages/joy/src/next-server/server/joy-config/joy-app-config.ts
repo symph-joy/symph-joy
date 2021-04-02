@@ -7,7 +7,6 @@ import findUp from "find-up";
 import { CONFIG_FILE, SERVER_DIRECTORY } from "../../lib/constants";
 import * as path from "path";
 import { basename, extname, resolve } from "path";
-import { normalizeConfig } from "../config";
 import {
   Hook,
   HookPipe,
@@ -29,11 +28,6 @@ const experimentalWarning = execOnce(() => {
     `Experimental features are not covered by semver, and may cause unexpected or broken application behavior. ` +
       `Use them at your own risk.`
   );
-  // Log.warn(
-  //   `Experimental features are not covered by semver, and may cause unexpected or broken application behavior. ` +
-  //   `Use them at your own risk.`
-  // )
-  // console.warn()
 });
 
 function isNil(v: any): v is undefined | null {
@@ -51,8 +45,8 @@ export const existsSync = (f: string): boolean => {
 
 export interface IJoyConfig {
   dir: string; // = './'
-  port: number; // = 3000
-  hostname: string; // = 'localhost'
+  port?: number; // = 3000
+  hostname?: string; // = 'localhost'
   dev: boolean; // = false
   quiet: boolean; // = false
   customServer: boolean; // = false
@@ -160,8 +154,8 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
   pagesDir?: string = undefined;
 
   dir = "./";
-  port = 3000;
-  hostname = "localhost";
+  port = undefined;
+  hostname = undefined;
   dev = false;
   quiet = false;
   customServer = false;
@@ -323,14 +317,14 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
 
       const userDistDir = this.distDir.trim();
 
-      // don't allow public as the distDir as this is a reserved folder for
+      // don't allow public as the outDir as this is a reserved folder for
       // public files
       if (userDistDir === "public") {
         throw new Error(
           `The 'public' directory is reserved in Next.js and can not be set as the 'distDir'. https://err.sh/vercel/next.js/can-not-output-to-public`
         );
       }
-      // make sure distDir isn't an empty string as it can result in the provided
+      // make sure outDir isn't an empty string as it can result in the provided
       // directory being deleted in development mode
       if (userDistDir.length === 0) {
         throw new Error(
@@ -409,6 +403,19 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
     return true;
   }
 
+  private normalizeConfig(phase: string, config: any) {
+    if (typeof config === "function") {
+      config = config(phase, { defaultConfig: this });
+
+      if (typeof config.then === "function") {
+        throw new Error(
+          "> Promise returned in next config. https://err.sh/vercel/next.js/promise-in-next-config"
+        );
+      }
+    }
+    return config;
+  }
+
   public loadConfig(
     phase: string,
     dir: string,
@@ -427,7 +434,7 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
     // If config file was found
     if (path?.length) {
       const userConfigModule = require(path);
-      const userConfig = normalizeConfig(
+      const userConfig = this.normalizeConfig(
         phase,
         userConfigModule.default || userConfigModule
       );

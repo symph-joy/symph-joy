@@ -28,6 +28,7 @@ module.exports = {
     "@typescript-eslint/ban-types": "warn",
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/no-empty-function": "warn",
-    "max-line-length": [0, {"max": 300}]
+    "max-line-length": [0, {"max": 300}],
+    'prefer-const': "off"
   }
 }

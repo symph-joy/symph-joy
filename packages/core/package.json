@@ -14,7 +14,8 @@
   ],
   "scripts": {
     "————prepublish": "tsc -d -p tsconfig.json",
-    "build": "tsc -d --sourceMap  -p tsconfig.json"
+    "build": "tsc -d --sourceMap  -p tsconfig.json",
+    "watch": "tsc -w -d --sourceMap  -p tsconfig.json"
   },
   "standard": {
     "parser": "babel-eslint",

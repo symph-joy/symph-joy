@@ -35,6 +35,7 @@ class RouteConfig {
   public path: string;
 }
 
+// todo 该插件考虑是否还需要，已将所有功能移动了ReactRouteService里了。
 @JoyPlugin()
 export class RouterPlugin implements IJoyPlugin {
   name = "router-plugin";

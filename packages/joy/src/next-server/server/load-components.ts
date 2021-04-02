@@ -45,7 +45,7 @@ export async function loadComponents(
   serverless: boolean
 ): Promise<LoadComponentsReturnType> {
   // if (serverless) {
-  //   const Component = await requirePage(pathname, distDir, serverless)
+  //   const Component = await requirePage(pathname, outDir, serverless)
   //   const { getStaticProps, getStaticPaths, getServerSideProps } = Component
   //
   //   return {
@@ -59,8 +59,8 @@ export async function loadComponents(
 
   const DocumentMod = requirePage("/_document", distDir);
   const AppMod = requirePage("/_app", distDir);
-  // const ComponentMod = requirePage(pathname, distDir, serverless) // todo 不在需要加载页面组件了，去掉该操作
-  // const ComponentMod = requirePage('/_app', distDir, serverless) // todo 不在需要加载页面组件了，去掉该操作。 先用_app占位， 后续流程中已经不在需要ComponentMod了
+  // const ComponentMod = requirePage(pathname, outDir, serverless) // todo 不在需要加载页面组件了，去掉该操作
+  // const ComponentMod = requirePage('/_app', outDir, serverless) // todo 不在需要加载页面组件了，去掉该操作。 先用_app占位， 后续流程中已经不在需要ComponentMod了
 
   const [
     buildManifest,

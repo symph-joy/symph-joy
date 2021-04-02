@@ -333,7 +333,7 @@ export default class HotReloader {
         const isClientCompilation = config.name === "client";
 
         // 加载动态生成的文件
-        // if( existsSync(this.config.resolveAppDir(this.config.distDir, 'dist/src'))) {
+        // if( existsSync(this.config.resolveAppDir(this.config.outDir, 'dist/src'))) {
         //     entrypoints[''] = 'bbb'
         // }
 
@@ -391,7 +391,7 @@ export default class HotReloader {
       async (stats) => {
         //  ===== 扫描src目录
         // const distPagesDir = this.config.resolveDistPagesDir()
-        // const distPagesDir = this.config.resolveAppDir(this.config.distDir, 'server', 'dist/src' )
+        // const distPagesDir = this.config.resolveAppDir(this.config.outDir, 'server', 'dist/src' )
         const distPagesDir = this.config.resolveAppDir(
           this.config.distDir,
           "dist/src"

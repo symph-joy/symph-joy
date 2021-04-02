@@ -28,6 +28,8 @@ function getDesiredCompilerOptions(
     skipLibCheck: { suggested: true },
     strict: { suggested: false },
     forceConsistentCasingInFileNames: { suggested: true },
+    emitDecoratorMetadata: { suggested: true },
+    experimentalDecorators: { suggested: true },
     noEmit: { suggested: true },
 
     // These values are required and cannot be changed by the user

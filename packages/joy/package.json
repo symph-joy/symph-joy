@@ -44,7 +44,7 @@
     "joy": "bin/joy.js"
   },
   "scripts": {
-    "dev": "gulp watch",
+    "watch": "gulp watch",
     "build": "gulp build",
     "release": "taskr release",
     "_prepublish": "npm run release && yarn types",

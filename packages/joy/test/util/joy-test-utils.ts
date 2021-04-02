@@ -9,6 +9,7 @@ import spawn from "cross-spawn";
 import child_process from "child_process";
 import treeKill from "tree-kill";
 import getPort from "get-port";
+import { ReactNode } from "react";
 
 export async function renderViaAPI(
   app: NextServer,
@@ -59,14 +60,108 @@ interface RunOptions {
   stdout?: boolean;
   stderr?: boolean;
   env?: Record<string, any>;
+  cwd?: string;
+  spawnOptions?: any;
+  instance?: (proc: child_process.ChildProcess) => void;
+  ignoreFail?: boolean;
 }
 
-export function runNextServerProc(
-  dev: boolean,
+export function runJoyCommand(
   argv: string[],
-  opts: RunOptions = {}
+  opts: RunOptions = { stdout: true, stderr: true }
 ) {
-  const cwd = path.dirname(require.resolve("@symph/joy/package"));
+  const nextDir = path.dirname(require.resolve("@symph/joy/package"));
+  const nextBin = path.join(nextDir, "bin/joy");
+  const cwd = opts.cwd || nextDir;
+  // Let Next.js decide the environment
+  const env = {
+    ...process.env,
+    ...opts.env,
+    NODE_ENV: "",
+    __NEXT_TEST_MODE: "true",
+  };
+
+  return new Promise<{ code: number; stdout?: string; stderr?: string }>(
+    (resolve, reject) => {
+      console.log(`Running command "joy ${argv.join(" ")}"`);
+      const instance = spawn("node", [nextBin, ...argv, "--no-deprecation"], {
+        ...opts.spawnOptions,
+        cwd,
+        env,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      if (typeof opts.instance === "function") {
+        opts.instance(instance);
+      }
+
+      let stderrOutput = "";
+      // if (opts.stderr) {
+      //   instance.stderr!.on('data', function (chunk) {
+      //     stderrOutput += chunk
+      //   })
+      // }
+      instance.stderr!.on("data", function (chunk) {
+        const message = chunk.toString();
+        if (typeof opts.onStderr === "function") {
+          opts.onStderr(message);
+        }
+
+        if (opts.stderr) {
+          process.stderr.write(message);
+        } else {
+          stderrOutput += chunk;
+        }
+      });
+
+      let stdoutOutput = "";
+      instance.stdout!.on("data", function (chunk) {
+        const message: string = chunk.toString();
+        if (typeof opts.onStdout === "function") {
+          opts.onStdout(message);
+        }
+
+        if (opts.stdout) {
+          process.stdout.write(message);
+        } else {
+          stdoutOutput += chunk;
+        }
+      });
+
+      // if (opts.stdout) {
+      //   instance.stdout!.on('data', function (chunk) {
+      //     stdoutOutput += chunk
+      //   })
+      // }
+
+      instance.on("close", (code) => {
+        if (code === null) {
+          code = 1;
+        }
+
+        if (!opts.stderr && !opts.stdout && !opts.ignoreFail && code !== 0) {
+          return reject(new Error(`command failed with code ${code}`));
+        }
+
+        resolve({
+          code,
+          stdout: stdoutOutput,
+          stderr: stderrOutput,
+        });
+      });
+
+      instance.on("error", (err: any) => {
+        err.stdout = stdoutOutput;
+        err.stderr = stderrOutput;
+        reject(err);
+      });
+    }
+  );
+}
+
+export function runJoyServer(dev: boolean, argv: any[], opts: RunOptions = {}) {
+  const nextDir = path.dirname(require.resolve("@symph/joy/package"));
+  const cwd = opts.cwd || nextDir;
   const env = {
     ...process.env,
     NODE_ENV: "test" as const,
@@ -78,7 +173,7 @@ export function runNextServerProc(
     const instance = spawn(
       "node",
       ["--no-deprecation", "bin/joy", dev ? "dev" : "start", ...argv],
-      { cwd, env }
+      { ...opts.spawnOptions, cwd, env }
     );
     let didResolve = false;
 
@@ -162,7 +257,10 @@ export async function killApp(instance: child_process.ChildProcess) {
   });
 }
 
-export async function runNextServer(dev: boolean, args: any): Promise<JoyBoot> {
+export async function startJoyServer(
+  dev: boolean,
+  args: any
+): Promise<JoyBoot> {
   // todo 在jest启动的时候，设置通用的环境变量
   // const env = {
   //   ...process.env,
@@ -183,10 +281,31 @@ export async function runNextServer(dev: boolean, args: any): Promise<JoyBoot> {
 }
 
 // Launch the app in dev mode.
-export async function launchApp(
+export async function joyDev(
   dir: any,
-  port: any
+  port: any,
+  options?: RunOptions
 ): Promise<child_process.ChildProcess> {
   // return await runNextCommandDev({_: [dir], hostname: "localhost", port}) as any;
-  return runNextServerProc(true, [dir, "--host=localhost", `--port=${port}`]);
+  return runJoyServer(
+    true,
+    [dir, "--host=localhost", `--port=${port}`],
+    options
+  );
+}
+
+export function joyStart(dir: string, port: number, opts?: RunOptions) {
+  return runJoyServer(false, [dir, "-p", port], opts);
+}
+
+export function joyBuild(dir: string, args: any[] = [], opts?: RunOptions) {
+  return runJoyCommand(["build", dir, ...args], opts);
+}
+
+export function joyExport(dir: string, outdir: string, opts?: RunOptions) {
+  return runJoyCommand(["export", dir, "--outdir", outdir], opts);
+}
+
+export function joyExportDefault(dir: string, opts?: RunOptions) {
+  return runJoyCommand(["export", dir], opts);
 }

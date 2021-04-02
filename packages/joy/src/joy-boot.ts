@@ -24,7 +24,7 @@ export class JoyBoot extends CoreContext {
   }
 
   async runCommand(name: string, args: any = {}): Promise<any> {
-    console.log(">>>> runCommandd fa", name, args);
+    console.log(">>>> runCommand: ", name, args);
     const commandCenter = await this.get<CommandCenter>(CommandCenter);
     if (!commandCenter) {
       throw new Error(

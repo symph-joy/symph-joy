@@ -11,6 +11,7 @@ export const ROUTES_MANIFEST = "routes-manifest.json";
 export const DEV_CLIENT_PAGES_MANIFEST = "_devPagesManifest.json";
 export const REACT_LOADABLE_MANIFEST = "react-loadable-manifest.json";
 export const FONT_MANIFEST = "font-manifest.json";
+export const OUT_DIRECTORY = "out";
 export const SERVER_DIRECTORY = "server";
 export const SERVERLESS_DIRECTORY = "serverless";
 export const CONFIG_FILE = "next.config.js";

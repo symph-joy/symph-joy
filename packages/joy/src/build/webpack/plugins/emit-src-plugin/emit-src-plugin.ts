@@ -126,12 +126,26 @@ export class EmitSrcPlugin {
     });
   }
 
+  private getNormalModules(
+    modules: Set<Module>,
+    normalModules: NormalModule[] = []
+  ) {
+    modules.forEach((mod) => {
+      if (isNormalModule(mod)) {
+        normalModules.push(mod);
+      } else if ((mod as any).modules) {
+        this.getNormalModules((mod as any).modules, normalModules);
+      }
+    });
+    return normalModules;
+  }
+
   apply(compiler: Compiler) {
     compiler.hooks.afterEmit.tapPromise(
       "EmitAllPlugin",
       async (compilation: Compilation) => {
         console.log(">>>>>> EmitSrcPlugin, emit src files");
-        const { modules } = compilation;
+        const normalModules = this.getNormalModules(compilation.modules);
         const outputFileSystem: OutputFileSystem = compiler.outputFileSystem as any;
         const out = this.path || (compiler.options.output?.path as string);
 
@@ -140,7 +154,7 @@ export class EmitSrcPlugin {
           await mkdirp(out);
         }
 
-        for (const mod of modules) {
+        for (const mod of normalModules) {
           if (!isNormalModule(mod) || mod.getNumberOfErrors() > 0) {
             continue;
           }

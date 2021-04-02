@@ -104,14 +104,14 @@ function assignDefaults(userConfig: { [key: string]: any }) {
         }
         const userDistDir = value.trim();
 
-        // don't allow public as the distDir as this is a reserved folder for
+        // don't allow public as the outDir as this is a reserved folder for
         // public files
         if (userDistDir === "public") {
           throw new Error(
             `The 'public' directory is reserved in Next.js and can not be set as the 'distDir'. https://err.sh/vercel/next.js/can-not-output-to-public`
           );
         }
-        // make sure distDir isn't an empty string as it can result in the provided
+        // make sure outDir isn't an empty string as it can result in the provided
         // directory being deleted in development mode
         if (userDistDir.length === 0) {
           throw new Error(

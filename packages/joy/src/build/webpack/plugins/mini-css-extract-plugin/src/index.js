@@ -126,11 +126,11 @@ class MiniCssExtractPlugin {
         const { chunkFilename } = this.options;
 
         if (REGEXP_CHUNKHASH.test(chunkFilename)) {
-          hash.replace(JSON.stringify(chunk.getChunkMaps(true).hash));
+          hash.update(JSON.stringify(chunk.getChunkMaps(true).hash));
         }
 
         if (REGEXP_CONTENTHASH.test(chunkFilename)) {
-          hash.replace(
+          hash.update(
             JSON.stringify(
               chunk.getChunkMaps(true).contentHash[MODULE_TYPE] || {}
             )
@@ -138,7 +138,7 @@ class MiniCssExtractPlugin {
         }
 
         if (REGEXP_NAME.test(chunkFilename)) {
-          hash.replace(JSON.stringify(chunk.getChunkMaps(true).name));
+          hash.update(JSON.stringify(chunk.getChunkMaps(true).name));
         }
       };
       if (isWebpack5) {

@@ -1,10 +1,4 @@
 {
-  //  "extends": "../../tsconfig.json",
-  //  "include": ["./**/*"],
-  //  "exclude": [".joy"],
-  //  "compilerOptions": {
-  //    "jsx": "preserve"
-  //  }
   "compilerOptions": {
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -12,6 +6,8 @@
     "skipLibCheck": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
