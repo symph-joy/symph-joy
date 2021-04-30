@@ -76,7 +76,7 @@ export class EmitSrcPlugin {
   constructor(opts: EmitAllPluginOptions = {}) {
     this.ignorePattern =
       opts.ignorePattern ||
-      /([\\/]node_modules)|([\\/]joy[\\/]src)|([\\/]core[\\/]src)|([\\/]react[\\/]src)/;
+      /([\\/]node_modules)|([\\/]joy[\\/](src|dist))|([\\/]core[\\/](src|dist))|([\\/]react[\\/](src|dist))/;
     this.ignoreExternals = !!opts.ignoreExternals;
     this.path = opts.path;
   }

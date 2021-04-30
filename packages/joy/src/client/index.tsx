@@ -28,6 +28,7 @@ import {
   ApplicationConfig,
   ReactApplicationContext,
 } from "@symph/react";
+import { JoyClientConfig } from "./joy-client-config";
 
 // require('next/dist/build/polyfills/finally-polyfill.min')
 
@@ -205,7 +206,9 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   if (process.env.NODE_ENV === "development") {
     webpackHMR = opts.webpackHMR;
   }
+  console.log(">>>>111");
   const { page: app, mod } = await pageLoader.loadPage("/_app");
+  console.log(">>>>222");
   CachedApp = app as AppComponent;
 
   if (mod && mod.reportWebVitals) {
@@ -338,7 +341,15 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   const applicationConfig = new ApplicationConfig();
   const joyContainer = new JoyContainer();
   const reactApplicationContext = new ReactApplicationContext(
-    JoyReactAppClientConfig,
+    {
+      JoyReactAppClientConfig,
+      joyClientConfig: {
+        type: JoyClientConfig,
+        useFactory: () => {
+          return JoyClientConfig.fromJoyData(data);
+        },
+      },
+    },
     applicationConfig,
     joyContainer,
     hydrateInitState

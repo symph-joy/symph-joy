@@ -1,7 +1,8 @@
 import { IReactRoute } from "../interfaces";
 import { matchPath } from "react-router";
-import { ClassProvider } from "@symph/core";
-import { getRouteMeta } from "./react-route.decorator";
+import { ClassProvider, Type } from "@symph/core";
+import { getRouteMeta, IRouteMeta } from "./react-route.decorator";
+import * as H from "history";
 
 export class ReactRouter<T extends IReactRoute = IReactRoute> {
   protected routes: T[] = [];
@@ -12,6 +13,16 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
 
   public setRoutes(routes: T[]): void {
     this.routes = routes;
+  }
+
+  private curLocation: H.Location;
+
+  public get location(): H.Location {
+    return this.curLocation;
+  }
+
+  public setCurrentLocation(location: H.Location) {
+    this.curLocation = location;
   }
 
   /**
@@ -57,7 +68,21 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     }
   }
 
-  public getMatchedRoutes(pathname: string): T | undefined {
+  public getParentRoutes(routePath: string): T[] | undefined {
+    let parents: T[] | undefined = undefined;
+    for (let i = 0; i < this.routes.length; i++) {
+      const route = this.routes[i];
+      if (route.path.startsWith(routePath) && route.path !== routePath) {
+        if (!parents) {
+          parents = [];
+        }
+        parents.push(route);
+      }
+    }
+    return parents;
+  }
+
+  public getMatchedRoutes(pathname: string): T[] | undefined {
     // routes = routes || [];
     // if (!routes?.length) {
     //   return matchContext;
@@ -79,21 +104,24 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     //   }
     // }
     // return matchContext;
-    let matched: T | undefined;
+    let matched: T[] | undefined = undefined;
     for (let i = 0; i < this.routes.length; i++) {
       const route = this.routes[i];
       const m = matchPath(pathname, route);
       if (!m) {
         continue;
       }
-      matched = route;
+      if (!matched) {
+        matched = [];
+      }
+      matched.push(route);
     }
     return matched;
   }
 
-  public extendRoute(route: IReactRoute): T {
-    return route as T;
-  }
+  // protected extendRoute(route: IReactRoute): T {
+  //   return route as T;
+  // }
 
   protected mergeRouteExtendState(to: T, from: T): void {
     // by default, there is nothing to merge
@@ -101,15 +129,15 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
 
   public addRouteProvider(provider: ClassProvider): T[] | undefined {
     const routes = this.scanProvider(provider);
-    if (!routes) {
+    if (!routes || routes.length === 0) {
       return;
     }
     const addedRoutes = [];
     for (let i = 0; i < routes.length; i++) {
       const route = routes[i];
-      const extRoute = this.extendRoute(route);
-      this.addRoute(extRoute);
-      addedRoutes.push(extRoute);
+      // const extRoute = this.extendRoute(route);
+      this.addRoute(route);
+      addedRoutes.push(route);
     }
     return addedRoutes;
   }
@@ -118,9 +146,7 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     nextProvider: ClassProvider,
     preProviderId: string
   ): { added: T[]; removed: T[]; modified: T[] } {
-    const nextRoutes = (this.scanProvider(nextProvider) || []).map((value) =>
-      this.extendRoute(value)
-    );
+    const nextRoutes = this.scanProvider(nextProvider) || [];
     const preProviders = this.filterRoutes(
       (route) => route.providerId === preProviderId
     );
@@ -148,7 +174,7 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
       }
     });
     nextRoutes.forEach((route) => {
-      this.addRoute(this.extendRoute(route));
+      this.addRoute(route);
       const pre = preProviders.find((value) => value.path === route.path);
       if (!pre) {
         added.push(route);
@@ -158,27 +184,37 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     return { added, removed, modified };
   }
 
-  protected scanProvider(provider: ClassProvider): IReactRoute[] | undefined {
+  protected fromRouteMeta(
+    path: string,
+    providerId: string,
+    meta: IRouteMeta,
+    useClass: Type
+  ): T {
+    const hasStaticState = !!useClass.prototype.initialModelStaticState;
+    const hasState = !!useClass.prototype.initialModelState;
+    return {
+      ...meta,
+      path,
+      providerId,
+      hasStaticState,
+      hasState,
+    } as T;
+  }
+
+  protected scanProvider(provider: ClassProvider): T[] | undefined {
     const { useClass, id } = provider;
     const routeMeta = getRouteMeta(useClass);
     if (!routeMeta) {
       return;
     }
-    const routes: IReactRoute[] = [];
+    const routes: T[] = [];
     if (Array.isArray(routeMeta.path)) {
       routeMeta.path?.forEach((path) => {
-        const route: IReactRoute = {
-          ...routeMeta,
-          path: path,
-          providerId: id,
-        };
+        const route = this.fromRouteMeta(path, id, routeMeta, useClass);
         routes.push(route);
       });
-    } else if (typeof routeMeta.path === "string") {
-      const route: IReactRoute = {
-        path: routeMeta.path,
-        providerId: id,
-      };
+    } else {
+      const route = this.fromRouteMeta(routeMeta.path, id, routeMeta, useClass);
       routes.push(route);
     }
     return routes;

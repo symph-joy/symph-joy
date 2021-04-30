@@ -200,8 +200,12 @@ export class ReactReduxService {
     }
 
     // set reducers
+    const setStateActionType = namespace + "/__SET_STATE";
     this.asyncReducers[namespace] = (state = initState, action: Action) => {
-      if (action.type === namespace + "/__SET_STATE") {
+      if (action.type === setStateActionType) {
+        if (this.isStateRecording) {
+          this.setStateHistories.push(action as ActionSetState);
+        }
         const { nextState } = action as ActionSetState;
         return { ...state, ...nextState };
       } else {
@@ -212,5 +216,19 @@ export class ReactReduxService {
     this.store.replaceReducer(this.createReducer());
 
     return model;
+  }
+
+  private setStateHistories: ActionSetState[];
+  private isStateRecording = false;
+
+  public startRecordState() {
+    this.isStateRecording = true;
+    this.setStateHistories = [];
+  }
+
+  public stopRecordState(): ActionSetState[] {
+    const histories = this.setStateHistories;
+    this.setStateHistories = [];
+    return histories;
   }
 }

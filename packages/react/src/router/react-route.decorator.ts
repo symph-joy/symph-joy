@@ -1,6 +1,7 @@
 import { IReactRoute } from "../interfaces/react-route.interface";
 import { Component } from "react";
-import { getInjectableMeta } from "@symph/core";
+import { getInjectableMeta, Type } from "@symph/core";
+import { any } from "prop-types";
 
 const REACT_ROUTE_META_KEY = "__joy_route";
 
@@ -11,12 +12,26 @@ export interface IReactRouteMatched {
   url: string;
 }
 
-type IRouteMeta = {
+export interface ParsedUrlQuery {
+  [key: string]: string | string[];
+}
+
+export interface IReactRouteStaticPathGenerator<
+  P extends ParsedUrlQuery = ParsedUrlQuery
+> {
+  isFallback(): Promise<boolean> | boolean;
+  getPaths(): Promise<Array<string | { params: P }>>;
+}
+
+export type IRouteMeta<TParams extends ParsedUrlQuery = ParsedUrlQuery> = {
   path: string | string[];
+  staticPathGenerator?:
+    | IReactRouteStaticPathGenerator<TParams>
+    | (new (...args: any[]) => IReactRouteStaticPathGenerator<TParams>);
 } & Pick<IReactRoute, "exact" | "sensitive" | "strict">;
 
-export function Route<T>(
-  options: Partial<IRouteMeta> = {}
+export function Route<TParams extends ParsedUrlQuery = ParsedUrlQuery>(
+  options: Partial<IRouteMeta<TParams>> = {}
 ): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
   return (constructor) => {
     const injectableMeta = getInjectableMeta(constructor);

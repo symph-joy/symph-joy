@@ -715,7 +715,7 @@ export default class Router implements BaseRouter {
     pathname: string,
     query: any,
     as: string,
-    shallow: boolean = false
+    shallow = false
   ): Promise<PrivateRouteInfo> {
     try {
       const cachedRouteInfo = this.components[route];
@@ -944,7 +944,7 @@ export default class Router implements BaseRouter {
       }
 
       if (cancelled) {
-        const err: any = new Error("Loading initial props cancelled");
+        const err: any = new Error("DynamicLoading initial props cancelled");
         err.cancelled = true;
         throw err;
       }

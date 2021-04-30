@@ -32,10 +32,12 @@ import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
 import {
+  JoyRouteInitState,
   ReactAppContainer,
-  ReactApplicationContext,
   ReactAppInitManager,
+  ReactApplicationContext,
 } from "@symph/react";
+import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 
 function noRouter() {
   const message =
@@ -131,7 +133,7 @@ export type RenderOptsPartial = {
   ampOptimizerConfig?: { [key: string]: any };
   isDataReq?: boolean;
   params?: ParsedUrlQuery;
-  previewProps: __ApiPreviewProps;
+  previewProps?: __ApiPreviewProps;
   basePath: string;
   unstable_runtimeJS?: false;
   optimizeFonts: boolean;
@@ -726,17 +728,20 @@ export async function renderToHTML(
     }
 
     const initManager = await reactApplicationContext.get(ReactAppInitManager);
-    initManager.resetTask();
+    const reduxService = await reactApplicationContext.get(ReactReduxService);
+    initManager.resetInitState(pathname);
+    reduxService.startRecordState();
 
     let state = reactApplicationContext.getState();
-
     const html = renderToStaticMarkup(<AppContainer />);
-
-    await initManager.waitAllFinished();
-    initManager.setInitState(true, true);
+    await initManager.waitAllFinished(pathname);
+    // initManager.setInitState(pathname, {initStatic: JoyRouteInitState.SUCCESS, init: JoyRouteInitState.SUCCESS});
+    const reduxStateHistories = reduxService.stopRecordState();
+    (renderOpts as any).pageData = reduxStateHistories;
 
     state = reactApplicationContext.getState();
-    console.log(state);
+
+    return reduxStateHistories;
   };
 
   await renderData();

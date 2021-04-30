@@ -163,7 +163,7 @@ export class CoreContext implements IJoyContext {
 
   public syncGetProvider<TInput = any>(
     typeOrToken: TypeOrTokenType<TInput>,
-    options: { strict?: boolean }
+    options?: { strict?: boolean }
   ): TInput {
     const loadRst = this.get<TInput>(typeOrToken, options);
     if (loadRst instanceof Promise) {

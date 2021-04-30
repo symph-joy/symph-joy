@@ -68,7 +68,7 @@ export default (context) => {
         // fontSize = await page.$eval('#hello', el => el.computedStyleMap().get('font-size').value)
         //
         // try { expect(fontSize).toBe(200)} finally {
-        //   writeFileSync(filePath, originalContent, 'utf8')
+        //   writeFileSync(srcPath, originalContent, 'utf8')
         // }
 
         try {

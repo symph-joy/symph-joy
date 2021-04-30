@@ -8,11 +8,26 @@ import http from "http";
 import { JoyAppConfig } from "../../next-server/server/joy-config/joy-app-config";
 import { NextServer } from "../../next-server/server/next-server";
 import { ServerConfig } from "../../next-server/server/server-config";
+import { ReactContextFactory } from "../../next-server/server/react-context-factory";
+import { Protocol } from "playwright-chromium/types/protocol";
+import { JoyGenModuleServerProvider } from "../../plugin/joy-gen-module-server.provider";
+import { ReactRouterServer } from "../../router/react-router-server";
+import { getServerAutoGenerateModules } from "../../plugin/getServerGenModules";
+import { JoyReactRouterPluginDev } from "../../router/joy-react-router-plugin-dev";
+
+@Configuration()
+class JoyPluginsConfig {
+  @Configuration.Provider({ type: ReactRouterServer })
+  public reactRouter: ReactRouterServer;
+}
 
 @Configuration()
 export class JoyServerConfig {
   @Configuration.Provider()
   public serverConfig: ServerConfig;
+
+  @Configuration.Provider()
+  public reactContextFactory: ReactContextFactory;
 
   @Configuration.Provider()
   public joyServer: NextServer;
@@ -41,7 +56,12 @@ export class JoyStartCommand extends JoyCommand {
   }
 
   async startServer(appContext: CoreContext): Promise<NextServer> {
-    await appContext.loadModule(JoyServerConfig);
+    const distDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir);
+    await appContext.loadModule([
+      ...getServerAutoGenerateModules(distDir),
+      JoyPluginsConfig,
+      JoyServerConfig,
+    ]);
     const config = this.joyAppConfig;
     const { dir, hostname, port } = config;
     const server = await appContext.get(NextServer);
@@ -98,6 +118,9 @@ export class JoyStartCommand extends JoyCommand {
     try {
       const server = await this.startServer(this.appContext);
       await server.prepare();
+      console.log(
+        `started server on http://${args["--hostname"] || "localhost"}:${port}`
+      );
     } catch (err) {
       console.error(err);
       printAndExit(undefined, 1);

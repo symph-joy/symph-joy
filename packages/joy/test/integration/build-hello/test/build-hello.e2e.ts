@@ -9,7 +9,7 @@ describe("build-hello", () => {
     start = Date.now();
     console.log(">>>>> start dev server", start);
     const curPath = path.resolve(__dirname, "../");
-    testContext = await JoyTestContext.createDevContext(curPath);
+    testContext = await JoyTestContext.createServerContext(curPath);
     console.log(">>>>> server prepared", testContext.port, Date.now() - start);
   }, 3000000);
 
@@ -19,8 +19,8 @@ describe("build-hello", () => {
   });
 
   test("should render hello page", async () => {
-    // await page.goto(testContext.getUrl("/"));
-    // const browser = await page.$eval("#message", (el: any) => el.innerHTML);
-    // expect(browser).toContain("Welcome to Joy!");
+    await page.goto(testContext.getUrl("/"));
+    const browser = await page.$eval("#message", (el: any) => el.innerHTML);
+    expect(browser).toContain("Welcome to Joy!");
   });
 });

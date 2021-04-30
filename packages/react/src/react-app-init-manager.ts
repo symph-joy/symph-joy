@@ -1,50 +1,83 @@
 import { ReactModel } from "./react-model";
 
-export class ReactAppInitManager extends ReactModel<{
-  hasInit: boolean;
-  hasInitStatic: boolean;
-}> {
+export enum JoyRouteInitState {
+  NONE,
+  LOADING,
+  SUCCESS,
+  ERROR,
+}
+
+export class ReactAppInitManager extends ReactModel<
+  Record<
+    string,
+    {
+      init: JoyRouteInitState;
+      initStatic: JoyRouteInitState;
+    }
+  >
+> {
   /**
    * 是否是静态渲染，一般用于SSG
    */
   public isRenderStatic = false;
+
+  public initTasks: Record<string, Promise<any>[]> = {};
 
   constructor() {
     super();
   }
 
   getInitState() {
-    return {
-      hasInit: false,
-      hasInitStatic: false,
-    };
+    return {};
   }
 
-  // 在执行中的任务队列
-  public initTasks: Promise<any>[] = [];
-
-  addTask(task: Promise<any> | (() => Promise<any>)): void {
+  /**
+   *  !!impotent: must call resetInitState, when the initial is finished
+   * @param pathname
+   * @param task
+   */
+  addTask(pathname: string, task: Promise<any> | (() => Promise<any>)): void {
+    let initTasks = this.initTasks[pathname];
+    if (!initTasks) {
+      initTasks = [];
+      this.initTasks[pathname] = initTasks;
+    }
     if (task instanceof Promise) {
-      this.initTasks.push(task);
+      initTasks.push(task);
     } else {
       const rst = task();
-      this.initTasks.push(rst);
+      initTasks.push(rst);
     }
   }
 
-  waitAllFinished() {
-    return Promise.all(this.initTasks);
+  waitAllFinished(pathname: string) {
+    let tasks = this.initTasks[pathname] || [];
+    return Promise.all(tasks);
   }
 
-  setInitState(hasInitStatic: boolean, hasInit: boolean) {
-    this.setState({ hasInitStatic, hasInit });
-  }
-
-  resetTask() {
-    this.initTasks = [];
-    this.setState({
-      hasInitStatic: false,
-      hasInit: false,
+  setInitState(
+    pathname: string,
+    {
+      initStatic,
+      init,
+    }: { initStatic?: JoyRouteInitState; init?: JoyRouteInitState }
+  ) {
+    const nextState = Object.assign({}, this.state[pathname], {
+      initStatic: initStatic,
+      init: init,
     });
+    this.setState({
+      [pathname]: nextState,
+    });
+  }
+
+  resetInitState(pathname: string) {
+    this.setState({
+      [pathname]: {
+        initStatic: JoyRouteInitState.NONE,
+        init: JoyRouteInitState.NONE,
+      },
+    });
+    delete this.initTasks[pathname];
   }
 }

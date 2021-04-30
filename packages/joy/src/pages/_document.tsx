@@ -448,6 +448,7 @@ export class Head extends Component<
           name="next-head-count"
           content={React.Children.count(head || []).toString()}
         />
+        <link rel="icon" href="data:image/ico;base64,aWNv" />
         {inAmpMode && (
           <>
             <meta

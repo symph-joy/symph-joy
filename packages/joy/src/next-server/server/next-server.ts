@@ -87,10 +87,16 @@ import {
   ProviderLifecycle,
 } from "@symph/core";
 import { JoyAppConfig } from "./joy-config/joy-app-config";
-import { ServerConfig } from "./server-config";
-import { JoyReactAppServerConfig } from "../lib/joy-react-app-server-config";
-import { ApplicationConfig, ReactApplicationContext } from "@symph/react";
+// import { ServerConfig } from "./server-config";
+// import { JoyReactAppServerConfig } from "../lib/joy-react-app-server-config";
+import {
+  ApplicationConfig,
+  ReactApplicationContext,
+  ReactRouter,
+} from "@symph/react";
 import React from "react";
+import { ReactContextFactory } from "./react-context-factory";
+import { ReactRouterServer } from "../../router/react-router-server";
 
 const getCustomRouteMatcher = pathMatch(true);
 
@@ -175,7 +181,9 @@ export class NextServer implements ProviderLifecycle {
   // }: ServerConstructor = {}) {
   public constructor(
     protected joyAppConfig: JoyAppConfig,
-    protected serverConfig: ServerConfig
+    protected reactRouter: ReactRouter,
+    // protected serverConfig: ServerConfig,
+    protected reactContextFactory: ReactContextFactory
   ) {
     const { dir, quiet, dev, customServer, distDir } = joyAppConfig;
     this.dir = joyAppConfig.resolveAppDir(dir);
@@ -206,7 +214,8 @@ export class NextServer implements ProviderLifecycle {
       canonicalBase: this.nextConfig.amp.canonicalBase,
       buildId: this.buildId,
       generateEtags,
-      previewProps: this.getPreviewProps(),
+      // previewProps: this.getPreviewProps(),
+      previewProps: {} as any, // todo remove
       customServer: customServer === true ? true : undefined,
       ampOptimizerConfig: this.nextConfig.experimental.amp?.optimizer,
       basePath: this.nextConfig.basePath,
@@ -263,11 +272,12 @@ export class NextServer implements ProviderLifecycle {
     this.incrementalCache = new IncrementalCache({
       dev,
       distDir: this.outDir,
-      pagesDir: join(
-        this.outDir,
-        this._isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
-        "pages"
-      ),
+      // pagesDir: join(
+      //   this.outDir,
+      //   this._isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
+      //   "pages"
+      // ),
+      pagesDir: join(this.outDir, "export"),
       flushToDisk: this.nextConfig.experimental.sprFlushToDisk,
     });
 
@@ -369,7 +379,7 @@ export class NextServer implements ProviderLifecycle {
   }
 
   protected getPreviewProps(): __ApiPreviewProps {
-    return this.getPrerenderManifest().preview;
+    return this.getPrerenderManifest().preview!;
   }
 
   protected generateRoutes(): {
@@ -967,14 +977,14 @@ export class NextServer implements ProviderLifecycle {
   ): Promise<FindComponentsResult | null> {
     const paths = [
       // try serving a static AMP version first
-      query.amp ? normalizePagePath(pathname) + ".amp" : null,
+      // query.amp ? normalizePagePath(pathname) + ".amp" : null,
       pathname,
     ].filter(Boolean);
-    for (const pagePath of paths) {
+    for (const routePath of paths) {
       try {
         const components = await loadComponents(
           this.outDir,
-          pagePath!,
+          routePath!,
           !this.renderOpts.dev && this._isLikeServerless
         );
         return {
@@ -1038,8 +1048,8 @@ export class NextServer implements ProviderLifecycle {
   private async renderToHTMLWithComponents(
     req: IncomingMessage,
     res: ServerResponse,
-    pathname: string,
-    reactAppContext: ReactApplicationContext,
+    pathname: string, // route pathname
+    reactAppContext: ReactApplicationContext | undefined,
     { components, query }: FindComponentsResult,
     opts: RenderOptsPartial
   ): Promise<string | null> {
@@ -1062,7 +1072,7 @@ export class NextServer implements ProviderLifecycle {
     // const hasStaticPaths = !!components.getStaticPaths
 
     // todo 支持ssg
-    const isSSG = false;
+    const isSSG = true;
     const isServerProps = true;
     const hasStaticPaths = false;
 
@@ -1325,47 +1335,47 @@ export class NextServer implements ProviderLifecycle {
     return resHtml;
   }
 
-  public async getAutoGenerateModules(): Promise<any[]> {
-    const genServerModulesPath = this.joyAppConfig.resolveAppDir(
-      this.joyAppConfig.distDir,
-      "./out/server/gen-server-modules.js"
-    );
-    const modules = require(genServerModulesPath);
-    return modules.default || modules;
-    // if (await fileExists(genServerModulesPath)){
-    //   const modules = require(genServerModulesPath)
-    //   return  modules.default || modules
-    // } else {
-    //   return  []
-    // }
-  }
-
-  protected getReactAppProviderConfig(): EntryType[] {
-    return [JoyReactAppServerConfig];
-  }
-
-  protected async getReactAppContext(
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathname: string,
-    query: ParsedUrlQuery
-  ): Promise<ReactApplicationContext> {
-    const applicationConfig = new ApplicationConfig();
-    const joyContainer = new JoyContainer();
-    const reactApplicationContext = new ReactApplicationContext(
-      {},
-      applicationConfig,
-      joyContainer
-    );
-    await reactApplicationContext.init();
-    const autoGenModules = await this.getAutoGenerateModules();
-    await reactApplicationContext.loadModule([
-      ...autoGenModules,
-      { reactRouterProps: { type: Object, useValue: { location: pathname } } }, // StaticRouter props
-      ...this.getReactAppProviderConfig(),
-    ]);
-    return reactApplicationContext;
-  }
+  // public async getAutoGenerateModules(): Promise<any[]> {
+  //   const genServerModulesPath = this.joyAppConfig.resolveAppDir(
+  //     this.joyAppConfig.distDir,
+  //     "./out/server/gen-server-modules.js"
+  //   );
+  //   const modules = require(genServerModulesPath);
+  //   return modules.default || modules;
+  //   // if (await fileExists(genServerModulesPath)){
+  //   //   const modules = require(genServerModulesPath)
+  //   //   return  modules.default || modules
+  //   // } else {
+  //   //   return  []
+  //   // }
+  // }
+  //
+  // protected getReactAppProviderConfig(): EntryType[] {
+  //   return [JoyReactAppServerConfig];
+  // }
+  //
+  // protected async getReactAppContext(
+  //   req: IncomingMessage,
+  //   res: ServerResponse,
+  //   pathname: string,
+  //   query: ParsedUrlQuery
+  // ): Promise<ReactApplicationContext> {
+  //   const applicationConfig = new ApplicationConfig();
+  //   const joyContainer = new JoyContainer();
+  //   const reactApplicationContext = new ReactApplicationContext(
+  //     {},
+  //     applicationConfig,
+  //     joyContainer
+  //   );
+  //   await reactApplicationContext.init();
+  //   const autoGenModules = await this.getAutoGenerateModules();
+  //   await reactApplicationContext.loadModule([
+  //     ...autoGenModules,
+  //     { reactRouterProps: { type: Object, useValue: { location: pathname } } }, // StaticRouter props
+  //     ...this.getReactAppProviderConfig(),
+  //   ]);
+  //   return reactApplicationContext;
+  // }
 
   public async renderToHTML(
     req: IncomingMessage,
@@ -1373,10 +1383,11 @@ export class NextServer implements ProviderLifecycle {
     pathname: string,
     query: ParsedUrlQuery = {}
   ): Promise<string | null> {
-    console.dir(this.nextConfig);
+    // ssg
+
     await this.onBeforeRender.call({ req, res, pathname, query });
 
-    const reactAppContext = await this.getReactAppContext(
+    const reactAppContext = await this.reactContextFactory.getReactAppContext(
       req,
       res,
       pathname,
@@ -1384,7 +1395,7 @@ export class NextServer implements ProviderLifecycle {
     );
 
     if (res.writableEnded) {
-      // todo 终止渲染，场景：在hook中终止了渲染。
+      // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
     }
 
     try {
@@ -1504,8 +1515,17 @@ export class NextServer implements ProviderLifecycle {
     //   this.customErrorNo404Warn();
     // }
 
-    // const reactAppContext: ReactApplicationContext = null;
-    const reactAppContext: any = undefined;
+    let reactAppContext: ReactApplicationContext | undefined;
+    if (!err) {
+      // 404 page
+      reactAppContext = await this.reactContextFactory.getReactAppContext(
+        req,
+        res,
+        _pathname,
+        query
+      );
+    }
+    // const reactAppContext: any = undefined;
 
     let html: string | null;
     try {
@@ -1567,7 +1587,7 @@ export class NextServer implements ProviderLifecycle {
       await serveStatic(req, res, path);
     } catch (err) {
       if (err.code === "ENOENT" || err.statusCode === 404) {
-        this.render404(req, res, parsedUrl);
+        await this.render404(req, res, parsedUrl);
       } else if (err.statusCode === 412) {
         res.statusCode = 412;
         return this.renderError(err, req, res, path);
