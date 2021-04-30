@@ -26,11 +26,11 @@ import createSpinner from "./spinner";
 import { verifyTypeScriptSetup } from "../lib/verifyTypeScriptSetup";
 import {
   getJsPageSizeInKb,
-  getNamedExports,
   hasCustomGetInitialProps,
   PageInfo,
   printCustomRoutes,
   printTreeView,
+  isPageStatic,
 } from "./utils";
 import { __ApiPreviewProps } from "../next-server/server/api-utils";
 import crypto from "crypto";
@@ -61,12 +61,19 @@ import { ClientSsgManifest, PrerenderManifest, SsgRoute } from "./index";
 import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
-import { Injectable } from "@symph/core";
+import { ClassProvider, CoreContext, Injectable } from "@symph/core";
 import { getWebpackConfigForSrc } from "./webpack-config-for-src";
 import webpack from "webpack";
 import { FileGenerator } from "../plugin/file-generator";
 import { FileScanner } from "../next-server/server/scanner/file-scanner";
-import { JoyReactRouter } from "../router/joy-react-router";
+import {
+  IJoyReactRouteBuild,
+  JoyReactRouterPlugin,
+} from "../router/joy-react-router-plugin";
+import Worker from "jest-worker";
+import { ReactController } from "@symph/react";
+import { JoyPrerenderService } from "./prerender/joy-prerender.service";
+import { JoyExportAppService } from "../export/joy-export-app.service";
 
 @Injectable()
 export class JoyBuildService {
@@ -75,20 +82,40 @@ export class JoyBuildService {
   private outDir: string;
   // const isLikeServerless = isTargetLikeServerless(target);
   private isLikeServerless = false; // todo remove
+  private buildManifestPath: string;
 
   constructor(
+    private readonly coreContext: CoreContext,
     private joyConfig: JoyAppConfig,
     private buildConfig: BuildConfig,
     private fileGenerator: FileGenerator,
     private fileScanner: FileScanner,
-    private joyReactRoute: JoyReactRouter
+    private joyReactRoute: JoyReactRouterPlugin,
+    private prerenderService: JoyPrerenderService,
+    public joyExportAppService: JoyExportAppService
   ) {
     this.dir = joyConfig.resolveAppDir();
     this.distDir = joyConfig.resolveAppDir(joyConfig.distDir);
     this.outDir = joyConfig.resolveAppDir(joyConfig.distDir, OUT_DIRECTORY);
+    this.buildManifestPath = path.join(this.outDir, BUILD_MANIFEST);
   }
 
-  public async buildSrcAndScan(serverWebpackConfig: webpack.Configuration) {
+  public async buildSrcAndScan() {
+    const buildId = await this.buildConfig.getBuildId();
+    const target = this.joyConfig.target;
+    const pagesDir = this.joyConfig.resolvePagesDir();
+    const serverWebpackConfig = await getBaseWebpackConfig(this.dir, {
+      // tracer,
+      buildId,
+      // reactProductionProfiling,
+      isServer: true,
+      config: this.joyConfig,
+      target,
+      pagesDir,
+      entrypoints: {},
+      rewrites: [],
+    });
+
     const distPagesDir = this.joyConfig.resolveAppDir(
       this.joyConfig.distDir,
       "dist/src"
@@ -109,140 +136,281 @@ export class JoyBuildService {
     return srcResult;
   }
 
-  // public async analysisBuild(){
-  //   const analysisBegin = process.hrtime();
-  //
-  //   const reactRoutes = this.joyReactRoute.getRoutes()
-  //
-  //   const manifestPath = path.join(
-  //     this.outDir,
-  //     this.isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
-  //     PAGES_MANIFEST
-  //   );
-  //
-  //   const pagesManifest = JSON.parse(
-  //     await promises.readFile(manifestPath, "utf8")
-  //   ) as PagesManifest;
-  //
-  //   await Promise.all(
-  //
-  //     reactRoutes.map(async (reactRoute) => {
-  //       const {path, filePath} = reactRoute
-  //
-  //       // const actualPage = normalizePagePath(page);
-  //       const [selfSize, allSize] = await getJsPageSizeInKb(
-  //         filePath,
-  //         outDir,
-  //         buildManifest,
-  //         config.experimental.modern
-  //       );
-  //
-  //       let isSsg = false;
-  //       let isStatic = false;
-  //       let isHybridAmp = false;
-  //       let ssgPageRoutes: string[] | null = null;
-  //
-  //       const nonReservedPage = !page.match(/^\/(_app|_error|_document|api)/);
-  //
-  //       if (nonReservedPage) {
-  //         const serverBundle = getPagePath(page, outDir);
-  //
-  //         if (customAppGetInitialProps === undefined) {
-  //           customAppGetInitialProps = hasCustomGetInitialProps(
-  //             isLikeServerless ? serverBundle : getPagePath("/_app", outDir),
-  //             runtimeEnvConfig,
-  //             true
-  //           );
-  //
-  //           namedExports = getNamedExports(
-  //             isLikeServerless ? serverBundle : getPagePath("/_app", outDir),
-  //             runtimeEnvConfig
-  //           );
-  //
-  //           if (customAppGetInitialProps) {
-  //             console.warn(
-  //               chalk.bold.yellow(`Warning: `) +
-  //               chalk.yellow(
-  //                 `You have opted-out of Automatic Static Optimization due to \`getInitialProps\` in \`pages/_app\`. This does not opt-out pages with \`getStaticProps\``
-  //               )
-  //             );
-  //             console.warn(
-  //               "Read more: https://err.sh/next.js/opt-out-auto-static-optimization\n"
-  //             );
-  //           }
-  //         }
-  //
-  //         try {
-  //           const workerResult = await staticCheckWorkers.isPageStatic(
-  //             page,
-  //             serverBundle,
-  //             runtimeEnvConfig
-  //           );
-  //
-  //           if (workerResult.isHybridAmp) {
-  //             isHybridAmp = true;
-  //             hybridAmpPages.add(page);
-  //           }
-  //
-  //           if (workerResult.hasStaticProps) {
-  //             ssgPages.add(page);
-  //             isSsg = true;
-  //
-  //             if (workerResult.prerenderRoutes) {
-  //               additionalSsgPaths.set(page, workerResult.prerenderRoutes);
-  //               ssgPageRoutes = workerResult.prerenderRoutes;
-  //             }
-  //
-  //             if (workerResult.prerenderFallback === "unstable_blocking") {
-  //               ssgBlockingFallbackPages.add(page);
-  //             } else if (workerResult.prerenderFallback === true) {
-  //               ssgStaticFallbackPages.add(page);
-  //             }
-  //           } else if (workerResult.hasServerProps) {
-  //             serverPropsPages.add(page);
-  //           } else if (
-  //             workerResult.isStatic &&
-  //             customAppGetInitialProps === false
-  //           ) {
-  //             staticPages.add(page);
-  //             isStatic = true;
-  //           }
-  //
-  //           if (hasPages404 && page === "/404") {
-  //             if (!workerResult.isStatic && !workerResult.hasStaticProps) {
-  //               throw new Error(PAGES_404_GET_INITIAL_PROPS_ERROR);
-  //             }
-  //             // we need to ensure the 404 lambda is present since we use
-  //             // it when _app has getInitialProps
-  //             if (customAppGetInitialProps && !workerResult.hasStaticProps) {
-  //               staticPages.delete(page);
-  //             }
-  //           }
-  //         } catch (err) {
-  //           if (err.message !== "INVALID_DEFAULT_EXPORT") throw err;
-  //           invalidPages.add(page);
-  //         }
-  //       }
-  //
-  //       pageInfos.set(page, {
-  //         size: selfSize,
-  //         totalSize: allSize,
-  //         static: isStatic,
-  //         isSsg,
-  //         isHybridAmp,
-  //         ssgPageRoutes,
-  //         initialRevalidateSeconds: false,
-  //       });
-  //     })
-  //   );
+  public async analysisBuild(): Promise<Map<string, PageInfo>> {
+    const reactRoutes = this.joyReactRoute.getRoutes();
+    const staticCheckWorker = require.resolve("./utils");
+    const staticCheckWorkers = new Worker(staticCheckWorker, {
+      numWorkers: 2,
+      // enableWorkerThreads: config.experimental.workerThreads,
+    }) as Worker & { isPageStatic: typeof isPageStatic };
+
+    staticCheckWorkers.getStdout().pipe(process.stdout);
+    staticCheckWorkers.getStderr().pipe(process.stderr);
+
+    // const staticCheckWorkers = require("./utils");
+
+    const analysisBegin = process.hrtime();
+    const pageInfos = new Map<string, PageInfo>();
+
+    // const reactRoutes = this.joyReactRoute.getRoutes()
+
+    const manifestPath = path.join(
+      this.outDir,
+      this.isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
+      PAGES_MANIFEST
+    );
+
+    const pagesManifest = JSON.parse(
+      await promises.readFile(manifestPath, "utf8")
+    ) as PagesManifest;
+    const buildManifest = JSON.parse(
+      await promises.readFile(this.buildManifestPath, "utf8")
+    ) as BuildManifest;
+
+    await Promise.all(
+      reactRoutes.map(async (reactRoute) => {
+        const { path: _pathname, providerId } = reactRoute;
+        const path: string = _pathname as string;
+        if (!providerId) {
+          throw new Error(`The route${path} is not a provider.`);
+        }
+
+        let isSsg = false;
+        let isStatic = false;
+        let isHybridAmp = false;
+        let ssgPageRoutes: string[] | null = null;
+        let ssgFallback = false;
+
+        // todo 计算路由首次加的大小
+        // const actualPage = normalizePagePath(page);
+        // const [selfSize, allSize] = await getJsPageSizeInKb(
+        //   srcPath,
+        //   this.outDir,
+        //   buildManifest,
+        //   config.experimental.modern
+        // );
+
+        const routeModule = this.coreContext.getProviderDefinition<
+          ClassProvider
+        >(providerId);
+        const routeClass = (routeModule?.useClass as any) as typeof ReactController;
+        const pathIsDynamic = isDynamicRoute(path);
+        const parentRoutes = this.joyReactRoute.getParentRoutes(
+          reactRoute.path
+        );
+
+        const hasStaticModelState = !!routeClass.prototype
+          .initialModelStaticState;
+        const hasModelState = !!routeClass.prototype.initialModelState;
+        isSsg = hasStaticModelState;
+        isStatic = !hasStaticModelState && !hasModelState;
+
+        // if (hasStaticModelState && !pathIsDynamic) {
+        //   throw new Error(
+        //     `getStaticPaths can only be used with dynamic pages, not '${page}'.` +
+        //     `\nLearn more: https://nextjs.org/docs/routing/dynamic-routes`
+        //   )
+        // }
+
+        // try {
+        //   const workerResult = await staticCheckWorkers.isPageStatic(
+        //     page,
+        //     serverBundle,
+        //     runtimeEnvConfig
+        //   );
+        //
+        //   if (workerResult.isHybridAmp) {
+        //     isHybridAmp = true;
+        //     hybridAmpPages.add(page);
+        //   }
+        //
+        //   if (workerResult.hasStaticProps) {
+        //     ssgPages.add(page);
+        //     isSsg = true;
+        //
+        //     if (workerResult.prerenderRoutes) {
+        //       additionalSsgPaths.set(page, workerResult.prerenderRoutes);
+        //       ssgPageRoutes = workerResult.prerenderRoutes;
+        //     }
+        //
+        //     if (workerResult.prerenderFallback === "unstable_blocking") {
+        //       ssgBlockingFallbackPages.add(page);
+        //     } else if (workerResult.prerenderFallback === true) {
+        //       ssgStaticFallbackPages.add(page);
+        //     }
+        //   } else if (workerResult.hasServerProps) {
+        //     serverPropsPages.add(page);
+        //   } else if (
+        //     workerResult.isStatic &&
+        //     customAppGetInitialProps === false
+        //   ) {
+        //     staticPages.add(page);
+        //     isStatic = true;
+        //   }
+        //
+        //   if (hasPages404 && page === "/404") {
+        //     if (!workerResult.isStatic && !workerResult.hasStaticProps) {
+        //       throw new Error(PAGES_404_GET_INITIAL_PROPS_ERROR);
+        //     }
+        //     // we need to ensure the 404 lambda is present since we use
+        //     // it when _app has getInitialProps
+        //     if (customAppGetInitialProps && !workerResult.hasStaticProps) {
+        //       staticPages.delete(page);
+        //     }
+        //   }
+        // } catch (err) {
+        //   if (err.message !== "INVALID_DEFAULT_EXPORT") throw err;
+        //   invalidPages.add(page);
+        // }
+        pageInfos.set(path, {
+          size: -1,
+          totalSize: -1,
+          static: isStatic,
+          isSsg,
+          isHybridAmp,
+          ssgPageRoutes,
+          ssgFallback,
+          initialRevalidateSeconds: false as const,
+        } as PageInfo);
+      })
+    );
+
+    return pageInfos;
+  }
+
+  // public async getPrerenderPath(reactRoute: IJoyReactRouteBuild): Promise<string[]>{
+  //   const {s} = reactRoute
+  //   const routeModule = this.coreContext.getProviderDefinition<ClassProvider>()
+  //   return []
   // }
+
+  public async prerenderRoutes(
+    pageInfos: Map<string, PageInfo>
+  ): Promise<PrerenderManifest> {
+    const distDir = this.distDir;
+    const outDir = this.outDir;
+    const dir = this.dir;
+    const buildId = await this.buildConfig.getBuildId();
+
+    const prerenderInfos = await this.prerenderService.getPrerenderList();
+
+    // const combinedPages = [...staticPages, ...ssgPages];
+    const combinedPages = prerenderInfos.reduce<string[]>(
+      (value, info, infoIndex) => {
+        value.push(...info.paths);
+        return value;
+      },
+      []
+    );
+    // const {exportApp} = require("../export");
+
+    const exportConfig: any = {
+      // ...config,
+      initialPageRevalidationMap: {},
+
+      exportPathMap: (defaultMap: any) => {
+        prerenderInfos.forEach((prerenderInfo) => {
+          const { route, paths, isFallback } = prerenderInfo;
+          for (let i = 0; i < paths.length; i++) {
+            const path = paths[i];
+            if (defaultMap[path]) {
+              console.warn(`multi define prerender url path: ${path}`);
+            }
+            defaultMap[path] = { page: path, query: {} };
+          }
+          if (isDynamicRoute(prerenderInfo.route) && isFallback) {
+            defaultMap[route] = { page: path, query: { __nextFallback: true } };
+          }
+        });
+
+        return defaultMap;
+      },
+      trailingSlash: false,
+    };
+
+    const exportOptions = {
+      silent: false,
+      buildExport: true,
+      threads: this.joyConfig.experimental.cpus,
+      pages: combinedPages,
+      outdir: path.join(outDir, "export"),
+      statusMessage: "Generating static pages",
+      ...exportConfig,
+    };
+
+    // tood 导出需要的joyAppConfig 独立出来
+    // await exportApp(dir, exportOptions, exportConfig);
+    await this.joyExportAppService.exportApp(dir, exportOptions);
+
+    const postBuildSpinner = createSpinner({
+      prefixText: `${Log.prefixes.info} Finalizing page optimization`,
+    });
+
+    const finalPrerenderRoutes: { [route: string]: SsgRoute } = {};
+    const finalDynamicRoutes: PrerenderManifest["dynamicRoutes"] = {};
+    prerenderInfos.forEach((prerenderInfo) => {
+      const { route, paths, isFallback } = prerenderInfo;
+      const isDynamic = isDynamicRoute(route);
+      for (let i = 0; i < paths.length; i++) {
+        const pathname = paths[i];
+        const file = normalizePagePath(pathname);
+        finalPrerenderRoutes[pathname] = {
+          initialRevalidateSeconds:
+            exportConfig.initialPageRevalidationMap[pathname],
+          srcRoute: isDynamic ? route : null,
+          dataRoute: path.posix.join("/_next/data", buildId, `${file}.json`),
+        };
+      }
+
+      if (isDynamic) {
+        const normalizedRoute = normalizePagePath(route);
+        const dataRoute = path.posix.join(
+          "/_next/data",
+          buildId,
+          `${normalizedRoute}.json`
+        );
+        finalDynamicRoutes[route] = {
+          routeRegex: normalizeRouteRegex(getRouteRegex(route).re.source),
+          dataRoute,
+          fallback: isFallback ? `${normalizedRoute}.html` : false,
+          dataRouteRegex: normalizeRouteRegex(
+            getRouteRegex(dataRoute.replace(/\.json$/, "")).re.source.replace(
+              /\(\?:\\\/\)\?\$$/,
+              "\\.json$"
+            )
+          ),
+        };
+      }
+    });
+
+    const prerenderManifest: PrerenderManifest = {
+      version: 2,
+      routes: finalPrerenderRoutes,
+      dynamicRoutes: finalDynamicRoutes,
+    };
+
+    await promises.writeFile(
+      path.join(outDir, PRERENDER_MANIFEST),
+      JSON.stringify(prerenderManifest),
+      "utf8"
+    );
+    await this.generateClientSsgManifest(prerenderManifest, {
+      outDir,
+      buildId,
+      isModern: this.joyConfig.experimental.modern,
+    });
+
+    if (postBuildSpinner) postBuildSpinner.stopAndPersist();
+    console.log();
+    return prerenderManifest;
+  }
 
   public async build(
     reactProductionProfiling = false,
     debugOutput = false
   ): Promise<void> {
     const config = this.joyConfig;
-    const dir = config.resolveAppDir();
+    const dir = this.dir;
     if (!(await isWriteable(dir))) {
       throw new Error(
         "> Build directory is not writeable. https://err.sh/vercel/next.js/build-dir-not-writeable"
@@ -266,6 +434,8 @@ export class JoyBuildService {
       )} --profile=${reactProductionProfiling} --debug=${debugOutput}`
     );
 
+    await promises.mkdir(outDir, { recursive: true });
+
     const { headers, rewrites, redirects } = await loadCustomRoutes(config);
 
     // if (ciEnvironment.isCI && !ciEnvironment.hasNextSupport) {
@@ -284,24 +454,9 @@ export class JoyBuildService {
       prefixText: `${Log.prefixes.info} Creating an optimized production build`,
     });
 
-    // const telemetry = new Telemetry({ outDir });
-    //
     const publicDir = config.resolveAppDir("public");
     const pagesDir = this.joyConfig.resolvePagesDir();
     const hasPublicDir = await fileExists(publicDir);
-
-    // await telemetry.record(
-    //   eventCliSession(PHASE_PRODUCTION_BUILD, dir, {
-    //     cliCommand: "build",
-    //     isSrcDir: path.relative(dir, pagesDir!).startsWith("src"),
-    //     hasNowJson: !!(await findUp("now.json", { cwd: dir })),
-    //     isCustomServer: null,
-    //   })
-    // );
-    //
-    // eventNextPlugins(path.resolve(dir)).then((events: any) =>
-    //   telemetry.record(events)
-    // );
 
     const ignoreTypeScriptErrors = Boolean(
       config.typescript?.ignoreBuildErrors
@@ -481,14 +636,16 @@ export class JoyBuildService {
       dataRoutes: [],
     };
 
-    await promises.mkdir(outDir, { recursive: true });
-    // We need to write the manifest with rewrites before build
-    // so serverless can import the manifest
-    await promises.writeFile(
-      routesManifestPath,
-      JSON.stringify(routesManifest),
-      "utf8"
-    );
+    // await promises.mkdir(outDir, { recursive: true });
+    // // We need to write the manifest with rewrites before build
+    // // so serverless can import the manifest
+    // await promises.writeFile(
+    //   routesManifestPath,
+    //   JSON.stringify(routesManifest),
+    //   "utf8"
+    // );
+
+    const srcResult = await this.buildSrcAndScan();
 
     const configs = await Promise.all([
       getBaseWebpackConfig(dir, {
@@ -501,6 +658,7 @@ export class JoyBuildService {
         pagesDir,
         entrypoints: entrypoints.client,
         rewrites,
+        routes: this.joyReactRoute.getRoutes(),
       }),
       getBaseWebpackConfig(dir, {
         tracer,
@@ -512,13 +670,11 @@ export class JoyBuildService {
         pagesDir,
         entrypoints: entrypoints.server,
         rewrites,
+        routes: this.joyReactRoute.getRoutes(),
       }),
     ]);
 
     const [clientConfig, serverConfig] = configs;
-    const srcResult = await this.buildSrcAndScan(serverConfig);
-
-    // const clientConfig = configs[0];
 
     if (
       clientConfig.optimization &&
@@ -535,24 +691,7 @@ export class JoyBuildService {
 
     let result: CompilerResult = { warnings: [], errors: [] };
     // // TODO: why do we need this?? https://github.com/vercel/next.js/issues/8253
-    // if (isLikeServerless) {
-    //   const clientResult = await runCompiler(clientConfig);
-    //   // Fail build if clientResult contains errors
-    //   if (clientResult.errors.length > 0) {
-    //     result = {
-    //       warnings: [...clientResult.warnings],
-    //       errors: [...clientResult.errors],
-    //     };
-    //   } else {
-    //     const serverResult = await runCompiler(configs[1]);
-    //     result = {
-    //       warnings: [...clientResult.warnings, ...serverResult.warnings],
-    //       errors: [...clientResult.errors, ...serverResult.errors],
-    //     };
-    //   }
-    // } else {
     result = await runCompiler(configs);
-    // }
     result = {
       warnings: [...srcResult.warnings, ...result.warnings],
       errors: [...srcResult.errors, ...result.errors],
@@ -599,12 +738,6 @@ export class JoyBuildService {
       }
       throw new Error("> Build failed because of webpack errors");
     } else {
-      // telemetry.record(
-      //   eventBuildCompleted(pagePaths, {
-      //     durationInSeconds: webpackBuildEnd[0],
-      //   })
-      // );
-
       if (result.warnings.length > 0) {
         Log.warn("Compiled with warnings\n");
         console.warn(result.warnings.join("\n\n"));
@@ -626,35 +759,24 @@ export class JoyBuildService {
     const buildManifestPath = path.join(outDir, BUILD_MANIFEST);
 
     const ssgPages = new Set<string>();
-    const ssgStaticFallbackPages = new Set<string>();
-    const ssgBlockingFallbackPages = new Set<string>();
     const staticPages = new Set<string>();
-    const invalidPages = new Set<string>();
-    const hybridAmpPages = new Set<string>();
-    const serverPropsPages = new Set<string>();
-    const additionalSsgPaths = new Map<string, Array<string>>();
-    const pageInfos = new Map<string, PageInfo>();
-    const pagesManifest = JSON.parse(
-      await promises.readFile(manifestPath, "utf8")
-    ) as PagesManifest;
     const buildManifest = JSON.parse(
       await promises.readFile(buildManifestPath, "utf8")
     ) as BuildManifest;
 
     let customAppGetInitialProps: boolean | undefined;
-    let namedExports: Array<string> | undefined;
 
     process.env.NEXT_PHASE = PHASE_PRODUCTION_BUILD;
 
-    // const staticCheckWorkers = new Worker(staticCheckWorker, {
-    //   numWorkers: config.experimental.cpus,
-    //   enableWorkerThreads: config.experimental.workerThreads,
-    // }) as Worker & { isPageStatic: typeof isPageStatic }
+    // // const staticCheckWorkers = new Worker(staticCheckWorker, {
+    // //   numWorkers: config.experimental.cpus,
+    // //   enableWorkerThreads: config.experimental.workerThreads,
+    // // }) as Worker & { isPageStatic: typeof isPageStatic }
+    // //
+    // // staticCheckWorkers.getStdout().pipe(process.stdout)
+    // // staticCheckWorkers.getStderr().pipe(process.stderr)
     //
-    // staticCheckWorkers.getStdout().pipe(process.stdout)
-    // staticCheckWorkers.getStderr().pipe(process.stderr)
-
-    const staticCheckWorkers = require("./utils");
+    // const staticCheckWorkers = require("./utils");
 
     const runtimeEnvConfig = {
       publicRuntimeConfig: config.publicRuntimeConfig,
@@ -670,488 +792,89 @@ export class JoyBuildService {
       ));
 
     const analysisBegin = process.hrtime();
-    await Promise.all(
-      pageKeys.map(async (page) => {
-        const actualPage = normalizePagePath(page);
-        const [selfSize, allSize] = await getJsPageSizeInKb(
-          actualPage,
-          outDir,
-          buildManifest,
-          config.experimental.modern
-        );
 
-        let isSsg = false;
-        let isStatic = false;
-        let isHybridAmp = false;
-        let ssgPageRoutes: string[] | null = null;
+    const reactRoutes = this.joyReactRoute.getRoutes();
+    const pageInfos: Map<string, PageInfo> = await this.analysisBuild();
+    pageInfos.forEach((pageInfo, route) => {
+      if (pageInfo.isSsg) {
+        ssgPages.add(route);
+      }
+      if (pageInfo.static) {
+        staticPages.add(route);
+      }
+    });
 
-        const nonReservedPage = !page.match(/^\/(_app|_error|_document|api)/);
+    await writeBuildId(outDir, buildId);
 
-        if (nonReservedPage) {
-          const serverBundle = getPagePath(page, outDir);
+    await this.prerenderRoutes(pageInfos);
 
-          if (customAppGetInitialProps === undefined) {
-            customAppGetInitialProps = hasCustomGetInitialProps(
-              isLikeServerless ? serverBundle : getPagePath("/_app", outDir),
-              runtimeEnvConfig,
-              true
-            );
-
-            namedExports = getNamedExports(
-              isLikeServerless ? serverBundle : getPagePath("/_app", outDir),
-              runtimeEnvConfig
-            );
-
-            if (customAppGetInitialProps) {
-              console.warn(
-                chalk.bold.yellow(`Warning: `) +
-                  chalk.yellow(
-                    `You have opted-out of Automatic Static Optimization due to \`getInitialProps\` in \`pages/_app\`. This does not opt-out pages with \`getStaticProps\``
-                  )
-              );
-              console.warn(
-                "Read more: https://err.sh/next.js/opt-out-auto-static-optimization\n"
-              );
-            }
-          }
-
-          try {
-            const workerResult = await staticCheckWorkers.isPageStatic(
-              page,
-              serverBundle,
-              runtimeEnvConfig
-            );
-
-            if (workerResult.isHybridAmp) {
-              isHybridAmp = true;
-              hybridAmpPages.add(page);
-            }
-
-            if (workerResult.hasStaticProps) {
-              ssgPages.add(page);
-              isSsg = true;
-
-              if (workerResult.prerenderRoutes) {
-                additionalSsgPaths.set(page, workerResult.prerenderRoutes);
-                ssgPageRoutes = workerResult.prerenderRoutes;
-              }
-
-              if (workerResult.prerenderFallback === "unstable_blocking") {
-                ssgBlockingFallbackPages.add(page);
-              } else if (workerResult.prerenderFallback === true) {
-                ssgStaticFallbackPages.add(page);
-              }
-            } else if (workerResult.hasServerProps) {
-              serverPropsPages.add(page);
-            } else if (
-              workerResult.isStatic &&
-              customAppGetInitialProps === false
-            ) {
-              staticPages.add(page);
-              isStatic = true;
-            }
-
-            if (hasPages404 && page === "/404") {
-              if (!workerResult.isStatic && !workerResult.hasStaticProps) {
-                throw new Error(PAGES_404_GET_INITIAL_PROPS_ERROR);
-              }
-              // we need to ensure the 404 lambda is present since we use
-              // it when _app has getInitialProps
-              if (customAppGetInitialProps && !workerResult.hasStaticProps) {
-                staticPages.delete(page);
-              }
-            }
-          } catch (err) {
-            if (err.message !== "INVALID_DEFAULT_EXPORT") throw err;
-            invalidPages.add(page);
-          }
-        }
-
-        pageInfos.set(page, {
-          size: selfSize,
-          totalSize: allSize,
-          static: isStatic,
-          isSsg,
-          isHybridAmp,
-          ssgPageRoutes,
-          initialRevalidateSeconds: false,
-        });
-      })
-    );
-    // staticCheckWorkers.end()
-
-    if (serverPropsPages.size > 0 || ssgPages.size > 0) {
-      // We update the routes manifest after the build with the
-      // data routes since we can't determine these until after build
-      routesManifest.dataRoutes = getSortedRoutes([
-        ...serverPropsPages,
-        ...ssgPages,
-      ]).map((page) => {
-        const pagePath = normalizePagePath(page);
-        const dataRoute = path.posix.join(
-          "/_next/data",
-          buildId,
-          `${pagePath}.json`
-        );
-
-        let dataRouteRegex: string;
-        let namedDataRouteRegex: string | undefined;
-        let routeKeys: { [named: string]: string } | undefined;
-
-        if (isDynamicRoute(page)) {
-          const routeRegex = getRouteRegex(dataRoute.replace(/\.json$/, ""));
-
-          dataRouteRegex = normalizeRouteRegex(
-            routeRegex.re.source.replace(/\(\?:\\\/\)\?\$$/, "\\.json$")
-          );
-          namedDataRouteRegex = routeRegex.namedRegex!.replace(
-            /\(\?:\/\)\?\$$/,
-            "\\.json$"
-          );
-          routeKeys = routeRegex.routeKeys;
-        } else {
-          dataRouteRegex = normalizeRouteRegex(
-            new RegExp(
-              `^${path.posix.join(
-                "/_next/data",
-                escapeStringRegexp(buildId),
-                `${pagePath}.json`
-              )}$`
-            ).source
-          );
-        }
-
-        return {
-          page,
-          routeKeys,
-          dataRouteRegex,
-          namedDataRouteRegex,
-        };
-      });
-
-      await promises.writeFile(
-        routesManifestPath,
-        JSON.stringify(routesManifest),
-        "utf8"
+    // if (ssgPages.size > 0) {
+    // We update the routes manifest after the build with the
+    // data routes since we can't determine these until after build
+    routesManifest.dataRoutes = getSortedRoutes([
+      // ...serverPropsPages,
+      ...ssgPages,
+    ]).map((page) => {
+      // todo change name to  routePath
+      // const pagePath = normalizePagePath(page);
+      const pagePath = page;
+      const dataRoute = path.posix.join(
+        "/_next/data",
+        buildId,
+        `${pagePath}.json`
       );
-    }
+
+      let dataRouteRegex: string;
+      let namedDataRouteRegex: string | undefined;
+      let routeKeys: { [named: string]: string } | undefined;
+
+      if (isDynamicRoute(page)) {
+        const routeRegex = getRouteRegex(dataRoute.replace(/\.json$/, ""));
+
+        dataRouteRegex = normalizeRouteRegex(
+          routeRegex.re.source.replace(/\(\?:\\\/\)\?\$$/, "\\.json$")
+        );
+        namedDataRouteRegex = routeRegex.namedRegex!.replace(
+          /\(\?:\/\)\?\$$/,
+          "\\.json$"
+        );
+        routeKeys = routeRegex.routeKeys;
+      } else {
+        dataRouteRegex = normalizeRouteRegex(
+          new RegExp(
+            `^${path.posix.join(
+              "/_next/data",
+              escapeStringRegexp(buildId),
+              `${pagePath}.json`
+            )}$`
+          ).source
+        );
+      }
+
+      return {
+        page,
+        routeKeys,
+        dataRouteRegex,
+        namedDataRouteRegex,
+      };
+    });
+
+    // @ts-ignore
+    routesManifest.reactRoutes = reactRoutes;
+
+    await promises.writeFile(
+      routesManifestPath,
+      JSON.stringify(routesManifest),
+      "utf8"
+    );
+    // }
 
     // Since custom _app.js can wrap the 404 page we have to opt-out of static optimization if it has getInitialProps
     // Only export the static 404 when there is no /_error present
     const useStatic404 =
       !customAppGetInitialProps && (!hasNonStaticErrorPage || hasPages404);
 
-    if (invalidPages.size > 0) {
-      throw new Error(
-        `Build optimization failed: found page${
-          invalidPages.size === 1 ? "" : "s"
-        } without a React Component as default export in \n${[...invalidPages]
-          .map((pg) => `pages${pg}`)
-          .join(
-            "\n"
-          )}\n\nSee https://err.sh/vercel/next.js/page-without-valid-component for more info.\n`
-      );
-    }
-
-    await writeBuildId(outDir, buildId);
-
-    const finalPrerenderRoutes: { [route: string]: SsgRoute } = {};
-    const tbdPrerenderRoutes: string[] = [];
-
     if (postCompileSpinner) postCompileSpinner.stopAndPersist();
-
-    // if (staticPages.size > 0 || ssgPages.size > 0 || useStatic404) {
-    if (staticPages.size > 0 || ssgPages.size > 0) {
-      const combinedPages = [...staticPages, ...ssgPages];
-      const exportApp = require("../export").default;
-      const exportOptions = {
-        silent: false,
-        buildExport: true,
-        threads: config.experimental.cpus,
-        pages: combinedPages,
-        outdir: path.join(outDir, "export"),
-        statusMessage: "Generating static pages",
-      };
-      const exportConfig: any = {
-        ...config,
-        initialPageRevalidationMap: {},
-        // Default map will be the collection of automatic statically exported
-        // pages and incremental pages.
-        // n.b. we cannot handle this above in combinedPages because the dynamic
-        // page must be in the `pages` array, but not in the mapping.
-        exportPathMap: (defaultMap: any) => {
-          // Dynamically routed pages should be prerendered to be used as
-          // a client-side skeleton (fallback) while data is being fetched.
-          // This ensures the end-user never sees a 500 or slow response from the
-          // server.
-          //
-          // Note: prerendering disables automatic static optimization.
-          ssgPages.forEach((page) => {
-            if (isDynamicRoute(page)) {
-              tbdPrerenderRoutes.push(page);
-
-              if (ssgStaticFallbackPages.has(page)) {
-                // Override the rendering for the dynamic page to be treated as a
-                // fallback render.
-                defaultMap[page] = { page, query: { __nextFallback: true } };
-              } else {
-                // Remove dynamically routed pages from the default path map when
-                // fallback behavior is disabled.
-                delete defaultMap[page];
-              }
-            }
-          });
-          // Append the "well-known" routes we should prerender for, e.g. blog
-          // post slugs.
-          additionalSsgPaths.forEach((routes, page) => {
-            routes.forEach((route) => {
-              defaultMap[route] = { page };
-            });
-          });
-
-          if (useStatic404) {
-            defaultMap["/404"] = {
-              page: hasPages404 ? "/404" : "/_error",
-            };
-          }
-
-          return defaultMap;
-        },
-        trailingSlash: false,
-      };
-
-      await exportApp(dir, exportOptions, exportConfig);
-
-      const postBuildSpinner = createSpinner({
-        prefixText: `${Log.prefixes.info} Finalizing page optimization`,
-      });
-
-      // remove server bundles that were exported
-      for (const page of staticPages) {
-        const serverBundle = getPagePath(page, outDir);
-        await promises.unlink(serverBundle);
-      }
-      const serverOutputDir = path.join(
-        outDir,
-        isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY
-      );
-
-      const moveExportedPage = async (
-        originPage: string,
-        page: string,
-        file: string,
-        isSsg: boolean,
-        ext: "html" | "json"
-      ) => {
-        file = `${file}.${ext}`;
-        const orig = path.join(exportOptions.outdir, file);
-        const pagePath = getPagePath(originPage, outDir);
-
-        const relativeDest = path
-          .relative(
-            serverOutputDir,
-            path.join(
-              path.join(
-                pagePath,
-                // strip leading / and then recurse number of nested dirs
-                // to place from base folder
-                originPage
-                  .substr(1)
-                  .split("/")
-                  .map(() => "..")
-                  .join("/")
-              ),
-              file
-            )
-          )
-          .replace(/\\/g, "/");
-
-        const dest = path.join(
-          outDir,
-          isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
-          relativeDest
-        );
-
-        if (!isSsg) {
-          pagesManifest[page] = relativeDest;
-        }
-        await promises.mkdir(path.dirname(dest), { recursive: true });
-        await promises.rename(orig, dest);
-      };
-
-      // Only move /404 to /404 when there is no custom 404 as in that case we don't know about the 404 page
-      if (!hasPages404 && useStatic404) {
-        await moveExportedPage("/_error", "/404", "/404", false, "html");
-      }
-
-      for (const page of combinedPages) {
-        const isSsg = ssgPages.has(page);
-        const isStaticSsgFallback = ssgStaticFallbackPages.has(page);
-        const isDynamic = isDynamicRoute(page);
-        const hasAmp = hybridAmpPages.has(page);
-        const file = normalizePagePath(page);
-
-        // The dynamic version of SSG pages are only prerendered if the fallback
-        // is enabled. Below, we handle the specific prerenders of these.
-        if (!(isSsg && isDynamic && !isStaticSsgFallback)) {
-          await moveExportedPage(page, page, file, isSsg, "html");
-        }
-
-        if (hasAmp && (!isSsg || (isSsg && !isDynamic))) {
-          const ampPage = `${file}.amp`;
-          await moveExportedPage(page, ampPage, ampPage, isSsg, "html");
-
-          if (isSsg) {
-            await moveExportedPage(page, ampPage, ampPage, isSsg, "json");
-          }
-        }
-
-        if (isSsg) {
-          // For a non-dynamic SSG page, we must copy its data file from export.
-          if (!isDynamic) {
-            await moveExportedPage(page, page, file, true, "json");
-
-            finalPrerenderRoutes[page] = {
-              initialRevalidateSeconds:
-                exportConfig.initialPageRevalidationMap[page],
-              srcRoute: null,
-              dataRoute: path.posix.join(
-                "/_next/data",
-                buildId,
-                `${file}.json`
-              ),
-            };
-            // Set Page Revalidation Interval
-            const pageInfo = pageInfos.get(page);
-            if (pageInfo) {
-              pageInfo.initialRevalidateSeconds =
-                exportConfig.initialPageRevalidationMap[page];
-              pageInfos.set(page, pageInfo);
-            }
-          } else {
-            // For a dynamic SSG page, we did not copy its data exports and only
-            // copy the fallback HTML file (if present).
-            // We must also copy specific versions of this page as defined by
-            // `getStaticPaths` (additionalSsgPaths).
-            const extraRoutes = additionalSsgPaths.get(page) || [];
-            for (const route of extraRoutes) {
-              const pageFile = normalizePagePath(route);
-              await moveExportedPage(page, route, pageFile, true, "html");
-              await moveExportedPage(page, route, pageFile, true, "json");
-
-              if (hasAmp) {
-                const ampPage = `${pageFile}.amp`;
-                await moveExportedPage(page, ampPage, ampPage, true, "html");
-                await moveExportedPage(page, ampPage, ampPage, true, "json");
-              }
-
-              finalPrerenderRoutes[route] = {
-                initialRevalidateSeconds:
-                  exportConfig.initialPageRevalidationMap[route],
-                srcRoute: page,
-                dataRoute: path.posix.join(
-                  "/_next/data",
-                  buildId,
-                  `${normalizePagePath(route)}.json`
-                ),
-              };
-
-              // Set route Revalidation Interval
-              const pageInfo = pageInfos.get(route);
-              if (pageInfo) {
-                pageInfo.initialRevalidateSeconds =
-                  exportConfig.initialPageRevalidationMap[route];
-                pageInfos.set(route, pageInfo);
-              }
-            }
-          }
-        }
-      }
-
-      // remove temporary export folder
-      await recursiveDelete(exportOptions.outdir);
-      await promises.rmdir(exportOptions.outdir);
-      await promises.writeFile(
-        manifestPath,
-        JSON.stringify(pagesManifest, null, 2),
-        "utf8"
-      );
-
-      if (postBuildSpinner) postBuildSpinner.stopAndPersist();
-      console.log();
-    }
-
-    const analysisEnd = process.hrtime(analysisBegin);
-    // telemetry.record(
-    //   eventBuildOptimize(pagePaths, {
-    //     durationInSeconds: analysisEnd[0],
-    //     staticPageCount: staticPages.size,
-    //     staticPropsPageCount: ssgPages.size,
-    //     serverPropsPageCount: serverPropsPages.size,
-    //     ssrPageCount:
-    //       pagePaths.length -
-    //       (staticPages.size + ssgPages.size + serverPropsPages.size),
-    //     hasStatic404: useStatic404,
-    //     hasReportWebVitals: namedExports?.includes("reportWebVitals") ?? false,
-    //   })
-    // );
-
-    if (ssgPages.size > 0) {
-      const finalDynamicRoutes: PrerenderManifest["dynamicRoutes"] = {};
-      tbdPrerenderRoutes.forEach((tbdRoute) => {
-        const normalizedRoute = normalizePagePath(tbdRoute);
-        const dataRoute = path.posix.join(
-          "/_next/data",
-          buildId,
-          `${normalizedRoute}.json`
-        );
-
-        finalDynamicRoutes[tbdRoute] = {
-          routeRegex: normalizeRouteRegex(getRouteRegex(tbdRoute).re.source),
-          dataRoute,
-          fallback: ssgBlockingFallbackPages.has(tbdRoute)
-            ? null
-            : ssgStaticFallbackPages.has(tbdRoute)
-            ? `${normalizedRoute}.html`
-            : false,
-          dataRouteRegex: normalizeRouteRegex(
-            getRouteRegex(dataRoute.replace(/\.json$/, "")).re.source.replace(
-              /\(\?:\\\/\)\?\$$/,
-              "\\.json$"
-            )
-          ),
-        };
-      });
-      const prerenderManifest: PrerenderManifest = {
-        version: 2,
-        routes: finalPrerenderRoutes,
-        dynamicRoutes: finalDynamicRoutes,
-        preview: previewProps,
-      };
-
-      await promises.writeFile(
-        path.join(outDir, PRERENDER_MANIFEST),
-        JSON.stringify(prerenderManifest),
-        "utf8"
-      );
-      await this.generateClientSsgManifest(prerenderManifest, {
-        distDir: outDir,
-        buildId,
-        isModern: !!config.experimental.modern,
-      });
-    } else {
-      const prerenderManifest: PrerenderManifest = {
-        version: 2,
-        routes: {},
-        dynamicRoutes: {},
-        preview: previewProps,
-      };
-      await promises.writeFile(
-        path.join(outDir, PRERENDER_MANIFEST),
-        JSON.stringify(prerenderManifest),
-        "utf8"
-      );
-    }
 
     await promises.writeFile(
       path.join(outDir, EXPORT_MARKER),
@@ -1193,74 +916,16 @@ export class JoyBuildService {
       printCustomRoutes({ redirects, rewrites, headers });
     }
 
-    // if (tracer) {
-    //   const parsedResults = await tracer.profiler.stopProfiling();
-    //   await new Promise((resolve) => {
-    //     if (parsedResults === undefined) {
-    //       tracer.profiler.destroy();
-    //       tracer.trace.flush();
-    //       tracer.end(resolve);
-    //       return;
-    //     }
-    //
-    //     const cpuStartTime = parsedResults.profile.startTime;
-    //     const cpuEndTime = parsedResults.profile.endTime;
-    //
-    //     tracer.trace.completeEvent({
-    //       name: "TaskQueueManager::ProcessTaskFromWorkQueue",
-    //       id: ++tracer.counter,
-    //       cat: ["toplevel"],
-    //       ts: cpuStartTime,
-    //       args: {
-    //         src_file: "../../ipc/ipc_moji_bootstrap.cc",
-    //         src_func: "Accept",
-    //       },
-    //     });
-    //
-    //     tracer.trace.completeEvent({
-    //       name: "EvaluateScript",
-    //       id: ++tracer.counter,
-    //       cat: ["devtools.timeline"],
-    //       ts: cpuStartTime,
-    //       dur: cpuEndTime - cpuStartTime,
-    //       args: {
-    //         data: {
-    //           url: "webpack",
-    //           lineNumber: 1,
-    //           columnNumber: 1,
-    //           frame: "0xFFF",
-    //         },
-    //       },
-    //     });
-    //
-    //     tracer.trace.instantEvent({
-    //       name: "CpuProfile",
-    //       id: ++tracer.counter,
-    //       cat: ["disabled-by-default-devtools.timeline"],
-    //       ts: cpuEndTime,
-    //       args: {
-    //         data: {
-    //           cpuProfile: parsedResults.profile,
-    //         },
-    //       },
-    //     });
-    //
-    //     tracer.profiler.destroy();
-    //     tracer.trace.flush();
-    //     tracer.end(resolve);
-    //   });
-    // }
-
-    // await telemetry.flush();
+    console.log(">>>>> build.service, finished");
   }
 
   private generateClientSsgManifest(
     prerenderManifest: PrerenderManifest,
     {
       buildId,
-      distDir,
+      outDir,
       isModern,
-    }: { buildId: string; distDir: string; isModern: boolean }
+    }: { buildId: string; outDir: string; isModern: boolean }
   ) {
     const ssgPages: ClientSsgManifest = new Set<string>([
       ...Object.entries(prerenderManifest.routes)
@@ -1283,7 +948,7 @@ export class JoyBuildService {
     )};self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()`;
     clientSsgManifestPaths.forEach((clientSsgManifestPath) =>
       writeFileSync(
-        path.join(distDir, clientSsgManifestPath),
+        path.join(outDir, clientSsgManifestPath),
         clientSsgManifestContent
       )
     );

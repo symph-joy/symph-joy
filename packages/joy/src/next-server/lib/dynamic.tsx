@@ -16,18 +16,20 @@ export type LoadableGeneratedOptions = {
   modules?(): LoaderMap;
 };
 
+export type DynamicLoading = ({
+  error,
+  isLoading,
+  pastDelay,
+}: {
+  error?: Error | null;
+  isLoading?: boolean;
+  pastDelay?: boolean;
+  retry?: () => void;
+  timedOut?: boolean;
+}) => JSX.Element | null;
+
 export type LoadableBaseOptions<P = {}> = LoadableGeneratedOptions & {
-  loading?: ({
-    error,
-    isLoading,
-    pastDelay,
-  }: {
-    error?: Error | null;
-    isLoading?: boolean;
-    pastDelay?: boolean;
-    retry?: () => void;
-    timedOut?: boolean;
-  }) => JSX.Element | null;
+  loading?: DynamicLoading;
   loader?: Loader<P> | LoaderMap;
   loadableGenerated?: LoadableGeneratedOptions;
   ssr?: boolean;
@@ -114,7 +116,7 @@ export default function dynamic<P = {}>(
     loadableOptions = { ...loadableOptions, ...dynamicOptions };
   }
 
-  // Support for passing options, eg: dynamic(import('../hello-world'), {loading: () => <p>Loading something</p>})
+  // Support for passing options, eg: dynamic(import('../hello-world'), {loading: () => <p>DynamicLoading something</p>})
   loadableOptions = { ...loadableOptions, ...options };
 
   if (

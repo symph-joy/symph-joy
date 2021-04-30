@@ -27,7 +27,7 @@ if (isWebpack5) {
   // @ts-ignore TODO: remove ts-ignore when webpack 5 is stable
   webpack.util.serialization.register(
     CssDependency,
-    "next/dist/build/webpack/plugins/mini-css-extract-plugin/src/CssDependency",
+    "@symph/joy/dist/build/webpack/plugins/mini-css-extract-plugin/src/CssDependency",
     null,
     {
       serialize(obj, { write }) {

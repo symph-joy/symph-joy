@@ -27,10 +27,11 @@ const {
 
 const prefix = assetPrefix || "";
 const webpackHMR = initWebpackHMR({ assetPrefix: prefix });
-
+console.log(">>>> aaaaaaaaaaddddddddcccc");
 window.next = next;
 initNext({ webpackHMR })
   .then(({ renderCtx, render }) => {
+    console.log(">>>> aaaaaaaaaadddddddd");
     initOnDemandEntries({ assetPrefix: prefix });
 
     function devPagesManifestListener(event) {

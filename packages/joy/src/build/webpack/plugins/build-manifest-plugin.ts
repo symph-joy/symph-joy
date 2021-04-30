@@ -1,5 +1,5 @@
 import devalue from "devalue";
-import webpack, { Compiler, Chunk } from "webpack";
+import webpack, { Chunk, Compiler } from "webpack";
 import sources from "webpack-sources";
 import {
   BUILD_MANIFEST,
@@ -7,13 +7,13 @@ import {
   CLIENT_STATIC_FILES_RUNTIME_MAIN,
   CLIENT_STATIC_FILES_RUNTIME_POLYFILLS,
   CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH,
-  CLIENT_STATIC_FILES_RUNTIME_AMP,
+  CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
 } from "../../../next-server/lib/constants";
 import { BuildManifest } from "../../../next-server/server/get-page-files";
 import getRouteFromEntrypoint from "../../../next-server/server/get-route-from-entrypoint";
-import { ampFirstEntryNamesMap } from "./next-drop-client-page-plugin";
 import { Rewrite } from "../../../lib/load-custom-routes";
 import { getSortedRoutes } from "../../../next-server/lib/router/utils";
+import { IJoyReactRouteBuild } from "../../../router/joy-react-router-plugin";
 
 // @ts-ignore: TODO: remove ignore when webpack 5 is stable
 const { RawSource } = webpack.sources || sources;
@@ -84,14 +84,17 @@ export default class BuildManifestPlugin {
   private buildId: string;
   private modern: boolean;
   private rewrites: Rewrite[];
+  private routes: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]);
 
   constructor(options: {
     buildId: string;
     modern: boolean;
     rewrites: Rewrite[];
+    routes: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]);
   }) {
     this.buildId = options.buildId;
     this.modern = options.modern;
+    this.routes = options.routes;
     this.rewrites = options.rewrites.map((r) => {
       const rewrite = { ...r };
 
@@ -105,7 +108,25 @@ export default class BuildManifestPlugin {
     });
   }
 
+  private filterChunks(chunks: Chunk[], filePath: string): string[] {
+    if (!chunks || chunks.length === 0) {
+      return [];
+    }
+    const rstChunkFiles: string[] = [];
+    const rstChunks: Chunk[] = chunks.filter((chunk) => {
+      const modules = chunk.getModules();
+      for (const mod of modules) {
+        if ((mod as any).resource === filePath) {
+          rstChunkFiles.push(...chunk.files);
+          return true;
+        }
+      }
+    });
+    return rstChunkFiles;
+  }
+
   createAssets(compilation: any, assets: any) {
+    console.log(">>>> BuildManifestPlugin routes", this.routes);
     const namedChunks: Map<string, Chunk> = compilation.namedChunks;
     const assetMap: DeepMutable<BuildManifest> = {
       commonFiles: [],
@@ -129,18 +150,21 @@ export default class BuildManifestPlugin {
     //   }
     // }
 
+    const webpackRuntimeJsChunk = namedChunks.get(
+      CLIENT_STATIC_FILES_RUNTIME_WEBPACK
+    );
+    const webpackRuntimeJsFiles: string[] = getFilesArray(
+      webpackRuntimeJsChunk?.files
+    ).filter(isJsFile);
     const mainJsChunk = namedChunks.get(CLIENT_STATIC_FILES_RUNTIME_MAIN);
-
     const mainJsFiles: string[] = getFilesArray(mainJsChunk?.files).filter(
       isJsFile
     );
-
-    assetMap.commonFiles = [...mainJsFiles];
+    assetMap.commonFiles = [...mainJsFiles, ...webpackRuntimeJsFiles];
 
     const polyfillChunk = namedChunks.get(
       CLIENT_STATIC_FILES_RUNTIME_POLYFILLS
     );
-
     // Create a separate entry  for polyfills
     assetMap.polyfillFiles = getFilesArray(polyfillChunk?.files).filter(
       isJsFile
@@ -153,6 +177,19 @@ export default class BuildManifestPlugin {
       isJsFile
     );
 
+    const chunks = [...compilation.chunks];
+    const routes =
+      typeof this.routes === "function" ? this.routes() : this.routes;
+    for (const route of routes) {
+      if (route.srcPath) {
+        assetMap.pages[route.path] = this.filterChunks(
+          chunks,
+          route.srcPath
+        ).filter(isJsFile);
+      }
+    }
+
+    // todo 去掉通过entry生成的页面entry，但要保留和考虑_app和_document的处理。
     for (const entrypoint of compilation.entrypoints.values()) {
       // const isAmpRuntime = entrypoint.name === CLIENT_STATIC_FILES_RUNTIME_AMP;
       //

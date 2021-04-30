@@ -46,8 +46,8 @@ export async function fetchViaHTTP(
 }
 
 export async function findPort(): Promise<number> {
-  return getPort();
-  // return 4000;
+  // return getPort();
+  return 4000;
 }
 
 export async function waitForMoment(millisecond = 100000000): Promise<void> {

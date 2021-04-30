@@ -103,7 +103,7 @@ export type PrerenderManifest = {
   version: 2;
   routes: { [route: string]: SsgRoute };
   dynamicRoutes: { [route: string]: DynamicSsgRoute };
-  preview: __ApiPreviewProps;
+  preview?: __ApiPreviewProps; // todo remove
 };
 
 export default async function build(

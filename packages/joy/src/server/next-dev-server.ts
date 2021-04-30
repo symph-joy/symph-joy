@@ -4,7 +4,13 @@ import crypto from "crypto";
 import fs from "fs";
 import { IncomingMessage, ServerResponse } from "http";
 import AmpHtmlValidator from "amphtml-validator";
-import { join as pathJoin, relative, resolve as pathResolve, sep } from "path";
+import {
+  join,
+  join as pathJoin,
+  relative,
+  resolve as pathResolve,
+  sep,
+} from "path";
 import { UrlWithParsedQuery } from "url";
 import Watchpack from "watchpack";
 import { ampValidation } from "../build/output/index";
@@ -17,6 +23,7 @@ import {
   CLIENT_STATIC_FILES_PATH,
   DEV_CLIENT_PAGES_MANIFEST,
   PHASE_DEVELOPMENT_SERVER,
+  PRERENDER_MANIFEST,
 } from "../next-server/lib/constants";
 import {
   getRouteMatcher,
@@ -40,6 +47,10 @@ import { FileGenerator } from "../plugin/file-generator";
 import { JoyReactAppServerDevConfig } from "../next-server/lib/joy-react-app-server-dev-config";
 import { ParsedUrlQuery } from "querystring";
 import { ReactApplicationContext } from "@symph/react";
+import { ReactContextFactory } from "../next-server/server/react-context-factory";
+import { ReactContextFactoryDev } from "./react-context-factory-dev";
+import { PrerenderManifest } from "../build";
+import { JoyReactRouterPluginDev } from "../router/joy-react-router-plugin-dev";
 
 if (typeof React.Suspense === "undefined") {
   throw new Error(
@@ -59,7 +70,7 @@ export class NextDevServer extends NextServer {
   @Inject("fileGenerator")
   private fileGenerator: FileGenerator;
 
-  private hotReloader?: HotReloader;
+  // private hotReloader?: HotReloader;
   // private isCustomServer: boolean
   protected sortedRoutes?: string[];
 
@@ -71,9 +82,12 @@ export class NextDevServer extends NextServer {
   constructor(
     protected joyAppConfig: JoyAppConfig,
     protected serverConfig: ServerConfigDev,
-    protected buildConfig: BuildDevConfig
+    protected buildConfig: BuildDevConfig,
+    protected hotReloader: HotReloader,
+    protected reactRouter: JoyReactRouterPluginDev,
+    protected reactContextFactory: ReactContextFactoryDev
   ) {
-    super(joyAppConfig, serverConfig);
+    super(joyAppConfig, reactRouter, reactContextFactory);
     this.renderOpts.dev = true;
     (this.renderOpts as any).ErrorComponent = ReactDevOverlay;
     this.devReady = new Promise((resolve) => {
@@ -296,15 +310,15 @@ export class NextDevServer extends NextServer {
       this.router = new Router(this.generateRoutes());
     }
 
-    this.hotReloader = new HotReloader(this.dir, {
-      pagesDir: this.pagesDir!,
-      config: this.nextConfig,
-      previewProps: this.getPreviewProps(),
-      buildId: this.buildId,
-      rewrites: this.customRoutes.rewrites,
-      fileScanner: this.fileScanner,
-      fileGenerator: this.fileGenerator,
-    });
+    // this.hotReloader = new HotReloader(this.dir, {
+    //   pagesDir: this.pagesDir!,
+    //   config: this.nextConfig,
+    //   previewProps: this.getPreviewProps(),
+    //   buildId: this.buildId,
+    //   rewrites: this.customRoutes.rewrites,
+    //   fileScanner: this.fileScanner,
+    //   fileGenerator: this.fileGenerator,
+    // });
     await super.prepare();
     await this.addExportPathMapRoutes();
     await this.hotReloader.start();
@@ -580,7 +594,7 @@ export class NextDevServer extends NextServer {
   }
 
   protected async ensureApiPage(pathname: string) {
-    return this.hotReloader!.ensurePage(pathname);
+    return this.hotReloader!.ensurePath(pathname);
   }
 
   // public async invalidateCompilerWatcher(srcPaths: string[]): Promise<void> {
@@ -592,22 +606,19 @@ export class NextDevServer extends NextServer {
   }
 
   protected getReactAppProviderConfig(): EntryType[] {
-    return [
-      // {fileGenerator: {type: FileGenerator, useValue: this.fileGenerator}},
-      JoyReactAppServerDevConfig,
-    ];
+    return [JoyReactAppServerDevConfig];
   }
 
-  protected async getReactAppContext(
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathname: string,
-    query: ParsedUrlQuery
-  ): Promise<ReactApplicationContext> {
-    const context = await super.getReactAppContext(req, res, pathname, query);
-    // todo 实现ensurePath相关的方法，当req相关的路由component编译完成后，才会开始渲染页面。
-    return context;
-  }
+  // protected async getReactAppContext(
+  //   req: IncomingMessage,
+  //   res: ServerResponse,
+  //   pathname: string,
+  //   query: ParsedUrlQuery
+  // ): Promise<ReactApplicationContext> {
+  //   const context = await super.getReactAppContext(req, res, pathname, query);
+  //   // todo 实现ensurePath相关的方法，当req相关的路由component编译完成后，才会开始渲染页面。
+  //   return context;
+  // }
 
   async renderToHTML(
     req: IncomingMessage,
@@ -622,9 +633,11 @@ export class NextDevServer extends NextServer {
       return this.renderErrorToHTML(compilationErr, req, res, pathname, query);
     }
 
+    await this.hotReloader.ensurePath(pathname);
+
     // // In dev mode we use on demand entries to compile the page before rendering
     // try {
-    //   await this.hotReloader!.ensurePage(pathname).catch(async (err: Error) => {
+    //   await this.hotReloader!.ensurePath(pathname).catch(async (err: Error) => {
     //     if ((err as any).code !== 'ENOENT') {
     //       throw err
     //     }
@@ -635,14 +648,14 @@ export class NextDevServer extends NextServer {
     //         continue
     //       }
     //
-    //       return this.hotReloader!.ensurePage(dynamicRoute.page)
+    //       return this.hotReloader!.ensurePath(dynamicRoute.page)
     //     }
     //     throw err
     //   })
     // } catch (err) {
     //   if (err.code === 'ENOENT') {
     //     try {
-    //       await this.hotReloader!.ensurePage('/404')
+    //       await this.hotReloader!.ensurePath('/404')
     //     } catch (hotReloaderError) {
     //       if (hotReloaderError.code !== 'ENOENT') {
     //         throw hotReloaderError
@@ -667,9 +680,9 @@ export class NextDevServer extends NextServer {
   ): Promise<string | null> {
     await this.devReady;
     if (res.statusCode === 404 && (await this.hasPage("/404"))) {
-      await this.hotReloader!.ensurePage("/404");
+      await this.hotReloader!.ensurePath("/404");
     } else {
-      await this.hotReloader!.ensurePage("/_error");
+      await this.hotReloader!.ensurePath("/_error");
     }
 
     const compilationErr = await this.getCompilationError(pathname);

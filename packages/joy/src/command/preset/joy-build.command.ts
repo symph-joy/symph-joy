@@ -59,9 +59,10 @@ export class JoyBuildCommand extends JoyCommand {
       await this.appContext.loadModule(JoyBuildConfig);
       const buildService = await this.appContext.get(JoyBuildService);
       await buildService.build(args.profile, args.debug);
+      printAndExit(undefined, 0);
     } catch (err) {
-      console.error(err);
-      printAndExit(undefined, 1);
+      // console.error(err);
+      printAndExit(err, 1);
     }
   }
 }

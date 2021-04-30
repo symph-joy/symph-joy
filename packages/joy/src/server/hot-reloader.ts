@@ -11,6 +11,7 @@ import getBaseWebpackConfig from "../build/webpack-config";
 import { API_ROUTE, NEXT_PROJECT_ROOT_DIST_CLIENT } from "../lib/constants";
 import { recursiveDelete } from "../lib/recursive-delete";
 import {
+  BLOCKED_PAGES,
   CLIENT_STATIC_FILES_RUNTIME_AMP,
   CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH,
 } from "../next-server/lib/constants";
@@ -23,13 +24,17 @@ import getRouteFromEntrypoint from "../next-server/server/get-route-from-entrypo
 import { isWriteable } from "../build/is-writeable";
 import { ClientPagesLoaderOptions } from "../build/webpack/loaders/next-client-pages-loader";
 import { stringify } from "querystring";
-import { Rewrite } from "../lib/load-custom-routes";
+import loadCustomRoutes, { Rewrite } from "../lib/load-custom-routes";
 import { FileScanner } from "../next-server/server/scanner/file-scanner";
 import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
 import { FileGenerator } from "../plugin/file-generator";
 import { EventEmitter } from "events";
 import OnDemandModuleHandler from "./on-demand-module-handler";
 import { getWebpackConfigForSrc } from "../build/webpack-config-for-src";
+import { Injectable } from "@symph/core";
+import { BuildDevConfig } from "./build-dev-config";
+import crypto from "crypto";
+import { JoyReactRouterPluginDev } from "../router/joy-react-router-plugin-dev";
 
 export async function renderScriptError(
   res: ServerResponse,
@@ -136,13 +141,12 @@ function erroredPages(compilation: Compilation) {
   return failedPages;
 }
 
+@Injectable()
 export default class HotReloader {
   private dir: string;
-  private buildId: string;
   private middlewares: any[];
   private pagesDir: string;
   private webpackHotMiddleware: (NextHandleFunction & any) | null;
-  private config: JoyAppConfig;
   private stats: webpack.Stats | null;
   private serverStats: webpack.Stats | null;
   private clientError: Error | null = null;
@@ -151,50 +155,40 @@ export default class HotReloader {
   private prevChunkNames?: Set<any>;
   private onDemandEntries: any;
   private onDemandModules: OnDemandModuleHandler;
-  private previewProps: __ApiPreviewProps;
   private watcher: ReturnType<MultiCompiler["watch"]>;
-  private rewrites: Rewrite[];
 
   private isBuildForDist: boolean;
-  private fileScanner: FileScanner;
-  private fileGenerator: FileGenerator;
+  // private fileScanner: FileScanner;
+  // private fileGenerator: FileGenerator;
   private doneCallbacks: EventEmitter = new EventEmitter();
 
   constructor(
-    dir: string,
-    {
-      config,
-      pagesDir,
-      buildId,
-      previewProps,
-      rewrites,
-      fileScanner,
-      fileGenerator,
-    }: {
-      config: object;
-      pagesDir: string;
-      buildId: string;
-      previewProps: __ApiPreviewProps;
-      rewrites: Rewrite[];
-      fileScanner: FileScanner;
-      fileGenerator: FileGenerator;
-    }
+    private joyAppConfig: JoyAppConfig,
+    private fileGenerator: FileGenerator,
+    private fileScanner: FileScanner,
+    protected buildConfig: BuildDevConfig,
+    private joyReactRouter: JoyReactRouterPluginDev
   ) {
-    this.buildId = buildId;
-    this.dir = dir;
+    this.dir = this.joyAppConfig.resolveAppDir();
     this.middlewares = [];
-    this.pagesDir = pagesDir;
+    this.pagesDir = this.joyAppConfig.resolvePagesDir();
     this.webpackHotMiddleware = null;
     this.stats = null;
     this.serverStats = null;
     this.serverPrevDocumentHash = undefined;
+  }
 
-    this.config = config as any;
-    this.previewProps = previewProps;
-    this.rewrites = rewrites;
+  private _devCachedPreviewProps: __ApiPreviewProps | undefined;
 
-    this.fileScanner = fileScanner;
-    this.fileGenerator = fileGenerator;
+  protected getPreviewProps() {
+    if (this._devCachedPreviewProps) {
+      return this._devCachedPreviewProps;
+    }
+    return (this._devCachedPreviewProps = {
+      previewModeId: crypto.randomBytes(16).toString("hex"),
+      previewModeSigningKey: crypto.randomBytes(32).toString("hex"),
+      previewModeEncryptionKey: crypto.randomBytes(32).toString("hex"),
+    });
   }
 
   public async run(
@@ -230,7 +224,7 @@ export default class HotReloader {
     //   const page = denormalizePagePath(`/${params.path.join('/')}`)
     //   if (page === '/_error' || BLOCKED_PAGES.indexOf(page) === -1) {
     //     try {
-    //       await this.ensurePage(page)
+    //       await this.ensurePath(page)
     //     } catch (error) {
     //       await renderScriptError(pageBundleRes, error)
     //       return { finished: true }
@@ -262,26 +256,41 @@ export default class HotReloader {
   }
 
   private async clean(): Promise<void> {
-    await recursiveDelete(join(this.dir, this.config.distDir), /^cache/);
-    // await this.fileGenerator.cleanTempFiles()
+    await recursiveDelete(
+      this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir),
+      /^cache/
+    );
   }
 
   private async getWebpackConfig() {
     const pagePaths = await Promise.all([
-      findPageFile(this.pagesDir, "/_app", this.config.pageExtensions),
-      findPageFile(this.pagesDir, "/_document", this.config.pageExtensions),
+      findPageFile(this.pagesDir, "/_app", this.joyAppConfig.pageExtensions),
+      findPageFile(
+        this.pagesDir,
+        "/_document",
+        this.joyAppConfig.pageExtensions
+      ),
     ]);
+
+    const routes = () => {
+      return this.joyReactRouter.getRoutes();
+    };
 
     const pages = createPagesMapping(
       pagePaths.filter((i) => i !== null) as string[],
-      this.config.pageExtensions
+      this.joyAppConfig.pageExtensions
     );
+    const buildId = await this.buildConfig.getBuildId();
+    const previewProps = this.getPreviewProps();
+    const customRoutes = await loadCustomRoutes(this.joyAppConfig);
+    const { redirects, rewrites, headers } = customRoutes;
+
     const entrypoints = createEntrypoints(
       pages,
       "server",
-      this.buildId,
-      this.previewProps,
-      this.config,
+      buildId,
+      previewProps,
+      this.joyAppConfig,
       []
     );
 
@@ -301,19 +310,21 @@ export default class HotReloader {
       getBaseWebpackConfig(this.dir, {
         dev: true,
         isServer: false,
-        config: this.config,
-        buildId: this.buildId,
+        config: this.joyAppConfig,
+        buildId,
         pagesDir: this.pagesDir,
-        rewrites: this.rewrites,
+        rewrites: rewrites,
+        routes,
         entrypoints: { ...entrypoints.client, ...additionalClientEntrypoints },
       }),
       getBaseWebpackConfig(this.dir, {
         dev: true,
         isServer: true,
-        config: this.config,
-        buildId: this.buildId,
+        config: this.joyAppConfig,
+        buildId,
         pagesDir: this.pagesDir,
-        rewrites: this.rewrites,
+        rewrites: rewrites,
+        routes,
         entrypoints: { ...entrypoints.server },
       }),
     ]);
@@ -373,7 +384,10 @@ export default class HotReloader {
     }
 
     const [clientConfig, serverConfig] = _configs;
-    const srcConfig = await getWebpackConfigForSrc(serverConfig, this.config);
+    const srcConfig = await getWebpackConfigForSrc(
+      serverConfig,
+      this.joyAppConfig
+    );
     const configs = [clientConfig, serverConfig, srcConfig];
     const multiCompiler = webpack(configs);
 
@@ -392,8 +406,8 @@ export default class HotReloader {
         //  ===== 扫描src目录
         // const distPagesDir = this.config.resolveDistPagesDir()
         // const distPagesDir = this.config.resolveAppDir(this.config.outDir, 'server', 'dist/src' )
-        const distPagesDir = this.config.resolveAppDir(
-          this.config.distDir,
+        const distPagesDir = this.joyAppConfig.resolveAppDir(
+          this.joyAppConfig.distDir,
           "dist/src"
         );
         await this.fileScanner.scan(distPagesDir);
@@ -622,19 +636,20 @@ export default class HotReloader {
     return this.onDemandModules.ensureModules(moduleFilePaths);
   }
 
-  public async ensurePage(page: string) {
-    console.error("ensurePage has deprecated, should be removed after");
-    // return
+  public async ensurePath(page: string) {
+    // Make sure we don't re-build or dispose prebuilt pages
+    if (page !== "/_error" && BLOCKED_PAGES.indexOf(page) !== -1) {
+      return;
+    }
+    if (this.serverError || this.clientError) {
+      return Promise.reject(this.serverError || this.clientError);
+    }
 
-    // // Make sure we don't re-build or dispose prebuilt pages
-    // if (page !== '/_error' && BLOCKED_PAGES.indexOf(page) !== -1) {
-    //   return
-    // }
-    // if (this.serverError || this.clientError) {
-    //   return Promise.reject(this.serverError || this.clientError)
-    // }
-    //
-    // return this.onDemandEntries.ensurePage(page)
+    const ensureFiles = await this.joyReactRouter.getRouteFiles(page);
+    if (!ensureFiles || ensureFiles.length === 0) {
+      return;
+    }
+    await this.ensureModules(ensureFiles);
   }
 }
 

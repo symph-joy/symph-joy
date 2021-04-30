@@ -19,8 +19,10 @@ export function RouteSwitch({
   location,
   extraProps,
 }: RouterContainerType) {
-  const ctxLocation = useLocation();
-  location = location || ctxLocation;
+  if (!location) {
+    location = useLocation();
+  }
+
   const joyContext = useJoyContext();
 
   return (

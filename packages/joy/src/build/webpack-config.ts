@@ -58,6 +58,7 @@ import { Rewrite } from "../lib/load-custom-routes";
 import { webpack5 } from "../types/webpack5";
 import OptimizationSplitChunksOptions = webpack5.OptimizationSplitChunksOptions;
 import { stringify } from "querystring";
+import { IJoyReactRouteBuild } from "../router/joy-react-router-plugin";
 type ExcludesFalse = <T>(x: T | false) => x is T;
 
 const isWebpack5 = parseInt(webpack.version!) === 5;
@@ -204,6 +205,7 @@ export default async function getBaseWebpackConfig(
     reactProductionProfiling = false,
     entrypoints,
     rewrites,
+    routes,
   }: {
     buildId: string;
     config: any;
@@ -215,6 +217,7 @@ export default async function getBaseWebpackConfig(
     reactProductionProfiling?: boolean;
     entrypoints: WebpackEntrypoints;
     rewrites: Rewrite[];
+    routes?: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]);
   }
 ): Promise<webpack.Configuration> {
   const productionBrowserSourceMaps =
@@ -1117,6 +1120,7 @@ export default async function getBaseWebpackConfig(
           buildId,
           rewrites,
           modern: config.experimental.modern,
+          routes: routes || [],
         }),
       tracer &&
         new ProfilingPlugin({

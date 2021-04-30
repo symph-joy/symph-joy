@@ -13,7 +13,7 @@ import {
 import { EmitSrcService } from "../../../build/webpack/plugins/emit-src-plugin/emit-src-service";
 
 interface IModuleLoaded {
-  path: string;
+  path: string; // build dist file path
   resource: string | undefined; // source file path
   module: Record<string, unknown>;
   providers?: Provider[];
@@ -44,7 +44,9 @@ export class FileScanner {
 
   private cachedModules: Map<string, IModuleLoaded> = new Map();
 
-  public getSourceFileByProviderId(providerId: string): string | undefined {
+  public getCacheModuleByProviderId(
+    providerId: string
+  ): IModuleLoaded | undefined {
     const moduleKeys = new Array(...this.cachedModules.keys());
     for (let i = 0; i < moduleKeys.length; i++) {
       const key = moduleKeys[i];
@@ -56,8 +58,16 @@ export class FileScanner {
         (p) => p.id === providerId
       );
       if (findOutProvider) {
-        return cacheModule.resource;
+        return cacheModule;
       }
+    }
+    return undefined;
+  }
+
+  public getSourceFileByProviderId(providerId: string): string | undefined {
+    const cacheModule = this.getCacheModuleByProviderId(providerId);
+    if (cacheModule) {
+      return cacheModule.resource;
     }
     return undefined;
   }
@@ -128,10 +138,7 @@ export class FileScanner {
               });
             }
           }
-
-          // console.log('>>>>>>> module', moduleLoaded)
         }
-
         resolve();
       });
     });

@@ -1,5 +1,5 @@
 import * as path from "path";
-import { killApp } from "../../../util/joy-test-utils";
+import { waitForMoment } from "../../../util/joy-test-utils";
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
 
@@ -10,7 +10,7 @@ describe("hello joy dev", () => {
     start = Date.now();
     console.log(">>>>> start dev server", start);
     const curPath = path.resolve(__dirname, "../");
-    testContext = await JoyTestContext.createContext(curPath);
+    testContext = await JoyTestContext.createDevServerContext(curPath);
     console.log(">>>>> server prepared", testContext.port, Date.now() - start);
   }, 30000);
 
@@ -20,8 +20,9 @@ describe("hello joy dev", () => {
   });
 
   test("hello should start dev", async () => {
+    await waitForMoment();
     await page.goto(testContext.getUrl("/"));
     const browser = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(browser).toContain("Welcome to Joy!");
-  });
+  }, 99999999);
 });

@@ -56,6 +56,7 @@ export interface PageInfo {
   static: boolean;
   isSsg: boolean;
   ssgPageRoutes: string[] | null;
+  ssgFallback?: boolean;
   initialRevalidateSeconds: number | false;
 }
 
@@ -780,6 +781,7 @@ export async function isPageStatic(
   }
 }
 
+// todo 判断是一个路由是否是静态的：当前controller以及父级路由的controller是否都是静态的。
 export function hasCustomGetInitialProps(
   bundle: string,
   runtimeEnvConfig: any,

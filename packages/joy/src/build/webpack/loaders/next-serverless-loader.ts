@@ -413,7 +413,7 @@ const nextServerlessLoader: loader.Loader = function () {
         }
         ${
           // Temporary work around: `x-now-route-matches` is a platform header
-          // _only_ set for `Prerender` requests. We should move this logic
+          // _only_ set for `JoyPrerenderInterface` requests. We should move this logic
           // into our builder to ensure we're decoupled. However, this entails
           // removing reliance on `req.url` and using `req.query` instead
           // (which is needed for "custom routes" anyway).

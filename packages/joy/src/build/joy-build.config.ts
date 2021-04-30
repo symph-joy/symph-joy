@@ -4,8 +4,10 @@ import { EmitSrcService } from "./webpack/plugins/emit-src-plugin/emit-src-servi
 import { FileGenerator } from "../plugin/file-generator";
 import { FileScanner } from "../next-server/server/scanner/file-scanner";
 import { RouterPlugin } from "../router/router-plugin";
-import { JoyReactRouter } from "../router/joy-react-router";
+import { JoyReactRouterPlugin } from "../router/joy-react-router-plugin";
 import { JoyBuildService } from "./joy-build.service";
+import { JoyPrerenderService } from "./prerender/joy-prerender.service";
+import { JoyExportAppService } from "../export/joy-export-app.service";
 
 @Configuration()
 export class JoyBuildConfig {
@@ -25,8 +27,14 @@ export class JoyBuildConfig {
   public routerPlugin: RouterPlugin;
 
   @Configuration.Provider()
-  public joyReactRouter: JoyReactRouter;
+  public joyReactRouter: JoyReactRouterPlugin;
 
   @Configuration.Provider()
   public buildService: JoyBuildService;
+
+  @Configuration.Provider()
+  public joyExportAppService: JoyExportAppService;
+
+  @Configuration.Provider()
+  public joyPrerenderService: JoyPrerenderService;
 }

@@ -1,36 +1,31 @@
-import {
-  Injectable,
-  InstanceWrapper,
-  isClassProvider,
-  Provider,
-  Tap,
-} from "@symph/core";
-import { IReactRoute, ReactRouter } from "@symph/react";
-import { NextDevServer } from "../server/next-dev-server";
-import { IncomingMessage, ServerResponse } from "http";
-import { ParsedUrlQuery } from "querystring";
+import { Injectable, Tap } from "@symph/core";
+import { IReactRoute } from "@symph/react";
 import { FileScanner } from "../next-server/server/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join } from "path";
 
 import { FileGenerator } from "../plugin/file-generator";
 import { handlebars } from "../lib/handlebars";
-import { IJoyReactRouteBuild, JoyReactRouter } from "./joy-react-router";
+import {
+  IJoyReactRouteBuild,
+  JoyReactRouterPlugin,
+} from "./joy-react-router-plugin";
 
 interface IReactRouteBuildDev extends IJoyReactRouteBuild {
-  filePath?: string;
+  srcPath?: string;
   isAdd?: boolean;
 }
 
 @Injectable()
-export class JoyReactRouterDev extends JoyReactRouter<IReactRouteBuildDev> {
+export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<
+  IReactRouteBuildDev
+> {
   protected routesTemplate = handlebars.compile(
     readFileSync(join(__dirname, "./routes.handlebars"), "utf-8")
   );
   constructor(
     protected fileGenerator: FileGenerator,
-    protected fileScanner: FileScanner,
-    protected joyDevServer: NextDevServer
+    protected fileScanner: FileScanner
   ) {
     super(fileGenerator, fileScanner);
   }
@@ -68,13 +63,13 @@ export class JoyReactRouterDev extends JoyReactRouter<IReactRouteBuildDev> {
     return plainRoutes;
   }
 
-  public async ensurePath(pathname: string) {
+  public async getRouteFiles(pathname: string): Promise<string[] | undefined> {
     const matchedRoutes = this.getMatchedRoutes(pathname);
     if (!matchedRoutes) {
       return;
     }
 
-    const usedRoutes = this.plainRoutesTree([matchedRoutes]);
+    const usedRoutes = this.plainRoutesTree([...matchedRoutes]);
     const waitingRoutes: IReactRouteBuildDev[] = [];
     usedRoutes.forEach((route) => {
       waitingRoutes.push(route);
@@ -86,25 +81,26 @@ export class JoyReactRouterDev extends JoyReactRouter<IReactRouteBuildDev> {
       return;
     }
     const routeFiles = waitingRoutes
-      .map((r) => r.filePath)
+      .map((r) => r.srcPath)
       .filter(Boolean) as string[];
-    await this.joyDevServer.ensureModules(routeFiles);
+
+    return routeFiles;
   }
 
-  @Tap()
-  async onBeforeRender({
-    req,
-    res,
-    pathname,
-    query,
-  }: {
-    req: IncomingMessage;
-    res: ServerResponse;
-    pathname: string;
-    query: ParsedUrlQuery;
-  }): Promise<void> {
-    await this.ensurePath(pathname);
-  }
+  // @Tap()
+  // async onBeforeRender({
+  //   req,
+  //   res,
+  //   pathname,
+  //   query,
+  // }: {
+  //   req: IncomingMessage;
+  //   res: ServerResponse;
+  //   pathname: string;
+  //   query: ParsedUrlQuery;
+  // }): Promise<void> {
+  //
+  // }
 
   @Tap()
   protected async onGenerateFiles() {

@@ -113,13 +113,15 @@ export class IncrementalCache {
     // let's check the disk for seed data
     if (!data) {
       try {
+        // todo 优化：当缓存不存在时，减少磁盘的反问次数。
         const html = await promises.readFile(
           this.getSeedPath(pathname, "html"),
           "utf8"
         );
-        const pageData = JSON.parse(
-          await promises.readFile(this.getSeedPath(pathname, "json"), "utf8")
-        );
+        // const pageData = JSON.parse(
+        //   await promises.readFile(this.getSeedPath(pathname, "json"), "utf8")
+        // );
+        const pageData = {};
 
         data = {
           html,

@@ -4,7 +4,11 @@ import { execOnce } from "../../lib/utils";
 import * as Log from "../../../build/output/log";
 import { object } from "prop-types";
 import findUp from "find-up";
-import { CONFIG_FILE, SERVER_DIRECTORY } from "../../lib/constants";
+import {
+  CONFIG_FILE,
+  OUT_DIRECTORY,
+  SERVER_DIRECTORY,
+} from "../../lib/constants";
 import * as path from "path";
 import { basename, extname, resolve } from "path";
 import {
@@ -105,8 +109,8 @@ export interface IJoyConfig {
   //   = {
   //   excludeDefaultMomentLocales: false,
   // }
-  serverRuntimeConfig: Object; // = {}
-  publicRuntimeConfig: Object; // = {}
+  serverRuntimeConfig: Record<string, any>; // = {}
+  publicRuntimeConfig: Record<string, any>; // = {}
   reactStrictMode: boolean; // = false;
 
   resolveAppDir(...pathSegments: string[]): string;
@@ -220,8 +224,8 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
     return path.relative(this.dir, absPath);
   }
 
-  public resolveAppDir(...pathSegments: string[]) {
-    return resolve(this.dir, ...pathSegments);
+  public resolveAppDir(...subPaths: string[]) {
+    return resolve(this.dir, ...subPaths);
   }
 
   public resolvePagesDir(): string {
@@ -246,8 +250,17 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
     return this.pagesDir;
   }
 
-  public resolveDistPagesDir(): string {
-    return this.resolveAppDir(this.distDir, SERVER_DIRECTORY, "pages");
+  public resolveBuildOutDir(...subPaths: string[]) {
+    return this.resolveAppDir(OUT_DIRECTORY, ...subPaths);
+  }
+
+  public resolveSSGOutDir(...subPaths: string[]) {
+    return this.resolveAppDir(
+      this.distDir,
+      OUT_DIRECTORY,
+      "export",
+      ...subPaths
+    );
   }
 
   public mergeCustomConfig(

@@ -1,3 +1,5 @@
+//import {JoyReactRouteLoader} from '@symph/joy/dist/router/joy-react-route-loader'
+
 export const joyReactAutoGenRoutes = {
   id: "joyReactAutoGenRoutes",
   type: Array,
@@ -6,7 +8,11 @@ export const joyReactAutoGenRoutes = {
     {
       path: "{{path}}",
       providerId: "{{providerId}}",
-      component: {{#if dynamic}}()=>import({{json filePath}}){{else}}require({{json filePath}}){{/if}},
+      // dynamic: {{json dynamic}},-->
+      //render: (routeProps) => {
+       // return <JoyReactRouteLoader {...routeProps} component={require({{json srcPath}})} />;
+      //},
+       component: {{#if dynamic}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}},
     },
     {{/routes}}
   ]

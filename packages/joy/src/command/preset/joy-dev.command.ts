@@ -11,14 +11,31 @@ import http from "http";
 import { JoyAppConfig } from "../../next-server/server/joy-config/joy-app-config";
 import { ServerConfigDev } from "../../server/server-config-dev";
 import { JoyBuildConfig } from "../../build/joy-build.config";
+import { ReactContextFactoryDev } from "../../server/react-context-factory-dev";
+import HotReloader from "../../server/hot-reloader";
+import { JoyReactRouterPluginDev } from "../../router/joy-react-router-plugin-dev";
+import { JoyGenModuleServerProvider } from "../../plugin/joy-gen-module-server.provider";
+import { JoyServerConfig } from "./joy-start.command";
 
-@Configuration({ imports: [JoyBuildConfig] })
-export class JoyDevServerConfig {
+@Configuration()
+class JoyBuildConfigDev extends JoyBuildConfig {
+  @Configuration.Provider()
+  public joyReactRouter: JoyReactRouterPluginDev;
+}
+
+@Configuration({ imports: [JoyBuildConfigDev] })
+export class JoyDevServerConfig extends JoyServerConfig {
   @Configuration.Provider()
   public serverConfig: ServerConfigDev;
 
   @Configuration.Provider()
-  public joyDevServer: NextDevServer;
+  public reactContextFactory: ReactContextFactoryDev;
+
+  @Configuration.Provider()
+  public hotReloader: HotReloader;
+
+  @Configuration.Provider()
+  public joyServer: NextDevServer;
 }
 
 @CommandProvider()

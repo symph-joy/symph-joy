@@ -32,10 +32,13 @@ import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
 import {
+  JoyRouteInitState,
   ReactAppContainer,
-  ReactApplicationContext,
   ReactAppInitManager,
+  ReactApplicationContext,
 } from "@symph/react";
+import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
+import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 
 function noRouter() {
   const message =
@@ -113,6 +116,7 @@ function enhanceComponents(
 }
 
 export type RenderOptsPartial = {
+  initStage: EnumReactAppInitStage;
   buildId: string;
   canonicalBase: string;
   runtimeConfig?: { [key: string]: any };
@@ -131,7 +135,7 @@ export type RenderOptsPartial = {
   ampOptimizerConfig?: { [key: string]: any };
   isDataReq?: boolean;
   params?: ParsedUrlQuery;
-  previewProps: __ApiPreviewProps;
+  previewProps?: __ApiPreviewProps;
   basePath: string;
   unstable_runtimeJS?: false;
   optimizeFonts: boolean;
@@ -292,6 +296,7 @@ export async function renderToHTML(
     devOnlyCacheBusterQueryString,
 
     reactApplicationContext,
+    initStage,
   } = renderOpts;
 
   const getFontDefinition = (url: string): string => {
@@ -726,17 +731,25 @@ export async function renderToHTML(
     }
 
     const initManager = await reactApplicationContext.get(ReactAppInitManager);
-    initManager.resetTask();
+    const reduxService = await reactApplicationContext.get(ReactReduxService);
+    initManager.resetInitState(pathname);
+    initManager.initStage = initStage;
+    reduxService.startRecordState();
 
     let state = reactApplicationContext.getState();
-
     const html = renderToStaticMarkup(<AppContainer />);
+    const { revalidate } = await initManager.waitAllFinished(pathname);
 
-    await initManager.waitAllFinished();
-    initManager.setInitState(true, true);
+    // initManager.setInitState(pathname, {initStatic: JoyRouteInitState.SUCCESS, init: JoyRouteInitState.SUCCESS});
+    const reduxStateHistories = reduxService.stopRecordState();
+    (renderOpts as any).pageData = reduxStateHistories;
 
     state = reactApplicationContext.getState();
-    console.log(state);
+
+    return {
+      revalidate,
+      stateHistories: reduxStateHistories,
+    };
   };
 
   await renderData();
