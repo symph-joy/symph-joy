@@ -75,22 +75,37 @@ export class ReactAppInitManager extends ReactModel<
       init,
     }: { initStatic?: JoyRouteInitState; init?: JoyRouteInitState }
   ): void {
-    const nextState = Object.assign({}, this.state[pathname], {
-      initStatic: initStatic,
-      init: init,
-    });
+    const nextState = Object.assign(
+      {
+        initStatic: JoyRouteInitState.NONE,
+        init: JoyRouteInitState.NONE,
+      },
+      this.state[pathname]
+    );
+    if (typeof initStatic !== "undefined") {
+      nextState.initStatic = initStatic;
+    }
+    if (typeof init !== "undefined") {
+      nextState.init = init;
+    }
     this.setState({
       [pathname]: nextState,
     });
   }
 
-  resetInitState(pathname: string): void {
-    this.setState({
-      [pathname]: {
+  getState(
+    pathname: string
+  ): { initStatic: JoyRouteInitState; init: JoyRouteInitState } {
+    return (
+      this.state[pathname] || {
         initStatic: JoyRouteInitState.NONE,
         init: JoyRouteInitState.NONE,
-      },
-    });
+      }
+    );
+  }
+
+  resetInitState(pathname: string): void {
+    this.setInitState(pathname, { init: JoyRouteInitState.NONE });
     delete this.initTasks[pathname];
   }
 }

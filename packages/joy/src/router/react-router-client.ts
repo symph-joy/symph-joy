@@ -10,6 +10,9 @@ import getAssetPathFromRoute from "../next-server/lib/router/utils/get-asset-pat
 import { addBasePath } from "../next-server/lib/router/router";
 import { normalizePathTrailingSlash } from "../client/normalize-trailing-slash";
 import { JoyClientConfig } from "../client/joy-client-config";
+import { isDynamicRoute } from "../next-server/lib/router/utils";
+import { matchPath } from "react-router";
+import { route } from "../next-server/server/router";
 
 type ClientRouteSSG = string[];
 
@@ -45,23 +48,39 @@ export class ReactRouterClient extends ReactRouter {
     });
   }
 
-  public async getSSGManifest(path: string): Promise<boolean> {
-    let ssgManifest: Set<string>;
-    if (this._cachedSSgManifest) {
-      ssgManifest = this._cachedSSgManifest;
-    } else {
-      ssgManifest = await new Promise((resolve) => {
-        if ((window as any).__SSG_MANIFEST) {
-          resolve((window as any).__SSG_MANIFEST);
-        } else {
-          (window as any).__SSG_MANIFEST_CB = () => {
-            resolve((window as any).__SSG_MANIFEST);
-          };
+  public getSSGManifest(path: string): Promise<boolean> | boolean {
+    // this._cachedSSgManifest = new Set(["\u002Fdynamic\u002F:id", '/static', '/stateful' ])
+    if (!this._cachedSSgManifest && (window as any).__SSG_MANIFEST) {
+      this._cachedSSgManifest = (window as any).__SSG_MANIFEST;
+    }
+    // todo pref: 将动态路由分开，提升比较效率。
+    const check = (ssgManifest: Set<string>): boolean => {
+      for (const ssgRoute of ssgManifest.values()) {
+        if (ssgRoute === path) {
+          return true;
+        } else if (
+          isDynamicRoute(ssgRoute) &&
+          matchPath(path, { path: ssgRoute })
+        ) {
+          return true;
         }
+      }
+      return false;
+    };
+
+    if (this._cachedSSgManifest) {
+      return check(this._cachedSSgManifest);
+    } else {
+      return new Promise<Set<string>>((resolve) => {
+        (window as any).__SSG_MANIFEST_CB = () => {
+          resolve((window as any).__SSG_MANIFEST);
+        };
+      }).then((ssgManifest) => {
+        ssgManifest = ssgManifest || new Set();
+        this._cachedSSgManifest = ssgManifest;
+        return check(ssgManifest);
       });
     }
-    ssgManifest = ssgManifest || new Set();
-    return ssgManifest.has(path);
   }
 
   private fetchRetry(url: string, attempts: number): Promise<any> {

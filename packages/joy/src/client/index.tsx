@@ -206,9 +206,7 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   if (process.env.NODE_ENV === "development") {
     webpackHMR = opts.webpackHMR;
   }
-  console.log(">>>>111");
   const { page: app, mod } = await pageLoader.loadPage("/_app");
-  console.log(">>>>222");
   CachedApp = app as AppComponent;
 
   if (mod && mod.reportWebVitals) {

@@ -1,17 +1,20 @@
-import React, { ComponentType, useContext, useEffect, useState } from "react";
+import React, {
+  ComponentType,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   IReactRoute,
   JoyReactContext,
-  ReactRoute,
-  ReactRouteProps,
+  JoyRouteInitState,
+  ReactAppInitManager,
 } from "@symph/react";
 import { ReactRouterClient } from "./react-router-client";
 import * as H from "history";
 import { match } from "react-router-dom";
-import path from "path";
-import { Simulate } from "react-dom/test-utils";
-import load = Simulate.load;
-import dynamic, { Loader, DynamicLoading } from "../next-server/lib/dynamic";
+import dynamic, { DynamicLoading, Loader } from "../next-server/lib/dynamic";
 
 type JoyReactRouteLoaderOptions = {
   match: match;
@@ -40,8 +43,6 @@ export function JoyReactRouteLoader({
     throw new Error("react app context is not initialed");
   }
 
-  const [loadingState, setLoadingStat] = useState({ loading: false });
-
   // const {providerId} = route
   // if(!providerId){
   //   throw new Error('joyReactRouteLoader: the route is not a ReactController')
@@ -49,41 +50,93 @@ export function JoyReactRouteLoader({
 
   // @ts-ignore
   let RouteComponent = component.default || component;
+  const LoadingComp = loading || (() => <div>route loading...</div>);
 
-  if (typeof window !== "undefined") {
-    // lazy component
-    if (typeof loader !== "undefined") {
-      RouteComponent = dynamic({ loader, loading });
-    }
-
-    // prefetch Data
-    const router = joyAppContext.syncGetProvider(ReactRouterClient);
-    const href = location.pathname;
-    useEffect(() => {
-      const ssgInfo = router.getSSGManifest(match.path);
-      if (ssgInfo) {
-        router
-          .fetchSSGData(href)
-          .then((ssgData: any) => {})
-          .catch((e) => {});
-      }
-    }, [match]);
-  } else {
+  // lazy component
+  if (typeof loader !== "undefined") {
+    RouteComponent = dynamic({ loader, loading });
   }
+
+  // prefetch Data
+  const router = joyAppContext.syncGetProvider(ReactRouterClient);
+  const href = location.pathname;
+  /**
+   * 是否采用ssg数据的条件：
+   * 1. 预渲染的静态路由页面，revalidate为false。
+   * 2. 预渲染的动态路由页面，fallback为false，revalidate为false。
+   */
+  const isUseSSGData = useMemo(() => {
+    const initManager = joyAppContext.syncGetProvider(ReactAppInitManager);
+    const initState = initManager.getState(href);
+    if (initState && initState.initStatic === JoyRouteInitState.SUCCESS) {
+      return false;
+    }
+    const check = (ssgInfo: boolean) => {
+      if (!ssgInfo) {
+        return false;
+      }
+      // return initState && (initState.initStatic === JoyRouteInitState.NONE || initState.initStatic === JoyRouteInitState.ERROR);
+      const isUse = true;
+      if (isUse) {
+        initManager.setInitState(href, {
+          initStatic: JoyRouteInitState.LOADING,
+        });
+      }
+      return isUse;
+    };
+
+    const ssgInfo = router.getSSGManifest(match.path);
+    if (ssgInfo instanceof Promise) {
+      return ssgInfo.then(check);
+    } else {
+      return check(ssgInfo);
+    }
+  }, []);
+
+  const isWaitingCheckSSGData = isUseSSGData instanceof Promise;
+  const [loadingState, setLoadingStat] = useState({
+    isLoading: isWaitingCheckSSGData,
+  });
+
+  useEffect(() => {
+    Promise.resolve(isUseSSGData).then((is) => {
+      if (!is) {
+        if (loadingState.isLoading) {
+          setLoadingStat({ isLoading: false });
+        }
+        return;
+      }
+      const initManager = joyAppContext.syncGetProvider(ReactAppInitManager);
+
+      router
+        .fetchSSGData(href)
+        .then((ssgData: Array<any>) => {
+          // todo merge store state
+          if (ssgData && ssgData.length) {
+            for (const data of ssgData) {
+              joyAppContext.dispatch(data);
+            }
+          }
+          initManager.setInitState(href, {
+            initStatic: JoyRouteInitState.SUCCESS,
+          });
+        })
+        .catch((e) => {
+          initManager.setInitState(href, {
+            initStatic: JoyRouteInitState.ERROR,
+          });
+        });
+
+      if (loadingState.isLoading) {
+        setLoadingStat({ isLoading: false });
+      }
+    });
+  }, [match]);
+
   const props = { match, location, history, route };
+
+  if (loadingState.isLoading) {
+    return <LoadingComp />;
+  }
   return <RouteComponent {...props} {...extraProps} route={route} />;
-
-  // const instanceWrapper = joyAppContext.getProviderDefinition(providerId);
-  // if (!instanceWrapper) {
-  //   throw new Error(`Missing controller(id:${providerId}) in the container`);
-  // }
-
-  // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // // @ts-ignore
-  // return (
-  //   <instanceWrapper.type
-  //     {...props}
-  //     {...extraProps}
-  //   />
-  // );
 }

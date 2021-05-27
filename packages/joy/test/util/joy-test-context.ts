@@ -9,6 +9,7 @@ import {
 import { stringify } from "querystring";
 import { CoreContext, EntryType } from "@symph/core";
 import { JoyAppConfig } from "@symph/joy";
+import fs from "fs";
 
 export class JoyTestContext extends CoreContext {
   public buildState?: { code: number; stdout?: string; strerr?: string };
@@ -18,6 +19,8 @@ export class JoyTestContext extends CoreContext {
   public host = "localhost";
   public serverProcess?: child_process.ChildProcess;
   public dev = false;
+
+  private cachedBuildId: string;
 
   constructor(public workDir: string, entry: EntryType = {}) {
     super({
@@ -31,6 +34,16 @@ export class JoyTestContext extends CoreContext {
     this.joyAppConfig = await this.get(JoyAppConfig);
     this.joyAppConfig.mergeCustomConfig({ dir: this.workDir });
     return this;
+  }
+
+  getBuildId(): string {
+    if (this.cachedBuildId) {
+      return this.cachedBuildId;
+    }
+    this.cachedBuildId = fs
+      .readFileSync(this.joyAppConfig.resolveBuildOutDir("BUILD_ID"), "utf8")
+      .trim();
+    return this.cachedBuildId;
   }
 
   async killServer() {

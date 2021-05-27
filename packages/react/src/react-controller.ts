@@ -77,6 +77,8 @@ export abstract class ReactController<
   protected isCtlMounted: boolean;
   protected routeMeta?: IRouteMeta;
 
+  protected _models: Array<ReactModel<unknown>>;
+
   private hasInitInvoked = false;
   private hasInjectProps = false;
 
@@ -97,11 +99,6 @@ export abstract class ReactController<
     this.isCtlMounted = false;
     this.appContext = context;
     this.reduxStore = this.appContext.syncGetProvider(ReactReduxService)!;
-
-    this.routeMeta = getRouteMeta(this.constructor);
-    if (this.routeMeta) {
-      bindRouteFromCompProps(this, this.props);
-    }
   }
 
   shouldComponentUpdate(
@@ -117,8 +114,17 @@ export abstract class ReactController<
 
   componentDidMount(): void {
     this.isCtlMounted = true;
+  }
+
+  componentWillUnmount(): void {
+    this.isCtlMounted = false;
+    if (this._models) {
+      this.reduxStore.rmModelStateListener(
+        this._models.map((it) => it.getNamespace()),
+        this.modelStateListener
+      );
+    }
     this.initManager.resetInitState(this.location.pathname);
-    // todo  移除事件监听
   }
 
   protected async init(): Promise<void> {
@@ -127,56 +133,60 @@ export abstract class ReactController<
     }
     this.hasInitInvoked = true;
 
+    this.routeMeta = getRouteMeta(this.constructor);
+    if (this.routeMeta) {
+      bindRouteFromCompProps(this, this.props);
+    }
+
     this.injectProps();
     this.state = {
       ...this.state,
       _modelStateVersion: 1,
     };
-
     // todo prepare component
-    console.log(">>>> controller.props", this.props);
     // const initManager = await this.appContext.get(ReactAppInitManager);
     this.location = (this.props as any).location;
     const { pathname } = this.location;
     const renderStage = this.initManager.initStage;
-    const { initStatic, init } = this.initManager.state[pathname] || {
-      initStatic: JoyRouteInitState.NONE,
-      init: JoyRouteInitState.NONE,
-    };
+    const { initStatic, init } = this.initManager.getState(pathname);
 
-    if (
-      renderStage >= EnumReactAppInitStage.STATIC &&
-      initStatic !== JoyRouteInitState.SUCCESS &&
-      this.initialModelStaticState
-    ) {
-      const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
-        .then(() => {
-          this.initManager.setInitState(pathname, {
-            initStatic: JoyRouteInitState.SUCCESS,
+    if (renderStage >= EnumReactAppInitStage.STATIC) {
+      if (
+        this.initialModelStaticState &&
+        (initStatic === JoyRouteInitState.NONE ||
+          initStatic === JoyRouteInitState.ERROR)
+      ) {
+        const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
+          .then((rst) => {
+            this.initManager.setInitState(pathname, {
+              initStatic: JoyRouteInitState.SUCCESS,
+            });
+            return rst;
+          })
+          .catch((e) => {
+            console.error(e);
+            this.initManager.setInitState(pathname, {
+              initStatic: JoyRouteInitState.ERROR,
+            });
           });
-        })
-        .catch((e) => {
-          this.initManager.setInitState(pathname, {
-            initStatic: JoyRouteInitState.ERROR,
-          });
-        });
-      if (typeof window == "undefined" && initStaticTask) {
-        // only on server side
-        this.initManager.addTask(pathname, initStaticTask);
+        if (typeof window == "undefined" && initStaticTask) {
+          // only on server side
+          this.initManager.addTask(pathname, initStaticTask);
+        }
       }
-    } else {
-      this.initManager.setInitState(pathname, {
-        initStatic: JoyRouteInitState.SUCCESS,
-      });
     }
-    // 如果实在ssg接口，只渲染静态状态部分。
+
     if (renderStage >= EnumReactAppInitStage.DYNAMIC) {
-      if (init !== JoyRouteInitState.SUCCESS && this.initialModelState) {
+      if (
+        this.initialModelState &&
+        (init === JoyRouteInitState.NONE || init === JoyRouteInitState.ERROR)
+      ) {
         const initTask = Promise.resolve(this.initialModelState({}))
-          .then(() => {
+          .then((rst) => {
             this.initManager.setInitState(pathname, {
               init: JoyRouteInitState.SUCCESS,
             });
+            return rst;
           })
           .catch((e) => {
             this.initManager.setInitState(pathname, {
@@ -187,10 +197,6 @@ export abstract class ReactController<
           // only on server side
           this.initManager.addTask(pathname, initTask);
         }
-      } else {
-        this.initManager.setInitState(pathname, {
-          init: JoyRouteInitState.SUCCESS,
-        });
       }
     }
   }
@@ -218,16 +224,16 @@ export abstract class ReactController<
   }
 
   private registersModel(propDeps: IInjectableDependency[]) {
-    const models = new Array<ReactModel<unknown>>();
+    this._models = new Array<ReactModel<unknown>>();
     for (let i = 0; i < propDeps.length; i++) {
       const model = propDeps[i].instance;
       if (ReactModel.isModel(model)) {
-        models.push(model);
+        this._models.push(model);
       }
     }
-    if (models.length) {
+    if (this._models.length) {
       this.reduxStore.addModelStateListener(
-        models.map((it) => it.getNamespace()),
+        this._models.map((it) => it.getNamespace()),
         this.modelStateListener
       );
     }
@@ -249,17 +255,21 @@ export abstract class ReactController<
   };
 
   render(): ReactNode {
-    const { initStatic, init } = this.initManager.state[this.location.pathname];
+    const { initStatic, init } = this.initManager.getState(
+      this.location.pathname
+    );
 
     if (!this.hasInjectProps || initStatic === JoyRouteInitState.LOADING) {
       return "loading...";
     }
     if (initStatic === JoyRouteInitState.ERROR) {
-      return `controller${this.constructor.name} initStatic failed`;
+      return `controller ${this.constructor.name} init static model state failed`;
     }
 
     if (init === JoyRouteInitState.ERROR) {
-      console.warn(`controller${this.constructor.name} initStatic failed`);
+      console.warn(
+        `controller${this.constructor.name} init model state failed`
+      );
     }
 
     return this.renderView();

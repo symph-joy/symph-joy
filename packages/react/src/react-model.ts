@@ -5,6 +5,7 @@ import {
   ProviderInfo,
   ProviderLifecycle,
 } from "@symph/core";
+import { Action } from "redux";
 
 export abstract class ReactModel<TState>
   implements ProviderLifecycle, IProviderInfoWare {
@@ -24,7 +25,7 @@ export abstract class ReactModel<TState>
   private _namespace: string;
 
   afterPropertiesSet(): void {
-    const initState = this.getInitState();
+    const initState = this.state || this.getInitState();
     this.reduxStore.registerModel(this, initState);
   }
 
@@ -36,12 +37,12 @@ export abstract class ReactModel<TState>
     return this.reduxStore.store.getState()[this.getNamespace()];
   }
 
-  protected setState(nextState: Partial<TState>) {
+  protected setState(nextState: Partial<TState>): void {
     const action = {
       type: this.getNamespace() + "/__SET_STATE",
       nextState,
     };
-    return this.reduxStore.store.dispatch(action);
+    this.reduxStore.store.dispatch(action);
   }
 
   static isModel(obj: unknown): obj is ReactModel<unknown> {

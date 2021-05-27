@@ -117,16 +117,11 @@ export class JoyExportAppService {
     this.distDir = joyAppConfig.resolveAppDir(joyAppConfig.distDir);
   }
 
-  async exportApp(
-    dir: string,
-    options: ExportOptions
-    // configuration: JoyAppConfig
-  ): Promise<void> {
+  async exportApp(dir: string, options: ExportOptions): Promise<void> {
     dir = resolve(dir);
 
     // attempt to load global env values so they are available in next.config.js
     loadEnvConfig(dir);
-    // const nextConfig = configuration || loadConfig(PHASE_EXPORT, dir)
     const nextConfig = this.joyAppConfig;
     const { buildExport, trailingSlash } = options;
     const initialPageRevalidationMap = options.initialPageRevalidationMap || {};

@@ -30,6 +30,10 @@ export class JoyReactRouterPlugin<
     readFileSync(join(__dirname, "./routes.handlebars"), "utf-8")
   );
 
+  protected routesServerTemplate = handlebars.compile(
+    readFileSync(join(__dirname, "./routes.server.handlebars"), "utf-8")
+  );
+
   constructor(
     protected fileGenerator: FileGenerator,
     protected fileScanner: FileScanner
@@ -98,11 +102,20 @@ export class JoyReactRouterPlugin<
     console.log(">>>> IReactRouteDev. onReplaceProviderAfter", nextProvider);
   }
 
+  protected getClientRoutes(): T[] {
+    return this.getRoutes();
+  }
+
   @Tap()
   protected async onGenerateFiles() {
     console.log(">>>> IReactRouteDev. onGenerateFiles");
-    const clientRoutes = this.getRoutes();
+    const clientRoutes = this.getClientRoutes();
     const clientFileContent = this.routesTemplate({ routes: clientRoutes });
-    await this.fileGenerator.writeCommonFile("./routes.js", clientFileContent);
+    await this.fileGenerator.writeClientFile("./routes.js", clientFileContent);
+
+    const serverFileContent = this.routesServerTemplate({
+      routes: clientRoutes,
+    });
+    await this.fileGenerator.writeServerFile("./routes.js", serverFileContent);
   }
 }

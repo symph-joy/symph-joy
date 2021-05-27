@@ -118,10 +118,9 @@ export class IncrementalCache {
           this.getSeedPath(pathname, "html"),
           "utf8"
         );
-        // const pageData = JSON.parse(
-        //   await promises.readFile(this.getSeedPath(pathname, "json"), "utf8")
-        // );
-        const pageData = {};
+        const pageData = JSON.parse(
+          await promises.readFile(this.getSeedPath(pathname, "json"), "utf8")
+        );
 
         data = {
           html,

@@ -63,12 +63,20 @@ export default class StatefulCtl extends ReactController {
   public statefulModel: StatefulModel;
 
   async initialModelStaticState(urlParams: any): Promise<void> {
+    console.log(
+      ">>>> initialModelStaticState this.statefulModel",
+      this.statefulModel
+    );
     await this.statefulModel.setStaticMessage(
       "hello from initialModelStaticState"
     );
   }
 
   async initialModelState(context: any): Promise<void> {
+    console.log(
+      ">>>> initialModelState this.statefulModel",
+      this.statefulModel
+    );
     await this.statefulModel.setDynamicMessage("hello from initialModelState");
   }
 

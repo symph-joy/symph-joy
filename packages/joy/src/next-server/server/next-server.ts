@@ -201,13 +201,11 @@ export class NextServer implements ProviderLifecycle {
       compress,
     } = this.nextConfig;
 
-    // this.buildId = this.readBuildId()
-
     this.renderOpts = {
-      initStage: EnumReactAppInitStage.STATIC,
+      initStage: EnumReactAppInitStage.DYNAMIC,
       poweredByHeader: this.nextConfig.poweredByHeader,
       canonicalBase: this.nextConfig.amp.canonicalBase,
-      buildId: this.buildId,
+      buildId: this.buildId, // will be updated in afterPropertiesSet
       generateEtags,
       // previewProps: this.getPreviewProps(),
       previewProps: {} as any, // todo remove
@@ -292,6 +290,7 @@ export class NextServer implements ProviderLifecycle {
 
   async afterPropertiesSet() {
     this.buildId = await this.readBuildId();
+    this.renderOpts.buildId = this.buildId;
   }
 
   protected currentPhase(): string {

@@ -9,10 +9,10 @@ export const joyReactAutoGenRoutes = {
       path: "{{path}}",
       providerId: "{{providerId}}",
       dynamic: {{json dynamic}},
-      render: (routeProps) => {
-        return <JoyReactRouteLoader {...routeProps} component={require({{json srcPath}})} />;
-      },
-      //component: {{#if dynamic}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}},
+      //render: (routeProps) => {
+      //  return <JoyReactRouteLoader {...routeProps} component={require({{json srcPath}})} />;
+      //},
+      component: {{#if dynamic}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}},
     },
     {{/routes}}
   ]

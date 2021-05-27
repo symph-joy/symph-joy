@@ -742,6 +742,7 @@ export async function renderToHTML(
 
     // initManager.setInitState(pathname, {initStatic: JoyRouteInitState.SUCCESS, init: JoyRouteInitState.SUCCESS});
     const reduxStateHistories = reduxService.stopRecordState();
+    (renderOpts as any).revalidate = revalidate;
     (renderOpts as any).pageData = reduxStateHistories;
 
     state = reactApplicationContext.getState();

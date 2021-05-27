@@ -31,11 +31,11 @@ export class DynamicStaticPathGenerator implements JoyPrerenderInterface {
 
   async getPaths(): Promise<Array<string | { params: { id: string } }>> {
     // return [{params: {id: '1'}}, {params: {id: '2'}}];
-    return ["/dynamic/1", "/dynamic/2"];
+    return ["/dynamic/hello1", "/dynamic/hello2"];
   }
 }
 
-@Route<{ id: string }>({ path: "/dynamic/:id" })
+@Route<{ id: string }>({ path: "/dynamic/:msg" })
 @Controller()
 export default class DynamicRouteCtl extends ReactController {
   initialModelStaticState(urlParams: any): Promise<void> {
@@ -47,12 +47,14 @@ export default class DynamicRouteCtl extends ReactController {
   }
 
   @RouteParam()
-  private id: string;
+  private msg: string;
 
   renderView(): ReactNode {
     return (
       <>
-        <div>id: {this.id}</div>
+        <div>
+          msg: <span id="msg">{this.msg}</span>
+        </div>
       </>
     );
   }

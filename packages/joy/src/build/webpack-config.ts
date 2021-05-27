@@ -449,6 +449,8 @@ export default async function getBaseWebpackConfig(
   const webpackMode = dev ? "development" : "production";
 
   const terserOptions: any = {
+    keep_classnames: true,
+    keep_fnames: true,
     parse: {
       ecma: 8,
     },
@@ -800,12 +802,12 @@ export default async function getBaseWebpackConfig(
       minimize: !(dev || isServer),
       minimizer: [
         // Minify JavaScript
-        new TerserPlugin({
-          extractComments: false,
-          // cache: path.join(outDir, 'cache', 'next-minifier'), // webpack5 升级后不兼容，先屏蔽掉
-          parallel: config.experimental.cpus || true,
-          terserOptions,
-        }),
+        // new TerserPlugin({
+        //   extractComments: false,
+        //   // cache: path.join(outDir, 'cache', 'next-minifier'), // webpack5 升级后不兼容，先屏蔽掉
+        //   parallel: config.experimental.cpus || true,
+        //   terserOptions,
+        // }),
         // Minify CSS
         new CssMinimizerPlugin({
           postcssOptions: {

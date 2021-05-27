@@ -20,9 +20,6 @@ interface IReactRouteBuildDev extends IJoyReactRouteBuild {
 export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<
   IReactRouteBuildDev
 > {
-  protected routesTemplate = handlebars.compile(
-    readFileSync(join(__dirname, "./routes.handlebars"), "utf-8")
-  );
   constructor(
     protected fileGenerator: FileGenerator,
     protected fileScanner: FileScanner
@@ -102,12 +99,19 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<
   //
   // }
 
-  @Tap()
-  protected async onGenerateFiles() {
-    console.log(">>>> IReactRouteDev. onGenerateFiles");
-    const clientRoutes = this.filterRoutes((route) => !!route.isAdd);
-    const clientFileContent = this.routesTemplate({ routes: clientRoutes });
-    await this.fileGenerator.writeCommonFile("./routes.js", clientFileContent);
+  // @Tap()
+  // protected async onGenerateFiles() {
+  //   console.log(">>>> IReactRouteDev. onGenerateFiles");
+  //   const clientRoutes = this.filterRoutes((route) => !!route.isAdd);
+  //   const clientFileContent = this.routesTemplate({ routes: clientRoutes });
+  //   await this.fileGenerator.writeClientFile("./routes.js", clientFileContent);
+  //
+  //   const serverFileContent = this.routesServerTemplate({ routes: clientRoutes });
+  //   await this.fileGenerator.writeServerFile("./routes.js", serverFileContent);
+  // }
+
+  protected getClientRoutes(): IReactRouteBuildDev[] {
+    return this.filterRoutes((route) => !!route.isAdd);
   }
 
   @Tap()

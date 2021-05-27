@@ -168,6 +168,8 @@ export class JoyDevCommand extends JoyCommand {
   async run(args: JoyCommandOptionType<this>): Promise<any> {
     // @ts-ignore
     process.env.NODE_ENV = "development";
+    // @ts-ignore
+    process.env.__NEXT_TEST_WITH_DEVTOOL = true;
 
     const dir = args._[0] || ".";
     const { port, hostname } = args;

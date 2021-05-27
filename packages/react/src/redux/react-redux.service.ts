@@ -119,6 +119,30 @@ export class ReactReduxService {
     return combined;
   }
 
+  rmModelStateListener(
+    modelNameSpaces: string[],
+    listener: ModelStateChangeHandler
+  ): number {
+    let count = 0;
+    if (!(modelNameSpaces && modelNameSpaces.length > 0)) {
+      return count;
+    }
+    for (let i = 0; i < modelNameSpaces.length; i++) {
+      const registeredModel = this.models[modelNameSpaces[i]];
+      if (!registeredModel?.listeners?.length) {
+        continue;
+      }
+      const index = registeredModel.listeners.findIndex(
+        (it) => it.listener === listener
+      );
+      if (index >= 0) {
+        count++;
+        registeredModel.listeners.splice(index, 1);
+      }
+    }
+    return count;
+  }
+
   addModelStateListener(
     modelNameSpaces: string[],
     listener: ModelStateChangeHandler

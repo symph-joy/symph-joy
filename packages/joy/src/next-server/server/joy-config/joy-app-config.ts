@@ -251,7 +251,7 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
   }
 
   public resolveBuildOutDir(...subPaths: string[]) {
-    return this.resolveAppDir(OUT_DIRECTORY, ...subPaths);
+    return this.resolveAppDir(this.distDir, OUT_DIRECTORY, ...subPaths);
   }
 
   public resolveSSGOutDir(...subPaths: string[]) {

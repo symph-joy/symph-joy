@@ -9,6 +9,9 @@ export default class StaticCtl extends ReactController {
   renderView(): ReactNode {
     return (
       <>
+        <div>
+          controller class name:<span id="ctlClassName">{StaticCtl.name}</span>
+        </div>
         <div id="message">this is a static route page</div>
         <div>timestamp:{new Date().getTime()}</div>
       </>

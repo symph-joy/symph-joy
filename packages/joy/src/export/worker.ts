@@ -317,9 +317,7 @@ export async function exportPage(
       query
     );
     const curRenderOpts = {
-      initStage: buildExport
-        ? EnumReactAppInitStage.STATIC
-        : EnumReactAppInitStage.DYNAMIC,
+      initStage: EnumReactAppInitStage.STATIC,
       ...components,
       ...renderOpts,
       ampPath,
@@ -423,7 +421,6 @@ export async function exportPage(
       }
     }
     results.fromBuildExportRevalidate = (curRenderOpts as any).revalidate;
-
     await promises.writeFile(htmlFilepath, html, "utf8");
     return results;
   } catch (error) {
