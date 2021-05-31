@@ -20,6 +20,6 @@ describe("basic", () => {
   });
 
   test("start", async () => {
-    await waitForMoment();
+    // await waitForMoment();
   }, 999999999);
 });

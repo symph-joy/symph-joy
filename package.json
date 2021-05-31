@@ -16,7 +16,7 @@
     "watch": "lerna run watch",
     "build": "lerna run build",
     "clean": "lerna clean",
-    "publish:canary": "npm run clean && npm run build && npx lerna publish --npm-tag=beta --access public -m \"publish %s release\"",
+    "publish:canary": "npm run clean && npm run build && npx lerna publish --npm-tag=beta --access public -m \"publish %`s release\"",
 
     "testonly": "jest --no-watchman",
     "testall": "yarn run testonly -- --ci --reporters=default --reporters=jest-junit --forceExit --runInBand --no-watchman",

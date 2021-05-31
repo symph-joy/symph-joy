@@ -1,5 +1,4 @@
 import * as path from "path";
-import { waitForMoment } from "../../../util/joy-test-utils";
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
 
@@ -20,7 +19,6 @@ describe("hello joy dev", () => {
   });
 
   test("hello should start dev", async () => {
-    await waitForMoment();
     await page.goto(testContext.getUrl("/"));
     const browser = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(browser).toContain("Welcome to Joy!");
