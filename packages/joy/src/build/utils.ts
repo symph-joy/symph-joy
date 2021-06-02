@@ -1,4 +1,4 @@
-import "../next-server/server/node-polyfill-fetch";
+import "../joy-server/server/node-polyfill-fetch";
 
 import chalk from "chalk";
 import gzipSize from "gzip-size";
@@ -19,16 +19,13 @@ import {
 } from "../lib/constants";
 import prettyBytes from "../lib/pretty-bytes";
 import { recursiveReadDir } from "../lib/recursive-readdir";
-import {
-  getRouteMatcher,
-  getRouteRegex,
-} from "../next-server/lib/router/utils";
-import { isDynamicRoute } from "../next-server/lib/router/utils/is-dynamic";
-import escapePathDelimiters from "../next-server/lib/router/utils/escape-path-delimiters";
+import { getRouteMatcher, getRouteRegex } from "../joy-server/lib/router/utils";
+import { isDynamicRoute } from "../joy-server/lib/router/utils/is-dynamic";
+import escapePathDelimiters from "../joy-server/lib/router/utils/escape-path-delimiters";
 import { findPageFile } from "../server/lib/find-page-file";
 import { GetStaticPaths } from "../types";
-import { denormalizePagePath } from "../next-server/server/normalize-page-path";
-import { BuildManifest } from "../next-server/server/get-page-files";
+import { denormalizePagePath } from "../joy-server/server/normalize-page-path";
+import { BuildManifest } from "../joy-server/server/get-page-files";
 import { removePathTrailingSlash } from "../client/normalize-trailing-slash";
 import type { UnwrapPromise } from "../lib/coalesced-function";
 
@@ -550,9 +547,7 @@ export async function buildStaticPaths(
 
   const staticPathsResult = await getStaticPaths();
 
-  const expectedReturnVal =
-    `Expected: { paths: [], fallback: boolean }\n` +
-    `See here for more info: https://err.sh/vercel/next.js/invalid-getstaticpaths-value`;
+  const expectedReturnVal = `Expected: { paths: [], fallback: boolean }\n`;
 
   if (
     !staticPathsResult ||
@@ -685,7 +680,7 @@ export async function isPageStatic(
   prerenderFallback?: boolean | "unstable_blocking" | undefined;
 }> {
   try {
-    require("../next-server/lib/runtime-config").setConfig(runtimeEnvConfig);
+    require("../joy-server/lib/runtime-config").setConfig(runtimeEnvConfig);
     const mod = require(serverBundle);
     const Comp = mod.default || mod;
 
@@ -744,15 +739,13 @@ export async function isPageStatic(
     // A page cannot have static parameters if it is not a dynamic page.
     if (hasStaticProps && hasStaticPaths && !pageIsDynamic) {
       throw new Error(
-        `getStaticPaths can only be used with dynamic pages, not '${page}'.` +
-          `\nLearn more: https://nextjs.org/docs/routing/dynamic-routes`
+        `getStaticPaths can only be used with dynamic pages, not '${page}'.`
       );
     }
 
     if (hasStaticProps && pageIsDynamic && !hasStaticPaths) {
       throw new Error(
-        `getStaticPaths is required for dynamic SSG pages and is missing for '${page}'.` +
-          `\nRead more: https://err.sh/next.js/invalid-getstaticpaths-value`
+        `getStaticPaths is required for dynamic SSG pages and is missing for '${page}'.`
       );
     }
 
@@ -787,7 +780,7 @@ export function hasCustomGetInitialProps(
   runtimeEnvConfig: any,
   checkingApp: boolean
 ): boolean {
-  require("../next-server/lib/runtime-config").setConfig(runtimeEnvConfig);
+  require("../joy-server/lib/runtime-config").setConfig(runtimeEnvConfig);
   let mod = require(bundle);
 
   if (checkingApp) {
@@ -802,6 +795,6 @@ export function getNamedExports(
   bundle: string,
   runtimeEnvConfig: any
 ): Array<string> {
-  require("../next-server/lib/runtime-config").setConfig(runtimeEnvConfig);
+  require("../joy-server/lib/runtime-config").setConfig(runtimeEnvConfig);
   return Object.keys(require(bundle));
 }

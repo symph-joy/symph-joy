@@ -1,6 +1,6 @@
 import { CoreContext, EntryType, JoyContainer } from "@symph/core";
 import { CommandCenter } from "./command/command-center";
-import { JoyAppConfig } from "./next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "./joy-server/server/joy-config/joy-app-config";
 
 export class JoyBoot extends CoreContext {
   // public commandCenter: CommandCenter = new CommandCenter()
@@ -24,7 +24,6 @@ export class JoyBoot extends CoreContext {
   }
 
   async runCommand(name: string, args: any = {}): Promise<any> {
-    console.log(">>>> runCommand: ", name, args);
     const commandCenter = await this.get<CommandCenter>(CommandCenter);
     if (!commandCenter) {
       throw new Error(

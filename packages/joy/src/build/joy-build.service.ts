@@ -12,7 +12,7 @@ import {
   ROUTES_MANIFEST,
   SERVER_DIRECTORY,
   SERVERLESS_DIRECTORY,
-} from "../next-server/lib/constants";
+} from "../joy-server/lib/constants";
 import path from "path";
 import loadCustomRoutes, {
   getRedirectStatus,
@@ -32,7 +32,7 @@ import {
   printTreeView,
   isPageStatic,
 } from "./utils";
-import { __ApiPreviewProps } from "../next-server/server/api-utils";
+import { __ApiPreviewProps } from "../joy-server/server/api-utils";
 import crypto from "crypto";
 import { createEntrypoints, createPagesMapping } from "./entries";
 import {
@@ -44,28 +44,27 @@ import {
   getRouteRegex,
   getSortedRoutes,
   isDynamicRoute,
-} from "../next-server/lib/router/utils";
+} from "../joy-server/lib/router/utils";
 import { promises, writeFileSync } from "fs";
 import getBaseWebpackConfig from "./webpack-config";
 import { CompilerResult, runCompiler } from "./compiler";
 import formatWebpackMessages from "../client/dev/error-overlay/format-webpack-messages";
 import chalk from "chalk";
 import { PagesManifest } from "./webpack/plugins/pages-manifest-plugin";
-import { BuildManifest } from "../next-server/server/get-page-files";
-import { getPagePath } from "../next-server/server/require";
-import { normalizePagePath } from "../next-server/server/normalize-page-path";
+import { BuildManifest } from "../joy-server/server/get-page-files";
+import { getPagePath } from "../joy-server/server/require";
+import { normalizePagePath } from "../joy-server/server/normalize-page-path";
 import escapeStringRegexp from "escape-string-regexp";
 import { writeBuildId } from "./write-build-id";
 import { recursiveDelete } from "../lib/recursive-delete";
-import { ClientSsgManifest, PrerenderManifest, SsgRoute } from "./index";
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
 import { ClassProvider, CoreContext, Injectable } from "@symph/core";
 import { getWebpackConfigForSrc } from "./webpack-config-for-src";
 import webpack from "webpack";
 import { FileGenerator } from "../plugin/file-generator";
-import { FileScanner } from "../next-server/server/scanner/file-scanner";
+import { FileScanner } from "../joy-server/server/scanner/file-scanner";
 import {
   IJoyReactRouteBuild,
   JoyReactRouterPlugin,
@@ -74,6 +73,28 @@ import Worker from "jest-worker";
 import { ReactController } from "@symph/react";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
+
+export type SsgRoute = {
+  initialRevalidateSeconds: number | false;
+  srcRoute: string | null;
+  dataRoute: string;
+};
+
+export type DynamicSsgRoute = {
+  routeRegex: string;
+  fallback: string | null | false;
+  dataRoute: string;
+  dataRouteRegex: string;
+};
+
+export type ClientSsgManifest = Set<string>;
+
+export type PrerenderManifest = {
+  version: 2;
+  routes: { [route: string]: SsgRoute };
+  dynamicRoutes: { [route: string]: DynamicSsgRoute };
+  preview?: __ApiPreviewProps; // todo remove
+};
 
 @Injectable()
 export class JoyBuildService {
@@ -207,8 +228,7 @@ export class JoyBuildService {
 
         // if (hasStaticModelState && !pathIsDynamic) {
         //   throw new Error(
-        //     `getStaticPaths can only be used with dynamic pages, not '${page}'.` +
-        //     `\nLearn more: https://nextjs.org/docs/routing/dynamic-routes`
+        //     `getStaticPaths can only be used with dynamic pages, not '${page}'.`
         //   )
         // }
 
@@ -319,7 +339,7 @@ export class JoyBuildService {
             defaultMap[path] = { page: path, query: {} };
           }
           if (isDynamicRoute(prerenderInfo.route) && isFallback) {
-            defaultMap[route] = { page: path, query: { __nextFallback: true } };
+            defaultMap[route] = { page: path, query: { __joyFallback: true } };
           }
         });
 
@@ -358,14 +378,14 @@ export class JoyBuildService {
           initialRevalidateSeconds:
             exportConfig.initialPageRevalidationMap[pathname],
           srcRoute: isDynamic ? route : null,
-          dataRoute: path.posix.join("/_next/data", buildId, `${file}.json`),
+          dataRoute: path.posix.join("/_joy/data", buildId, `${file}.json`),
         };
       }
 
       if (isDynamic) {
         const normalizedRoute = normalizePagePath(route);
         const dataRoute = path.posix.join(
-          "/_next/data",
+          "/_joy/data",
           buildId,
           `${normalizedRoute}.json`
         );
@@ -412,12 +432,10 @@ export class JoyBuildService {
     const config = this.joyConfig;
     const dir = this.dir;
     if (!(await isWriteable(dir))) {
-      throw new Error(
-        "> Build directory is not writeable. https://err.sh/vercel/next.js/build-dir-not-writeable"
-      );
+      throw new Error("> Build directory is not writeable.");
     }
 
-    // attempt to load global env values so they are available in next.config.js
+    // attempt to load global env values so they are available in joy.config.js
     const { loadedEnvFiles } = loadEnvConfig(dir);
 
     // const config = loadConfig(PHASE_PRODUCTION_BUILD, dir, conf);
@@ -428,28 +446,21 @@ export class JoyBuildService {
     const distDir = config.resolveAppDir(config.distDir);
     const outDir = config.resolveAppDir(config.distDir, OUT_DIRECTORY);
 
-    console.log(
-      `>>>> build ${config.resolveAppDir(
-        dir
-      )} --profile=${reactProductionProfiling} --debug=${debugOutput}`
-    );
-
     await promises.mkdir(outDir, { recursive: true });
 
     const { headers, rewrites, redirects } = await loadCustomRoutes(config);
 
-    // if (ciEnvironment.isCI && !ciEnvironment.hasNextSupport) {
+    // if (ciEnvironment.isCI && !ciEnvironment.hasJoySupport) {
     const cacheDir = path.join(distDir, "cache");
     const hasCache = await fileExists(cacheDir);
     if (!hasCache) {
       // Intentionally not piping to stderr in case people fail in CI when
       // stderr is detected.
       console.log(
-        `${Log.prefixes.warn} No build cache found. Please configure build caching for faster rebuilds. Read more: https://err.sh/next.js/no-cache`
+        `${Log.prefixes.warn} No build cache found. Please configure build caching for faster rebuilds.`
       );
     }
     // }
-    console.log(">>>> ddd");
     const buildSpinner = createSpinner({
       prefixText: `${Log.prefixes.info} Creating an optimized production build`,
     });
@@ -503,19 +514,18 @@ export class JoyBuildService {
     const pageKeys = Object.keys(mappedPages);
     const conflictingPublicFiles: string[] = [];
     const hasCustomErrorPage = mappedPages["/_error"].startsWith(
-      "private-next-pages"
+      "private-joy-pages"
     );
     const hasPages404 = Boolean(
-      mappedPages["/404"] &&
-        mappedPages["/404"].startsWith("private-next-pages")
+      mappedPages["/404"] && mappedPages["/404"].startsWith("private-joy-pages")
     );
     let hasNonStaticErrorPage: boolean;
 
     if (hasPublicDir) {
-      const hasPublicUnderScoreNextDir = await fileExists(
-        path.join(publicDir, "_next")
+      const hasPublicUnderScoreJoyDir = await fileExists(
+        path.join(publicDir, "_joy")
       );
-      if (hasPublicUnderScoreNextDir) {
+      if (hasPublicUnderScoreJoyDir) {
         throw new Error(PUBLIC_DIR_MIDDLEWARE_CONFLICT);
       }
     }
@@ -538,9 +548,7 @@ export class JoyBuildService {
       throw new Error(
         `Conflicting public and page file${
           numConflicting === 1 ? " was" : "s were"
-        } found. https://err.sh/vercel/next.js/conflicting-public-file-page\n${conflictingPublicFiles.join(
-          "\n"
-        )}`
+        } found. ${conflictingPublicFiles.join("\n")}`
       );
     }
 
@@ -552,9 +560,8 @@ export class JoyBuildService {
 
     if (nestedReservedPages.length) {
       Log.warn(
-        `The following reserved Next.js pages were detected not directly under the pages directory:\n` +
-          nestedReservedPages.join("\n") +
-          `\nSee more info here: https://err.sh/next.js/nested-reserved-page\n`
+        `The following reserved Joy.js pages were detected not directly under the pages directory:\n` +
+          nestedReservedPages.join("\n")
       );
     }
 
@@ -580,7 +587,7 @@ export class JoyBuildService {
       const routeRegex = pathToRegexp(r.source, keys, {
         strict: true,
         sensitive: false,
-        delimiter: "/", // default is `/#?`, but Next does not pass query info
+        delimiter: "/", // default is `/#?`, but Joy does not pass query info
       });
 
       return {
@@ -683,14 +690,13 @@ export class JoyBuildService {
           clientConfig.optimization.minimizer.length === 0))
     ) {
       Log.warn(
-        `Production code optimization has been disabled in your project. Read more: https://err.sh/vercel/next.js/minification-disabled`
+        `Production code optimization has been disabled in your project.`
       );
     }
 
     const webpackBuildStart = process.hrtime();
 
     let result: CompilerResult = { warnings: [], errors: [] };
-    // // TODO: why do we need this?? https://github.com/vercel/next.js/issues/8253
     result = await runCompiler(configs);
     result = {
       warnings: [...srcResult.warnings, ...result.warnings],
@@ -714,14 +720,14 @@ export class JoyBuildService {
       console.error(chalk.red("Failed to compile.\n"));
 
       if (
-        error.indexOf("private-next-pages") > -1 &&
+        error.indexOf("private-joy-pages") > -1 &&
         error.indexOf("does not contain a default export") > -1
       ) {
-        const page_name_regex = /'private-next-pages\/(?<page_name>[^']*)'/;
+        const page_name_regex = /'private-joy-pages\/(?<page_name>[^']*)'/;
         const parsed = page_name_regex.exec(error);
         const page_name = parsed && parsed.groups && parsed.groups.page_name;
         throw new Error(
-          `webpack build failed: found page without a React Component as default export in pages/${page_name}\n\nSee https://err.sh/vercel/next.js/page-without-valid-component for more info.`
+          `webpack build failed: found page without a React Component as default export in pages/${page_name}\n`
         );
       }
 
@@ -729,11 +735,11 @@ export class JoyBuildService {
       console.error();
 
       if (
-        error.indexOf("private-next-pages") > -1 ||
-        error.indexOf("__next_polyfill__") > -1
+        error.indexOf("private-joy-pages") > -1 ||
+        error.indexOf("__joy_polyfill__") > -1
       ) {
         throw new Error(
-          "> webpack config.resolve.alias was incorrectly overridden. https://err.sh/vercel/next.js/invalid-resolve-alias"
+          "> webpack config.resolve.alias was incorrectly overridden."
         );
       }
       throw new Error("> Build failed because of webpack errors");
@@ -766,7 +772,7 @@ export class JoyBuildService {
 
     let customAppGetInitialProps: boolean | undefined;
 
-    process.env.NEXT_PHASE = PHASE_PRODUCTION_BUILD;
+    process.env.JOY_PHASE = PHASE_PRODUCTION_BUILD;
 
     // // const staticCheckWorkers = new Worker(staticCheckWorker, {
     // //   numWorkers: config.experimental.cpus,
@@ -819,7 +825,7 @@ export class JoyBuildService {
       // const pagePath = normalizePagePath(page);
       const pagePath = page;
       const dataRoute = path.posix.join(
-        "/_next/data",
+        "/_joy/data",
         buildId,
         `${pagePath}.json`
       );
@@ -843,7 +849,7 @@ export class JoyBuildService {
         dataRouteRegex = normalizeRouteRegex(
           new RegExp(
             `^${path.posix.join(
-              "/_next/data",
+              "/_joy/data",
               escapeStringRegexp(buildId),
               `${pagePath}.json`
             )}$`
@@ -915,8 +921,6 @@ export class JoyBuildService {
     if (debugOutput) {
       printCustomRoutes({ redirects, rewrites, headers });
     }
-
-    console.log(">>>>> build.service, finished");
   }
 
   private generateClientSsgManifest(

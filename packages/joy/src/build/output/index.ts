@@ -211,12 +211,12 @@ export function watchCompilers(
     compiler: any,
     onEvent: (status: WebpackStatus) => void
   ) {
-    compiler.hooks.invalid.tap(`NextJsInvalid-${key}`, () => {
+    compiler.hooks.invalid.tap(`JoyJsInvalid-${key}`, () => {
       onEvent({ loading: true });
     });
 
     compiler.hooks.done.tap(
-      `NextJsDone-${key}`,
+      `JoyJsDone-${key}`,
       (stats: import("webpack").Stats) => {
         buildStore.setState({ amp: {} });
 

@@ -3,10 +3,10 @@ import { UrlObject } from "url";
 import {
   addBasePath,
   isLocalURL,
-  NextRouter,
+  JoyRouter,
   PrefetchOptions,
   resolveHref,
-} from "../next-server/lib/router/router";
+} from "../joy-server/lib/router/router";
 import { useRouter } from "./router";
 
 type Url = string | UrlObject;
@@ -84,7 +84,7 @@ const listenToIntersections = (el: Element, cb: () => void) => {
 };
 
 function prefetch(
-  router: NextRouter,
+  router: JoyRouter,
   href: string,
   as: string,
   options?: PrefetchOptions
@@ -119,7 +119,7 @@ function isModifiedEvent(event: React.MouseEvent) {
 
 function linkClicked(
   e: React.MouseEvent,
-  router: NextRouter,
+  router: JoyRouter,
   href: string,
   as: string,
   replace?: boolean,
@@ -245,7 +245,7 @@ function Link(props: React.PropsWithChildren<LinkProps>) {
     if (props.prefetch && !hasWarned.current) {
       hasWarned.current = true;
       console.warn(
-        "Next.js auto-prefetches automatically based on viewport. The prefetch attribute is no longer needed. More: https://err.sh/vercel/next.js/prefetch-true-deprecated"
+        "Joy auto-prefetches automatically based on viewport. The prefetch attribute is no longer needed."
       );
     }
   }

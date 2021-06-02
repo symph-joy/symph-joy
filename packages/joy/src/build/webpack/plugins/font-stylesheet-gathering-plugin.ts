@@ -4,12 +4,12 @@ import sources from "webpack-sources";
 import {
   getFontDefinitionFromNetwork,
   FontManifest,
-} from "../../../next-server/server/font-utils";
+} from "../../../joy-server/server/font-utils";
 // @ts-ignore
 import BasicEvaluatedExpression from "webpack/lib/BasicEvaluatedExpression";
 import postcss from "postcss";
 import minifier from "cssnano-simple";
-import { OPTIMIZED_FONT_PROVIDERS } from "../../../next-server/lib/constants";
+import { OPTIMIZED_FONT_PROVIDERS } from "../../../joy-server/lib/constants";
 import { webpack5 } from "../../../types/webpack5";
 import NormalModuleFactory = webpack5.NormalModuleFactory;
 
@@ -138,7 +138,7 @@ export class FontStylesheetGatheringPlugin {
                 // Font manifest declaration
                 ${
                   mainTemplate.requireFn
-                }.__NEXT_FONT_MANIFEST__ = ${JSON.stringify(
+                }.__JOY_FONT_MANIFEST__ = ${JSON.stringify(
               this.manifestContent
             )};`;
           }
@@ -200,6 +200,6 @@ function isNodeCreatingLinkElement(node: namedTypes.CallExpression) {
   if (componentNode.type !== "Literal") {
     return false;
   }
-  // Next has pragma: __jsx.
+  // Joy has pragma: __jsx.
   return callee.name === "__jsx" && componentNode.value === "link";
 }

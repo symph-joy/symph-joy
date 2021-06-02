@@ -31,13 +31,11 @@ function reactElementToDOM({ type, props }: JSX.Element): HTMLElement {
 function updateElements(type: string, components: JSX.Element[]) {
   const headEl = document.getElementsByTagName("head")[0];
   const headCountEl: HTMLMetaElement = headEl.querySelector(
-    "meta[name=next-head-count]"
+    "meta[name=joy-head-count]"
   ) as HTMLMetaElement;
   if (process.env.NODE_ENV !== "production") {
     if (!headCountEl) {
-      console.error(
-        "Warning: next-head-count is missing. https://err.sh/next.js/next-head-count-missing"
-      );
+      console.error("Warning: joy-head-count is missing.");
       return;
     }
   }

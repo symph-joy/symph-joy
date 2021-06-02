@@ -2,6 +2,6 @@
 // import MiniCssExtractPlugin from './mini-css-extract-plugin/src'
 const MiniCssExtractPlugin = require("./mini-css-extract-plugin/src").default;
 
-export default class NextMiniCssExtractPlugin extends MiniCssExtractPlugin {
-  __next_css_remove = true;
+export default class JoyMiniCssExtractPlugin extends MiniCssExtractPlugin {
+  __joy_css_remove = true;
 }

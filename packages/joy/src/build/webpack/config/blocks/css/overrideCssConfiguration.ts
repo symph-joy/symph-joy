@@ -12,7 +12,7 @@ export async function __overrideCssConfiguration(
     if (
       rule.options &&
       typeof rule.options === "object" &&
-      rule.options["ident"] === "__nextjs_postcss"
+      rule.options["ident"] === "__joyjs_postcss"
     ) {
       rule.options.plugins = postCssPlugins;
     } else if (Array.isArray(rule.oneOf)) {

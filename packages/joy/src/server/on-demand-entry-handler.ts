@@ -7,10 +7,10 @@ import * as Log from "../build/output/log";
 import {
   normalizePagePath,
   normalizePathSep,
-} from "../next-server/server/normalize-page-path";
-import { pageNotFoundError } from "../next-server/server/require";
+} from "../joy-server/server/normalize-page-path";
+import { pageNotFoundError } from "../joy-server/server/require";
 import { findPageFile } from "./lib/find-page-file";
-import getRouteFromEntrypoint from "../next-server/server/get-route-from-entrypoint";
+import getRouteFromEntrypoint from "../joy-server/server/get-route-from-entrypoint";
 
 export const ADDED = Symbol("added");
 export const BUILDING = Symbol("building");
@@ -53,7 +53,7 @@ export default function onDemandEntryHandler(
 
   for (const compiler of compilers) {
     compiler.hooks.make.tap(
-      "NextJsOnDemandEntries",
+      "JoyJsOnDemandEntries",
       (_compilation: Compilation) => {
         invalidator.startBuilding();
       }
@@ -87,7 +87,7 @@ export default function onDemandEntryHandler(
   );
   // <<<< poc
 
-  multiCompiler.hooks.done.tap("NextJsOnDemandEntries", (multiStats) => {
+  multiCompiler.hooks.done.tap("JoyJsOnDemandEntries", (multiStats) => {
     const [clientStats, serverStats] = multiStats.stats;
     const pagePaths = new Set([
       ...getPagePathsFromEntrypoints(clientStats.compilation.entrypoints),
@@ -169,11 +169,11 @@ export default function onDemandEntryHandler(
         pageExtensions
       );
 
-      // Default the /_error route to the Next.js provided default page
+      // Default the /_error route to the Joy.js provided default page
       if (pagePath === null) {
         if (page === "/_error") {
           absolutePagePath = require.resolve("../pages/_error");
-          pagePath = "next/dist/pages/_error";
+          pagePath = "@symph/joy/dist/pages/_error";
         } else {
           throw pageNotFoundError(normalizedPagePath);
         }
@@ -181,8 +181,8 @@ export default function onDemandEntryHandler(
         absolutePagePath = join(pagesDir, pagePath);
       }
       // if (page === '/_error' && pagePath === null) {
-      //   // pagePath = 'next/dist/pages/_error'
-      //   pagePath = 'next/dist/pages/_error'
+      //   // pagePath = 'joy/dist/pages/_error'
+      //   pagePath = 'joy/dist/pages/_error'
       // }
       //
       // if (pagePath === null) {
@@ -200,7 +200,7 @@ export default function onDemandEntryHandler(
       const bundleFile = normalizePagePath(pageUrl);
       const serverBundlePath = posix.join("pages", bundleFile);
       const clientBundlePath = posix.join("pages", bundleFile);
-      // const absolutePagePath = pagePath.startsWith('next/dist/pages')
+      // const absolutePagePath = pagePath.startsWith('@symph/joy/dist/pages')
       //   ? require.resolve(pagePath)
       //   : join(pagesDir, pagePath)
 
@@ -243,7 +243,7 @@ export default function onDemandEntryHandler(
     },
 
     middleware(req: IncomingMessage, res: ServerResponse, next: Function) {
-      if (!req.url?.startsWith("/_next/webpack-hmr")) return next();
+      if (!req.url?.startsWith("/_joy/webpack-hmr")) return next();
 
       const { query } = parse(req.url!, true);
       const page = query.page;

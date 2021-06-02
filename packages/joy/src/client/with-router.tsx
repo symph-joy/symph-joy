@@ -1,9 +1,9 @@
 import React from "react";
-import { NextComponentType, NextPageContext } from "../next-server/lib/utils";
-import { NextRouter, useRouter } from "./router";
+import { JoyComponentType, JoyPageContext } from "../joy-server/lib/utils";
+import { JoyRouter, useRouter } from "./router";
 
 export type WithRouterProps = {
-  router: NextRouter;
+  router: JoyRouter;
 };
 
 export type ExcludeRouterProps<P> = Pick<
@@ -13,9 +13,9 @@ export type ExcludeRouterProps<P> = Pick<
 
 export default function withRouter<
   P extends WithRouterProps,
-  C = NextPageContext
+  C = JoyPageContext
 >(
-  ComposedComponent: NextComponentType<C, any, P>
+  ComposedComponent: JoyComponentType<C, any, P>
 ): React.ComponentType<ExcludeRouterProps<P>> {
   function WithRouterWrapper(props: any) {
     return <ComposedComponent router={useRouter()} {...props} />;

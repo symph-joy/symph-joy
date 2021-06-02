@@ -21,7 +21,7 @@ type CssMinimizerPluginOptions = {
 const isWebpack5 = parseInt(webpack.version!) === 5;
 
 export class CssMinimizerPlugin {
-  __next_css_remove = true;
+  __joy_css_remove = true;
 
   private options: CssMinimizerPluginOptions;
 

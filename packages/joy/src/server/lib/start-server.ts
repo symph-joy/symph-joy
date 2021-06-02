@@ -1,12 +1,12 @@
 import http from "http";
-import next from "../next";
+import joy from "../joy";
 
 export default async function start(
   serverOptions: any,
   port?: number,
   hostname?: string
 ) {
-  const app = next({
+  const app = joy({
     ...serverOptions,
     customServer: false,
   });

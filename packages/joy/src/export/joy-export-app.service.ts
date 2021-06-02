@@ -29,23 +29,23 @@ import {
   SERVERLESS_DIRECTORY,
   SERVER_DIRECTORY,
   OUT_DIRECTORY,
-} from "../next-server/lib/constants";
+} from "../joy-server/lib/constants";
 import loadConfig, {
   isTargetLikeServerless,
-} from "../next-server/server/config";
+} from "../joy-server/server/config";
 // import { eventCliSession } from '../telemetry/events'
 // import { Telemetry } from '../telemetry/storage'
 import {
   normalizePagePath,
   denormalizePagePath,
-} from "../next-server/server/normalize-page-path";
+} from "../joy-server/server/normalize-page-path";
 import { loadEnvConfig } from "../lib/load-env-config";
-import { PrerenderManifest } from "../build";
+import { PrerenderManifest } from "../build/joy-build.service";
 import { ExportRenderOpts } from "./worker";
 import type exportPage from "./worker";
 import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
-import { getPagePath } from "../next-server/server/require";
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { getPagePath } from "../joy-server/server/require";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { Injectable } from "@symph/core";
 
 const exists = promisify(existsOrig);
@@ -122,7 +122,7 @@ export class JoyExportAppService {
 
     // attempt to load global env values so they are available in next.config.js
     loadEnvConfig(dir);
-    const nextConfig = this.joyAppConfig;
+    const joyConfig = this.joyAppConfig;
     const { buildExport, trailingSlash } = options;
     const initialPageRevalidationMap = options.initialPageRevalidationMap || {};
     let exportPathMapFn;
@@ -133,7 +133,7 @@ export class JoyExportAppService {
       }
     } else {
       // Get the exportPathMap from the config file
-      if (typeof nextConfig.exportPathMap !== "function") {
+      if (typeof joyConfig.exportPathMap !== "function") {
         if (!options.silent) {
           Log.info(
             `No "exportPathMap" found in "${CONFIG_FILE}". Generating map from "./pages"`
@@ -143,13 +143,13 @@ export class JoyExportAppService {
           return defaultMap;
         };
       } else {
-        exportPathMapFn = nextConfig.exportPathMap;
+        exportPathMapFn = joyConfig.exportPathMap;
       }
     }
 
     // const threads = options.threads || Math.max(Math.min(cpus().length - 1, 4), 1)
     const threads = 2; // todo remove
-    // const distDir = join(dir, nextConfig.distDir)
+    // const distDir = join(dir, joyConfig.distDir)
     const distDir = this.joyAppConfig.resolveAppDir(
       this.distDir,
       OUT_DIRECTORY
@@ -168,7 +168,7 @@ export class JoyExportAppService {
     // }
 
     const subFolders = trailingSlash;
-    // const isLikeServerless = nextConfig.target !== 'server'
+    // const isLikeServerless = joyConfig.target !== 'server'
     const isLikeServerless = false;
 
     if (!options.silent && !options.buildExport) {
@@ -177,7 +177,7 @@ export class JoyExportAppService {
 
     if (!existsSync(distDir)) {
       throw new Error(
-        `Build directory ${distDir} does not exist. Make sure you run "next build" before running "next start" or "next export".`
+        `Build directory ${distDir} does not exist. Make sure you run "joy build" before running "joy start" or "joy export".`
       );
     }
 
@@ -231,12 +231,12 @@ export class JoyExportAppService {
 
     if (outDir === join(dir, "public")) {
       throw new Error(
-        `The 'public' directory is reserved in Next.js and can not be used as the export out directory. https://err.sh/vercel/next.js/can-not-output-to-public`
+        `The 'public' directory is reserved in Joy.js and can not be used as the export out directory.`
       );
     }
 
     await recursiveDelete(join(outDir));
-    await promises.mkdir(join(outDir, "_next", buildId), { recursive: true });
+    await promises.mkdir(join(outDir, "_joy", buildId), { recursive: true });
 
     writeFileSync(
       join(distDir, EXPORT_DETAIL),
@@ -256,7 +256,7 @@ export class JoyExportAppService {
       await recursiveCopy(join(dir, "static"), join(outDir, "static"));
     }
 
-    // Copy .next/static directory
+    // Copy .joy/out/static directory
     if (
       !options.buildExport &&
       existsSync(join(distDir, CLIENT_STATIC_FILES_PATH))
@@ -266,18 +266,18 @@ export class JoyExportAppService {
       }
       await recursiveCopy(
         join(distDir, CLIENT_STATIC_FILES_PATH),
-        join(outDir, "_next", CLIENT_STATIC_FILES_PATH)
+        join(outDir, "_joy", CLIENT_STATIC_FILES_PATH)
       );
     }
 
     // // Get the exportPathMap from the config file
-    // if (typeof nextConfig.exportPathMap !== 'function') {
+    // if (typeof joyConfig.exportPathMap !== 'function') {
     //   if (!options.silent) {
     //     Log.info(
     //       `No "exportPathMap" found in "${CONFIG_FILE}". Generating map from "./pages"`
     //     )
     //   }
-    //   nextConfig.exportPathMap = async (defaultMap: ExportPathMap) => {
+    //   joyConfig.exportPathMap = async (defaultMap: ExportPathMap) => {
     //     return defaultMap
     //   }
     // }
@@ -286,31 +286,31 @@ export class JoyExportAppService {
     const renderOpts = {
       // dir,
       buildId,
-      nextExport: true,
-      assetPrefix: nextConfig.assetPrefix.replace(/\/$/, ""),
+      joyExport: true,
+      assetPrefix: joyConfig.assetPrefix.replace(/\/$/, ""),
       // distDir,
       dev: false,
       hotReloader: null,
-      basePath: nextConfig.basePath,
-      canonicalBase: nextConfig.amp?.canonicalBase || "",
-      isModern: nextConfig.experimental.modern,
-      // ampValidatorPath: nextConfig.experimental.amp?.validator || undefined,
-      // ampSkipValidation: nextConfig.experimental.amp?.skipValidation || false,
-      // ampOptimizerConfig: nextConfig.experimental.amp?.optimizer || undefined,
+      basePath: joyConfig.basePath,
+      canonicalBase: joyConfig.amp?.canonicalBase || "",
+      isModern: joyConfig.experimental.modern,
+      // ampValidatorPath: joyConfig.experimental.amp?.validator || undefined,
+      // ampSkipValidation: joyConfig.experimental.amp?.skipValidation || false,
+      // ampOptimizerConfig: joyConfig.experimental.amp?.optimizer || undefined,
       ampValidatorPath: undefined,
       ampSkipValidation: false,
       ampOptimizerConfig: undefined,
     } as ExportRenderOpts;
 
-    const { serverRuntimeConfig, publicRuntimeConfig } = nextConfig;
+    const { serverRuntimeConfig, publicRuntimeConfig } = joyConfig;
 
     if (Object.keys(publicRuntimeConfig).length > 0) {
       renderOpts.runtimeConfig = publicRuntimeConfig;
     }
 
     // We need this for server rendering the Link component.
-    (global as any).__NEXT_DATA__ = {
-      nextExport: true,
+    (global as any).__JOY_DATA__ = {
+      joyExport: true,
     };
 
     if (!options.silent && !options.buildExport) {
@@ -381,7 +381,7 @@ export class JoyExportAppService {
       if (!options.silent) {
         Log.warn(
           chalk.yellow(
-            `Statically exporting a Next.js application via \`next export\` disables API routes.`
+            `Statically exporting a Joy.js application via \`joy export\` disables API routes.`
           ) +
             `\n` +
             chalk.yellow(
@@ -391,11 +391,7 @@ export class JoyExportAppService {
             ) +
             `\n` +
             chalk.yellow(
-              `Pages in your application without server-side data dependencies will be automatically statically exported by \`next build\`, including pages powered by \`getStaticProps\`.`
-            ) +
-            `\n` +
-            chalk.yellow(
-              `Learn more: https://err.sh/vercel/next.js/api-routes-static-export`
+              `Pages in your application without server-side data dependencies will be automatically statically exported by \`joy build\`, including pages powered by \`getStaticProps\`.`
             )
         );
       }
@@ -409,7 +405,7 @@ export class JoyExportAppService {
       );
     const pagesDataDir = options.buildExport
       ? outDir
-      : join(outDir, "_next/data", buildId);
+      : join(outDir, "_joy/data", buildId);
 
     const ampValidations: AmpPageStatus = {};
     let hadValidationError = false;
@@ -431,7 +427,7 @@ export class JoyExportAppService {
     const worker = new Worker(require.resolve("./worker"), {
       maxRetries: 0,
       numWorkers: threads,
-      enableWorkerThreads: nextConfig.experimental.workerThreads,
+      enableWorkerThreads: joyConfig.experimental.workerThreads,
       exposedMethods: ["default"],
     }) as Worker & { default: typeof exportPage };
 
@@ -454,9 +450,9 @@ export class JoyExportAppService {
           serverRuntimeConfig: serverRuntimeConfig as any,
           subFolders: subFolders as any,
           buildExport: options.buildExport,
-          serverless: isTargetLikeServerless(nextConfig.target),
-          optimizeFonts: nextConfig.experimental.optimizeFonts,
-          optimizeImages: nextConfig.experimental.optimizeImages,
+          serverless: isTargetLikeServerless(joyConfig.target),
+          optimizeFonts: joyConfig.experimental.optimizeFonts,
+          optimizeImages: joyConfig.experimental.optimizeImages,
         });
 
         for (const validation of result.ampValidations || []) {
@@ -532,9 +528,7 @@ export class JoyExportAppService {
       console.log(formatAmpMessages(ampValidations));
     }
     if (hadValidationError) {
-      throw new Error(
-        `AMP Validation caused the export to fail. https://err.sh/vercel/next.js/amp-export-validation`
-      );
+      throw new Error(`AMP Validation caused the export to fail.`);
     }
 
     if (renderError) {

@@ -7,15 +7,12 @@ describe("hello joy dev", () => {
   let testContext: JoyTestContext;
   beforeAll(async () => {
     start = Date.now();
-    console.log(">>>>> start dev server", start);
     const curPath = path.resolve(__dirname, "../");
     testContext = await JoyTestContext.createDevServerContext(curPath);
-    console.log(">>>>> server prepared", testContext.port, Date.now() - start);
   }, 30000);
 
   afterAll(async () => {
     await testContext.killServer();
-    console.log(">>>>> server close", Date.now() - start);
   });
 
   test("hello should start dev", async () => {

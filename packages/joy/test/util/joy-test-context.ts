@@ -67,12 +67,9 @@ export class JoyTestContext extends CoreContext {
     args?: any[]
   ) {
     const start = process.hrtime();
-    console.log(">>>>> start build", start);
     const buildState = await joyBuild(workDir, args);
-    console.log(">>>>> build finished", process.hrtime(start));
 
     port = 4000 || port || (await findPort());
-    console.log(">>>>> start run", start);
     const testContext = new JoyTestContext(workDir);
     await testContext.init();
     testContext.buildState = buildState;

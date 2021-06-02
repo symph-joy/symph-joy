@@ -55,7 +55,7 @@ export class WebpackHotMiddleware {
     next: () => void
   ) => {
     if (this.closed) return next();
-    if (!req.url?.startsWith("/_next/webpack-hmr")) return next();
+    if (!req.url?.startsWith("/_joy/webpack-hmr")) return next();
     this.eventStream.handler(req, res);
     if (this.latestStats) {
       // Explicitly not passing in `log` fn as we don't want to log again on

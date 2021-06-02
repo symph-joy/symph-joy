@@ -44,24 +44,8 @@ export abstract class ReactController<
   TProps = Record<string, unknown>,
   TState = Record<string, unknown>,
   TContext extends IJoyContext = IJoyContext
-  // TStaticState = any
 > extends Component<TProps, TState, TContext> {
   __proto__: typeof React.Component;
-
-  // todo 在Route装饰器中实现
-  // /**
-  //  * 生成预渲染的路径，
-  //  */
-  // async buildPreRenderPaths(): Promise<any> {
-  //   return undefined
-  // }
-
-  // /**
-  //  * 获取预渲染的状态
-  //  */
-  // async getSub(): Promise<Record<string, any>> {
-  //   return {};
-  // }
 
   /**
    * 向后兼容：
@@ -97,6 +81,8 @@ export abstract class ReactController<
     // this.hasInitInvoked = false;
     // this.hasInjectProps = false;
     this.isCtlMounted = false;
+
+    this.routeMeta = getRouteMeta(this.constructor);
     this.appContext = context;
     this.reduxStore = this.appContext.syncGetProvider(ReactReduxService)!;
   }
@@ -106,9 +92,7 @@ export abstract class ReactController<
     nextState: Readonly<TState>,
     nextContext: any
   ): boolean {
-    if (this.routeMeta) {
-      bindRouteFromCompProps(this, nextProps);
-    }
+    this.bindProps();
     return true;
   }
 
@@ -127,25 +111,27 @@ export abstract class ReactController<
     this.initManager.resetInitState(this.location.pathname);
   }
 
+  protected bindProps() {
+    this.location = (this.props as any).location || window.location;
+    if (this.routeMeta) {
+      bindRouteFromCompProps(this, this.props);
+    }
+  }
+
   protected async init(): Promise<void> {
     if (this.hasInitInvoked) {
       throw new Error("Controller init twice");
     }
     this.hasInitInvoked = true;
 
-    this.routeMeta = getRouteMeta(this.constructor);
-    if (this.routeMeta) {
-      bindRouteFromCompProps(this, this.props);
-    }
-
     this.injectProps();
+    this.bindProps();
+
     this.state = {
       ...this.state,
       _modelStateVersion: 1,
     };
-    // todo prepare component
-    // const initManager = await this.appContext.get(ReactAppInitManager);
-    this.location = (this.props as any).location;
+
     const { pathname } = this.location;
     const renderStage = this.initManager.initStage;
     const { initStatic, init } = this.initManager.getState(pathname);

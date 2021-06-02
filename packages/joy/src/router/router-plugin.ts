@@ -1,6 +1,6 @@
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { CollectionOf, MinLength } from "@tsed/schema";
-import { ConfigValue } from "../next-server/server/joy-config/config-value.decorator";
+import { ConfigValue } from "../joy-server/server/joy-config/config-value.decorator";
 import { IJoyPlugin } from "../plugin/joy-plugin.interface";
 import { JoyPlugin } from "../plugin/joy-plugin.decorator";
 // import {ReactRouteInterface} from "../router/react-route.interface";

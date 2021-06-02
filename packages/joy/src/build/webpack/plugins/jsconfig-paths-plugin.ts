@@ -10,7 +10,7 @@ import { debug } from "debug";
 import { webpack5 } from "../../../types/webpack5";
 import ResolvePlugin = webpack5.ResolvePlugin;
 
-const log = debug("next:jsconfig-paths-plugin");
+const log = debug("joy:jsconfig-paths-plugin");
 
 export interface Pattern {
   prefix: string;

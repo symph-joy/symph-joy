@@ -1,6 +1,6 @@
 import React from "react";
-import { NextPageContext } from "../next-server/lib/utils";
-import Head from "../next-server/lib/head";
+import { JoyPageContext } from "../joy-server/lib/utils";
+import Head from "../joy-server/lib/head";
 
 const statusCodes: { [code: number]: string } = {
   400: "Bad Request",
@@ -17,7 +17,7 @@ export type ErrorProps = {
 function _getInitialProps({
   res,
   err,
-}: NextPageContext): Promise<ErrorProps> | ErrorProps {
+}: JoyPageContext): Promise<ErrorProps> | ErrorProps {
   const statusCode =
     res && res.statusCode ? res.statusCode : err ? err.statusCode! : 404;
   return { statusCode };

@@ -5,7 +5,7 @@ import { Compiler } from "webpack";
 export default class ChunkNamesPlugin {
   apply(compiler: Compiler) {
     compiler.hooks.compilation.tap(
-      "NextJsChunkNamesPlugin",
+      "JoyJsChunkNamesPlugin",
       (compilation: any) => {
         compilation.chunkTemplate.hooks.renderManifest.intercept({
           register(tapInfo: any) {

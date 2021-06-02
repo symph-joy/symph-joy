@@ -15,19 +15,19 @@ import { namedTypes } from "ast-types/";
 import { NodePath } from "ast-types/lib/node-path";
 import { getLocalFileName } from "../utils/file-utils";
 import { isNodeCreatingScriptElement } from "../utils/ast-utils";
-export const ErrorMessage: string = `${CONFORMANCE_ERROR_PREFIX}: A sync script was found in a react module.`;
-export const WarningMessage: string = `${CONFORMANCE_WARNING_PREFIX}: A sync script was found in a react module.`;
+export const ErrorMessage = `${CONFORMANCE_ERROR_PREFIX}: A sync script was found in a react module.`;
+export const WarningMessage = `${CONFORMANCE_WARNING_PREFIX}: A sync script was found in a react module.`;
 export const ErrorDescription = ``;
 const EARLY_EXIT_SUCCESS_RESULT: IConformanceTestResult = {
   result: IConformanceTestStatus.SUCCESS,
 };
 
 export interface ReactSyncScriptsConformanceCheckOptions {
-  AllowedSources?: String[];
+  AllowedSources?: string[];
 }
 export class ReactSyncScriptsConformanceCheck
   implements IWebpackConformanceTest {
-  private allowedSources: String[] = [];
+  private allowedSources: string[] = [];
   constructor({
     AllowedSources,
   }: ReactSyncScriptsConformanceCheckOptions = {}) {
@@ -66,7 +66,7 @@ export class ReactSyncScriptsConformanceCheck
               return EARLY_EXIT_SUCCESS_RESULT;
             }
 
-            // Todo: Add an absolute error case for modern js when class is a subclass of next/head.
+            // Todo: Add an absolute error case for modern js when class is a subclass of joy/head.
             return {
               result: IConformanceTestStatus.FAILED,
               warnings: [

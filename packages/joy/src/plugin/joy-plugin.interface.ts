@@ -1,4 +1,4 @@
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { JsonSchema } from "@tsed/schema";
 
 export interface IJoyPlugin {

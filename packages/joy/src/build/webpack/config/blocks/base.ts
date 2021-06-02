@@ -20,7 +20,7 @@ export const base = curry(function base(
 
   // https://webpack.js.org/configuration/devtool/#development
   if (ctx.isDevelopment) {
-    if (process.env.__NEXT_TEST_MODE && !process.env.__NEXT_TEST_WITH_DEVTOOL) {
+    if (process.env.__JOY_TEST_MODE && !process.env.__JOY_TEST_WITH_DEVTOOL) {
       config.devtool = false;
     } else if (isWindows) {
       // Non-eval based source maps are slow to rebuild, so we only enable

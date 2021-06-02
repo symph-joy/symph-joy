@@ -1,36 +1,33 @@
 /* global location */
 import React from "react";
 import ReactDOM from "react-dom";
-import { HeadManagerContext } from "../next-server/lib/head-manager-context";
-import mitt from "../next-server/lib/mitt";
-import { RouterContext } from "../next-server/lib/router-context";
-import { delBasePath, hasBasePath } from "../next-server/lib/router/router";
-import type Router from "../next-server/lib/router/router";
+import { HeadManagerContext } from "../joy-server/lib/head-manager-context";
+import mitt from "../joy-server/lib/mitt";
+import { RouterContext } from "../joy-server/lib/router-context";
+import { delBasePath, hasBasePath } from "../joy-server/lib/router/router";
+import type Router from "../joy-server/lib/router/router";
 import type {
   AppComponent,
   AppProps,
   PrivateRouteInfo,
-} from "../next-server/lib/router/router";
-import { isDynamicRoute } from "../next-server/lib/router/utils/is-dynamic";
-import * as querystring from "../next-server/lib/router/utils/querystring";
-import * as envConfig from "../next-server/lib/runtime-config";
-import { getURL, loadGetInitialProps, ST } from "../next-server/lib/utils";
-import type { NEXT_DATA } from "../next-server/lib/utils";
+} from "../joy-server/lib/router/router";
+import { isDynamicRoute } from "../joy-server/lib/router/utils/is-dynamic";
+import * as querystring from "../joy-server/lib/router/utils/querystring";
+import * as envConfig from "../joy-server/lib/runtime-config";
+import { getURL, loadGetInitialProps, ST } from "../joy-server/lib/utils";
+import type { JOY_DATA } from "../joy-server/lib/utils";
 import initHeadManager from "./head-manager";
 import PageLoader, { looseToArray, StyleSheetTuple } from "./page-loader";
 import measureWebVitals from "./performance-relayer";
 import { createRouter, makePublicRouterInstance } from "./router";
 import { JoyContainer } from "@symph/core";
-import { FileScanner } from "../next-server/server/scanner/file-scanner";
-import { JoyReactAppClientConfig } from "../next-server/lib/joy-react-app-client-config";
+import { JoyReactAppClientConfig } from "../joy-server/lib/joy-react-app-client-config";
 import {
   ReactAppContainer,
   ApplicationConfig,
   ReactApplicationContext,
 } from "@symph/react";
 import { JoyClientConfig } from "./joy-client-config";
-
-// require('next/dist/build/polyfills/finally-polyfill.min')
 
 /// <reference types="react-dom/experimental" />
 
@@ -39,13 +36,13 @@ declare let __webpack_public_path__: string;
 declare global {
   interface Window {
     /* test fns */
-    __NEXT_HYDRATED?: boolean;
-    __NEXT_HYDRATED_CB?: () => void;
+    __JOY_HYDRATED?: boolean;
+    __JOY_HYDRATED_CB?: () => void;
 
     /* prod */
-    __NEXT_PRELOADREADY?: (ids?: string[]) => void;
-    __NEXT_DATA__: NEXT_DATA;
-    __NEXT_P: any[];
+    __JOY_PRELOADREADY?: (ids?: string[]) => void;
+    __JOY_DATA__: JOY_DATA;
+    __JOY_P: any[];
   }
 }
 
@@ -55,12 +52,12 @@ type RenderRouteInfo = PrivateRouteInfo & {
 };
 type RenderErrorProps = Omit<RenderRouteInfo, "Component" | "styleSheets">;
 
-const data: typeof window["__NEXT_DATA__"] = JSON.parse(
-  document.getElementById("__NEXT_DATA__")!.textContent!
+const data: typeof window["__JOY_DATA__"] = JSON.parse(
+  document.getElementById("__JOY_DATA__")!.textContent!
 );
-window.__NEXT_DATA__ = data;
+window.__JOY_DATA__ = data;
 
-export const version = process.env.__NEXT_VERSION;
+export const version = process.env.__JOY_VERSION;
 
 const {
   initState: hydrateInitState,
@@ -79,8 +76,8 @@ const prefix = assetPrefix || "";
 
 // With dynamic assetPrefix it's no longer possible to set assetPrefix at the build time
 // So, this is how we do it in the client side at runtime
-__webpack_public_path__ = `${prefix}/_next/`; //eslint-disable-line
-// Initialize next/config with the environment configuration
+__webpack_public_path__ = `${prefix}/_joy/`; //eslint-disable-line
+// Initialize joy/config with the environment configuration
 envConfig.setConfig({
   serverRuntimeConfig: {},
   publicRuntimeConfig: runtimeConfig || {},
@@ -97,16 +94,16 @@ type RegisterFn = (input: [string, () => void]) => void;
 
 const pageLoader = new PageLoader(buildId, prefix, page);
 const register: RegisterFn = ([r, f]) => pageLoader.registerPage(r, f);
-if (window.__NEXT_P) {
+if (window.__JOY_P) {
   // Defer page registration for another tick. This will increase the overall
   // latency in hydrating the page, but reduce the total blocking time.
-  window.__NEXT_P.map((p) => setTimeout(() => register(p), 0));
+  window.__JOY_P.map((p) => setTimeout(() => register(p), 0));
 }
-window.__NEXT_P = [];
-(window.__NEXT_P as any).push = register;
+window.__JOY_P = [];
+(window.__JOY_P as any).push = register;
 
 const headManager = initHeadManager();
-const appElement = document.getElementById("__next");
+const appElement = document.getElementById("__joy");
 
 let lastAppProps: AppProps;
 let lastRenderReject: (() => void) | null;
@@ -133,7 +130,7 @@ class Container extends React.Component<{
     if (
       router.isSsr &&
       (isFallback ||
-        (data.nextExport &&
+        (data.joyExport &&
           (isDynamicRoute(router.pathname) || location.search)) ||
         (hydrateProps && hydrateProps.__N_SSG && location.search))
     ) {
@@ -150,7 +147,7 @@ class Container extends React.Component<{
         asPath,
         {
           // @ts-ignore
-          // WARNING: `_h` is an internal option for handing Next.js
+          // WARNING: `_h` is an internal option for handing Joy.js
           // client-side hydration. Your app should _never_ use this property.
           // It may change at any time without notice.
           _h: 1,
@@ -163,11 +160,11 @@ class Container extends React.Component<{
       );
     }
 
-    if (process.env.__NEXT_TEST_MODE) {
-      window.__NEXT_HYDRATED = true;
+    if (process.env.__JOY_TEST_MODE) {
+      window.__JOY_HYDRATED = true;
 
-      if (window.__NEXT_HYDRATED_CB) {
-        window.__NEXT_HYDRATED_CB();
+      if (window.__JOY_HYDRATED_CB) {
+        window.__JOY_HYDRATED_CB();
       }
     }
   }
@@ -299,8 +296,8 @@ export default async (opts: { webpackHMR?: any } = {}) => {
     }
   }
 
-  if (window.__NEXT_PRELOADREADY) {
-    await window.__NEXT_PRELOADREADY(dynamicIds);
+  if (window.__JOY_PRELOADREADY) {
+    await window.__JOY_PRELOADREADY(dynamicIds);
   }
 
   router = createRouter(page, query, asPath, {
@@ -324,10 +321,10 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   });
 
   // call init-client middleware
-  if (process.env.__NEXT_PLUGINS) {
+  if (process.env.__JOY_PLUGINS) {
     // @ts-ignore
     // eslint-disable-next-line
-    import("next-plugin-loader?middleware=on-init-client!")
+    import("joy-plugin-loader?middleware=on-init-client!")
       .then((initClientModule) => {
         return initClientModule.default({ router });
       })
@@ -404,7 +401,7 @@ export function renderError(renderErrorProps: RenderErrorProps) {
   // In development runtime errors are caught by our overlay
   // In production we catch runtime errors using componentDidCatch which will trigger renderError
   if (process.env.NODE_ENV !== "production") {
-    // A Next.js rendering runtime error is always unrecoverable
+    // A Joy.js rendering runtime error is always unrecoverable
     // FIXME: let's make this recoverable (error in GIP client-transition)
     webpackHMR.onUnrecoverableError();
 
@@ -418,10 +415,10 @@ export function renderError(renderErrorProps: RenderErrorProps) {
       reactApplicationContext,
     });
   }
-  if (process.env.__NEXT_PLUGINS) {
+  if (process.env.__JOY_PLUGINS) {
     // @ts-ignore
     // eslint-disable-next-line
-    import("next-plugin-loader?middleware=on-error-client!")
+    import("joy-plugin-loader?middleware=on-error-client!")
       .then((onClientErrorModule) => {
         return onClientErrorModule.default({ err });
       })
@@ -469,11 +466,11 @@ let isInitialRender = typeof ReactDOM.hydrate === "function";
 let reactRoot: any = null;
 
 function renderReactElement(reactEl: JSX.Element, domEl: HTMLElement) {
-  if (process.env.__NEXT_REACT_MODE !== "legacy") {
+  if (process.env.__JOY_REACT_MODE !== "legacy") {
     if (!reactRoot) {
       const opts = { hydrate: true };
       reactRoot =
-        process.env.__NEXT_REACT_MODE === "concurrent"
+        process.env.__JOY_REACT_MODE === "concurrent"
           ? (ReactDOM as any).unstable_createRoot(domEl, opts)
           : (ReactDOM as any).unstable_createBlockingRoot(domEl, opts);
     }
@@ -504,14 +501,14 @@ function markHydrateComplete() {
   performance.mark("afterHydrate"); // mark end of hydration
 
   performance.measure(
-    "Next.js-before-hydration",
+    "Joy.js-before-hydration",
     "navigationStart",
     "beforeRender"
   );
-  performance.measure("Next.js-hydration", "beforeRender", "afterHydrate");
+  performance.measure("Joy.js-hydration", "beforeRender", "afterHydrate");
 
   if (onPerfEntry) {
-    performance.getEntriesByName("Next.js-hydration").forEach(onPerfEntry);
+    performance.getEntriesByName("Joy.js-hydration").forEach(onPerfEntry);
   }
   clearMarks();
 }
@@ -527,19 +524,19 @@ function markRenderComplete() {
   }
 
   performance.measure(
-    "Next.js-route-change-to-render",
+    "Joy.js-route-change-to-render",
     navStartEntries[0].name,
     "beforeRender"
   );
-  performance.measure("Next.js-render", "beforeRender", "afterRender");
+  performance.measure("Joy.js-render", "beforeRender", "afterRender");
   if (onPerfEntry) {
-    performance.getEntriesByName("Next.js-render").forEach(onPerfEntry);
+    performance.getEntriesByName("Joy.js-render").forEach(onPerfEntry);
     performance
-      .getEntriesByName("Next.js-route-change-to-render")
+      .getEntriesByName("Joy.js-route-change-to-render")
       .forEach(onPerfEntry);
   }
   clearMarks();
-  ["Next.js-route-change-to-render", "Next.js-render"].forEach((measure) =>
+  ["Joy.js-route-change-to-render", "Joy.js-render"].forEach((measure) =>
     performance.clearMeasures(measure)
   );
 }
@@ -745,7 +742,7 @@ function doRender({
 
   // We catch runtime errors using componentDidCatch which will trigger renderError
   renderReactElement(
-    process.env.__NEXT_STRICT_MODE ? (
+    process.env.__JOY_STRICT_MODE ? (
       <React.StrictMode>{elem}</React.StrictMode>
     ) : (
       elem

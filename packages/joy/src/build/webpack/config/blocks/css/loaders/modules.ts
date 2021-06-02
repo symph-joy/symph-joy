@@ -47,7 +47,7 @@ export function getCssModuleLoader(
   loaders.push({
     loader: require.resolve("postcss-loader"),
     options: {
-      ident: "__nextjs_postcss",
+      ident: "__joyjs_postcss",
       plugins: postCssPlugins,
       sourceMap: true,
     },

@@ -2,7 +2,7 @@ import { CommandProvider } from "../command-provider.decorator";
 import { JoyCommand, JoyCommandOptionType } from "../command";
 import { printAndExit } from "../../server/lib/utils";
 import { CoreContext, Inject } from "@symph/core";
-import { JoyAppConfig } from "../../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../../joy-server/server/joy-config/joy-app-config";
 import { JoyBuildConfig } from "../../build/joy-build.config";
 import { JoyBuildService } from "../../build/joy-build.service";
 
@@ -34,9 +34,9 @@ export class JoyBuildCommand extends JoyCommand {
         Compiles the application for production deployment
 
       Usage
-        $ next build <dir>
+        $ joy build <dir>
 
-      <dir> represents the directory of the Next.js application.
+      <dir> represents the directory of the Joy.js application.
       If no directory is provided, the current directory will be used.
 
       Options

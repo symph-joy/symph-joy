@@ -1,6 +1,6 @@
 /// <reference types="node" />
 
-// Extend the NodeJS namespace with Next.js-defined properties
+// Extend the NodeJS namespace with Joy.js-defined properties
 declare namespace NodeJS {
   interface Process {
     readonly browser: boolean;

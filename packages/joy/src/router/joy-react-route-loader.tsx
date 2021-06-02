@@ -14,7 +14,7 @@ import {
 import { ReactRouterClient } from "./react-router-client";
 import * as H from "history";
 import { match } from "react-router-dom";
-import dynamic, { DynamicLoading, Loader } from "../next-server/lib/dynamic";
+import dynamic, { DynamicLoading, Loader } from "../joy-server/lib/dynamic";
 
 type JoyReactRouteLoaderOptions = {
   match: match;

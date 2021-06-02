@@ -2,7 +2,7 @@ import connect from "./error-overlay/hot-dev-client";
 
 export default ({ assetPrefix }) => {
   const options = {
-    path: `${assetPrefix}/_next/webpack-hmr`,
+    path: `${assetPrefix}/_joy/webpack-hmr`,
   };
 
   const devClient = connect(options);
@@ -13,7 +13,7 @@ export default ({ assetPrefix }) => {
     }
     if (obj.action === "removedPage") {
       const [page] = obj.data;
-      if (page === window.next.router.pathname) {
+      if (page === window.joy.router.pathname) {
         return window.location.reload();
       }
       return;
@@ -21,8 +21,8 @@ export default ({ assetPrefix }) => {
     if (obj.action === "addedPage") {
       const [page] = obj.data;
       if (
-        page === window.next.router.pathname &&
-        typeof window.next.router.components[page] === "undefined"
+        page === window.joy.router.pathname &&
+        typeof window.joy.router.components[page] === "undefined"
       ) {
         return window.location.reload();
       }

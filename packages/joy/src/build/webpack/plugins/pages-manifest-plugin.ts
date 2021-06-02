@@ -1,7 +1,7 @@
 import webpack, { Compiler, WebpackPluginInstance } from "webpack";
 import sources from "webpack-sources";
-import { PAGES_MANIFEST } from "../../../next-server/lib/constants";
-import getRouteFromEntrypoint from "../../../next-server/server/get-route-from-entrypoint";
+import { PAGES_MANIFEST } from "../../../joy-server/lib/constants";
+import getRouteFromEntrypoint from "../../../joy-server/server/get-route-from-entrypoint";
 
 export type PagesManifest = { [page: string]: string };
 
@@ -11,8 +11,8 @@ const { RawSource } = webpack.sources || sources;
 const isWebpack5 = parseInt(webpack.version!) === 5;
 
 // This plugin creates a pages-manifest.json from page entrypoints.
-// This is used for mapping paths like `/` to `.next/server/static/<buildid>/pages/index.js` when doing SSR
-// It's also used by next export to provide defaultPathMap
+// This is used for mapping paths like `/` to `.joy/out/server/static/<buildid>/pages/index.js` when doing SSR
+// It's also used by joy export to provide defaultPathMap
 export default class PagesManifestPlugin implements WebpackPluginInstance {
   serverless: boolean;
 
@@ -55,11 +55,11 @@ export default class PagesManifestPlugin implements WebpackPluginInstance {
 
   apply(compiler: Compiler): void {
     if (isWebpack5) {
-      compiler.hooks.make.tap("NextJsPagesManifest", (compilation) => {
+      compiler.hooks.make.tap("JoyJsPagesManifest", (compilation) => {
         // @ts-ignore TODO: Remove ignore when webpack 5 is stable
         compilation.hooks.processAssets.tap(
           {
-            name: "NextJsPagesManifest",
+            name: "JoyJsPagesManifest",
             // @ts-ignore TODO: Remove ignore when webpack 5 is stable
             stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
           },
@@ -71,7 +71,7 @@ export default class PagesManifestPlugin implements WebpackPluginInstance {
       return;
     }
 
-    compiler.hooks.emit.tap("NextJsPagesManifest", (compilation: any) => {
+    compiler.hooks.emit.tap("JoyJsPagesManifest", (compilation: any) => {
       this.createAssets(compilation, compilation.assets);
     });
   }

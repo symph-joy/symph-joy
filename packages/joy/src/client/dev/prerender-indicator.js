@@ -2,7 +2,7 @@ import Router from "../router";
 
 export default function initializeBuildWatcher() {
   const shadowHost = document.createElement("div");
-  shadowHost.id = "__next-prerender-indicator";
+  shadowHost.id = "__joy-prerender-indicator";
   // Make sure container is fixed and on a high zIndex so it shows
   shadowHost.style.position = "fixed";
   shadowHost.style.bottom = "20px";
@@ -24,7 +24,7 @@ export default function initializeBuildWatcher() {
     // the Shadow DOM, we need to prefix all the names so there
     // will be no conflicts
     shadowRoot = shadowHost;
-    prefix = "__next-prerender-indicator-";
+    prefix = "__joy-prerender-indicator-";
   }
 
   // Container
@@ -39,11 +39,11 @@ export default function initializeBuildWatcher() {
   const closeEl = container.querySelector(`#${prefix}close`);
 
   // State
-  const dismissKey = "__NEXT_DISMISS_PRERENDER_INDICATOR";
+  const dismissKey = "__JOY_DISMISS_PRERENDER_INDICATOR";
   const dismissUntil = parseInt(window.localStorage.getItem(dismissKey), 10);
   const dismissed = dismissUntil > new Date().getTime();
 
-  let isVisible = !dismissed && window.__NEXT_DATA__.nextExport;
+  let isVisible = !dismissed && window.__JOY_DATA__.joyExport;
 
   function updateContainer() {
     if (isVisible) {
@@ -81,7 +81,7 @@ export default function initializeBuildWatcher() {
   expandEl.addEventListener("mouseleave", () => toggleExpand(false));
 
   Router.events.on("routeChangeComplete", () => {
-    isVisible = window.next.isPrerendered;
+    isVisible = window.joy.isPrerendered;
     updateContainer();
   });
   updateContainer();

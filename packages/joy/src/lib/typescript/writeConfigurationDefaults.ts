@@ -64,7 +64,7 @@ function getDesiredCompilerOptions(
     jsx: {
       parsedValue: ts.JsxEmit.Preserve,
       value: "preserve",
-      reason: "next.js implements its own optimized jsx transform",
+      reason: "joy.js implements its own optimized jsx transform",
     },
   };
 

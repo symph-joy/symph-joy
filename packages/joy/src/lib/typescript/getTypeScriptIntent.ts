@@ -22,7 +22,7 @@ export async function getTypeScriptIntent(
     return { firstTimeSetup: content === "" || content === "{}" };
   }
 
-  // Next.js also offers a friendly setup mode that bootstraps a TypeScript
+  // Joy.js also offers a friendly setup mode that bootstraps a TypeScript
   // project for the user when we detect TypeScript files. So, we need to check
   // the `pages/` directory for a TypeScript file.
   // Checking all directories is too slow, so this is a happy medium.

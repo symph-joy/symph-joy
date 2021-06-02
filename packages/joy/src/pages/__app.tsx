@@ -1,16 +1,16 @@
 import React, { ErrorInfo } from "react";
 
-import { execOnce, loadGetInitialProps } from "../next-server/lib/utils";
+import { execOnce, loadGetInitialProps } from "../joy-server/lib/utils";
 import {
   AppContextType,
   AppInitialProps as _AppInitialProps,
   AppPropsType,
-  NextWebVitalsMetric as _NextWebVitalsMetric,
-} from "../next-server/lib/utils";
+  JoyWebVitalsMetric as _JoyWebVitalsMetric,
+} from "../joy-server/lib/utils";
 import { Router } from "../client/router";
 
 export type AppInitialProps = _AppInitialProps;
-export type NextWebVitalsMetric = _NextWebVitalsMetric;
+export type JoyWebVitalsMetric = _JoyWebVitalsMetric;
 
 export type AppContext = AppContextType<Router>;
 
@@ -65,14 +65,12 @@ let warnUrl: () => void;
 if (process.env.NODE_ENV !== "production") {
   warnContainer = execOnce(() => {
     console.warn(
-      `Warning: the \`Container\` in \`_app\` has been deprecated and should be removed. https://err.sh/vercel/next.js/app-container-deprecated`
+      `Warning: the \`Container\` in \`_app\` has been deprecated and should be removed.`
     );
   });
 
   warnUrl = execOnce(() => {
-    console.error(
-      `Warning: the 'url' property is deprecated. https://err.sh/vercel/next.js/url-deprecated`
-    );
+    console.error(`Warning: the 'url' property is deprecated.`);
   });
 }
 

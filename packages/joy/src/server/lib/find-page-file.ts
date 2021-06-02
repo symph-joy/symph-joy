@@ -3,7 +3,7 @@ import chalk from "chalk";
 import { isWriteable } from "../../build/is-writeable";
 import { warn } from "../../build/output/log";
 import { promises } from "fs";
-import { denormalizePagePath } from "../../next-server/server/normalize-page-path";
+import { denormalizePagePath } from "../../joy-server/server/normalize-page-path";
 
 async function isTrueCasePagePath(pagePath: string, pagesDir: string) {
   const pageSegments = normalize(pagePath).split(pathSeparator).filter(Boolean);

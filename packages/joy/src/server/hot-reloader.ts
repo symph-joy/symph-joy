@@ -8,25 +8,25 @@ import webpack, { Compilation, MultiCompiler } from "webpack";
 import { createEntrypoints, createPagesMapping } from "../build/entries";
 import { watchCompilers } from "../build/output";
 import getBaseWebpackConfig from "../build/webpack-config";
-import { API_ROUTE, NEXT_PROJECT_ROOT_DIST_CLIENT } from "../lib/constants";
+import { API_ROUTE, JOY_PROJECT_ROOT_DIST_CLIENT } from "../lib/constants";
 import { recursiveDelete } from "../lib/recursive-delete";
 import {
   BLOCKED_PAGES,
   CLIENT_STATIC_FILES_RUNTIME_AMP,
   CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH,
-} from "../next-server/lib/constants";
-import { __ApiPreviewProps } from "../next-server/server/api-utils";
-import { route } from "../next-server/server/router";
+} from "../joy-server/lib/constants";
+import { __ApiPreviewProps } from "../joy-server/server/api-utils";
+import { route } from "../joy-server/server/router";
 import { findPageFile } from "./lib/find-page-file";
 import { BUILDING, entries } from "./on-demand-entry-handler";
-import { normalizePathSep } from "../next-server/server/normalize-page-path";
-import getRouteFromEntrypoint from "../next-server/server/get-route-from-entrypoint";
+import { normalizePathSep } from "../joy-server/server/normalize-page-path";
+import getRouteFromEntrypoint from "../joy-server/server/get-route-from-entrypoint";
 import { isWriteable } from "../build/is-writeable";
-import { ClientPagesLoaderOptions } from "../build/webpack/loaders/next-client-pages-loader";
+import { ClientPagesLoaderOptions } from "../build/webpack/loaders/joy-client-pages-loader";
 import { stringify } from "querystring";
 import loadCustomRoutes, { Rewrite } from "../lib/load-custom-routes";
-import { FileScanner } from "../next-server/server/scanner/file-scanner";
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { FileScanner } from "../joy-server/server/scanner/file-scanner";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { FileGenerator } from "../plugin/file-generator";
 import { EventEmitter } from "events";
 import OnDemandModuleHandler from "./on-demand-module-handler";
@@ -93,8 +93,8 @@ function addCorsSupport(req: IncomingMessage, res: ServerResponse) {
   return { preflight: false };
 }
 
-const matchNextPageBundleRequest = route(
-  "/_next/static/chunks/pages/:path*.js(\\.map|)"
+const matchJoyPageBundleRequest = route(
+  "/_joy/static/chunks/pages/:path*.js(\\.map|)"
 );
 
 // Recursively look up the issuer till it ends up at the root
@@ -205,7 +205,7 @@ export default class HotReloader {
       return {};
     }
 
-    // // When a request comes in that is a page bundle, e.g. /_next/static/<buildid>/pages/index.js
+    // // When a request comes in that is a page bundle, e.g. /_joy/static/<buildid>/pages/index.js
     // // we have to compile the page using on-demand-entries, this middleware will handle doing that
     // // by adding the page to on-demand-entries, waiting till it's done
     // // and then the bundle will be served like usual by the actual route in server/index.js
@@ -214,7 +214,7 @@ export default class HotReloader {
     //   parsedPageBundleUrl: UrlObject
     // ): Promise<{ finished?: true }> => {
     //   const { pathname } = parsedPageBundleUrl
-    //   const params: { path: string[] } | null = matchNextPageBundleRequest(
+    //   const params: { path: string[] } | null = matchJoyPageBundleRequest(
     //     pathname
     //   )
     //   if (!params) {
@@ -299,7 +299,7 @@ export default class HotReloader {
       `./` +
       relativePath(
         this.dir,
-        join(NEXT_PROJECT_ROOT_DIST_CLIENT, "dev", "amp-dev")
+        join(JOY_PROJECT_ROOT_DIST_CLIENT, "dev", "amp-dev")
       ).replace(/\\/g, "/");
 
     additionalClientEntrypoints[
@@ -374,7 +374,7 @@ export default class HotReloader {
             entrypoints[
               isClientCompilation ? clientBundlePath : serverBundlePath
             ] = isClientCompilation
-              ? `next-client-pages-loader?${stringify(pageLoaderOpts)}!`
+              ? `joy-client-pages-loader?${stringify(pageLoaderOpts)}!`
               : absolutePagePath;
           })
         );
@@ -415,7 +415,6 @@ export default class HotReloader {
         // ===== 重新生成客户端需要的文件，比如路由和插件配置等。
         await this.fileGenerator.generate(false);
         // if (this.watcher){
-        console.log(">>>>> JoyJSHotReloaderForSrc");
         multiCompiler.compilers[0].watching.invalidate();
         multiCompiler.compilers[1].watching.invalidate();
         // this.watcher.watchings[0].invalidate()
@@ -426,14 +425,14 @@ export default class HotReloader {
 
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
     multiCompiler.compilers[1].hooks.failed.tap(
-      "NextjsHotReloaderForServer",
+      "JoyjsHotReloaderForServer",
       (err: Error) => {
         this.serverError = err;
         this.serverStats = null;
       }
     );
     multiCompiler.compilers[1].hooks.done.tap(
-      "NextjsHotReloaderForServer",
+      "JoyjsHotReloaderForServer",
       async (stats) => {
         this.serverError = null;
         this.serverStats = stats;
@@ -463,14 +462,14 @@ export default class HotReloader {
     );
 
     multiCompiler.compilers[0].hooks.failed.tap(
-      "NextjsHotReloaderForClient",
+      "JoyjsHotReloaderForClient",
       (err: Error) => {
         this.clientError = err;
         this.stats = null;
       }
     );
     multiCompiler.compilers[0].hooks.done.tap(
-      "NextjsHotReloaderForClient",
+      "JoyjsHotReloaderForClient",
       (stats) => {
         this.clientError = null;
         this.stats = stats;
@@ -507,7 +506,7 @@ export default class HotReloader {
       }
     );
 
-    multiCompiler.hooks.done.tap("NextJsOnDemandModules", (multiStats) => {
+    multiCompiler.hooks.done.tap("JoyJsOnDemandModules", (multiStats) => {
       const [clientStats, serverStats] = multiStats.stats;
       this.doneCallbacks.emit("done", clientStats);
     });

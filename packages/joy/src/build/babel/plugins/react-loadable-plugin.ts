@@ -19,8 +19,8 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWAR
 */
 // This file is https://github.com/jamiebuilds/react-loadable/blob/master/src/babel.js
-// Modified to also look for `next/dynamic`
-// Modified to put `webpack` and `modules` under `loadableGenerated` to be backwards compatible with next/dynamic which has a `modules` key
+// Modified to also look for `joy/dynamic`
+// Modified to put `webpack` and `modules` under `loadableGenerated` to be backwards compatible with joy/dynamic which has a `modules` key
 // Modified to support `dynamic(import('something'))` and `dynamic(import('something'), options)
 
 import { NodePath, PluginObj, types as BabelTypes } from "@babel/core";
@@ -34,7 +34,7 @@ export default function ({
     visitor: {
       ImportDeclaration(path: NodePath<BabelTypes.ImportDeclaration>) {
         const source = path.node.source.value;
-        if (source !== "next/dynamic") return;
+        if (source !== "@symph/joy/dynamic") return;
 
         const defaultSpecifier = path.get("specifiers").find((specifier) => {
           return specifier.isImportDefaultSpecifier();
@@ -70,7 +70,7 @@ export default function ({
           let args = callExpression.get("arguments") as any;
           if (args.length > 2) {
             throw callExpression.buildCodeFrameError(
-              "next/dynamic only accepts 2 arguments"
+              "@symph/joy/dynamic only accepts 2 arguments"
             );
           }
 
@@ -167,7 +167,7 @@ export default function ({
           );
 
           // Turns `dynamic(import('something'))` into `dynamic(() => import('something'))` for backwards compat.
-          // This is the replicate the behavior in versions below Next.js 7 where we magically handled not executing the `import()` too.
+          // This is the replicate the behavior in versions below Joy.js 7 where we magically handled not executing the `import()` too.
           // We'll deprecate this behavior and provide a codemod for it in 7.1.
           if (loader.isCallExpression()) {
             const arrowFunction = t.arrowFunctionExpression([], loader.node);

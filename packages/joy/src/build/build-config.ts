@@ -1,5 +1,5 @@
 import { Injectable } from "@symph/core";
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { generateBuildId } from "./generate-build-id";
 import nanoid from "nanoid/index.js";
 

@@ -19,7 +19,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWAR
 */
 // Implementation of this PR: https://github.com/jamiebuilds/react-loadable/pull/132
-// Modified to strip out unneeded results for Next's specific use case
+// Modified to strip out unneeded results for Joy's specific use case
 
 import webpack, {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,4 +1,4 @@
-import Router from "next/router";
+import Router from "../router";
 import { setupPing, currentPage, closePing } from "./on-demand-entries-utils";
 
 export default async ({ assetPrefix }) => {
@@ -12,7 +12,7 @@ export default async ({ assetPrefix }) => {
   setupPing(assetPrefix, () => Router.pathname, currentPage);
 
   // prevent HMR connection from being closed when running tests
-  if (!process.env.__NEXT_TEST_MODE) {
+  if (!process.env.__JOY_TEST_MODE) {
     document.addEventListener("visibilitychange", (_event) => {
       const state = document.visibilityState;
       if (state === "visible") {

@@ -4,15 +4,15 @@ import path from "path";
 import { fileExists } from "../file-exists";
 
 export async function writeAppTypeDeclarations(baseDir: string): Promise<void> {
-  // Reference `next` types
-  const appTypeDeclarations = path.join(baseDir, "next-env.d.ts");
+  // Reference `joy` types
+  const appTypeDeclarations = path.join(baseDir, "joy-env.d.ts");
   const hasAppTypeDeclarations = await fileExists(appTypeDeclarations);
   if (!hasAppTypeDeclarations) {
     await fs.writeFile(
       appTypeDeclarations,
-      '/// <reference types="next" />' +
+      '/// <reference types="joy" />' +
         os.EOL +
-        '/// <reference types="next/types/global" />' +
+        '/// <reference types="joy/types/global" />' +
         os.EOL
     );
   }

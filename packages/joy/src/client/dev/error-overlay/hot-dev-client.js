@@ -165,10 +165,10 @@ function handleErrors(errors) {
 
   // Do not attempt to reload now.
   // We will reload on next success instead.
-  if (process.env.__NEXT_TEST_MODE) {
-    if (self.__NEXT_HMR_CB) {
-      self.__NEXT_HMR_CB(formatted.errors[0]);
-      self.__NEXT_HMR_CB = null;
+  if (process.env.__JOY_TEST_MODE) {
+    if (self.__JOY_HMR_CB) {
+      self.__JOY_HMR_CB(formatted.errors[0]);
+      self.__JOY_HMR_CB = null;
     }
   }
 }
@@ -296,11 +296,11 @@ function tryApplyUpdates(onHotUpdateSuccess) {
       // While we were updating, there was a new update! Do it again.
       tryApplyUpdates(hasUpdates ? undefined : onHotUpdateSuccess);
     } else {
-      if (process.env.__NEXT_TEST_MODE) {
+      if (process.env.__JOY_TEST_MODE) {
         afterApplyUpdates(() => {
-          if (self.__NEXT_HMR_CB) {
-            self.__NEXT_HMR_CB();
-            self.__NEXT_HMR_CB = null;
+          if (self.__JOY_HMR_CB) {
+            self.__JOY_HMR_CB();
+            self.__JOY_HMR_CB = null;
           }
         });
       }

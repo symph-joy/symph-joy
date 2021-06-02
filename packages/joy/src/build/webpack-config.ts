@@ -8,9 +8,9 @@ import path from "path";
 import webpack, { Chunk, RuleSetRule } from "webpack";
 import type { Configuration } from "webpack";
 import {
-  DOT_NEXT_ALIAS,
-  NEXT_PROJECT_ROOT,
-  NEXT_PROJECT_ROOT_DIST_CLIENT,
+  DOT_JOY_ALIAS,
+  JOY_PROJECT_ROOT,
+  JOY_PROJECT_ROOT_DIST_CLIENT,
   PAGES_DIR_ALIAS,
 } from "../lib/constants";
 import { fileExists } from "../lib/file-exists";
@@ -23,8 +23,8 @@ import {
   REACT_LOADABLE_MANIFEST,
   SERVERLESS_DIRECTORY,
   SERVER_DIRECTORY,
-} from "../next-server/lib/constants";
-import { execOnce } from "../next-server/lib/utils";
+} from "../joy-server/lib/constants";
+import { execOnce } from "../joy-server/lib/utils";
 import { findPageFile } from "../server/lib/find-page-file";
 import { WebpackEntrypoints } from "./entries";
 import * as Log from "./output/log";
@@ -35,14 +35,14 @@ import {
 } from "./plugins/collect-plugins";
 import { build as buildConfiguration } from "./webpack/config";
 import { __overrideCssConfiguration } from "./webpack/config/blocks/css/overrideCssConfiguration";
-import { pluginLoaderOptions } from "./webpack/loaders/next-plugin-loader";
+import { pluginLoaderOptions } from "./webpack/loaders/joy-plugin-loader";
 import BuildManifestPlugin from "./webpack/plugins/build-manifest-plugin";
 import ChunkNamesPlugin from "./webpack/plugins/chunk-names-plugin";
 import { CssMinimizerPlugin } from "./webpack/plugins/css-minimizer-plugin";
 import { JsConfigPathsPlugin } from "./webpack/plugins/jsconfig-paths-plugin";
-import { DropClientPage } from "./webpack/plugins/next-drop-client-page-plugin";
-import NextJsSsrImportPlugin from "./webpack/plugins/nextjs-ssr-import";
-import NextJsSSRModuleCachePlugin from "./webpack/plugins/nextjs-ssr-module-cache";
+import { DropClientPage } from "./webpack/plugins/joy-drop-client-page-plugin";
+import JoyJsSsrImportPlugin from "./webpack/plugins/joyjs-ssr-import";
+import JoyJsSSRModuleCachePlugin from "./webpack/plugins/joyjs-ssr-module-cache";
 import PagesManifestPlugin from "./webpack/plugins/pages-manifest-plugin";
 import { ProfilingPlugin } from "./webpack/plugins/profiling-plugin";
 import { ReactLoadablePlugin } from "./webpack/plugins/react-loadable-plugin";
@@ -73,8 +73,7 @@ const devtoolRevertWarning = execOnce((devtool: Configuration["devtool"]) => {
   console.warn(
     chalk.yellow.bold("Warning: ") +
       chalk.bold(`Reverting webpack devtool to '${devtool}'.\n`) +
-      "Changing the webpack devtool in development mode will cause severe performance regressions.\n" +
-      "Read more: https://err.sh/next.js/improper-devtool"
+      "Changing the webpack devtool in development mode will cause severe performance regressions."
   );
 });
 
@@ -245,7 +244,7 @@ export default async function getBaseWebpackConfig(
   const distDir = path.join(dir, config.distDir);
   const defaultLoaders = {
     babel: {
-      loader: "next-babel-loader",
+      loader: "joy-babel-loader",
       options: {
         isServer,
         distDir,
@@ -265,23 +264,15 @@ export default async function getBaseWebpackConfig(
     },
   };
 
-  // const babelIncludeRegexes: RegExp[] = [
-  //   /next[\\/]dist[\\/]next-server[\\/]lib/,
-  //   /next[\\/]dist[\\/]client/,
-  //   /next[\\/]dist[\\/]pages/,
-  //   /[\\/](strip-ansi|ansi-regex)[\\/]/,
-  //   ...(config.experimental.plugins
-  //     ? VALID_MIDDLEWARE.map((name) => new RegExp(`src(\\\\|/)${name}`))
-  //     : []),
-  // ]
   const babelIncludeRegexes: RegExp[] = [
-    // /joy[\\/]next-server/,
-    // /joy[\\/]client/,
-    // /joy[\\/]pages/,
     // todo 如果不是test模式，就不用编译源代码。
     /packages[\\/]joy[\\/]src/,
     /packages[\\/]core[\\/]src/,
     /packages[\\/]react[\\/]src/,
+
+    /joy[\\/]dist[\\/]joy-server[\\/]lib/,
+    /joy[\\/]dist[\\/]client/,
+    /joy[\\/]dist[\\/]pages/,
     /[\\/](strip-ansi|ansi-regex)[\\/]/,
     ...(config.experimental.plugins
       ? VALID_MIDDLEWARE.map((name) => new RegExp(`src(\\\\|/)${name}`))
@@ -318,7 +309,7 @@ export default async function getBaseWebpackConfig(
           //   {absolutePath: path.join(dir, '.genFiles')} // todo set dir from config
           // )}!`,
           [CLIENT_STATIC_FILES_RUNTIME_MAIN]: [
-            // `./` + path.relative(dir, path.join(NEXT_PROJECT_ROOT_DIST_CLIENT, dev ? `next-dev.js` : 'next.js')).replace(/\\/g, '/'),
+            // `./` + path.relative(dir, path.join(JOY_PROJECT_ROOT_DIST_CLIENT, dev ? `joy-dev.js` : 'joy.js')).replace(/\\/g, '/'),
             // existsSync(autoGenOutputAbsDir) ? `joy-client-generate-file-loader?${stringify(
             //   {absolutePath: autoGenOutputAbsDir} // todo move this config into plugin
             // )}!` : undefined,
@@ -326,11 +317,11 @@ export default async function getBaseWebpackConfig(
               ? autoGenClientModulesFile
               : undefined,
             require
-              .resolve(dev ? `../client/next-dev` : "../client/next")
+              .resolve(dev ? `../client/joy-dev` : "../client/joy")
               .replace(/\\/g, "/"),
           ].filter(Boolean),
           [CLIENT_STATIC_FILES_RUNTIME_POLYFILLS]: path.join(
-            NEXT_PROJECT_ROOT_DIST_CLIENT,
+            JOY_PROJECT_ROOT_DIST_CLIENT,
             "polyfills.js"
           ),
         } as ClientEntries)
@@ -383,7 +374,7 @@ export default async function getBaseWebpackConfig(
   }
 
   const clientResolveRewrites = require.resolve(
-    "../next-server/lib/router/utils/resolve-rewrites"
+    "../joy-server/lib/router/utils/resolve-rewrites"
   );
 
   const resolveConfig = {
@@ -412,16 +403,11 @@ export default async function getBaseWebpackConfig(
     alias: {
       // These aliases make sure the wrapper module is not included in the bundles
       // Which makes bundles slightly smaller, but also skips parsing a module that we know will result in this alias
-      // 'next/head': 'next/dist/next-server/lib/head.js',
-      // 'next/router': 'next/dist/client/router.js',
-      // 'next/config': 'next/dist/next-server/lib/runtime-config.js',
-      // 'next/dynamic': 'next/dist/next-server/lib/dynamic.js',
-
-      "next/head": require.resolve("../next-server/lib/head"),
-      "next/router": require.resolve("../client/router"),
-      "next/config": require.resolve("../next-server/lib/runtime-config"),
-      "next/dynamic": require.resolve("../next-server/lib/dynamic"),
-      next: NEXT_PROJECT_ROOT,
+      "joy/head": require.resolve("../joy-server/lib/head"),
+      "@symph/joy/router": require.resolve("../client/router"),
+      "joy/config": require.resolve("../joy-server/lib/runtime-config"),
+      "joy/dynamic": require.resolve("../joy-server/lib/dynamic"),
+      joy: JOY_PROJECT_ROOT,
       ...(isWebpack5 && !isServer
         ? {
             stream: require.resolve("stream-browserify"),
@@ -432,7 +418,7 @@ export default async function getBaseWebpackConfig(
           }
         : undefined),
       [PAGES_DIR_ALIAS]: pagesDir,
-      [DOT_NEXT_ALIAS]: distDir,
+      [DOT_JOY_ALIAS]: distDir,
       ...getOptimizedAliases(isServer),
       ...getReactProfilingInProduction(),
       [clientResolveRewrites]: hasRewrites
@@ -459,7 +445,7 @@ export default async function getBaseWebpackConfig(
       warnings: false,
       // The following two options are known to break valid JavaScript code
       comparisons: false,
-      inline: 2, // https://github.com/vercel/next.js/issues/7178#issuecomment-493048965
+      inline: 2,
     },
     mangle: { safari10: true },
     output: {
@@ -507,7 +493,6 @@ export default async function getBaseWebpackConfig(
           name: "framework",
           // This regex ignores nested copies of framework libraries so they're
           // bundled with their issuer.
-          // https://github.com/vercel/next.js/pull/9012
           test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
           priority: 40,
           // Don't let webpack eliminate this chunk (prevents this chunk from
@@ -621,7 +606,7 @@ export default async function getBaseWebpackConfig(
 
   function handleExternals(context: any, request: any, callback: any) {
     // return     callback()
-    if (request === "next") {
+    if (request === "joy") {
       return callback(undefined, `commonjs ${request}`);
     }
 
@@ -633,13 +618,14 @@ export default async function getBaseWebpackConfig(
       return callback(undefined, `commonjs ${request}`);
     }
 
+    // todo 适配es module的导出方式
     const notExternalModules = [
-      "next/app",
-      "next/document",
-      "next/link",
-      "next/error",
+      "joy/app",
+      "joy/document",
+      "joy/link",
+      "joy/error",
       "string-hash",
-      "next/constants",
+      "joy/constants",
     ];
 
     if (notExternalModules.indexOf(request) !== -1) {
@@ -657,14 +643,13 @@ export default async function getBaseWebpackConfig(
       // When on Windows, we also want to check for Windows-specific
       // absolute paths.
       (process.platform === "win32" && path.win32.isAbsolute(request));
-    const isLikelyNextExternal =
-      isLocal && /[/\\]next-server[/\\]/.test(request);
+    const isLikelyJoyExternal = isLocal && /[/\\]joy-server[/\\]/.test(request);
 
     // Relative requires don't need custom resolution, because they
     // are relative to requests we've already resolved here.
     // Absolute requires (require('/foo')) are extremely uncommon, but
     // also have no need for customization as they're already resolved.
-    if (isLocal && !isLikelyNextExternal) {
+    if (isLocal && !isLikelyJoyExternal) {
       return callback();
     }
 
@@ -687,24 +672,24 @@ export default async function getBaseWebpackConfig(
       return callback();
     }
 
-    let isNextExternal = false;
+    let isJoyExternal = false;
     if (isLocal) {
-      // we need to process next-server/lib/router/router so that
+      // we need to process joy-server/lib/router/router so that
       // the DefinePlugin can inject process.env values
-      isNextExternal = /joy([/\\]src)?[/\\]next-server[/\\](?!lib[/\\]router[/\\]router)/.test(
+      isJoyExternal = /joy([/\\]src)?[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(
         res
       );
 
-      if (!isNextExternal) {
+      if (!isJoyExternal) {
         return callback();
       }
     }
 
-    // `isNextExternal` special cases Next.js' internal requires that
+    // `isJoyExternal` special cases Joy.js' internal requires that
     // should not be bundled. We need to skip the base resolve routine
-    // to prevent it from being bundled (assumes Next.js version cannot
+    // to prevent it from being bundled (assumes Joy version cannot
     // mismatch).
-    if (!isNextExternal) {
+    if (!isJoyExternal) {
       // Bundled Node.js code is relocated without its node_modules tree.
       // This means we need to make sure its request resolves to the same
       // package that'll be available at runtime. If it's not identical,
@@ -726,7 +711,7 @@ export default async function getBaseWebpackConfig(
 
     // Default pages have to be transpiled
     if (
-      !res.match(/joy[/\\]next-server[/\\]/) &&
+      !res.match(/joy[/\\]joy-server[/\\]/) &&
       (res.match(/[/\\]joy[/\\]/) ||
         // This is the @babel/plugin-transform-runtime "helpers: true" option
         res.match(/node_modules[/\\]@babel[/\\]runtime[/\\]/))
@@ -744,14 +729,14 @@ export default async function getBaseWebpackConfig(
 
     // Anything else that is standard JavaScript within `node_modules`
     // can be externalized.
-    if (isNextExternal || res.match(/node_modules[/\\].*\.js$/)) {
-      const externalRequest = isNextExternal
-        ? // Generate Next.js external import
+    if (isJoyExternal || res.match(/node_modules[/\\].*\.js$/)) {
+      const externalRequest = isJoyExternal
+        ? // Generate Joy external import
           path.posix.join(
             "joy",
             path
               .relative(
-                // Root of Next.js package:
+                // Root of Joy package:
                 path.join(__dirname, ".."),
                 res
               )
@@ -769,19 +754,14 @@ export default async function getBaseWebpackConfig(
 
   let webpackConfig: webpack.Configuration = {
     externals: !isServer
-      ? // make sure importing "next" is handled gracefully for client
+      ? // make sure importing "@symph/joy" is handled gracefully for client
         // bundles in case a user imported types and it wasn't removed
         // TODO: should we warn/error for this instead?
-        ["next"]
+        ["@symph/joy"]
       : !isServerless
       ? [
           ({ context, request }, callback) =>
             handleExternals(context, request, callback),
-          // isWebpack5
-          //   ? ({ context, request }, callback) =>
-          //       handleExternals(context, request, callback)
-          //   : (context, request, callback) =>
-          //       handleExternals(context, request, callback),
         ]
       : [
           // When the 'serverless' target is used all node_modules will be compiled into the output bundles
@@ -804,7 +784,7 @@ export default async function getBaseWebpackConfig(
         // Minify JavaScript
         // new TerserPlugin({
         //   extractComments: false,
-        //   // cache: path.join(outDir, 'cache', 'next-minifier'), // webpack5 升级后不兼容，先屏蔽掉
+        //   // cache: path.join(outDir, 'cache', 'joy-minifier'), // webpack5 升级后不兼容，先屏蔽掉
         //   parallel: config.experimental.cpus || true,
         //   terserOptions,
         // }),
@@ -835,9 +815,9 @@ export default async function getBaseWebpackConfig(
         ...entrypoints,
         ...(isServer
           ? {
-              "init-server.js": "next-plugin-loader?middleware=on-init-server!",
+              "init-server.js": "joy-plugin-loader?middleware=on-init-server!",
               "on-error-server.js":
-                "next-plugin-loader?middleware=on-error-server!",
+                "joy-plugin-loader?middleware=on-error-server!",
             }
           : {}),
       };
@@ -846,10 +826,9 @@ export default async function getBaseWebpackConfig(
       ignored: [
         "**/.git/**",
         "**/node_modules/**",
-        "**/.next/**",
         "**/.joy/out/**",
         "**/.joy/dist/**",
-      ], // todo 将.next目录，改为新的，通过配置指定的目录
+      ],
     },
     output: {
       // fixme
@@ -881,17 +860,17 @@ export default async function getBaseWebpackConfig(
     performance: false,
     resolve: resolveConfig,
     resolveLoader: {
-      // The loaders Next.js provides
+      // The loaders Joy provides
       alias: [
         "joy-client-generate-file-loader",
         "emit-file-loader",
         "error-loader",
-        "next-babel-loader",
-        "next-client-pages-loader",
-        "next-data-loader",
-        "next-serverless-loader",
+        "joy-babel-loader",
+        "joy-client-pages-loader",
+        "joy-data-loader",
+        "joy-serverless-loader",
         "noop-loader",
-        "next-plugin-loader",
+        "joy-plugin-loader",
         "joy-dir-files-loader",
       ].reduce((alias, loader) => {
         // using multiple aliases to replace `resolveLoader.modules`
@@ -900,7 +879,7 @@ export default async function getBaseWebpackConfig(
             __dirname,
             "webpack",
             "loaders",
-            ["next-babel-loader", "emit-file-loader"].includes(loader)
+            ["joy-babel-loader", "emit-file-loader"].includes(loader)
               ? loader + ".js"
               : loader + ".ts"
           );
@@ -912,7 +891,7 @@ export default async function getBaseWebpackConfig(
             loader + ".js"
           );
         }
-        // alias[loader] = path.join(__dirname, 'webpack', 'loaders', ['next-babel-loader', 'emit-file-loader' ].includes(loader) ? loader+'.js': loader+'.ts')
+        // alias[loader] = path.join(__dirname, 'webpack', 'loaders', ['joy-babel-loader', 'emit-file-loader' ].includes(loader) ? loader+'.js': loader+'.ts')
         // alias[loader] = path.join(__dirname, 'webpack', 'loaders',  loader + '.js')
         // alias[loader] = path.join(__dirname, 'webpack', 'loaders', loader)
         return alias;
@@ -942,7 +921,6 @@ export default async function getBaseWebpackConfig(
                   loader: "cache-loader",
                   options: {
                     cacheContext: dir,
-                    // cacheDirectory: path.join(dir, ".next", "cache", "webpack"),
                     cacheDirectory: path.join(distDir, "cache", "webpack"),
                     cacheIdentifier: `webpack${isServer ? "-server" : ""}${
                       config.experimental.modern ? "-hasmodern" : ""
@@ -985,7 +963,7 @@ export default async function getBaseWebpackConfig(
       new webpack.DefinePlugin({
         ...Object.keys(process.env).reduce(
           (prev: { [key: string]: string }, key: string) => {
-            if (key.startsWith("NEXT_PUBLIC_")) {
+            if (key.startsWith("JOY_PUBLIC_")) {
               prev[`process.env.${key}`] = JSON.stringify(process.env[key]!);
             }
             return prev;
@@ -995,7 +973,7 @@ export default async function getBaseWebpackConfig(
         ...Object.keys(config.env).reduce((acc, key) => {
           if (/^(?:NODE_.+)|^(?:__.+)$/i.test(key)) {
             throw new Error(
-              `The key "${key}" under "env" in next.config.js is not allowed. https://err.sh/vercel/next.js/env-key-not-allowed`
+              `The key "${key}" under "env" in joy.config.js is not allowed.`
             );
           }
 
@@ -1005,49 +983,47 @@ export default async function getBaseWebpackConfig(
           };
         }, {}),
         "process.env.NODE_ENV": JSON.stringify(webpackMode),
-        "process.env.__NEXT_CROSS_ORIGIN": JSON.stringify(crossOrigin),
+        "process.env.__JOY_CROSS_ORIGIN": JSON.stringify(crossOrigin),
         "process.browser": JSON.stringify(!isServer),
-        "process.env.__NEXT_TEST_MODE": JSON.stringify(
-          process.env.__NEXT_TEST_MODE
+        "process.env.__JOY_TEST_MODE": JSON.stringify(
+          process.env.__JOY_TEST_MODE
         ),
         // This is used in client/dev-error-overlay/hot-dev-client.js to replace the dist directory
         ...(dev && !isServer
           ? {
-              "process.env.__NEXT_DIST_DIR": JSON.stringify(distDir),
+              "process.env.__JOY_DIST_DIR": JSON.stringify(distDir),
             }
           : {}),
-        "process.env.__NEXT_TRAILING_SLASH": JSON.stringify(
+        "process.env.__JOY_TRAILING_SLASH": JSON.stringify(
           config.trailingSlash
         ),
-        "process.env.__NEXT_MODERN_BUILD": JSON.stringify(
+        "process.env.__JOY_MODERN_BUILD": JSON.stringify(
           config.experimental.modern && !dev
         ),
-        "process.env.__NEXT_BUILD_INDICATOR": JSON.stringify(
+        "process.env.__JOY_BUILD_INDICATOR": JSON.stringify(
           config.devIndicators.buildActivity
         ),
-        "process.env.__NEXT_PRERENDER_INDICATOR": JSON.stringify(
+        "process.env.__JOY_PRERENDER_INDICATOR": JSON.stringify(
           config.devIndicators.autoPrerender
         ),
-        "process.env.__NEXT_PLUGINS": JSON.stringify(
+        "process.env.__JOY_PLUGINS": JSON.stringify(
           config.experimental.plugins
         ),
-        "process.env.__NEXT_STRICT_MODE": JSON.stringify(
-          config.reactStrictMode
-        ),
-        "process.env.__NEXT_REACT_MODE": JSON.stringify(
+        "process.env.__JOY_STRICT_MODE": JSON.stringify(config.reactStrictMode),
+        "process.env.__JOY_REACT_MODE": JSON.stringify(
           config.experimental.reactMode
         ),
-        "process.env.__NEXT_OPTIMIZE_FONTS": JSON.stringify(
+        "process.env.__JOY_OPTIMIZE_FONTS": JSON.stringify(
           config.experimental.optimizeFonts && !dev
         ),
-        "process.env.__NEXT_OPTIMIZE_IMAGES": JSON.stringify(
+        "process.env.__JOY_OPTIMIZE_IMAGES": JSON.stringify(
           config.experimental.optimizeImages
         ),
-        "process.env.__NEXT_SCROLL_RESTORATION": JSON.stringify(
+        "process.env.__JOY_SCROLL_RESTORATION": JSON.stringify(
           config.experimental.scrollRestoration
         ),
-        "process.env.__NEXT_ROUTER_BASEPATH": JSON.stringify(config.basePath),
-        "process.env.__NEXT_HAS_REWRITES": JSON.stringify(hasRewrites),
+        "process.env.__JOY_ROUTER_BASEPATH": JSON.stringify(config.basePath),
+        "process.env.__JOY_HAS_REWRITES": JSON.stringify(hasRewrites),
         ...(isServer
           ? {
               // Fix bad-actors in the npm ecosystem (e.g. `node-formidable`)
@@ -1064,7 +1040,7 @@ export default async function getBaseWebpackConfig(
             new Proxy(${isServer ? "process.env" : "{}"}, {
               get(target, prop) {
                 if (typeof target[prop] === 'undefined') {
-                  console.warn(\`An environment variable (\${prop}) that was not provided in the environment was accessed.\nSee more info here: https://err.sh/next.js/missing-env-value\`)
+                  console.warn(\`An environment variable (\${prop}) that was not provided in the environment was accessed.\`)
                 }
                 return target[prop]
               }
@@ -1092,9 +1068,9 @@ export default async function getBaseWebpackConfig(
             // Even though require.cache is server only we have to clear assets from both compilations
             // This is because the client compilation generates the build manifest that's used on the server side
             const {
-              NextJsRequireCacheHotReloader,
-            } = require("./webpack/plugins/nextjs-require-cache-hot-reloader");
-            const devPlugins = [new NextJsRequireCacheHotReloader()];
+              JoyjsRequireCacheHotReloader,
+            } = require("./webpack/plugins/joyjs-require-cache-hot-reloader");
+            const devPlugins = [new JoyjsRequireCacheHotReloader()];
 
             if (!isServer) {
               devPlugins.push(new webpack.HotModuleReplacementPlugin());
@@ -1108,15 +1084,15 @@ export default async function getBaseWebpackConfig(
       !dev &&
         new webpack.IgnorePlugin({
           resourceRegExp: /react-is/,
-          contextRegExp: /(next-server|joy)[\\/]/,
+          contextRegExp: /(joy-server|joy)[\\/]/,
         }),
       isServerless && isServer && new ServerlessPlugin(),
       isServer && new PagesManifestPlugin(isLikeServerless),
       !isWebpack5 &&
         target === "server" &&
         isServer &&
-        new NextJsSSRModuleCachePlugin({ outputPath }),
-      isServer && new NextJsSsrImportPlugin(),
+        new JoyJsSSRModuleCachePlugin({ outputPath }),
+      isServer && new JoyJsSsrImportPlugin(),
       !isServer &&
         new BuildManifestPlugin({
           buildId,
@@ -1134,9 +1110,9 @@ export default async function getBaseWebpackConfig(
         !dev &&
         (() => {
           const {
-            NextEsmPlugin,
-          } = require("./webpack/plugins/next-esm-plugin");
-          return new NextEsmPlugin({
+            JoyEsmPlugin: JoyEsmPlugin,
+          } = require("./webpack/plugins/joy-esm-plugin");
+          return new JoyEsmPlugin({
             filename: (getFileName: Function | string) => (...args: any[]) => {
               const name =
                 typeof getFileName === "function"
@@ -1222,16 +1198,16 @@ export default async function getBaseWebpackConfig(
       webpackConfig.optimization.usedExports = false;
     }
 
-    const nextPublicVariables = Object.keys(process.env).reduce(
+    const joyPublicVariables = Object.keys(process.env).reduce(
       (prev: string, key: string) => {
-        if (key.startsWith("NEXT_PUBLIC_")) {
+        if (key.startsWith("JOY_PUBLIC_")) {
           return `${prev}|${key}=${process.env[key]}`;
         }
         return prev;
       },
       ""
     );
-    const nextEnvVariables = Object.keys(config.env).reduce(
+    const joyEnvVariables = Object.keys(config.env).reduce(
       (prev: string, key: string) => {
         return `${prev}|${key}=${config.env[key]}`;
       },
@@ -1262,15 +1238,15 @@ export default async function getBaseWebpackConfig(
     const cache: any = {
       type: "filesystem",
       // Includes:
-      //  - Next.js version
-      //  - NEXT_PUBLIC_ variable values (they affect caching) TODO: make this module usage only
-      //  - next.config.js `env` key
-      //  - next.config.js keys that affect compilation
-      version: `${process.env.__NEXT_VERSION}|${nextPublicVariables}|${nextEnvVariables}|${configVars}`,
+      //  - Joy version
+      //  - JOY_PUBLIC_ variable values (they affect caching) TODO: make this module usage only
+      //  - joy.config.js `env` key
+      //  - joy.config.js keys that affect compilation
+      version: `${process.env.__JOY_VERSION}|${joyPublicVariables}|${joyEnvVariables}|${configVars}`,
       cacheDirectory: path.join(distDir, "cache", "webpack"),
     };
 
-    // Adds `next.config.js` as a buildDependency when custom webpack config is provided
+    // Adds `joy.config.js` as a buildDependency when custom webpack config is provided
     if (config.webpack && config.configFile) {
       cache.buildDependencies = {
         config: [config.configFile],
@@ -1313,9 +1289,7 @@ export default async function getBaseWebpackConfig(
     }
 
     if (typeof (webpackConfig as any).then === "function") {
-      console.warn(
-        "> Promise returned in next config. https://err.sh/vercel/next.js/promise-in-next-config"
-      );
+      console.warn("> Promise returned in joy config.");
     }
   }
 
@@ -1379,9 +1353,8 @@ export default async function getBaseWebpackConfig(
       console.warn(
         chalk.yellow.bold("Warning: ") +
           chalk.bold(
-            "Built-in CSS support is being disabled due to custom CSS configuration being detected.\n"
-          ) +
-          "See here for more info: https://err.sh/next.js/built-in-css-disabled\n"
+            "Built-in CSS support is being disabled due to custom CSS configuration being detected."
+          )
       );
     }
 
@@ -1392,20 +1365,20 @@ export default async function getBaseWebpackConfig(
         (r) =>
           !(
             typeof r.oneOf?.[0]?.options === "object" &&
-            r.oneOf[0].options.__next_css_remove === true
+            r.oneOf[0].options.__joy_css_remove === true
           )
       );
     }
     if (webpackConfig.plugins?.length) {
       // Disable CSS Extraction Plugin
       webpackConfig.plugins = webpackConfig.plugins.filter(
-        (p) => (p as any).__next_css_remove !== true
+        (p) => (p as any).__joy_css_remove !== true
       );
     }
     if (webpackConfig.optimization?.minimizer?.length) {
       // Disable CSS Minifier
       webpackConfig.optimization.minimizer = webpackConfig.optimization.minimizer.filter(
-        (e) => (e as any).__next_css_remove !== true
+        (e) => (e as any).__joy_css_remove !== true
       );
     }
   } else {
@@ -1417,7 +1390,6 @@ export default async function getBaseWebpackConfig(
     // attachReactRefresh(webpackConfig, defaultLoaders.babel)
   }
 
-  // check if using @zeit/next-typescript and show warning
   if (
     isServer &&
     webpackConfig.module &&
@@ -1429,7 +1401,6 @@ export default async function getBaseWebpackConfig(
       ?.rules as RuleSetRule[]).filter((rule): boolean => {
       if (!(rule.test instanceof RegExp)) return true;
       if ("noop.ts".match(rule.test) && !"noop.js".match(rule.test)) {
-        // remove if it matches @zeit/next-typescript
         foundTsRule = rule.use === defaultLoaders.babel;
         return !foundTsRule;
       }
@@ -1438,123 +1409,10 @@ export default async function getBaseWebpackConfig(
 
     if (foundTsRule) {
       console.warn(
-        "\n@zeit/next-typescript is no longer needed since Next.js has built-in support for TypeScript now. Please remove it from your next.config.js and your .babelrc\n"
+        "\n@zeit/joy-typescript is no longer needed since Joy.js has built-in support for TypeScript now. Please remove it from your joy.config.js and your .babelrc\n"
       );
     }
   }
-
-  // Patch `@zeit/next-sass`, `@zeit/next-less`, `@zeit/next-stylus` for compatibility
-  if (webpackConfig.module && Array.isArray(webpackConfig.module.rules)) {
-    [].forEach.call(webpackConfig.module.rules, function (
-      rule: webpack.RuleSetRule
-    ) {
-      if (!(rule.test instanceof RegExp && Array.isArray(rule.use))) {
-        return;
-      }
-
-      const isSass =
-        rule.test.source === "\\.scss$" || rule.test.source === "\\.sass$";
-      const isLess = rule.test.source === "\\.less$";
-      const isCss = rule.test.source === "\\.css$";
-      const isStylus = rule.test.source === "\\.styl$";
-
-      // Check if the rule we're iterating over applies to Sass, Less, or CSS
-      if (!(isSass || isLess || isCss || isStylus)) {
-        return;
-      }
-
-      [].forEach.call(rule.use, function (use: webpack.RuleSetUseItem) {
-        if (
-          !(
-            use &&
-            typeof use === "object" &&
-            // Identify use statements only pertaining to `css-loader`
-            (use.loader === "css-loader" ||
-              use.loader === "css-loader/locals") &&
-            use.options &&
-            typeof use.options === "object" &&
-            // The `minimize` property is a good heuristic that we need to
-            // perform this hack. The `minimize` property was only valid on
-            // old `css-loader` versions. Custom setups (that aren't next-sass,
-            // next-less or next-stylus) likely have the newer version.
-            // We still handle this gracefully below.
-            (Object.prototype.hasOwnProperty.call(use.options, "minimize") ||
-              Object.prototype.hasOwnProperty.call(
-                use.options,
-                "exportOnlyLocals"
-              ))
-          )
-        ) {
-          return;
-        }
-
-        // Try to monkey patch within a try-catch. We shouldn't fail the build
-        // if we cannot pull this off.
-        // The user may not even be using the `next-sass` or `next-less` or
-        // `next-stylus` plugins.
-        // If it does work, great!
-        try {
-          // Resolve the version of `@zeit/next-css` as depended on by the Sass,
-          // Less or Stylus plugin.
-          const correctNextCss = resolveRequest(
-            "@zeit/next-css",
-            isCss
-              ? // Resolve `@zeit/next-css` from the base directory
-                `${dir}/`
-              : // Else, resolve it from the specific plugins
-                require.resolve(
-                  isSass
-                    ? "@zeit/next-sass"
-                    : isLess
-                    ? "@zeit/next-less"
-                    : isStylus
-                    ? "@zeit/next-stylus"
-                    : "next"
-                )
-          );
-
-          // If we found `@zeit/next-css` ...
-          if (correctNextCss) {
-            // ... resolve the version of `css-loader` shipped with that
-            // package instead of whichever was hoisted highest in your
-            // `node_modules` tree.
-            const correctCssLoader = resolveRequest(use.loader, correctNextCss);
-            if (correctCssLoader) {
-              // We saved the user from a failed build!
-              use.loader = correctCssLoader;
-            }
-          }
-        } catch (_) {
-          // The error is not required to be handled.
-        }
-      });
-    });
-  }
-
-  // should rm
-  // // Backwards compat for `main.js` entry key
-  // const originalEntry: any = webpackConfig.entry
-  // if (typeof originalEntry !== 'undefined') {
-  //   webpackConfig.entry = async () => {
-  //     const entry: WebpackEntrypoints =
-  //       typeof originalEntry === 'function'
-  //         ? await originalEntry()
-  //         : originalEntry
-  //     // Server compilation doesn't have main.js
-  //     if (clientEntries && entry['main.js'] && entry['main.js'].length > 0) {
-  //       const originalFile = clientEntries[
-  //         CLIENT_STATIC_FILES_RUNTIME_MAIN
-  //       ] as string
-  //       entry[CLIENT_STATIC_FILES_RUNTIME_MAIN] = [
-  //         ...entry['main.js'],
-  //         originalFile,
-  //       ]
-  //     }
-  //     delete entry['main.js']
-  //
-  //     return entry
-  //   }
-  // }
 
   if (!dev) {
     // entry is always a function

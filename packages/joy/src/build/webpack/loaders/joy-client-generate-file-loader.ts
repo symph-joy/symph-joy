@@ -34,7 +34,6 @@ const joyClientGenerateLoader: loader.Loader = function () {
           modules.push(ctx(key))
         }
         // modules.push(require('${absolutePath}/index.js'))
-        console.log('>>>> joyClientGenerateLoader, modules:',modules)
         window.__JOY_AUTOGEN = modules
         // return modules
       })()

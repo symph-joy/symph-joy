@@ -7,15 +7,12 @@ describe("build-hello", () => {
   let testContext: JoyTestContext;
   beforeAll(async () => {
     start = Date.now();
-    console.log(">>>>> start dev server", start);
     const curPath = path.resolve(__dirname, "../");
     testContext = await JoyTestContext.createServerContext(curPath);
-    console.log(">>>>> server prepared", testContext.port, Date.now() - start);
   }, 3000000);
 
   afterAll(async () => {
     await testContext.killServer();
-    console.log(">>>>> server close", Date.now() - start);
   });
 
   test("should render hello page", async () => {

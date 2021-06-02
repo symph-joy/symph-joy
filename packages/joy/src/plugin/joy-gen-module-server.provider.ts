@@ -1,4 +1,4 @@
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { Injectable } from "@symph/core";
 
 @Injectable()

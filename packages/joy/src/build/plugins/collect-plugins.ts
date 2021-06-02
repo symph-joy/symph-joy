@@ -2,7 +2,7 @@ import findUp from "find-up";
 import { promises } from "fs";
 import path from "path";
 import resolve from "resolve/index.js";
-import { execOnce } from "../../next-server/lib/utils";
+import { execOnce } from "../../joy-server/lib/utils";
 
 export type PluginMetaData = {
   requiredEnv: string[];
@@ -42,17 +42,15 @@ async function collectPluginMeta(
   const pluginMetaData: {
     name: string;
     "required-env": string[];
-  } = pluginPackageJson.nextjs;
+  } = pluginPackageJson.joyjs;
 
   if (!pluginMetaData) {
-    exitWithError(
-      'Next.js plugins need to have a "nextjs" key in package.json'
-    );
+    exitWithError('Joy.js plugins need to have a "joyjs" key in package.json');
   }
 
   if (!pluginMetaData.name) {
     exitWithError(
-      'Next.js plugins need to have a "nextjs.name" key in package.json'
+      'Joy.js plugins need to have a "joyjs.name" key in package.json'
     );
   }
 
@@ -69,7 +67,7 @@ async function collectPluginMeta(
       console.error(err);
     }
     exitWithError(
-      `Failed to read src/ directory for Next.js plugin: ${pluginMetaData.name}`
+      `Failed to read src/ directory for Joy.js plugin: ${pluginMetaData.name}`
     );
   }
 
@@ -90,7 +88,7 @@ async function collectPluginMeta(
 
   if (invalidMiddleware.length > 0) {
     console.error(
-      `Next.js Plugin: ${
+      `Joy.js Plugin: ${
         pluginMetaData.name
       } listed invalid middleware ${invalidMiddleware.join(", ")}`
     );
@@ -100,7 +98,7 @@ async function collectPluginMeta(
   // somehow to prevent collision
   if (!Array.isArray(pluginMetaData["required-env"])) {
     exitWithError(
-      'Next.js plugins need to have a "nextjs.required-env" key in package.json'
+      'Joy.js plugins need to have a "joyjs.required-env" key in package.json'
     );
   }
 
@@ -114,11 +112,11 @@ async function collectPluginMeta(
 
   if (missingEnvFields.length > 0) {
     exitWithError(
-      `Next.js Plugin: ${
+      `Joy.js Plugin: ${
         pluginMetaData.name
       } required env ${missingEnvFields.join(
         ", "
-      )} but was missing in your \`next.config.js\``
+      )} but was missing in your \`joy.config.js\``
     );
   }
 
@@ -154,18 +152,18 @@ async function _collectPlugins(
   env: ENV_OPTIONS,
   pluginsConfig: PluginConfig[] | undefined
 ): Promise<PluginMetaData[]> {
-  let nextPluginNames: string[] = [];
+  let joyPluginNames: string[] = [];
   const skippedPluginNames: string[] = [];
   const hasPluginConfig = Array.isArray(pluginsConfig);
 
-  const nextPluginConfigNames = hasPluginConfig
+  const joyPluginConfigNames = hasPluginConfig
     ? pluginsConfig!.map((config) =>
         typeof config === "string" ? config : config.name
       )
     : null;
 
   const rootPackageJsonPath = await findUp("package.json", { cwd: dir });
-  if (!rootPackageJsonPath && !nextPluginConfigNames) {
+  if (!rootPackageJsonPath && !joyPluginConfigNames) {
     console.log("Failed to load plugins, no package.json");
     return [];
   }
@@ -186,27 +184,27 @@ async function _collectPlugins(
     }
 
     // find packages with the naming convention
-    // @scope/next-plugin-[name]
-    // @next/plugin-[name]
-    // next-plugin-[name]
+    // @scope/joy-plugin-[name]
+    // @symph/joy-plugin-[name]
+    // joy-plugin-[name]
     const filteredDeps = dependencies.filter((name) => {
-      return name.match(/(^@next\/plugin|next-plugin-)/);
+      return name.match(/(^@symph\|joy-plugin-)/);
     });
 
-    if (nextPluginConfigNames) {
+    if (joyPluginConfigNames) {
       for (const dep of filteredDeps) {
-        if (!nextPluginConfigNames.includes(dep)) {
+        if (!joyPluginConfigNames.includes(dep)) {
           skippedPluginNames.push(dep);
         }
       }
-      nextPluginNames = nextPluginConfigNames;
+      joyPluginNames = joyPluginConfigNames;
     } else {
-      nextPluginNames = filteredDeps;
+      joyPluginNames = filteredDeps;
     }
   }
 
-  const nextPluginMetaData = await Promise.all(
-    nextPluginNames.map((name) =>
+  const joyPluginMetaData = await Promise.all(
+    joyPluginNames.map((name) =>
       collectPluginMeta(
         env,
         resolve.sync(path.join(name, "package.json"), {
@@ -217,8 +215,8 @@ async function _collectPlugins(
     )
   );
 
-  for (const plugin of nextPluginMetaData) {
-    // Add plugin config from `next.config.js`
+  for (const plugin of joyPluginMetaData) {
+    // Add plugin config from `joy.config.js`
     if (hasPluginConfig) {
       const curPlugin = pluginsConfig!.find(
         (config) =>
@@ -242,7 +240,7 @@ async function _collectPlugins(
   }
   console.log();
 
-  return nextPluginMetaData;
+  return joyPluginMetaData;
 }
 
 // only execute it once between server/client configs

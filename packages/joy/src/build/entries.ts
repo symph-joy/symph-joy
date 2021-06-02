@@ -1,13 +1,13 @@
 import chalk from "chalk";
 import { posix, join } from "path";
 import { stringify } from "querystring";
-import { API_ROUTE, DOT_NEXT_ALIAS, PAGES_DIR_ALIAS } from "../lib/constants";
-import { __ApiPreviewProps } from "../next-server/server/api-utils";
-import { isTargetLikeServerless } from "../next-server/server/config";
-import { normalizePagePath } from "../next-server/server/normalize-page-path";
+import { API_ROUTE, DOT_JOY_ALIAS, PAGES_DIR_ALIAS } from "../lib/constants";
+import { __ApiPreviewProps } from "../joy-server/server/api-utils";
+import { isTargetLikeServerless } from "../joy-server/server/config";
+import { normalizePagePath } from "../joy-server/server/normalize-page-path";
 import { warn } from "./output/log";
-import { ClientPagesLoaderOptions } from "./webpack/loaders/next-client-pages-loader";
-import { ServerlessLoaderQuery } from "./webpack/loaders/next-serverless-loader";
+import { ClientPagesLoaderOptions } from "./webpack/loaders/joy-client-pages-loader";
+import { ServerlessLoaderQuery } from "./webpack/loaders/joy-serverless-loader";
 import { LoadedEnvFiles } from "../lib/load-env-config";
 import { resolveRequest } from "../lib/resolve-request";
 
@@ -53,6 +53,7 @@ export function createPagesMapping(
   // pages['/_error'] = pages['/_error'] || require.resolve('../pages/_error')
   // pages['/_document'] = pages['/_document'] || require.resolve('../pages/_document')
 
+  // todo 却换为编译后的dist目录中的文件。
   pages["/_app"] = pages["/_app"] || "@symph/joy/src/pages/_app";
   pages["/_error"] = pages["/_error"] || "@symph/joy/src/pages/_error";
   pages["/_document"] = pages["/_document"] || "@symph/joy/src/pages/_document";
@@ -88,7 +89,7 @@ export function createEntrypoints(
     absoluteAppPath: pages["/_app"],
     absoluteDocumentPath: pages["/_document"],
     absoluteErrorPath: pages["/_error"],
-    distDir: DOT_NEXT_ALIAS,
+    distDir: DOT_JOY_ALIAS,
     buildId,
     assetPrefix: config.assetPrefix,
     generateEtags: config.generateEtags,
@@ -124,7 +125,7 @@ export function createEntrypoints(
         absolutePagePath,
         ...defaultServerlessOptions,
       };
-      server[serverBundlePath] = `next-serverless-loader?${stringify(
+      server[serverBundlePath] = `joy-serverless-loader?${stringify(
         serverlessLoaderOptions
       )}!`;
     } else if (isApiRoute || target === "server") {
@@ -135,7 +136,7 @@ export function createEntrypoints(
         absolutePagePath,
         ...defaultServerlessOptions,
       };
-      server[serverBundlePath] = `next-serverless-loader?${stringify(
+      server[serverBundlePath] = `joy-serverless-loader?${stringify(
         serverlessLoaderOptions
       )}!`;
     }
@@ -149,7 +150,7 @@ export function createEntrypoints(
         page,
         absolutePagePath,
       };
-      const pageLoader = `next-client-pages-loader?${stringify(
+      const pageLoader = `joy-client-pages-loader?${stringify(
         pageLoaderOpts
       )}!`;
 

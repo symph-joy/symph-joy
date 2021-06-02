@@ -12,7 +12,7 @@ import {
 import { dirname } from "path";
 import { EOL } from "os";
 import { promises } from "fs";
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import mkdirp from "mkdirp";
 import { recursiveDelete } from "../lib/recursive-delete";
 import { fileExists } from "../lib/file-exists";
@@ -26,10 +26,8 @@ for (const key of commonCtx.keys()) {
 
 const ctx = require.context('./client', true, /\.(jsx?|tsx?|json)$/i);
 for (const key of ctx.keys()) {
-console.log('>>>> gen-client-modules, key:', key);
   modules.push(ctx(key));
 }
-console.log('>>>> gen-client-modules, modules:', modules);
 if (typeof window !== 'undefined') {
   window.__JOY_AUTOGEN = modules;
 };
@@ -48,7 +46,6 @@ const ctx = require.context('./server', true, /\.(jsx?|tsx?|json)$/i);
 for (const key of ctx.keys()) {
   modules.push(ctx(key));
 }
-console.log('>>>> gen-server-modules, modules:', modules);
 export default modules;
 `;
 
@@ -81,7 +78,6 @@ export class FileGenerator implements ProviderLifecycle {
 
   @Tap({ hookId: "onGenerateFiles" })
   public async generateEntryModuleFiles() {
-    console.log(">>>> FileGenerator. onGenerateFiles");
     await Promise.all([
       this.writeServerFile("../gen-server-modules.js", GEN_SERVER_CONTENT, {
         skipTSCheck: true,

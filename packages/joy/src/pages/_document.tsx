@@ -4,18 +4,18 @@ import flush from "styled-jsx/server";
 import {
   AMP_RENDER_TARGET,
   OPTIMIZED_FONT_PROVIDERS,
-} from "../next-server/lib/constants";
-import { DocumentContext as DocumentComponentContext } from "../next-server/lib/document-context";
+} from "../joy-server/lib/constants";
+import { DocumentContext as DocumentComponentContext } from "../joy-server/lib/document-context";
 import {
   DocumentContext as _DocumentContext,
   DocumentInitialProps as _DocumentInitialProps,
   DocumentProps as _DocumentProps,
-} from "../next-server/lib/utils";
+} from "../joy-server/lib/utils";
 import {
   BuildManifest,
   getPageFiles,
-} from "../next-server/server/get-page-files";
-import { cleanAmpPath } from "../next-server/server/utils";
+} from "../joy-server/server/get-page-files";
+import { cleanAmpPath } from "../joy-server/server/utils";
 import { htmlEscapeJsonString } from "../server/htmlescape";
 
 // export { DocumentContext, DocumentInitialProps, DocumentProps }
@@ -41,7 +41,7 @@ function dedupe<T extends { file: string }>(bundles: T[]): T[] {
 }
 
 function getOptionalModernScriptVariant(path: string): string {
-  if (process.env.__NEXT_MODERN_BUILD) {
+  if (process.env.__JOY_MODERN_BUILD) {
     return path.replace(/\.js$/, ".module.js");
   }
   return path;
@@ -73,10 +73,10 @@ function getDocumentFiles(
  * Commonly used for implementing server side rendering for `css-in-js` libraries.
  */
 export default class Document<P = {}> extends Component<DocumentProps & P> {
-  static headTagsMiddleware = process.env.__NEXT_PLUGINS
+  static headTagsMiddleware = process.env.__JOY_PLUGINS
     ? import(
         // @ts-ignore loader syntax
-        "next-plugin-loader?middleware=document-head-tags-server!"
+        "joy-plugin-loader?middleware=document-head-tags-server!"
       )
     : () => [];
 
@@ -113,7 +113,7 @@ export default class Document<P = {}> extends Component<DocumentProps & P> {
         <Head />
         <body>
           <Main />
-          <NextScript />
+          <JoyScript />
         </body>
       </Html>
     );
@@ -188,24 +188,20 @@ export class Head extends Component<
           key={`${file}-preload`}
           nonce={this.props.nonce}
           rel="preload"
-          href={`${assetPrefix}/_next/${encodeURI(
+          href={`${assetPrefix}/_joy/${encodeURI(
             file
           )}${devOnlyCacheBusterQueryString}`}
           as="style"
-          crossOrigin={
-            this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
-          }
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
         />,
         <link
           key={file}
           nonce={this.props.nonce}
           rel="stylesheet"
-          href={`${assetPrefix}/_next/${encodeURI(
+          href={`${assetPrefix}/_joy/${encodeURI(
             file
           )}${devOnlyCacheBusterQueryString}`}
-          crossOrigin={
-            this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
-          }
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
           data-n-g={isSharedFile ? "" : undefined}
           data-n-p={isSharedFile ? undefined : ""}
         />
@@ -235,13 +231,13 @@ export class Head extends Component<
             <link
               rel="preload"
               key={bundle.file}
-              href={`${assetPrefix}/_next/${encodeURI(
+              href={`${assetPrefix}/_joy/${encodeURI(
                 bundle.file
               )}${devOnlyCacheBusterQueryString}`}
               as="script"
               nonce={this.props.nonce}
               crossOrigin={
-                this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
+                this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
               }
             />
           );
@@ -267,12 +263,12 @@ export class Head extends Component<
             key={file}
             nonce={this.props.nonce}
             rel="preload"
-            href={`${assetPrefix}/_next/${encodeURI(
+            href={`${assetPrefix}/_joy/${encodeURI(
               file
             )}${devOnlyCacheBusterQueryString}`}
             as="script"
             crossOrigin={
-              this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
+              this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
             }
           />
         ));
@@ -303,7 +299,7 @@ export class Head extends Component<
       inAmpMode,
       hybridAmp,
       canonicalBase,
-      __NEXT_DATA__,
+      __JOY_DATA__,
       dangerousAsPath,
       headTags,
       unstable_runtimeJS,
@@ -321,26 +317,24 @@ export class Head extends Component<
         if (!isReactHelmet) {
           if (child?.type === "title") {
             console.warn(
-              "Warning: <title> should not be used in _document.js's <Head>. https://err.sh/next.js/no-document-title"
+              "Warning: <title> should not be used in _document.js's <Head>."
             );
           } else if (
             child?.type === "meta" &&
             child?.props?.name === "viewport"
           ) {
             console.warn(
-              "Warning: viewport meta tags should not be used in _document.js's <Head>. https://err.sh/next.js/no-document-viewport-meta"
+              "Warning: viewport meta tags should not be used in _document.js's <Head>. "
             );
           }
         }
         return child;
       });
       if (this.props.crossOrigin)
-        console.warn(
-          "Warning: `Head` attribute `crossOrigin` is deprecated. https://err.sh/next.js/doc-crossorigin-deprecated"
-        );
+        console.warn("Warning: `Head` attribute `crossOrigin` is deprecated.");
     }
 
-    if (process.env.__NEXT_OPTIMIZE_FONTS && !inAmpMode) {
+    if (process.env.__JOY_OPTIMIZE_FONTS && !inAmpMode) {
       children = this.makeStylesheetInert(children);
     }
 
@@ -378,7 +372,7 @@ export class Head extends Component<
 
         if (badProp) {
           console.warn(
-            `Found conflicting amp tag "${child.type}" with conflicting prop ${badProp} in ${__NEXT_DATA__.page}. https://err.sh/next.js/conflicting-amp-tag`
+            `Found conflicting amp tag "${child.type}" with conflicting prop ${badProp} in ${__JOY_DATA__.page}.`
           );
           return null;
         }
@@ -417,21 +411,21 @@ export class Head extends Component<
 
     const files: DocumentFiles = getDocumentFiles(
       this.context.buildManifest,
-      this.context.__NEXT_DATA__.page
+      this.context.__JOY_DATA__.page
     );
     return (
       <head {...this.props}>
         {this.context.isDevelopment && (
           <>
             <style
-              data-next-hide-fouc
+              data-joy-hide-fouc
               data-ampdevmode={inAmpMode ? "true" : undefined}
               dangerouslySetInnerHTML={{
                 __html: `body{display:none}`,
               }}
             />
             <noscript
-              data-next-hide-fouc
+              data-joy-hide-fouc
               data-ampdevmode={inAmpMode ? "true" : undefined}
             >
               <style
@@ -445,7 +439,7 @@ export class Head extends Component<
         {children}
         {head}
         <meta
-          name="next-head-count"
+          name="joy-head-count"
           content={React.Children.count(head || []).toString()}
         />
         <link rel="icon" href="data:image/ico;base64,aWNv" />
@@ -505,7 +499,7 @@ export class Head extends Component<
                 href={canonicalBase + getAmpPath(ampPath, dangerousAsPath)}
               />
             )}
-            {process.env.__NEXT_OPTIMIZE_FONTS
+            {process.env.__JOY_OPTIMIZE_FONTS
               ? this.makeStylesheetInert(this.getCssLinks(files))
               : this.getCssLinks(files)}
             <noscript data-n-css />
@@ -515,7 +509,7 @@ export class Head extends Component<
               // this element is used to mount development styles so the
               // ordering matches production
               // (by default, style-loader injects at the bottom of <head />)
-              <noscript id="__next_css__DO_NOT_USE__" />
+              <noscript id="__joy_css__DO_NOT_USE__" />
             )}
             {styles || null}
           </>
@@ -534,10 +528,10 @@ export function Main() {
   docComponentsRendered.Main = true;
 
   if (inAmpMode) return <>{AMP_RENDER_TARGET}</>;
-  return <div id="__next" dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div id="__joy" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-export class NextScript extends Component<OriginProps> {
+export class JoyScript extends Component<OriginProps> {
   static contextType = DocumentComponentContext;
 
   static propTypes = {
@@ -561,7 +555,7 @@ export class NextScript extends Component<OriginProps> {
 
     return dedupe(dynamicImports).map((bundle) => {
       let modernProps = {};
-      if (process.env.__NEXT_MODERN_BUILD) {
+      if (process.env.__JOY_MODERN_BUILD) {
         modernProps = bundle.file.endsWith(".module.js")
           ? { type: "module" }
           : { noModule: true };
@@ -574,13 +568,11 @@ export class NextScript extends Component<OriginProps> {
         <script
           async={!isDevelopment}
           key={bundle.file}
-          src={`${assetPrefix}/_next/${encodeURI(
+          src={`${assetPrefix}/_joy/${encodeURI(
             bundle.file
           )}${devOnlyCacheBusterQueryString}`}
           nonce={this.props.nonce}
-          crossOrigin={
-            this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
-          }
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
           {...modernProps}
         />
       );
@@ -602,7 +594,7 @@ export class NextScript extends Component<OriginProps> {
 
     return [...normalScripts, ...lowPriorityScripts].map((file) => {
       let modernProps = {};
-      if (process.env.__NEXT_MODERN_BUILD) {
+      if (process.env.__JOY_MODERN_BUILD) {
         modernProps = file.endsWith(".module.js")
           ? { type: "module" }
           : { noModule: true };
@@ -611,14 +603,12 @@ export class NextScript extends Component<OriginProps> {
       return (
         <script
           key={file}
-          src={`${assetPrefix}/_next/${encodeURI(
+          src={`${assetPrefix}/_joy/${encodeURI(
             file
           )}${devOnlyCacheBusterQueryString}`}
           nonce={this.props.nonce}
           async={!isDevelopment}
-          crossOrigin={
-            this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
-          }
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
           {...modernProps}
         />
       );
@@ -643,24 +633,22 @@ export class NextScript extends Component<OriginProps> {
         <script
           key={polyfill}
           nonce={this.props.nonce}
-          crossOrigin={
-            this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
-          }
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
           noModule={true}
-          src={`${assetPrefix}/_next/${polyfill}${devOnlyCacheBusterQueryString}`}
+          src={`${assetPrefix}/_joy/${polyfill}${devOnlyCacheBusterQueryString}`}
         />
       ));
   }
 
   static getInlineScriptSource(documentProps: DocumentProps): string {
-    const { __NEXT_DATA__ } = documentProps;
+    const { __JOY_DATA__ } = documentProps;
     try {
-      const data = JSON.stringify(__NEXT_DATA__);
+      const data = JSON.stringify(__JOY_DATA__);
       return htmlEscapeJsonString(data);
     } catch (err) {
       if (err.message.indexOf("circular structure")) {
         throw new Error(
-          `Circular structure in "getInitialProps" result of page "${__NEXT_DATA__.page}". https://err.sh/vercel/next.js/circular-structure`
+          `Circular structure in "getInitialProps" result of page "${__JOY_DATA__.page}".`
         );
       }
       throw err;
@@ -678,7 +666,7 @@ export class NextScript extends Component<OriginProps> {
     } = this.context;
     const disableRuntimeJS = unstable_runtimeJS === false;
 
-    docComponentsRendered.NextScript = true;
+    docComponentsRendered.JoyScript = true;
 
     if (inAmpMode) {
       if (process.env.NODE_ENV === "production") {
@@ -694,14 +682,14 @@ export class NextScript extends Component<OriginProps> {
         <>
           {disableRuntimeJS ? null : (
             <script
-              id="__NEXT_DATA__"
+              id="__JOY_DATA__"
               type="application/json"
               nonce={this.props.nonce}
               crossOrigin={
-                this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
+                this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
               }
               dangerouslySetInnerHTML={{
-                __html: NextScript.getInlineScriptSource(this.context),
+                __html: JoyScript.getInlineScriptSource(this.context),
               }}
               data-ampdevmode
             />
@@ -709,10 +697,10 @@ export class NextScript extends Component<OriginProps> {
           {ampDevFiles.map((file) => (
             <script
               key={file}
-              src={`${assetPrefix}/_next/${file}${devOnlyCacheBusterQueryString}`}
+              src={`${assetPrefix}/_joy/${file}${devOnlyCacheBusterQueryString}`}
               nonce={this.props.nonce}
               crossOrigin={
-                this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
+                this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
               }
               data-ampdevmode
             />
@@ -724,13 +712,13 @@ export class NextScript extends Component<OriginProps> {
     if (process.env.NODE_ENV !== "production") {
       if (this.props.crossOrigin)
         console.warn(
-          "Warning: `NextScript` attribute `crossOrigin` is deprecated. https://err.sh/next.js/doc-crossorigin-deprecated"
+          "Warning: `JoyScript` attribute `crossOrigin` is deprecated."
         );
     }
 
     const files: DocumentFiles = getDocumentFiles(
       this.context.buildManifest,
-      this.context.__NEXT_DATA__.page
+      this.context.__JOY_DATA__.page
     );
     return (
       <>
@@ -738,38 +726,38 @@ export class NextScript extends Component<OriginProps> {
           ? buildManifest.devFiles.map((file: string) => (
               <script
                 key={file}
-                src={`${assetPrefix}/_next/${encodeURI(
+                src={`${assetPrefix}/_joy/${encodeURI(
                   file
                 )}${devOnlyCacheBusterQueryString}`}
                 nonce={this.props.nonce}
                 crossOrigin={
-                  this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
+                  this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
                 }
               />
             ))
           : null}
         {disableRuntimeJS ? null : (
           <script
-            id="__NEXT_DATA__"
+            id="__JOY_DATA__"
             type="application/json"
             nonce={this.props.nonce}
             crossOrigin={
-              this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
+              this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
             }
             dangerouslySetInnerHTML={{
-              __html: NextScript.getInlineScriptSource(this.context),
+              __html: JoyScript.getInlineScriptSource(this.context),
             }}
           />
         )}
-        {process.env.__NEXT_MODERN_BUILD && !disableRuntimeJS ? (
+        {process.env.__JOY_MODERN_BUILD && !disableRuntimeJS ? (
           <script
             nonce={this.props.nonce}
             crossOrigin={
-              this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
+              this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
             }
             noModule={true}
             dangerouslySetInnerHTML={{
-              __html: NextScript.safariNomoduleFix,
+              __html: JoyScript.safariNomoduleFix,
             }}
           />
         ) : null}

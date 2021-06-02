@@ -7,10 +7,7 @@ import {
   Type,
 } from "@symph/core";
 import { IReactRoute, IRouteMeta, ReactRouter } from "@symph/react";
-import { NextDevServer } from "../server/next-dev-server";
-import { IncomingMessage, ServerResponse } from "http";
-import { ParsedUrlQuery } from "querystring";
-import { FileScanner } from "../next-server/server/scanner/file-scanner";
+import { FileScanner } from "../joy-server/server/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -86,7 +83,6 @@ export class JoyReactRouterPlugin<
     }
     const addedRoutes = this.addRouteProvider(provider);
     if (addedRoutes && addedRoutes.length > 0) {
-      console.log(">>>> IReactRouteDev. onRegisterProviderAfter", provider);
     }
   }
 
@@ -99,7 +95,6 @@ export class JoyReactRouterPlugin<
       return;
     }
     this.replaceRouteProvider(nextProvider, preProvider.id);
-    console.log(">>>> IReactRouteDev. onReplaceProviderAfter", nextProvider);
   }
 
   protected getClientRoutes(): T[] {
@@ -108,7 +103,6 @@ export class JoyReactRouterPlugin<
 
   @Tap()
   protected async onGenerateFiles() {
-    console.log(">>>> IReactRouteDev. onGenerateFiles");
     const clientRoutes = this.getClientRoutes();
     const clientFileContent = this.routesTemplate({ routes: clientRoutes });
     await this.fileGenerator.writeClientFile("./routes.js", clientFileContent);

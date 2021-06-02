@@ -36,8 +36,8 @@ export async function verifyTypeScriptSetup(
 
     // Reconfigure (or create) the user's `tsconfig.json` for them:
     await writeConfigurationDefaults(ts, tsConfigPath, firstTimeSetup);
-    // // Write out the necessary `next-env.d.ts` file to correctly register
-    // // Next.js' types:
+    // // Write out the necessary `joy-env.d.ts` file to correctly register
+    // // Joy.js' types:
     // await writeAppTypeDeclarations(dir);
 
     if (typeCheckPreflight) {

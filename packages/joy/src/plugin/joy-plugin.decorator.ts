@@ -1,6 +1,6 @@
 import { ClassProvider, Injectable } from "@symph/core";
 import { IJoyPlugin } from "./joy-plugin.interface";
-import { ConfigurableProvider } from "../next-server/server/joy-config/configurable-provider.decorator";
+import { ConfigurableProvider } from "../joy-server/server/joy-config/configurable-provider.decorator";
 
 export function JoyPlugin(
   options: Partial<ClassProvider & IJoyPlugin> = {}

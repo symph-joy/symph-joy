@@ -38,12 +38,10 @@ describe("prerender", () => {
     // await fs.remove(join(appDir, '.joy'))
     testContext = await JoyTestContext.createServerContext(appDir);
     // testContext = await JoyTestContext.createDevServerContext(appDir);
-    console.log(">>> build completed:");
   }, 3000000);
 
   afterAll(async () => {
     await testContext.killServer();
-    console.log(">>>>> server close");
   });
 
   // test("prerender run start", async () => {

@@ -19,6 +19,7 @@ coverage
 
 # test output
 test/**/out
+junit.xml
 .DS_Store
 .idea
 *.iml

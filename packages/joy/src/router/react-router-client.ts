@@ -5,18 +5,18 @@ import {
   ReactAppInitManager,
   ReactRouter,
 } from "@symph/react";
-import { parseRelativeUrl } from "../next-server/lib/router/utils/parse-relative-url";
-import getAssetPathFromRoute from "../next-server/lib/router/utils/get-asset-path-from-route";
-import { addBasePath } from "../next-server/lib/router/router";
+import { parseRelativeUrl } from "../joy-server/lib/router/utils/parse-relative-url";
+import getAssetPathFromRoute from "../joy-server/lib/router/utils/get-asset-path-from-route";
+import { addBasePath } from "../joy-server/lib/router/router";
 import { normalizePathTrailingSlash } from "../client/normalize-trailing-slash";
 import { JoyClientConfig } from "../client/joy-client-config";
-import { isDynamicRoute } from "../next-server/lib/router/utils";
+import { isDynamicRoute } from "../joy-server/lib/router/utils";
 import { matchPath } from "react-router";
-import { route } from "../next-server/server/router";
+import { route } from "../joy-server/server/router";
 
 type ClientRouteSSG = string[];
 
-const basePath = (process.env.__NEXT_ROUTER_BASEPATH as string) || "";
+const basePath = (process.env.__JOY_ROUTER_BASEPATH as string) || "";
 const PAGE_LOAD_ERROR = Symbol("PAGE_LOAD_ERROR");
 
 function normalizeRoute(route: string) {
@@ -85,7 +85,7 @@ export class ReactRouterClient extends ReactRouter {
 
   private fetchRetry(url: string, attempts: number): Promise<any> {
     return fetch(url, {
-      // Cookies are required to be present for Next.js' SSG "Preview Mode".
+      // Cookies are required to be present for Joy.js' SSG "Preview Mode".
       // Cookies may also be required for `getServerSideProps`.
       //
       // > `fetch` won’t send cookies, unless you set the credentials init
@@ -155,7 +155,7 @@ export class ReactRouterClient extends ReactRouter {
 
     const dataRoute = getAssetPathFromRoute(route, ".json");
     return addBasePath(
-      `/_next/data/${this.joyClientConfig.buildId}${dataRoute}${
+      `/_joy/data/${this.joyClientConfig.buildId}${dataRoute}${
         ssg ? "" : search
       }`
     );

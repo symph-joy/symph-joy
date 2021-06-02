@@ -20,10 +20,10 @@ export function getClientStyleLoader({
           insert: function (element: Node) {
             // These elements should always exist. If they do not,
             // this code should fail.
-            var anchorElement = document.querySelector(
-              "#__next_css__DO_NOT_USE__"
+            let anchorElement = document.querySelector(
+              "#__joy_css__DO_NOT_USE__"
             )!;
-            var parentNode = anchorElement.parentNode!; // Normally <head>
+            let parentNode = anchorElement.parentNode!; // Normally <head>
 
             // Each style tag should be placed right before our
             // anchor. By inserting before and not after, we do not
@@ -35,6 +35,6 @@ export function getClientStyleLoader({
     : {
         // @ts-ignore: TODO: remove when webpack 5 is stable
         loader: MiniCssExtractPlugin.loader,
-        options: { publicPath: `${assetPrefix}/_next/` },
+        options: { publicPath: `${assetPrefix}/_joy/` },
       };
 }

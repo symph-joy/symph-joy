@@ -1,6 +1,6 @@
 import webpack from "webpack";
 import { stringify } from "querystring";
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { EmitSrcPlugin } from "./webpack/plugins/emit-src-plugin/emit-src-plugin";
 import path from "path";
 

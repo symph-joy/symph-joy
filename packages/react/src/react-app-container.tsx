@@ -19,6 +19,7 @@ export function ReactAppContainer({
   Component,
 }: ApplicationComponentProps): React.ComponentElement<any, any> {
   const reduxStore = appContext.syncGetProvider(ReactReduxService);
+  // todo useMemo
   const ReactRouterComponent = appContext.syncGetProvider(
     "reactRouterComponent"
   ) as { new (...args: any): any };

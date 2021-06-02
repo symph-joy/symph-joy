@@ -9,16 +9,14 @@ if (!window.EventSource) {
   window.EventSource = EventSourcePolyfill;
 }
 
-const data = JSON.parse(document.getElementById("__NEXT_DATA__").textContent);
+const data = JSON.parse(document.getElementById("__JOY_DATA__").textContent);
 let { assetPrefix, page } = data;
 assetPrefix = assetPrefix || "";
 let mostRecentHash = null;
 /* eslint-disable-next-line */
 let curHash = __webpack_hash__;
 const hotUpdatePath =
-  assetPrefix +
-  (assetPrefix.endsWith("/") ? "" : "/") +
-  "_next/static/webpack/";
+  assetPrefix + (assetPrefix.endsWith("/") ? "" : "/") + "_joy/static/webpack/";
 
 // Is there a newer version of this code available?
 function isUpdateAvailable() {
@@ -72,7 +70,7 @@ async function tryApplyUpdates() {
 }
 
 getEventSourceWrapper({
-  path: `${assetPrefix}/_next/webpack-hmr`,
+  path: `${assetPrefix}/_joy/webpack-hmr`,
 }).addMessageListener((event) => {
   if (event.data === "\uD83D\uDC93") {
     return;

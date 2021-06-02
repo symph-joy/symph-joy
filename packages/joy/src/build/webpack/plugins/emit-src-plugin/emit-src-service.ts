@@ -2,7 +2,7 @@ import { Injectable } from "@symph/core";
 import { IWebpackEmitModule } from "./emit-src-plugin";
 import path from "path";
 import { existsSync } from "fs";
-import { JoyAppConfig } from "../../../../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../../../../joy-server/server/joy-config/joy-app-config";
 import { fileExists } from "../../../../lib/file-exists";
 
 type TEmitManifest = Record<string, IWebpackEmitModule>;

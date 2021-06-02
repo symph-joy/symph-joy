@@ -1,6 +1,6 @@
 import { buildStaticPaths } from "../build/utils";
-import { loadComponents } from "../next-server/server/load-components";
-import "../next-server/server/node-polyfill-fetch";
+import { loadComponents } from "../joy-server/server/load-components";
+import "../joy-server/server/node-polyfill-fetch";
 
 type RuntimeConfig = any;
 
@@ -23,7 +23,7 @@ export async function loadStaticPaths(
   // }
   //
   // // update work memory runtime-config
-  // require('./../next-server/lib/runtime-config').setConfig(config)
+  // require('./../joy-server/lib/runtime-config').setConfig(config)
   //
   // const components = await loadComponents(outDir, pathname, serverless)
   //

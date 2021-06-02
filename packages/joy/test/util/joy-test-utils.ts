@@ -1,9 +1,9 @@
 import { ParsedUrlQuery, stringify, ParsedUrlQueryInput } from "querystring";
 import { IncomingMessage, ServerResponse } from "http";
 // import {JoyBoot} from "../../src/joy";
-// import {NextServer} from "../../src/next-server/server/next-server";
+// import {JoyServer} from "../../src/joy-server/server/joy-server";
 // import {PresetJoyCore} from "../../src/preset-joy-core";
-import { JoyBoot, PresetJoyCore, NextServer } from "@symph/joy";
+import { JoyBoot, PresetJoyCore, JoyServer } from "@symph/joy";
 import path from "path";
 import spawn from "cross-spawn";
 import child_process from "child_process";
@@ -12,7 +12,7 @@ import getPort from "get-port";
 import { ReactNode } from "react";
 
 export async function renderViaAPI(
-  app: NextServer,
+  app: JoyServer,
   pathname: string,
   query?: ParsedUrlQuery
 ): Promise<string | null> {

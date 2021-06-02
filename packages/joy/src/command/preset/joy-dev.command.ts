@@ -6,9 +6,9 @@ import * as Log from "../../build/output/log";
 import { startedDevelopmentServer } from "../../build/output";
 import { printAndExit } from "../../server/lib/utils";
 import { Configuration, CoreContext, Inject } from "@symph/core";
-import { NextDevServer } from "../../server/next-dev-server";
+import { JoyDevServer } from "../../server/joy-dev-server";
 import http from "http";
-import { JoyAppConfig } from "../../next-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../../joy-server/server/joy-config/joy-app-config";
 import { ServerConfigDev } from "../../server/server-config-dev";
 import { JoyBuildConfig } from "../../build/joy-build.config";
 import { ReactContextFactoryDev } from "../../server/react-context-factory-dev";
@@ -35,7 +35,7 @@ export class JoyDevServerConfig extends JoyServerConfig {
   public hotReloader: HotReloader;
 
   @Configuration.Provider()
-  public joyServer: NextDevServer;
+  public joyServer: JoyDevServer;
 }
 
 @CommandProvider()
@@ -75,8 +75,7 @@ export class JoyDevCommand extends JoyCommand {
       semver.coerce(reactVersion)?.version !== "0.0.0"
     ) {
       Log.warn(
-        "Fast Refresh is disabled in your application due to an outdated `react` version. Please upgrade 16.10 or newer!" +
-          " Read more: https://err.sh/next.js/react-version"
+        "Fast Refresh is disabled in your application due to an outdated `react` version. Please upgrade 16.10 or newer!"
       );
     } else {
       const reactDomVersion: string | null = await getPackageVersion({
@@ -89,8 +88,7 @@ export class JoyDevCommand extends JoyCommand {
         semver.coerce(reactDomVersion)?.version !== "0.0.0"
       ) {
         Log.warn(
-          "Fast Refresh is disabled in your application due to an outdated `react-dom` version. Please upgrade 16.10 or newer!" +
-            " Read more: https://err.sh/next.js/react-version"
+          "Fast Refresh is disabled in your application due to an outdated `react-dom` version. Please upgrade 16.10 or newer!"
         );
       }
     }
@@ -103,21 +101,21 @@ export class JoyDevCommand extends JoyCommand {
       Log.warn(
         "Your project has both `sass` and `node-sass` installed as dependencies, but should only use one or the other. " +
           "Please remove the `node-sass` dependency from your project. " +
-          " Read more: https://err.sh/next.js/duplicate-sass"
+          " #duplicate-sass"
       );
     }
   }
 
-  // async startDevServer( appContext: CoreContext, {dir, hostname, port, dev, isNextDevCommand}: {dir: string, hostname: string, port: number, dev: boolean, isNextDevCommand: boolean}): Promise<NextDevServer> {
+  // async startDevServer( appContext: CoreContext, {dir, hostname, port, dev, isJoyDevCommand}: {dir: string, hostname: string, port: number, dev: boolean, isJoyDevCommand: boolean}): Promise<JoyDevServer> {
 
-  async startDevServer(appContext: CoreContext): Promise<NextDevServer> {
+  async startDevServer(appContext: CoreContext): Promise<JoyDevServer> {
     await appContext.loadModule(JoyDevServerConfig);
     const config = this.joyAppConfig;
     if (config === undefined) {
       throw new Error("Start server error, can not find joy config provider");
     }
     const { dir, hostname, port } = config;
-    const server = await appContext.get(NextDevServer);
+    const server = await appContext.get(JoyDevServer);
     if (server === undefined) {
       throw new Error("Start server error, can not find joy server provider");
     }
@@ -136,11 +134,11 @@ export class JoyDevCommand extends JoyCommand {
         });
         const appPackage = require(pkgAppPath);
         if (appPackage.scripts) {
-          const nextScript = Object.entries(appPackage.scripts).find(
-            (scriptLine) => scriptLine[1] === "next"
+          const joyScript = Object.entries(appPackage.scripts).find(
+            (scriptLine) => scriptLine[1] === "joy"
           );
-          if (nextScript) {
-            errorMessage += `\nUse \`npm run ${nextScript[0]} -- -p <some other port>\`.`;
+          if (joyScript) {
+            errorMessage += `\nUse \`npm run ${joyScript[0]} -- -p <some other port>\`.`;
           }
         }
         throw new Error(errorMessage);
@@ -169,7 +167,7 @@ export class JoyDevCommand extends JoyCommand {
     // @ts-ignore
     process.env.NODE_ENV = "development";
     // @ts-ignore
-    process.env.__NEXT_TEST_WITH_DEVTOOL = true;
+    process.env.__JOY_TEST_WITH_DEVTOOL = true;
 
     const dir = args._[0] || ".";
     const { port, hostname } = args;
@@ -185,51 +183,4 @@ export class JoyDevCommand extends JoyCommand {
       printAndExit(undefined, 1);
     }
   }
-
-  // async _run(args: JoyCommandOptionType<this>): Promise<any> {
-  //   const dir = args._[0] || '.'
-  //   const {port, hostname} = args
-  //   const appUrl = `http://${hostname}:${port}`
-  //   this.joyAppConfig.mergeCustomConfig({dir, hostname, port, dev: true})
-  //
-  //   return startServer(
-  //     this.joyAppConfig,
-  //     port,
-  //     hostname
-  //   )
-  //     .then(async (app) => {
-  //       startedDevelopmentServer(appUrl)
-  //       // Start preflight after server is listening and ignore errors:
-  //       this.preflight().catch(() => {
-  //       })
-  //       // Finalize server bootup:
-  //       await app.prepare()
-  //       return app
-  //     })
-  //     .catch((err) => {
-  //       if (err.code === 'EADDRINUSE') {
-  //         let errorMessage = `Port ${port} is already in use.`
-  //         const pkgAppPath = require('find-up').sync(
-  //           'package.json',
-  //           {
-  //             cwd: dir,
-  //           }
-  //         )
-  //         const appPackage = require(pkgAppPath)
-  //         if (appPackage.scripts) {
-  //           const nextScript = Object.entries(appPackage.scripts).find(
-  //             (scriptLine) => scriptLine[1] === 'next'
-  //           )
-  //           if (nextScript) {
-  //             errorMessage += `\nUse \`npm run ${nextScript[0]} -- -p <some other port>\`.`
-  //           }
-  //         }
-  //         console.error(errorMessage)
-  //       } else {
-  //         console.error(err)
-  //       }
-  //       process.nextTick(() => printAndExit('', 1))
-  //     })
-  //
-  // }
 }

@@ -42,7 +42,6 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     if (this.hasExist(route.path as string)) {
       throw new Error(`route (${route.path}) has existed`);
     }
-    console.log(">>>> ReactRouter. addRoute", route);
     this.routes.push(route);
   }
 

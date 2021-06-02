@@ -1,29 +1,29 @@
 import { dirname, extname, join, sep } from "path";
-import { renderToHTML } from "../next-server/server/render";
+import { renderToHTML } from "../joy-server/server/render";
 import { promises } from "fs";
 import AmpHtmlValidator from "amphtml-validator";
-import { loadComponents } from "../next-server/server/load-components";
-import { isDynamicRoute } from "../next-server/lib/router/utils/is-dynamic";
-import { getRouteMatcher } from "../next-server/lib/router/utils/route-matcher";
-import { getRouteRegex } from "../next-server/lib/router/utils/route-regex";
-import { normalizePagePath } from "../next-server/server/normalize-page-path";
-import "../next-server/server/node-polyfill-fetch";
+import { loadComponents } from "../joy-server/server/load-components";
+import { isDynamicRoute } from "../joy-server/lib/router/utils/is-dynamic";
+import { getRouteMatcher } from "../joy-server/lib/router/utils/route-matcher";
+import { getRouteRegex } from "../joy-server/lib/router/utils/route-regex";
+import { normalizePagePath } from "../joy-server/server/normalize-page-path";
+import "../joy-server/server/node-polyfill-fetch";
 import { IncomingMessage, ServerResponse } from "http";
 import { ComponentType } from "react";
 import { GetStaticProps } from "../types";
-import { requireFontManifest } from "../next-server/server/require";
-import { FontManifest } from "../next-server/server/font-utils";
+import { requireFontManifest } from "../joy-server/server/require";
+import { FontManifest } from "../joy-server/server/font-utils";
 import { Configuration, CoreContext } from "@symph/core";
-import { ReactContextFactory } from "../next-server/server/react-context-factory";
-import { JoyAppConfig } from "../next-server/server/joy-config/joy-app-config";
+import { ReactContextFactory } from "../joy-server/server/react-context-factory";
+import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 // import {ValidateError} from "schema-utils/declarations/validate";
 import { JoyGenModuleServerProvider } from "../plugin/joy-gen-module-server.provider";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 
-const envConfig = require("../next-server/lib/runtime-config");
+const envConfig = require("../joy-server/lib/runtime-config");
 
-(global as any).__NEXT_DATA__ = {
-  nextExport: true,
+(global as any).__JOY_DATA__ = {
+  joyExport: true,
 };
 
 interface AmpValidation {
@@ -161,7 +161,7 @@ export async function exportPage(
         }
       } else {
         throw new Error(
-          `The provided export path '${path}' doesn't match the '${page}' page.\nRead more: https://err.sh/vercel/next.js/export-path-mismatch`
+          `The provided export path '${path}' doesn't match the '${page}' page.`
         );
       }
     }
@@ -299,14 +299,14 @@ export async function exportPage(
     /**
      * This sets environment variable to be used at the time of static export by head.tsx.
      * Using this from process.env allows targetting both serverless and SSR by calling
-     * `process.env.__NEXT_OPTIMIZE_FONTS`.
+     * `process.env.__JOY_OPTIMIZE_FONTS`.
      * TODO(prateekbh@): Remove this when experimental.optimizeFonts are being clened up.
      */
     if (optimizeFonts) {
-      process.env.__NEXT_OPTIMIZE_FONTS = JSON.stringify(true);
+      process.env.__JOY_OPTIMIZE_FONTS = JSON.stringify(true);
     }
     if (optimizeImages) {
-      process.env.__NEXT_OPTIMIZE_IMAGES = JSON.stringify(true);
+      process.env.__JOY_OPTIMIZE_IMAGES = JSON.stringify(true);
     }
 
     const reactContextFactory = await joyContext.get(ReactContextFactory);
@@ -425,8 +425,7 @@ export async function exportPage(
     return results;
   } catch (error) {
     console.error(
-      `\nError occurred prerendering page "${path}". Read more: https://err.sh/next.js/prerender-error\n` +
-        error.stack
+      `\nError occurred prerendering page "${path}". \n` + error.stack
     );
     return { ...results, error: true };
   }

@@ -1,19 +1,16 @@
 import { ComponentType } from "react";
-import type { ClientSsgManifest } from "../build";
+import type { ClientSsgManifest } from "../build/joy-build.service";
 import type { ClientBuildManifest } from "../build/webpack/plugins/build-manifest-plugin";
-import mitt from "../next-server/lib/mitt";
-import type { MittEmitter } from "../next-server/lib/mitt";
-import {
-  addBasePath,
-  markLoadingError,
-} from "../next-server/lib/router/router";
-import escapePathDelimiters from "../next-server/lib/router/utils/escape-path-delimiters";
-import getAssetPathFromRoute from "../next-server/lib/router/utils/get-asset-path-from-route";
-import { isDynamicRoute } from "../next-server/lib/router/utils/is-dynamic";
-import { parseRelativeUrl } from "../next-server/lib/router/utils/parse-relative-url";
-import { searchParamsToUrlQuery } from "../next-server/lib/router/utils/querystring";
-import { getRouteMatcher } from "../next-server/lib/router/utils/route-matcher";
-import { getRouteRegex } from "../next-server/lib/router/utils/route-regex";
+import mitt from "../joy-server/lib/mitt";
+import type { MittEmitter } from "../joy-server/lib/mitt";
+import { addBasePath, markLoadingError } from "../joy-server/lib/router/router";
+import escapePathDelimiters from "../joy-server/lib/router/utils/escape-path-delimiters";
+import getAssetPathFromRoute from "../joy-server/lib/router/utils/get-asset-path-from-route";
+import { isDynamicRoute } from "../joy-server/lib/router/utils/is-dynamic";
+import { parseRelativeUrl } from "../joy-server/lib/router/utils/parse-relative-url";
+import { searchParamsToUrlQuery } from "../joy-server/lib/router/utils/querystring";
+import { getRouteMatcher } from "../joy-server/lib/router/utils/route-matcher";
+import { getRouteRegex } from "../joy-server/lib/router/utils/route-regex";
 
 export const looseToArray = <T extends {}>(input: any): T[] =>
   [].slice.call(input);
@@ -86,7 +83,7 @@ function appendLink(
     // The order of property assignment here is intentional:
     if (as) link!.as = as;
     link!.rel = rel;
-    link!.crossOrigin = process.env.__NEXT_CROSS_ORIGIN!;
+    link!.crossOrigin = process.env.__JOY_CROSS_ORIGIN!;
     link!.onload = res;
     link!.onerror = rej;
 
@@ -100,10 +97,10 @@ function appendLink(
 function loadScript(url: string): Promise<any> {
   return new Promise((res, rej) => {
     const script = document.createElement("script");
-    if (process.env.__NEXT_MODERN_BUILD && hasNoModule) {
+    if (process.env.__JOY_MODERN_BUILD && hasNoModule) {
       script.type = "module";
     }
-    script.crossOrigin = process.env.__NEXT_CROSS_ORIGIN!;
+    script.crossOrigin = process.env.__JOY_CROSS_ORIGIN!;
     script.src = url;
     script.onload = res;
     script.onerror = () => rej(pageLoadError(url));
@@ -181,7 +178,7 @@ export default class RouteLoader {
       } else {
         if (!this.promisedDevPagesManifest) {
           this.promisedDevPagesManifest = fetch(
-            `${this.assetPrefix}/_next/static/development/_devPagesManifest.json`
+            `${this.assetPrefix}/_joy/static/development/_devPagesManifest.json`
           )
             .then((res) => res.json())
             .then((manifest) => {
@@ -201,7 +198,7 @@ export default class RouteLoader {
   private getDependencies(route: string): Promise<string[]> {
     return this.promisedBuildManifest!.then((m) => {
       return m[route]
-        ? m[route].map((url) => `${this.assetPrefix}/_next/${encodeURI(url)}`)
+        ? m[route].map((url) => `${this.assetPrefix}/_joy/${encodeURI(url)}`)
         : Promise.reject(pageLoadError(route));
     });
   }
@@ -221,7 +218,7 @@ export default class RouteLoader {
     const getHrefForSlug = (path: string) => {
       const dataRoute = getAssetPathFromRoute(path, ".json");
       return addBasePath(
-        `/_next/data/${this.buildId}${dataRoute}${ssg ? "" : search}`
+        `/_joy/data/${this.buildId}${dataRoute}${ssg ? "" : search}`
       );
     };
 
@@ -377,7 +374,7 @@ export default class RouteLoader {
           route = normalizeRoute(route);
           let scriptRoute = getAssetPathFromRoute(route, ".js");
 
-          const url = `${this.assetPrefix}/_next/static/chunks/pages${encodeURI(
+          const url = `${this.assetPrefix}/_joy/static/chunks/pages${encodeURI(
             scriptRoute
           )}`;
           loadScript(url).catch((err) => {
@@ -410,7 +407,6 @@ export default class RouteLoader {
 
     if (process.env.NODE_ENV !== "production") {
       // Wait for webpack to become idle if it's not.
-      // More info: https://github.com/vercel/next.js/pull/1511
       if ((module as any).hot && (module as any).hot.status() !== "idle") {
         console.log(
           `Waiting for webpack to become "idle" to initialize the page: "${route}"`
@@ -496,10 +492,10 @@ export default class RouteLoader {
         route = normalizeRoute(route);
 
         const ext =
-          process.env.__NEXT_MODERN_BUILD && hasNoModule ? ".module.js" : ".js";
+          process.env.__JOY_MODERN_BUILD && hasNoModule ? ".module.js" : ".js";
         const scriptRoute = getAssetPathFromRoute(route, ext);
 
-        url = `${this.assetPrefix}/_next/static/${encodeURIComponent(
+        url = `${this.assetPrefix}/_joy/static/${encodeURIComponent(
           this.buildId
         )}/pages${encodeURI(scriptRoute)}`;
       }

@@ -1,22 +1,22 @@
-import { NEXT_DATA } from "../next-server/lib/utils";
+import { JOY_DATA } from "../joy-server/lib/utils";
 
 export class JoyClientConfig {
   public buildId: string;
   public runtimeConfig: Record<string, any>;
   public assetPrefix: string;
   public isFallback?: boolean;
-  public nextExport?: boolean;
+  public joyExport?: boolean;
   public autoExport?: boolean;
   customServer?: boolean;
 
-  static fromJoyData(joyData: NEXT_DATA): JoyClientConfig {
+  static fromJoyData(joyData: JOY_DATA): JoyClientConfig {
     const instance = new JoyClientConfig();
     const {
       buildId,
       runtimeConfig,
       assetPrefix,
       isFallback,
-      nextExport,
+      joyExport,
       autoExport,
       customServer,
     } = joyData;
@@ -24,7 +24,7 @@ export class JoyClientConfig {
     instance.runtimeConfig = runtimeConfig || {};
     instance.assetPrefix = assetPrefix || "";
     instance.isFallback = isFallback;
-    instance.nextExport = nextExport;
+    instance.joyExport = joyExport;
     instance.autoExport = autoExport;
     instance.customServer = customServer;
     return instance;

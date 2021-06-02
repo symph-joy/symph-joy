@@ -14,7 +14,7 @@ test("Chinese", () => {
 
 test("Special characters", () => {
   expect(winPath("\\$\\%")).toEqual("/$/%");
-  expect(winPath("\\next\\test\\read")).toEqual("/next/test/read");
+  expect(winPath("\\joy\\test\\read")).toEqual("/joy/test/read");
 });
 
 test("not convert extended-length paths", () => {

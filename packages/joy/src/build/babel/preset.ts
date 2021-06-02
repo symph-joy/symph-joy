@@ -36,7 +36,7 @@ function styledJsxOptions(options: StyledJsxBabelOptions) {
   return options;
 }
 
-type NextBabelPresetOptions = {
+type JoyBabelPresetOptions = {
   "preset-env"?: any;
   "preset-react"?: any;
   "class-properties"?: any;
@@ -58,9 +58,9 @@ function supportsStaticESM(caller: any): boolean {
   return !!caller?.supportsStaticESM;
 }
 
-export function nextBabelPreset(
+export function joyBabelPreset(
   api: any,
-  options: NextBabelPresetOptions = {}
+  options: JoyBabelPresetOptions = {}
 ): BabelPreset {
   const supportsESM = api.caller(supportsStaticESM);
   const isServer = api.caller((caller: any) => !!caller && caller.isServer);
@@ -196,4 +196,4 @@ export function nextBabelPreset(
   };
 }
 
-export default nextBabelPreset;
+export default joyBabelPreset;

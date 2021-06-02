@@ -1,6 +1,6 @@
 import { Injectable, Tap } from "@symph/core";
 import { IReactRoute } from "@symph/react";
-import { FileScanner } from "../next-server/server/scanner/file-scanner";
+import { FileScanner } from "../joy-server/server/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join } from "path";
 

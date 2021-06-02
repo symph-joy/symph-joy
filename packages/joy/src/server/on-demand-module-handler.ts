@@ -7,10 +7,10 @@ import * as Log from "../build/output/log";
 import {
   normalizePagePath,
   normalizePathSep,
-} from "../next-server/server/normalize-page-path";
-import { pageNotFoundError } from "../next-server/server/require";
+} from "../joy-server/server/normalize-page-path";
+import { pageNotFoundError } from "../joy-server/server/require";
 import { findPageFile } from "./lib/find-page-file";
-import getRouteFromEntrypoint from "../next-server/server/get-route-from-entrypoint";
+import getRouteFromEntrypoint from "../joy-server/server/get-route-from-entrypoint";
 import { date } from "@tsed/schema";
 
 export const ADDED = Symbol("added");
@@ -53,14 +53,14 @@ export default class OnDemandModuleHandler {
 
     for (const compiler of compilers) {
       compiler.hooks.make.tap(
-        "NextJsOnDemandEntries",
+        "JoyJsOnDemandEntries",
         (_compilation: Compilation) => {
           this.invalidator.startBuilding();
         }
       );
     }
 
-    multiCompiler.hooks.done.tap("NextJsOnDemandModules", (multiStats) => {
+    multiCompiler.hooks.done.tap("JoyJsOnDemandModules", (multiStats) => {
       const [clientStats, serverStats] = multiStats.stats;
       const { compilation } = clientStats;
       const { modules } = compilation;

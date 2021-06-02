@@ -8,16 +8,16 @@ import { IncomingMessage, ServerResponse } from "http";
 import "./misc-has-used";
 
 import {
-  NextPageContext,
-  NextComponentType,
-  NextApiResponse,
-  NextApiRequest,
-  NextApiHandler,
+  JoyPageContext,
+  JoyComponentType,
+  JoyApiResponse,
+  JoyApiRequest,
+  JoyApiHandler,
   // @ts-ignore This path is generated at build time and conflicts otherwise
-} from "../dist/next-server/lib/utils";
+} from "../dist/joy-server/lib/utils";
 
 // @ts-ignore This path is generated at build time and conflicts otherwise
-import next from "../dist/server/next";
+import joy from "../dist/server/joy";
 
 declare global {
   namespace jest {
@@ -47,11 +47,7 @@ declare module "react" {
 /**
  * `Page` type, use it as a guide to create `pages`.
  */
-export type NextPage<P = {}, IP = P> = NextComponentType<
-  NextPageContext,
-  IP,
-  P
->;
+export type JoyPage<P = {}, IP = P> = JoyComponentType<JoyPageContext, IP, P>;
 
 /**
  * `Config` type, use it for export const config
@@ -76,11 +72,11 @@ export type PageConfig = {
 };
 
 export {
-  NextPageContext,
-  NextComponentType,
-  NextApiResponse,
-  NextApiRequest,
-  NextApiHandler,
+  JoyPageContext,
+  JoyComponentType,
+  JoyApiResponse,
+  JoyApiRequest,
+  JoyApiHandler,
 };
 
 export type GetStaticPropsContext<Q extends ParsedUrlQuery = ParsedUrlQuery> = {
@@ -147,4 +143,4 @@ export type InferGetServerSidePropsType<T> = T extends GetServerSideProps<
   ? P
   : never;
 
-export default next;
+export default joy;

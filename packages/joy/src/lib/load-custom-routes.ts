@@ -3,7 +3,7 @@ import { parse as parseUrl } from "url";
 import {
   PERMANENT_REDIRECT_STATUS,
   TEMPORARY_REDIRECT_STATUS,
-} from "../next-server/lib/constants";
+} from "../joy-server/lib/constants";
 
 export type Rewrite = {
   source: string;
@@ -110,16 +110,12 @@ function tryParsePath(route: string, handleUrl?: boolean): ParseAttemptResult {
       const position = parseInt(errMatches[1], 10);
       console.error(
         `\nError parsing \`${route}\` ` +
-          `https://err.sh/vercel/next.js/invalid-route-source\n` +
           `Reason: ${err.message}\n\n` +
           `  ${routePath}\n` +
           `  ${new Array(position).fill(" ").join("")}^\n`
       );
     } else {
-      console.error(
-        `\nError parsing ${route} https://err.sh/vercel/next.js/invalid-route-source`,
-        err
-      );
+      console.error(`\nError parsing ${route}. invalid-route-source`, err);
     }
     result.error = true;
   }
@@ -136,7 +132,7 @@ function checkCustomRoutes(
   if (!Array.isArray(routes)) {
     throw new Error(
       `${type}s must return an array, received ${typeof routes}.\n` +
-        `See here for more info: https://err.sh/next.js/routes-must-be-array`
+        `#routes-must-be-array`
     );
   }
 
@@ -181,7 +177,7 @@ function checkCustomRoutes(
       console.error(
         `The route ${
           (route as Rewrite).source
-        } rewrites urls outside of the basePath. Please use a destination that starts with \`http://\` or \`https://\` https://err.sh/vercel/next.js/invalid-external-rewrite.md`
+        } rewrites urls outside of the basePath. Please use a destination that starts with \`http://\` or \`https://\` #invalid-external-rewrite`
       );
       numInvalidRoutes++;
       continue;

@@ -107,11 +107,9 @@ export class CoreContext implements IJoyContext {
   }
 
   public async loadModule(module: EntryType | EntryType[]): Promise<void> {
-    console.log(">>>> entry loadModule", module);
     const providers = this.dependenciesScanner.scan(module);
     this.container.addProviders(providers);
     const providerIds = providers.map((it) => it.id);
-    console.log(">>>>>> scan out providerIds:", providerIds);
     await this.instanceLoader.createInstancesOfDependencies(providerIds);
   }
 

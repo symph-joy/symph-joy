@@ -1,12 +1,12 @@
 /* global window */
 import React from "react";
 import _Router, {
-  NextRouter as _NextRouter,
-} from "../next-server/lib/router/router";
-import { RouterContext } from "../next-server/lib/router-context";
+  JoyRouter as _JoyRouter,
+} from "../joy-server/lib/router/router";
+import { RouterContext } from "../joy-server/lib/router-context";
 export const Router = _Router;
 export type Router = _Router;
-export type NextRouter = _NextRouter;
+export type JoyRouter = _JoyRouter;
 
 type ClassArguments<T> = T extends new (...args: infer U) => any ? U : any;
 
@@ -18,9 +18,9 @@ type SingletonRouterBase = {
   ready(cb: () => any): void;
 };
 
-// export { Router, NextRouter }
+// export { Router, JoyRouter }
 
-export type SingletonRouter = SingletonRouterBase & NextRouter;
+export type SingletonRouter = SingletonRouterBase & JoyRouter;
 
 const singletonRouter: SingletonRouterBase = {
   router: null, // holds the actual router instance
@@ -111,7 +111,7 @@ function getRouter(): _Router {
   if (!singletonRouter.router) {
     const message =
       "No router instance found.\n" +
-      'You should only use "next/router" inside the client side of your app.\n';
+      'You should only use "@symph/joy/router" inside the client side of your app.\n';
     throw new Error(message);
   }
   return singletonRouter.router;
@@ -123,7 +123,7 @@ export default singletonRouter as SingletonRouter;
 // Reexport the withRoute HOC
 export { default as withRouter } from "./with-router";
 
-export function useRouter(): NextRouter {
+export function useRouter(): JoyRouter {
   return React.useContext(RouterContext);
 }
 
@@ -143,7 +143,7 @@ export const createRouter = (...args: RouterArgs): _Router => {
 };
 
 // This function is used to create the `withRouter` router instance
-export function makePublicRouterInstance(router: _Router): NextRouter {
+export function makePublicRouterInstance(router: _Router): JoyRouter {
   const _router = router as any;
   const instance = {} as any;
 

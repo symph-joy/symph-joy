@@ -20,7 +20,7 @@ export function setupPing(assetPrefix, pathnameFn, retry) {
   // close current EventSource connection
   closePing();
 
-  const url = `${assetPrefix}/_next/webpack-hmr?page=${currentPage}`;
+  const url = `${assetPrefix}/_joy/webpack-hmr?page=${currentPage}`;
   evtSource = getEventSourceWrapper({ path: url, timeout: 5000, ondemand: 1 });
 
   evtSource.addMessageListener((event) => {

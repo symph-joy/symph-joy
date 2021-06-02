@@ -45,13 +45,11 @@ export default class DynamicRouteCtl extends ReactController {
   async initialModelStaticState(): Promise<void> {
     // @ts-ignore
     const urlParams = this.props.match?.params;
-    console.log(">>>> post id initialModelStaticState", urlParams);
     await this.postsModel.fetchEntity(urlParams.id);
     return;
   }
 
   async initialModelState(context: any): Promise<void> {
-    console.log(">>>> post id initialModelState");
     return;
   }
 

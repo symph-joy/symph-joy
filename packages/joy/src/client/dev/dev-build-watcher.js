@@ -2,7 +2,7 @@ import { getEventSourceWrapper } from "./error-overlay/eventsource";
 
 export default function initializeBuildWatcher() {
   const shadowHost = document.createElement("div");
-  shadowHost.id = "__next-build-watcher";
+  shadowHost.id = "__joy-build-watcher";
   // Make sure container is fixed and on a high zIndex so it shows
   shadowHost.style.position = "fixed";
   shadowHost.style.bottom = "10px";
@@ -22,7 +22,7 @@ export default function initializeBuildWatcher() {
     // the Shadow DOM, we need to prefix all the names so there
     // will be no conflicts
     shadowRoot = shadowHost;
-    prefix = "__next-build-watcher-";
+    prefix = "__joy-build-watcher-";
   }
 
   // Container
@@ -39,7 +39,7 @@ export default function initializeBuildWatcher() {
   let timeoutId = null;
 
   // Handle events
-  const evtSource = getEventSourceWrapper({ path: "/_next/webpack-hmr" });
+  const evtSource = getEventSourceWrapper({ path: "/_joy/webpack-hmr" });
   evtSource.addMessageListener((event) => {
     // This is the heartbeat event
     if (event.data === "\uD83D\uDC93") {

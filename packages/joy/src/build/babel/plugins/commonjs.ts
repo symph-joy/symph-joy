@@ -1,8 +1,8 @@
 import { NodePath, PluginObj, types } from "@babel/core";
 import commonjsPlugin from "@babel/plugin-transform-modules-commonjs";
 
-// Rewrite imports using next/<something> to next-server/<something>
-export default function NextToNextServer(...args: any): PluginObj {
+// Rewrite imports using joy/<something> to joy-server/<something>
+export default function JoyToJoyServer(...args: any): PluginObj {
   const commonjs = commonjsPlugin(...args);
   return {
     visitor: {

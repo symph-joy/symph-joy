@@ -18,14 +18,14 @@ export function processEnv(loadedEnvFiles: LoadedEnvFiles, dir?: string) {
   // environment values e.g. \$ENV_FILE_KEY
   if (
     combinedEnv ||
-    process.env.__NEXT_PROCESSED_ENV ||
+    process.env.__JOY_PROCESSED_ENV ||
     !loadedEnvFiles.length
   ) {
     return process.env as Env;
   }
   // flag that we processed the environment values in case a serverless
-  // function is re-used or we are running in `next start` mode
-  process.env.__NEXT_PROCESSED_ENV = "true";
+  // function is re-used or we are running in `joy start` mode
+  process.env.__JOY_PROCESSED_ENV = "true";
 
   const origEnv = Object.assign({}, process.env);
   const parsed: dotenv.DotenvParseOutput = {};

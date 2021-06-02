@@ -65,7 +65,7 @@ export const css = curry(async function css(
           // Impossible regex expression
           test: /a^/,
           loader: "noop-loader",
-          options: { __next_css_remove: true },
+          options: { __joy_css_remove: true },
         },
       ],
     }),
@@ -284,7 +284,7 @@ export const css = curry(async function css(
         new MiniCssExtractPlugin({
           filename: "static/css/[contenthash].css",
           chunkFilename: "static/css/[contenthash].css",
-          // Next.js guarantees that CSS order "doesn't matter", due to imposed
+          // Joy guarantees that CSS order "doesn't matter", due to imposed
           // restrictions:
           // 1. Global CSS can only be defined in a single entrypoint (_app)
           // 2. CSS Modules generate scoped class names by default and cannot

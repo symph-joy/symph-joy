@@ -8,11 +8,11 @@ import {
   CLIENT_STATIC_FILES_RUNTIME_POLYFILLS,
   CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH,
   CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
-} from "../../../next-server/lib/constants";
-import { BuildManifest } from "../../../next-server/server/get-page-files";
-import getRouteFromEntrypoint from "../../../next-server/server/get-route-from-entrypoint";
+} from "../../../joy-server/lib/constants";
+import { BuildManifest } from "../../../joy-server/server/get-page-files";
+import getRouteFromEntrypoint from "../../../joy-server/server/get-route-from-entrypoint";
 import { Rewrite } from "../../../lib/load-custom-routes";
-import { getSortedRoutes } from "../../../next-server/lib/router/utils";
+import { getSortedRoutes } from "../../../joy-server/lib/router/utils";
 import { IJoyReactRouteBuild } from "../../../router/joy-react-router-plugin";
 
 // @ts-ignore: TODO: remove ignore when webpack 5 is stable
@@ -126,7 +126,6 @@ export default class BuildManifestPlugin {
   }
 
   createAssets(compilation: any, assets: any) {
-    console.log(">>>> BuildManifestPlugin routes", this.routes);
     const namedChunks: Map<string, Chunk> = compilation.namedChunks;
     const assetMap: DeepMutable<BuildManifest> = {
       commonFiles: [],
@@ -285,10 +284,10 @@ export default class BuildManifestPlugin {
 
   apply(compiler: Compiler) {
     if (isWebpack5) {
-      compiler.hooks.make.tap("NextJsBuildManifest", (compilation) => {
+      compiler.hooks.make.tap("JoyJsBuildManifest", (compilation) => {
         compilation.hooks.processAssets.tap(
           {
-            name: "NextJsBuildManifest",
+            name: "JoyJsBuildManifest",
             stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
           },
           (assets: any) => {
@@ -299,7 +298,7 @@ export default class BuildManifestPlugin {
       return;
     }
 
-    // compiler.hooks.emit.tap('NextJsBuildManifest', (compilation: any) => {
+    // compiler.hooks.emit.tap('JoyJsBuildManifest', (compilation: any) => {
     //   this.createAssets(compilation, compilation.assets)
     // })
   }

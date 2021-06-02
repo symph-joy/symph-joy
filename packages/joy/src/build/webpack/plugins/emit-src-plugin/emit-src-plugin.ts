@@ -144,7 +144,6 @@ export class EmitSrcPlugin {
     compiler.hooks.afterEmit.tapPromise(
       "EmitAllPlugin",
       async (compilation: Compilation) => {
-        console.log(">>>>>> EmitSrcPlugin, emit src files");
         const normalModules = this.getNormalModules(compilation.modules);
         const outputFileSystem: OutputFileSystem = compiler.outputFileSystem as any;
         const out = this.path || (compiler.options.output?.path as string);

@@ -11,7 +11,7 @@ export function isNodeCreatingScriptElement(node: namedTypes.CallExpression) {
   if (componentNode.type !== "Literal") {
     return false;
   }
-  // Next has pragma: __jsx.
+  // Joy has pragma: __jsx.
   return callee.name === "__jsx" && componentNode.value === "script";
 }
 

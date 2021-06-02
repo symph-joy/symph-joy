@@ -5,10 +5,10 @@ import { JoyCommand, JoyCommandOptionType } from "../command";
 import { printAndExit } from "../../server/lib/utils";
 import { Configuration, CoreContext, Inject } from "@symph/core";
 import http from "http";
-import { JoyAppConfig } from "../../next-server/server/joy-config/joy-app-config";
-import { NextServer } from "../../next-server/server/next-server";
-import { ServerConfig } from "../../next-server/server/server-config";
-import { ReactContextFactory } from "../../next-server/server/react-context-factory";
+import { JoyAppConfig } from "../../joy-server/server/joy-config/joy-app-config";
+import { JoyServer } from "../../joy-server/server/joy-server";
+import { ServerConfig } from "../../joy-server/server/server-config";
+import { ReactContextFactory } from "../../joy-server/server/react-context-factory";
 import { Protocol } from "playwright-chromium/types/protocol";
 import { JoyGenModuleServerProvider } from "../../plugin/joy-gen-module-server.provider";
 import { ReactRouterServer } from "../../router/react-router-server";
@@ -30,7 +30,7 @@ export class JoyServerConfig {
   public reactContextFactory: ReactContextFactory;
 
   @Configuration.Provider()
-  public joyServer: NextServer;
+  public joyServer: JoyServer;
 }
 
 @CommandProvider()
@@ -55,7 +55,7 @@ export class JoyStartCommand extends JoyCommand {
     };
   }
 
-  async startServer(appContext: CoreContext): Promise<NextServer> {
+  async startServer(appContext: CoreContext): Promise<JoyServer> {
     const distDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir);
     await appContext.loadModule([
       ...getServerAutoGenerateModules(distDir),
@@ -64,7 +64,7 @@ export class JoyStartCommand extends JoyCommand {
     ]);
     const config = this.joyAppConfig;
     const { dir, hostname, port } = config;
-    const server = await appContext.get(NextServer);
+    const server = await appContext.get(JoyServer);
 
     const srv = http.createServer(server.getRequestHandler());
     await new Promise<void>((resolve, reject) => {
@@ -80,11 +80,11 @@ export class JoyStartCommand extends JoyCommand {
         });
         const appPackage = require(pkgAppPath);
         if (appPackage.scripts) {
-          const nextScript = Object.entries(appPackage.scripts).find(
-            (scriptLine) => scriptLine[1] === "next"
+          const joyScript = Object.entries(appPackage.scripts).find(
+            (scriptLine) => scriptLine[1] === "joy"
           );
-          if (nextScript) {
-            errorMessage += `\nUse \`npm run ${nextScript[0]} -- -p <some other port>\`.`;
+          if (joyScript) {
+            errorMessage += `\nUse \`npm run ${joyScript[0]} -- -p <some other port>\`.`;
           }
         }
         throw new Error(errorMessage);
