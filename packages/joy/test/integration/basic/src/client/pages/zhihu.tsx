@@ -6,9 +6,8 @@ import { Inject } from "@symph/core";
 // @Route({path: '/aaa/zhihu'})
 @Controller()
 export default class ZhiHuController extends ReactController {
-  componentDidMount() {
-    super.componentDidMount();
-    this.zhiHuModel.getRecent();
+  async initialModelState(context: any): Promise<void> {
+    await this.zhiHuModel.getRecent();
   }
 
   @Inject(ZhiHuModel)

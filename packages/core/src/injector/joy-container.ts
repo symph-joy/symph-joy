@@ -319,6 +319,20 @@ export class JoyContainer {
     return undefined;
   }
 
+  public filter<T = unknown>(
+    filter: (id: string, wrapper: InstanceWrapper) => boolean
+  ): Map<string, InstanceWrapper<T>> {
+    const internalProviderIds = this.getProviderNames();
+    const result = new Map<string, InstanceWrapper<T>>();
+    for (const providerId of internalProviderIds) {
+      const wrapper = this.getProviderByName(providerId);
+      if (wrapper && filter(providerId, wrapper)) {
+        result.set(providerId, wrapper);
+      }
+    }
+    return result;
+  }
+
   // public findInstanceByToken<TInput = any, TResult = TInput>(
   //   typeOrToken: Type<TInput> | Abstract<TInput> | string,
   // ): TResult {

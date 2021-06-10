@@ -5,6 +5,7 @@ import { PresetJoyCore } from "../preset-joy-core";
 import yargs from "yargs";
 import { existsSync } from "fs";
 import { join } from "path";
+import { ServerFactory } from "@symph/server";
 
 export const startJoy = (async () => {
   let closed = false;
@@ -35,7 +36,13 @@ export const startJoy = (async () => {
     }
   }
 
-  const joyBoot = new JoyBoot(PresetJoyCore);
+  // const joyBoot = new JoyBoot(PresetJoyCore);
+  const joyBoot = await ServerFactory.createServer(
+    PresetJoyCore,
+    undefined,
+    undefined,
+    JoyBoot
+  );
   await joyBoot.init();
 
   function onSignal(signal: string) {

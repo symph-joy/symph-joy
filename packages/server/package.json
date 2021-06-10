@@ -1,0 +1,50 @@
+{
+  "name": "@symph/server",
+  "version": "2.0.0-alpha",
+  "description": "Joy core - modern, effect, powerful react application framework",
+  "module": "src/index.ts",
+  "_main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "repository": "https://github.com/lnlfps/symph-tempo",
+  "homepage": "https://github.com/lnlfps/symph-tempo",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -d --sourceMap  -p tsconfig.json",
+    "watch": "tsc -w -d --sourceMap  -p tsconfig.json"
+  },
+  "standard": {
+    "parser": "babel-eslint",
+    "ignore": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/examples/**",
+      "**/out/**"
+    ]
+  },
+  "lint-staged": {
+    "*.js": "standard",
+    "bin/*": "standard"
+  },
+  "dependencies": {
+    "standard": "^14.3.1",
+    "fastify": "^3.14.0",
+    "fastify-cors": "^6.0.1",
+    "fastify-formbody": "5.0.0",
+    "fastify-static": "^4.2.2",
+    "light-my-request": "4.4.1",
+    "middie": "5.2.0",
+    "path-to-regexp": "3.2.0",
+    "tslib": "2.2.0"
+  },
+  "devDependencies": {
+    "supertest": "^6.1.3",
+    "@types/supertest": "^2.0.11"
+  },
+  "peerDependencies": {
+    "@symph/core": "^1.0.0"
+  }
+}

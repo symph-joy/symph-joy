@@ -11,7 +11,7 @@ import { CoreContext, EntryType } from "@symph/core";
 import { JoyAppConfig } from "@symph/joy";
 import fs from "fs";
 
-export class JoyTestContext extends CoreContext {
+export class JoyTestContext {
   public buildState?: { code: number; stdout?: string; strerr?: string };
   public joyAppConfig: JoyAppConfig;
 
@@ -20,19 +20,49 @@ export class JoyTestContext extends CoreContext {
   public serverProcess?: child_process.ChildProcess;
   public dev = false;
 
+  private isInit = false;
+
   private cachedBuildId: string;
 
   constructor(public workDir: string, entry: EntryType = {}) {
-    super({
-      joyAppConfig: JoyAppConfig,
-      ...entry,
-    });
+    // super({
+    //   joyAppConfig: JoyAppConfig,
+    //   ...entry,
+    // });
   }
 
   async init(): Promise<this> {
-    await super.init();
-    this.joyAppConfig = await this.get(JoyAppConfig);
+    this.isInit = true;
+    this.joyAppConfig = new JoyAppConfig();
     this.joyAppConfig.mergeCustomConfig({ dir: this.workDir });
+    return this;
+  }
+
+  async start(port?: number, args?: any[]) {
+    const workDir = this.workDir;
+    if (!this.isInit) {
+      await this.init();
+    }
+    const buildState = await joyBuild(workDir, args);
+    port = 4000 || port || (await findPort());
+    this.port = port;
+
+    await this.init();
+    this.buildState = buildState;
+    this.dev = true;
+    this.serverProcess = await joyStart(workDir, port);
+    return this;
+  }
+
+  async startDev(port?: number) {
+    const workDir = this.workDir;
+    if (!this.isInit) {
+      await this.init();
+    }
+    port = port || (await findPort());
+    this.port = port;
+    const serverProcess = await joyDev(workDir, port);
+    this.serverProcess = serverProcess;
     return this;
   }
 
@@ -53,11 +83,8 @@ export class JoyTestContext extends CoreContext {
   }
 
   static async createDevServerContext(workDir: string, port?: number) {
-    port = port || (await findPort());
-    const serverProcess = await joyDev(workDir, port);
     const testContext = new JoyTestContext(workDir);
-    testContext.serverProcess = serverProcess;
-    testContext.port = port;
+    await testContext.startDev(port);
     return testContext;
   }
 
@@ -66,16 +93,8 @@ export class JoyTestContext extends CoreContext {
     port?: number,
     args?: any[]
   ) {
-    const start = process.hrtime();
-    const buildState = await joyBuild(workDir, args);
-
-    port = 4000 || port || (await findPort());
     const testContext = new JoyTestContext(workDir);
-    await testContext.init();
-    testContext.buildState = buildState;
-    testContext.dev = true;
-    testContext.serverProcess = await joyStart(workDir, port);
-    testContext.port = port;
+    await testContext.start(port, args);
     return testContext;
   }
 

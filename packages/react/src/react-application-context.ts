@@ -25,8 +25,11 @@ export class ReactApplicationContext extends CoreContext
   ) {
     super(entry, container);
     this.reduxStore = new ReactReduxService(this.appConfig, initState);
+  }
 
-    this.registerInternalModules({
+  protected async initInternalProvider(): Promise<string[]> {
+    const superIds = await super.initInternalProvider();
+    const myIds = await this.loadModule({
       applicationConfig: {
         id: "applicationConfig",
         type: ApplicationConfig,
@@ -38,6 +41,7 @@ export class ReactApplicationContext extends CoreContext
         useValue: this.reduxStore,
       },
     });
+    return [...superIds, ...myIds];
   }
 
   public async init(): Promise<this> {

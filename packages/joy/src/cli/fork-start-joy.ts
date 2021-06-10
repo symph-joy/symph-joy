@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { JoyBoot } from "../joy-boot";
 import { PresetJoyCore } from "../preset-joy-core";
+import { ServerFactory } from "@symph/server";
 
 export const startTask = (async () => {
   let closed = false;
@@ -29,7 +30,13 @@ export const startTask = (async () => {
       command = "help";
     }
 
-    joyBoot = new JoyBoot(PresetJoyCore);
+    // joyBoot = new JoyBoot(PresetJoyCore);
+    joyBoot = await ServerFactory.createServer(
+      PresetJoyCore,
+      undefined,
+      undefined,
+      JoyBoot
+    );
     await joyBoot.init();
     await joyBoot.runCommand(command);
   } catch (e) {

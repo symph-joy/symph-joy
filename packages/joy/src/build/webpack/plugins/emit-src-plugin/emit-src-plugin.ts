@@ -178,7 +178,7 @@ export class EmitSrcPlugin {
           const projectRoot = compiler.context;
 
           let dest = path.join(out, absolutePath.replace(projectRoot, ""));
-          dest = dest.replace(/\.ts$/, ".js").replace(/\.tsx$/, ".jsx");
+          dest = dest.replace(/\.ts$/, ".js").replace(/\.tsx$/, ".js");
 
           await this.mkdir(outputFileSystem, path.dirname(dest), {
             recursive: true,

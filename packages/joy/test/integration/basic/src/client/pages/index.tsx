@@ -1,8 +1,23 @@
-import React from "react";
-import { add } from "../util/calc";
+import React, { ReactNode } from "react";
+import { Controller, ReactController, Route } from "@symph/react";
+import { Prerender } from "@symph/joy/dist/build/prerender";
 
-function HomePage() {
-  return <div>aaWelcome to Joy， add(1,2)=:{add(1, 1)}</div>;
+@Prerender()
+@Route({ path: "/links", exact: true })
+@Controller()
+export default class IndexController extends ReactController {
+  onClickLink = (link: string) => {
+    // @ts-ignore
+    this.props.history.push(link);
+  };
+
+  renderView(): ReactNode {
+    return (
+      <>
+        <div id="basic-mvc" onClick={this.onClickLink.bind(this, "/basic-mvc")}>
+          /basic-mvc
+        </div>
+      </>
+    );
+  }
 }
-
-export default HomePage;

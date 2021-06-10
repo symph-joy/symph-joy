@@ -48,12 +48,10 @@ export class CoreContext implements IJoyContext {
     this.instanceLoader = new InstanceLoader(container, this.injector);
 
     this.hookCenter.registerProviderHooks(this.container, JoyContainer);
-
-    this.initInternalProvider();
   }
 
-  private initInternalProvider(): void {
-    this.registerInternalModules({
+  protected async initInternalProvider(): Promise<string[]> {
+    return this.loadModule({
       tempoContext: {
         id: "tempoContext",
         // @ts-ignore
@@ -76,41 +74,29 @@ export class CoreContext implements IJoyContext {
         useValue: new HookResolver(this.hookCenter),
       },
     });
-
-    // this.container.addProvider({
-    //   id: "tempoContext",
-    //   // @ts-ignore
-    //   type: this.constructor,
-    //   useValue: this,
-    // })
-    // this.container.addProvider({
-    //   id: "hookCenter",
-    //   type: HookCenter,
-    //   useValue: this.hookCenter,
-    // })
-    // this.container.addProvider({
-    //   id: "hookResolver",
-    //   type: HookResolver,
-    //   useValue: new HookResolver(this.hookCenter),
-    // })
   }
 
-  protected registerInternalModules(moduleConfig: EntryType) {
-    const providers = this.dependenciesScanner.scan(moduleConfig);
-    this.container.addProviders(providers);
-  }
+  // protected registerInternalModules(moduleConfig: EntryType) {
+  //   const providers = this.dependenciesScanner.scan(moduleConfig);
+  //   const infos =  this.container.addProviders(providers);
+  //   if (infos && infos.length) {
+  //     const ids  = infos.map(it => it.name)
+  //     this.loadInternalModule(ids)
+  //   }
+  // }
 
-  private async loadInternalModule(): Promise<void> {
-    const internalProviderIds = this.container.getProviderNames();
-    const providerIds = Array.from(internalProviderIds);
-    await this.instanceLoader.createInstancesOfDependencies(providerIds);
-  }
+  // private async loadInternalModule(ids: string[]): Promise<void> {
+  //   // const internalProviderIds = this.container.getProviderNames();
+  //   const providerIds = Array.from(ids);
+  //   await this.instanceLoader.createInstancesOfDependencies(providerIds);
+  // }
 
-  public async loadModule(module: EntryType | EntryType[]): Promise<void> {
+  public async loadModule(module: EntryType | EntryType[]): Promise<string[]> {
     const providers = this.dependenciesScanner.scan(module);
     this.container.addProviders(providers);
     const providerIds = providers.map((it) => it.id);
     await this.instanceLoader.createInstancesOfDependencies(providerIds);
+    return providerIds;
   }
 
   public getProviderDefinition<TInput = any>(
@@ -211,7 +197,7 @@ export class CoreContext implements IJoyContext {
     if (this.isInitialized) {
       return this;
     }
-    await this.loadInternalModule();
+    await this.initInternalProvider();
     await this.loadModule(this.entry);
     this.isInitialized = true;
     return this;

@@ -10,6 +10,7 @@ import child_process from "child_process";
 import treeKill from "tree-kill";
 import getPort from "get-port";
 import { ReactNode } from "react";
+import { ServerFactory } from "@symph/server";
 
 export async function renderViaAPI(
   app: JoyServer,
@@ -270,7 +271,13 @@ export async function startJoyServer(
   // process.env = env
   let app;
   try {
-    app = new JoyBoot(PresetJoyCore);
+    // app = new JoyBoot(PresetJoyCore);
+    app = await ServerFactory.createServer(
+      PresetJoyCore,
+      undefined,
+      undefined,
+      JoyBoot
+    );
     await app.init();
     await app.runCommand(dev ? "dev" : "start", args);
   } catch (e) {

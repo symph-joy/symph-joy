@@ -4,6 +4,7 @@ const babelJest = require('babel-jest')
 module.exports = {
   projects: [
     '<rootDir>/packages/core',
+    '<rootDir>/packages/server',
     '<rootDir>/packages/react',
     '<rootDir>/packages/joy',
     '<rootDir>/packages/joy/jest.config.e2e.js',
