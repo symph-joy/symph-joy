@@ -1,9 +1,10 @@
 import { CONFIGURATION_METADATA } from "../../../constants";
 import { Provider } from "./provider.decorator";
-import { Type } from "../../../interfaces";
+import { EntryType, Type } from "../../../interfaces";
+import { getInjectableMeta, Injectable } from "../injectable.decorator";
 
 export interface IConfigurationOptions {
-  imports?: Array<any>;
+  imports?: Record<string, EntryType>;
 }
 
 // todo import 需要数组合并，否则子类的配置会覆盖父类的配置
@@ -13,6 +14,11 @@ export function Configuration(
   return (target) => {
     const config = Object.assign({}, options);
     Reflect.defineMetadata(CONFIGURATION_METADATA, config, target);
+
+    const injectableMeta = getInjectableMeta(target);
+    if (!injectableMeta) {
+      Injectable()(target);
+    }
   };
 }
 

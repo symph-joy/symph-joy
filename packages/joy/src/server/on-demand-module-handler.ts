@@ -17,6 +17,8 @@ export const ADDED = Symbol("added");
 export const BUILDING = Symbol("building");
 export const BUILT = Symbol("built");
 
+export const COMPILER_DONE_EVENT = Symbol("compile_done");
+
 export enum CompileStatusEnum {
   ADDED,
   BUILDING,
@@ -61,7 +63,7 @@ export default class OnDemandModuleHandler {
     }
 
     multiCompiler.hooks.done.tap("JoyJsOnDemandModules", (multiStats) => {
-      const [clientStats, serverStats] = multiStats.stats;
+      const [clientStats, serverStats, apiState] = multiStats.stats;
       const { compilation } = clientStats;
       const { modules } = compilation;
       for (const mod of modules) {
@@ -79,6 +81,7 @@ export default class OnDemandModuleHandler {
       }
 
       this.invalidator.doneBuilding();
+      this.doneCallbacks.emit(COMPILER_DONE_EVENT);
     });
 
     // todo 在合适的时候，清理this.compileModules中不必要的数据, 否则： 有可能模块文件已经不能存在了
@@ -88,7 +91,7 @@ export default class OnDemandModuleHandler {
     // disposeHandler.unref && disposeHandler.unref()
   }
 
-  public async ensureModules(moduleFilePaths: string[]) {
+  public async ensureModules(moduleFilePaths: string[]): Promise<void> {
     if (!moduleFilePaths || !moduleFilePaths.length) {
       return;
     }
@@ -127,6 +130,22 @@ export default class OnDemandModuleHandler {
 
     this.invalidator.invalidate();
     return rst;
+  }
+
+  async ensureCompilerDone(): Promise<void> {
+    if (!this.invalidator.building && !this.invalidator.rebuildAgain) {
+      return;
+    }
+    return new Promise<void>((resolve, reject) => {
+      const listener = (err: Error) => {
+        if (err) return reject(err);
+        if (this.invalidator.building || this.invalidator.rebuildAgain) {
+          this.doneCallbacks.once(COMPILER_DONE_EVENT, listener);
+        }
+        resolve();
+      };
+      this.doneCallbacks.once(COMPILER_DONE_EVENT, listener);
+    });
   }
 
   //todo 在路由层面处理路由的ping，然后删除下面部分。
@@ -170,8 +189,8 @@ export default class OnDemandModuleHandler {
 class Invalidator {
   private multiCompiler: webpack.MultiCompiler;
   private watcher: any;
-  private building: boolean;
-  private rebuildAgain: boolean;
+  public building: boolean;
+  public rebuildAgain: boolean;
 
   constructor(watcher: any, multiCompiler: webpack.MultiCompiler) {
     this.multiCompiler = multiCompiler;

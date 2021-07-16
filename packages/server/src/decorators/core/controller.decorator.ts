@@ -4,7 +4,7 @@ import {
   PATH_METADATA,
   SCOPE_OPTIONS_METADATA,
 } from "../../constants";
-import { ScopeOptions } from "@symph/core";
+import { Injectable, ScopeOptions } from "@symph/core";
 import { isString, isUndefined } from "@symph/core/dist/utils/shared.utils";
 // import { ScopeOptions } from '../../interfaces/scope-options.interface';
 // import { isString, isUndefined } from '../../utils/shared.utils';
@@ -154,10 +154,11 @@ export function Controller(
         { scope: prefixOrOptions.scope },
       ];
 
-  return (target: object) => {
+  return (target) => {
     Reflect.defineMetadata(CONTROLLER_METADATA, true, target);
     Reflect.defineMetadata(PATH_METADATA, path, target);
     Reflect.defineMetadata(HOST_METADATA, host, target);
     Reflect.defineMetadata(SCOPE_OPTIONS_METADATA, scopeOptions, target);
+    Injectable(scopeOptions)(target);
   };
 }

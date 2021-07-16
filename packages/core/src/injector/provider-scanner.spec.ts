@@ -2,11 +2,12 @@ import "reflect-metadata";
 import { ProviderScanner } from "./provider-scanner";
 import { Configuration } from "../decorators/core/configuration/configuration.decorator";
 import { Provider } from "../decorators/core/configuration/provider.decorator";
-import { Injectable } from "../decorators/core";
+import { Inject, Injectable, Optional } from "../decorators/core";
 import { Scope } from "../interfaces";
 import { JoyContainer } from "./index";
 import { Injector } from "./injector";
 import { HookCenter } from "../hook/hook-center";
+import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
 
 function instanceContainer(): JoyContainer {
   const container = new JoyContainer();
@@ -61,8 +62,69 @@ describe("provider-scanner", () => {
       const factoryProvider = providers[0];
       expect(factoryProvider).toEqual({
         id: "factoryProvider",
-        useFactory: TestConfig.prototype.factoryProvider,
+        useFactory: { factory: TestConfig, property: "factoryProvider" },
         inject: [],
+        type: TestProvider,
+        scope: Scope.DEFAULT,
+      });
+    });
+
+    test("should scan out a factory provider，with custom inject param", async () => {
+      @Configuration()
+      class TestConfig {
+        @Provider()
+        public factoryProvider(
+          @Inject("initValue") initValue: string
+        ): TestProvider {
+          const p = new TestProvider();
+          p.msg = initValue;
+          return p;
+        }
+      }
+
+      const providers = await providerScanner.scanForConfig(TestConfig);
+      expect(providers && providers.length).toBe(1);
+      const factoryProvider = providers[0];
+      expect(factoryProvider).toEqual({
+        id: "factoryProvider",
+        useFactory: { factory: TestConfig, property: "factoryProvider" },
+        inject: [
+          {
+            type: undefined,
+            name: "initValue",
+          } as InjectCustomOptionsInterface,
+        ],
+        type: TestProvider,
+        scope: Scope.DEFAULT,
+      });
+    });
+
+    test("should scan out a factory provider，with optional param", async () => {
+      @Configuration()
+      class TestConfig {
+        @Provider()
+        public factoryProvider(
+          @Optional() @Inject("initValue") initValue: string
+        ): TestProvider {
+          const p = new TestProvider();
+          p.msg = initValue;
+          return p;
+        }
+      }
+
+      const providers = await providerScanner.scanForConfig(TestConfig);
+      expect(providers && providers.length).toBe(1);
+      const factoryProvider = providers[0];
+      expect(factoryProvider).toEqual({
+        id: "factoryProvider",
+        useFactory: { factory: TestConfig, property: "factoryProvider" },
+        inject: [
+          {
+            type: undefined,
+            name: "initValue",
+            isOptional: true,
+          } as InjectCustomOptionsInterface,
+        ],
         type: TestProvider,
         scope: Scope.DEFAULT,
       });
@@ -168,7 +230,7 @@ describe("provider-scanner", () => {
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.TRANSIENT,
-        autoReg: false,
+        autoLoad: false,
       });
     });
 
@@ -185,15 +247,15 @@ describe("provider-scanner", () => {
       };
       const providers = await providerScanner.scan(exports);
       container1.addProviders(providers);
-      expect(providers && providers.length).toBe(2);
-      const testProvider = providers[0];
-      const testProvider1 = providers[1];
+      expect(providers && providers.length).toBe(3);
+      const testProvider = providers.find((it) => it.id === "testProvider");
+      const testProvider1 = providers.find((it) => it.id === "testProvider1");
       expect(testProvider).toEqual({
         id: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.TRANSIENT,
-        autoReg: false,
+        autoLoad: false,
       });
       expect(testProvider1).toEqual({
         id: "testProvider1",
@@ -220,11 +282,118 @@ describe("provider-scanner", () => {
         public testProvider: TestProvider;
       }
 
-      @Configuration({ imports: [DepConfig] })
+      @Configuration({ imports: { DepConfig } })
       class Main {}
+
       const providers = await providerScanner.scan(Main);
       const testProvider = providers.find((v) => v.id === "testProvider");
       expect(testProvider).not.toBeNull();
+    });
+  });
+
+  describe("scan an array entry", () => {
+    const container = new JoyContainer();
+    const providerScanner = new ProviderScanner(container);
+
+    test("should scan out providers in all array items", async () => {
+      @Injectable()
+      class TestProvider1 {}
+
+      @Injectable()
+      class TestProvider2 {}
+
+      @Configuration()
+      class DepConfig {
+        @Provider()
+        public testProvider2: TestProvider2;
+      }
+
+      const providers = await providerScanner.scan([TestProvider1, DepConfig]);
+      expect(providers.length).toBe(3);
+    });
+  });
+
+  describe("scan nest config", () => {
+    const container = new JoyContainer();
+    const providerScanner = new ProviderScanner(container);
+
+    test("should scan out providers, when config class is nested in object", async () => {
+      @Injectable()
+      class TestProvider1 {}
+
+      @Injectable()
+      class TestProvider2 {}
+
+      @Configuration()
+      class Config1 {
+        @Provider()
+        public testProvider2: TestProvider2;
+      }
+
+      const providers = await providerScanner.scan({ TestProvider1, Config1 });
+      expect(providers.length).toBe(3);
+    });
+
+    test("should scan out providers, when sub config class is nested on main configuration prop", async () => {
+      @Injectable()
+      class TestProvider1 {}
+
+      @Injectable()
+      class TestProvider2 {}
+
+      @Configuration()
+      class Config1 {
+        @Provider()
+        public testProvider1: TestProvider1;
+      }
+
+      @Configuration()
+      class Config2 {
+        @Provider()
+        public testProvider2: TestProvider2;
+
+        @Provider()
+        public config1: Config1;
+      }
+
+      const providers = await providerScanner.scan(Config2);
+      expect(providers.length).toBe(4);
+      expect(providers.find((it) => it.id === "testProvider1")).not.toBeNull();
+      expect(providers.find((it) => it.id === "testProvider2")).not.toBeNull();
+      expect(providers.find((it) => it.id === "config1")).not.toBeNull();
+      expect(providers.find((it) => it.id === "config2")).not.toBeNull();
+    });
+
+    test("should scan out providers, when sub config class is nested on main configuration factory method", async () => {
+      @Injectable()
+      class TestProvider1 {}
+
+      @Injectable()
+      class TestProvider2 {}
+
+      @Configuration()
+      class Config1 {
+        @Provider()
+        public testProvider1: TestProvider1;
+      }
+
+      @Configuration()
+      class Config2 {
+        @Provider()
+        public testProvider2: TestProvider2;
+
+        @Provider()
+        public config1(): Config1 {
+          return new Config1();
+        }
+      }
+
+      const providers = await providerScanner.scan(Config2);
+      expect(providers.length).toBe(4);
+      expect(providers.find((it) => it.id === "testProvider1")).not.toBeNull();
+      expect(providers.find((it) => it.id === "testProvider2")).not.toBeNull();
+      expect(providers.find((it) => it.id === "config1")).not.toBeNull();
+      expect(providers.find((it) => it.id === "config2")).not.toBeNull();
     });
   });
 

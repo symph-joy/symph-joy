@@ -58,7 +58,8 @@ import { Rewrite } from "../lib/load-custom-routes";
 import { webpack5 } from "../types/webpack5";
 import OptimizationSplitChunksOptions = webpack5.OptimizationSplitChunksOptions;
 import { stringify } from "querystring";
-import { IJoyReactRouteBuild } from "../router/joy-react-router-plugin";
+import { IJoyReactRouteBuild } from "../react/router/joy-react-router-plugin";
+import { REACT_OUT_DIR } from "../react/react-const";
 type ExcludesFalse = <T>(x: T | false) => x is T;
 
 const isWebpack5 = parseInt(webpack.version!) === 5;
@@ -290,17 +291,31 @@ export default async function getBaseWebpackConfig(
   const isLikeServerless = isServerless || isServerlessTrace;
 
   const outputDir = isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY;
-  const outputPath = path.join(distDir, "out", isServer ? outputDir : "");
-  const totalPages = Object.keys(entrypoints).length;
-  const autoGenServerModulesFile = path.join(
+  const outputPath = path.join(
     distDir,
-    config.autoGenOutputDir,
-    "./gen-server-modules.js"
+    REACT_OUT_DIR,
+    isServer ? outputDir : ""
   );
-  const autoGenClientModulesFile = path.join(
+  const totalPages = Object.keys(entrypoints).length;
+  // const autoGenServerModulesFile = path.join(
+  //   distDir,
+  //   config.autoGenOutputDir,
+  //   "./gen-server-modules.js"
+  // );
+  // const autoGenClientModulesFile = path.join(
+  //   distDir,
+  //   config.autoGenOutputDir,
+  //   "./gen-client-modules.js"
+  // );
+  const autoGenClientOutputAbsDir = path.join(
     distDir,
     config.autoGenOutputDir,
-    "./gen-client-modules.js"
+    "react/client"
+  );
+  const autoGenServerOutputAbsDir = path.join(
+    distDir,
+    config.autoGenOutputDir,
+    "react/server"
   );
   const clientEntries = !isServer
     ? () =>
@@ -311,10 +326,18 @@ export default async function getBaseWebpackConfig(
           [CLIENT_STATIC_FILES_RUNTIME_MAIN]: [
             // `./` + path.relative(dir, path.join(JOY_PROJECT_ROOT_DIST_CLIENT, dev ? `joy-dev.js` : 'joy.js')).replace(/\\/g, '/'),
             // existsSync(autoGenOutputAbsDir) ? `joy-client-generate-file-loader?${stringify(
-            //   {absolutePath: autoGenOutputAbsDir} // todo move this config into plugin
+            //   {absolutePath: autoGenOutputAbsDir}
             // )}!` : undefined,
-            existsSync(autoGenClientModulesFile)
-              ? autoGenClientModulesFile
+            // existsSync(autoGenClientModulesFile)
+            //   ? autoGenClientModulesFile
+            //   : undefined,
+            existsSync(autoGenClientOutputAbsDir)
+              ? `joy-require-context-loader?${stringify({
+                  absolutePath: autoGenClientOutputAbsDir,
+                  globalVar: "window",
+                  globalKey: "__JOY_AUTOGEN",
+                  useFileScan: true,
+                })}!`
               : undefined,
             require
               .resolve(dev ? `../client/joy-dev` : "../client/joy")
@@ -329,8 +352,14 @@ export default async function getBaseWebpackConfig(
   const serverEntries = isServer
     ? () => ({
         "gen-server-modules": [
-          existsSync(autoGenServerModulesFile)
-            ? autoGenServerModulesFile
+          // existsSync(autoGenServerModulesFile)
+          //   ? autoGenServerModulesFile
+          //   : undefined,
+          existsSync(autoGenServerOutputAbsDir)
+            ? `joy-require-context-loader?${stringify({
+                absolutePath: autoGenServerOutputAbsDir,
+                useFileScan: true,
+              })}!`
             : undefined,
         ].filter(Boolean) as string[],
         // 'joy-gen-entry': [],
@@ -606,7 +635,10 @@ export default async function getBaseWebpackConfig(
 
   function handleExternals(context: any, request: any, callback: any) {
     // return     callback()
-    if (request === "joy") {
+    if (request === "@symph/joy") {
+      return callback(undefined, `commonjs ${request}`);
+    }
+    if (request === "@symph/joy/dist/react/service/joy-fetch.service") {
       return callback(undefined, `commonjs ${request}`);
     }
 
@@ -615,6 +647,10 @@ export default async function getBaseWebpackConfig(
     }
 
     if (request === "@symph/react") {
+      return callback(undefined, `commonjs ${request}`);
+    }
+
+    if (request === "@symph/server") {
       return callback(undefined, `commonjs ${request}`);
     }
 
@@ -676,7 +712,8 @@ export default async function getBaseWebpackConfig(
     if (isLocal) {
       // we need to process joy-server/lib/router/router so that
       // the DefinePlugin can inject process.env values
-      isJoyExternal = /joy([/\\]src)?[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(
+      // isJoyExternal = /joy([/\\]dist)?[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(
+      isJoyExternal = /joy[/\\]dist[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(
         res
       );
 
@@ -711,8 +748,8 @@ export default async function getBaseWebpackConfig(
 
     // Default pages have to be transpiled
     if (
-      !res.match(/joy[/\\]joy-server[/\\]/) &&
-      (res.match(/[/\\]joy[/\\]/) ||
+      !res.match(/joy[/\\]dist[/\\]next-server[/\\]/) &&
+      (res.match(/[/\\]joy[/\\]dist[/\\]/) ||
         // This is the @babel/plugin-transform-runtime "helpers: true" option
         res.match(/node_modules[/\\]@babel[/\\]runtime[/\\]/))
     ) {
@@ -871,7 +908,7 @@ export default async function getBaseWebpackConfig(
         "joy-serverless-loader",
         "noop-loader",
         "joy-plugin-loader",
-        "joy-dir-files-loader",
+        "joy-require-context-loader",
       ].reduce((alias, loader) => {
         // using multiple aliases to replace `resolveLoader.modules`
         if (process.env.NODE_ENV === "test") {

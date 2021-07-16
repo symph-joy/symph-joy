@@ -11,6 +11,7 @@ import { isNil } from "../utils/shared.utils";
 import { STATIC_CONTEXT } from "./constants";
 import { TaskThenable } from "../utils/task-thenable";
 import { RuntimeException } from "../errors/exceptions/runtime.exception";
+import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
 
 export const INSTANCE_METADATA_SYMBOL = Symbol.for("instance_metadata:cache");
 export const INSTANCE_ID_SYMBOL = Symbol.for("instance_metadata:id");
@@ -54,11 +55,13 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
   public readonly module?: any;
   public readonly scope?: Scope = Scope.DEFAULT;
   public type: Type<T>;
-  public factory?: (...args: any) => any; // useFactory
-  public inject?: (string | Type<any>)[];
+  public factory?:
+    | ((...args: any[]) => T)
+    | { factory: Type; property: string }; // useFactory
+  public inject?: (string | Type<any> | InjectCustomOptionsInterface)[];
   public forwardRef?: boolean;
 
-  public autoReg: boolean;
+  public autoLoad: boolean | "lazy";
   public instanceBy: InstanceBy;
   public useClass?: Type<T>; // when instanceBy class, it's used to instance the object
 
@@ -308,8 +311,14 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
         (provider as ValueProvider).useValue
       );
     } else if ((provider as any).useClass) {
-      const { type, scope, autoReg, useClass } = provider as ClassProvider;
-      Object.assign(this, { type, scope, autoReg, useClass, inject: null });
+      const { type, scope, autoLoad, useClass } = provider as ClassProvider;
+      Object.assign(this, {
+        type,
+        scope,
+        autoLoad: autoLoad,
+        useClass,
+        inject: null,
+      });
       this.values.delete(STATIC_CONTEXT);
     } else if ((provider as any).useFactory) {
       const { useFactory, inject, scope } = provider as FactoryProvider;

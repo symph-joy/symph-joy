@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "../decorators/core";
+import { Inject, Injectable, Optional } from "../decorators/core";
 import { Scope } from "../interfaces";
 import { JoyContainer } from "../injector";
 import { InstanceWrapper } from "../injector/instance-wrapper";
@@ -8,6 +8,7 @@ import sinon from "sinon";
 import { UnknownDependenciesException } from "../errors/exceptions/unknown-dependencies.exception";
 import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dependency-type.exception";
 import { HookCenter } from "../hook/hook-center";
+import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
 
 function instanceContainer(): JoyContainer {
   const container = new JoyContainer();
@@ -29,129 +30,322 @@ describe("injector-scopes-static", () => {
   });
 
   describe("loadProvider", () => {
-    @Injectable({ scope: Scope.TRANSIENT })
-    class TransProvider {}
+    describe("load class provider", () => {
+      @Injectable({ scope: Scope.TRANSIENT })
+      class TransProvider {}
 
-    @Injectable({ scope: Scope.DEFAULT })
-    class SingProvider {}
+      @Injectable({ scope: Scope.DEFAULT })
+      class SingProvider {}
 
-    @Injectable()
-    class MainTest {
-      @Inject()
-      public prop: SingProvider;
-
-      constructor(public singProvider: SingProvider) {}
-    }
-
-    let singProviderWrapper: InstanceWrapper<SingProvider>,
-      transProviderWrapper: InstanceWrapper<TransProvider>,
-      mainTestWrapper: InstanceWrapper<MainTest>,
-      container: JoyContainer;
-
-    beforeAll(async () => {
-      container = new JoyContainer();
-      // container = new Module(TestModule))
-      transProviderWrapper = new InstanceWrapper({
-        name: "transProvider",
-        type: TransProvider,
-        instance: Object.create(TransProvider.prototype),
-        scope: Scope.TRANSIENT,
-        isResolved: false,
-      });
-      singProviderWrapper = new InstanceWrapper({
-        name: "singProvider",
-        type: SingProvider,
-        instance: Object.create(SingProvider.prototype),
-        scope: Scope.DEFAULT,
-        isResolved: false,
-      });
-      mainTestWrapper = new InstanceWrapper({
-        name: "mainTest",
-        type: MainTest,
-        instance: Object.create(MainTest.prototype),
-        isResolved: false,
-      });
-      container.addWrapper(transProviderWrapper);
-      container.addWrapper(singProviderWrapper);
-      container.addWrapper(mainTestWrapper);
-    });
-
-    test("should create a singleton instance of component", async () => {
-      const singProvider = await injector.loadProvider(
-        singProviderWrapper,
-        container
-      );
-      expect(singProvider).not.toBeNull();
-      expect(singProvider).toBeInstanceOf(SingProvider);
-    });
-
-    test("should return same instance of component when load twice", async () => {
-      const provider1 = await injector.loadProvider(
-        singProviderWrapper,
-        container
-      );
-      const provider2 = await injector.loadProvider(
-        singProviderWrapper,
-        container
-      );
-      expect(provider1).toBe(provider2);
-      expect(provider1).not.toBe(new SingProvider());
-    });
-
-    test("should create a transient instance of component", async () => {
-      const provider = await injector.loadProvider(
-        transProviderWrapper,
-        container
-      );
-      expect(provider).not.toBeNull();
-      expect(provider).toBeInstanceOf(TransProvider);
-    });
-
-    test("should create an instance of Component with proper dependencies", async () => {
-      const mainTest = await injector.loadProvider(mainTestWrapper, container);
-      expect(mainTest).toBeInstanceOf(MainTest);
-      expect(mainTest.singProvider).toBeInstanceOf(SingProvider);
-      expect(mainTest.prop).toBeInstanceOf(SingProvider);
-      expect(mainTest.singProvider).toStrictEqual(mainTest.prop);
-    });
-
-    // transient
-    test("should return different instances of component when load twice", async () => {
-      const provider1 = await injector.loadProvider(
-        transProviderWrapper,
-        container
-      );
-      const provider2 = await injector.loadProvider(
-        transProviderWrapper,
-        container
-      );
-      expect(provider1).not.toBeNull();
-      expect(provider2).not.toBeNull();
-      expect(provider1).not.toBe(provider2);
-    });
-
-    test("should inject different instance into one hostInstance, when scope is SCOPE.TRANSIENT", async () => {
       @Injectable()
-      class TransDepsMain {
+      class MainTest {
+        @Inject()
+        public prop: SingProvider;
+
+        constructor(public singProvider: SingProvider) {}
+      }
+
+      let singProviderWrapper: InstanceWrapper<SingProvider>,
+        transProviderWrapper: InstanceWrapper<TransProvider>,
+        mainTestWrapper: InstanceWrapper<MainTest>,
+        container: JoyContainer;
+
+      beforeAll(async () => {
+        container = new JoyContainer();
+        // container = new Module(TestModule))
+        transProviderWrapper = new InstanceWrapper({
+          name: "transProvider",
+          type: TransProvider,
+          instance: Object.create(TransProvider.prototype),
+          scope: Scope.TRANSIENT,
+          isResolved: false,
+        });
+        singProviderWrapper = new InstanceWrapper({
+          name: "singProvider",
+          type: SingProvider,
+          instance: Object.create(SingProvider.prototype),
+          scope: Scope.DEFAULT,
+          isResolved: false,
+        });
+        mainTestWrapper = new InstanceWrapper({
+          name: "mainTest",
+          type: MainTest,
+          instance: Object.create(MainTest.prototype),
+          isResolved: false,
+        });
+        container.addWrapper(transProviderWrapper);
+        container.addWrapper(singProviderWrapper);
+        container.addWrapper(mainTestWrapper);
+      });
+
+      test("should create a singleton instance of component", async () => {
+        const singProvider = await injector.loadProvider(
+          singProviderWrapper,
+          container
+        );
+        expect(singProvider).not.toBeNull();
+        expect(singProvider).toBeInstanceOf(SingProvider);
+      });
+
+      test("should return same instance of component when load twice", async () => {
+        const provider1 = await injector.loadProvider(
+          singProviderWrapper,
+          container
+        );
+        const provider2 = await injector.loadProvider(
+          singProviderWrapper,
+          container
+        );
+        expect(provider1).toBe(provider2);
+        expect(provider1).not.toBe(new SingProvider());
+      });
+
+      test("should create a transient instance of component", async () => {
+        const provider = await injector.loadProvider(
+          transProviderWrapper,
+          container
+        );
+        expect(provider).not.toBeNull();
+        expect(provider).toBeInstanceOf(TransProvider);
+      });
+
+      test("should create an instance of Component with proper dependencies", async () => {
+        const mainTest = await injector.loadProvider(
+          mainTestWrapper,
+          container
+        );
+        expect(mainTest).toBeInstanceOf(MainTest);
+        expect(mainTest.singProvider).toBeInstanceOf(SingProvider);
+        expect(mainTest.prop).toBeInstanceOf(SingProvider);
+        expect(mainTest.singProvider).toStrictEqual(mainTest.prop);
+      });
+
+      // transient
+      test("should return different instances of component when load twice", async () => {
+        const provider1 = await injector.loadProvider(
+          transProviderWrapper,
+          container
+        );
+        const provider2 = await injector.loadProvider(
+          transProviderWrapper,
+          container
+        );
+        expect(provider1).not.toBeNull();
+        expect(provider2).not.toBeNull();
+        expect(provider1).not.toBe(provider2);
+      });
+
+      test("should inject different instance into one hostInstance, when scope is SCOPE.TRANSIENT", async () => {
+        @Injectable()
+        class TransDepsMain {
+          constructor(
+            public transProvider1: TransProvider,
+            public transProvider2: TransProvider
+          ) {}
+        }
+
+        const transDepsMainWrapper = new InstanceWrapper<TransDepsMain>({
+          name: "TransDepsMain",
+          type: TransDepsMain,
+          instance: Object.create(TransDepsMain.prototype),
+          isResolved: false,
+        });
+        container.addWrapper(transDepsMainWrapper);
+
+        const main = await injector.loadProvider(
+          transDepsMainWrapper,
+          container
+        );
+        expect(main).toBeInstanceOf(TransDepsMain);
+        expect(main.transProvider1).not.toBeNull();
+        expect(main.transProvider2).not.toBeNull();
+        expect(main.transProvider1).not.toBe(main.transProvider2);
+      });
+    });
+
+    describe("load factory provider", () => {
+      test("should return the value created by factory", async () => {
+        const container = new JoyContainer();
+
+        class Provider1 {}
+        let createInstance = undefined;
+        const wrapper = container.addCustomFactory({
+          id: "customFactory",
+          type: Provider1,
+          useFactory: () => {
+            createInstance = new Provider1();
+            return createInstance;
+          },
+          inject: [],
+        });
+        const instance = await injector.loadProvider(wrapper, container);
+
+        expect(instance).toBeInstanceOf(Provider1);
+        expect(instance === createInstance).toBeTruthy();
+      });
+
+      test("should return the value created by factory, with custom inject param.", async () => {
+        const container = new JoyContainer();
+
+        class Provider1 {
+          constructor(public msg: string) {}
+        }
+        let createInstance = undefined;
+        container.addCustomValue({
+          id: "initMsg",
+          type: String,
+          useValue: "hello",
+        });
+        const wrapper = container.addCustomFactory({
+          id: "customFactory",
+          type: Provider1,
+          useFactory: (initMsg: string) => {
+            createInstance = new Provider1(initMsg);
+            return createInstance;
+          },
+          inject: ["initMsg"],
+        }) as InstanceWrapper<Provider1>;
+        const instance = await injector.loadProvider(wrapper, container);
+
+        expect(instance).toBeInstanceOf(Provider1);
+        expect(instance === createInstance).toBeTruthy();
+        expect(instance.msg).toBe("hello");
+      });
+
+      test("should return the value created by factory, with optional param.", async () => {
+        const container = new JoyContainer();
+
+        class Provider1 {
+          constructor(public msg: string) {}
+        }
+        let createInstance = undefined;
+        const wrapper = container.addCustomFactory({
+          id: "customFactory",
+          type: Provider1,
+          useFactory: (initMsg: string | undefined) => {
+            createInstance = new Provider1(initMsg || "defaultValue");
+            return createInstance;
+          },
+          inject: [{ name: "initMsg", isOptional: true }],
+        }) as InstanceWrapper<Provider1>;
+        const instance = await injector.loadProvider(wrapper, container);
+
+        expect(instance).toBeInstanceOf(Provider1);
+        expect(instance === createInstance).toBeTruthy();
+        expect(instance.msg).toBe("defaultValue");
+      });
+    });
+  });
+
+  describe("inject", () => {
+    test("should inject undefined if the constructor param's type is not found and param is optional.", async () => {
+      @Injectable()
+      class Hello {}
+
+      @Injectable()
+      class HelloOptional {}
+
+      @Injectable()
+      class Main {
+        @Optional()
+        @Inject()
+        public hello: Hello;
+
+        @Optional()
+        @Inject()
+        public helloOptional: HelloOptional;
+      }
+
+      const container = new JoyContainer();
+      const [mainWrapper, helloWrapper] = createProviderWrappers(
+        container,
+        Main,
+        Hello
+      );
+
+      const instance = await injector.loadProvider<Main>(
+        mainWrapper,
+        container
+      );
+      expect(instance.hello).toBeInstanceOf(Hello);
+      expect(instance.helloOptional).toBeUndefined();
+    });
+
+    test("should inject undefined if the property's type is not found and property is optional.", async () => {
+      @Injectable()
+      class Hello {}
+
+      @Injectable()
+      class HelloOptional {}
+
+      @Injectable()
+      class Main {
         constructor(
-          public transProvider1: TransProvider,
-          public transProvider2: TransProvider
+          @Optional() @Inject() public hello: Hello,
+          @Optional() @Inject() public helloOptional: HelloOptional
         ) {}
       }
 
-      const transDepsMainWrapper = new InstanceWrapper<TransDepsMain>({
-        name: "TransDepsMain",
-        type: TransDepsMain,
-        instance: Object.create(TransDepsMain.prototype),
-        isResolved: false,
-      });
-      container.addWrapper(transDepsMainWrapper);
+      const container = new JoyContainer();
+      const [mainWrapper, helloWrapper] = createProviderWrappers(
+        container,
+        Main,
+        Hello
+      );
 
-      const main = await injector.loadProvider(transDepsMainWrapper, container);
-      expect(main).toBeInstanceOf(TransDepsMain);
-      expect(main.transProvider1).not.toBeNull();
-      expect(main.transProvider2).not.toBeNull();
-      expect(main.transProvider1).not.toBe(main.transProvider2);
+      const instance = await injector.loadProvider<Main>(
+        mainWrapper,
+        container
+      );
+      expect(instance.hello).toBeInstanceOf(Hello);
+      expect(instance.helloOptional).toBeUndefined();
+    });
+  });
+
+  describe("with sub class", () => {
+    test("should return child instance when get by super class", async () => {
+      @Injectable()
+      class SuperClazz {}
+
+      @Injectable()
+      class Sub1 extends SuperClazz {}
+
+      const container = new JoyContainer();
+      const [subWrapper] = createProviderWrappers(container, Sub1);
+
+      const wrapper = container.getProvider(SuperClazz);
+      expect(wrapper?.type).toBe(Sub1);
+      const instance = await injector.loadProvider<SuperClazz>(
+        wrapper!,
+        container
+      );
+      expect(instance).toBeInstanceOf(Sub1);
+    });
+
+    test("should rise an error, when super class more than one sub providers.", async () => {
+      @Injectable()
+      class SuperClazz {}
+
+      @Injectable()
+      class Sub1 extends SuperClazz {}
+
+      @Injectable()
+      class Sub2 extends SuperClazz {}
+
+      const container = new JoyContainer();
+      const [sub1Wrapper, sub2Wrapper] = createProviderWrappers(
+        container,
+        Sub1,
+        Sub2
+      );
+
+      let err: Error | undefined = undefined;
+      try {
+        const wrapper = container.getProvider(SuperClazz);
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeInstanceOf(NotUniqueMatchedProviderException);
     });
   });
 
@@ -621,7 +815,7 @@ describe("injector-scopes-static", () => {
     });
 
     it("should dynamic loading the model instance, at run time", async () => {
-      @Injectable({ autoReg: true })
+      @Injectable({ autoLoad: true })
       class Dep {}
 
       @Injectable()

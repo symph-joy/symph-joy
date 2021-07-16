@@ -4,7 +4,7 @@
 import { ModuleMetadata } from "../../../../dist/interfaces/modules";
 import { Provider, Type } from "@symph/core";
 
-export interface ServeStaticModuleOptions {
+export interface ServeStaticOptions {
   /**
    * Static files root directory. Default: "client"
    */
@@ -26,6 +26,13 @@ export interface ServeStaticModuleOptions {
    * Passed down to the underlying either `express.static` or `fastify-static.send`
    */
   serveStaticOptions?: {
+    /**
+     * The reply object is decorated with a sendFile function by default.
+     * If you want to disable this, pass the option { decorateReply: false }.
+     * If fastify-static is registered to multiple prefixes in the same route only one can initialize reply decorators.
+     */
+    decorateReply?: boolean;
+
     /**
      * Enable or disable setting Cache-Control response header, defaults to true.
      * Disabling this will ignore the immutable and maxAge options.
@@ -104,9 +111,7 @@ export interface ServeStaticModuleOptions {
 }
 
 export interface ServeStaticModuleOptionsFactory {
-  createLoggerOptions():
-    | Promise<ServeStaticModuleOptions[]>
-    | ServeStaticModuleOptions[];
+  createLoggerOptions(): Promise<ServeStaticOptions[]> | ServeStaticOptions[];
 }
 
 export interface ServeStaticModuleAsyncOptions
@@ -116,7 +121,7 @@ export interface ServeStaticModuleAsyncOptions
   useClass?: Type<ServeStaticModuleOptionsFactory>;
   useFactory?: (
     ...args: any[]
-  ) => Promise<ServeStaticModuleOptions[]> | ServeStaticModuleOptions[];
+  ) => Promise<ServeStaticOptions[]> | ServeStaticOptions[];
   inject?: any[];
   extraProviders?: Provider[];
 }

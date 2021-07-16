@@ -13,6 +13,7 @@ import { isEmpty, isNil, isString, isUndefined } from "../utils/shared.utils";
 import { InstanceWrapper } from "./instance-wrapper";
 import { RuntimeException } from "../errors/exceptions/runtime.exception";
 import { Hook, HookPipe, HookType } from "../hook";
+import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
 
 type ProviderId = string;
 
@@ -143,7 +144,7 @@ export class JoyContainer {
         id: name,
         useClass: type,
         scope,
-        autoReg: wrapper.autoReg,
+        autoLoad: wrapper.autoLoad,
       } as ClassProvider<T>;
     } else if (instanceBy === "value") {
       definition = {
@@ -218,7 +219,7 @@ export class JoyContainer {
   public addCustomValue(
     provider: ValueProvider & ProviderName
   ): InstanceWrapper {
-    const { id, useValue: value, type } = provider;
+    const { id, useValue: value, type = Object } = provider;
     return this.addWrapper(
       new InstanceWrapper({
         instanceBy: "value",
@@ -283,7 +284,7 @@ export class JoyContainer {
     if (isString(nameOrType)) {
       return this.getProviderByName(nameOrType) as InstanceWrapper<T>;
     } else {
-      return this.getProvidersByType(nameOrType);
+      return this.getProviderByType(nameOrType);
     }
   }
 
@@ -297,7 +298,7 @@ export class JoyContainer {
     return this._providerStore.get(name) as InstanceWrapper<T>;
   }
 
-  public getProvidersByType<T = any>(
+  public getProviderByType<T = any>(
     type: Type | Abstract
   ): InstanceWrapper | undefined {
     const matchTypes = this._typeCache.get(type);
@@ -314,9 +315,27 @@ export class JoyContainer {
       const exactMatched = matchTypes.get(type);
       if (exactMatched && exactMatched.length === 1) {
         return this.getProviderByName(exactMatched[0]);
+      } else {
+        // throw new Error(`There is ${matchSize} providers match the type(${type.name})`)
+        throw new NotUniqueMatchedProviderException(
+          type,
+          [...matchTypes.keys()].map((it) => it.name)
+        );
       }
     }
     return undefined;
+  }
+
+  public getProvidersByType<T = any>(type: Type | Abstract): string[] {
+    const matchTypes = this._typeCache.get(type);
+    if (!matchTypes) {
+      return [];
+    }
+    let ids = [] as string[];
+    for (const _ids of matchTypes.values()) {
+      ids = ids.concat(_ids);
+    }
+    return ids;
   }
 
   public filter<T = unknown>(

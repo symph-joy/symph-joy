@@ -13,7 +13,7 @@ import { BuildManifest } from "../../../joy-server/server/get-page-files";
 import getRouteFromEntrypoint from "../../../joy-server/server/get-route-from-entrypoint";
 import { Rewrite } from "../../../lib/load-custom-routes";
 import { getSortedRoutes } from "../../../joy-server/lib/router/utils";
-import { IJoyReactRouteBuild } from "../../../router/joy-react-router-plugin";
+import { IJoyReactRouteBuild } from "../../../react/router/joy-react-router-plugin";
 
 // @ts-ignore: TODO: remove ignore when webpack 5 is stable
 const { RawSource } = webpack.sources || sources;

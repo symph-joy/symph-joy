@@ -1,4 +1,3 @@
-import request from "supertest";
 import { ServerFactory } from "@symph/server";
 import { PipeConfig } from "../src/pipe/pipe-config";
 import { INestApplication } from "@symph/server";
@@ -11,7 +10,7 @@ describe("Hello world", () => {
   let port: number;
 
   beforeAll(async () => {
-    app = await ServerFactory.createServer({ PipeConfig });
+    app = await ServerFactory.create({ PipeConfig });
     port = await findPort();
     await app.listen(port);
     server = app.getHttpServer();

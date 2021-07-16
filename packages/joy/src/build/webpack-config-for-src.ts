@@ -14,7 +14,7 @@ export async function getWebpackConfigForSrc(
   const srcDir = joyConfig.resolveAppDir("src");
   srcConfig.entry = {
     "src-bundle": [
-      `joy-dir-files-loader?${stringify({ absolutePath: srcDir })}!`,
+      `joy-require-context-loader?${stringify({ absolutePath: srcDir })}!`,
     ],
   };
 
@@ -28,6 +28,10 @@ export async function getWebpackConfigForSrc(
     ...(serverConfig.plugins || []),
     new EmitSrcPlugin({ path: path.join(distDir, "dist") }),
   ];
+
+  const cache: any = { ...(srcConfig.cache as any) };
+  cache.cacheDirectory = path.join(cache.cacheDirectory, "../", "webpack-src");
+  srcConfig.cache = cache;
 
   return srcConfig;
 }

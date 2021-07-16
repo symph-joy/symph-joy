@@ -31,6 +31,7 @@ module.exports = {
     "/packages/joy/dist",
     "/packages/react/dist",
     "/packages/core/dist",
+    "/packages/server/dist",
     "\\.pnp\\.[^\\/]+$",
   ],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],

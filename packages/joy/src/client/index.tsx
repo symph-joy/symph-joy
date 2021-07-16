@@ -21,7 +21,7 @@ import PageLoader, { looseToArray, StyleSheetTuple } from "./page-loader";
 import measureWebVitals from "./performance-relayer";
 import { createRouter, makePublicRouterInstance } from "./router";
 import { JoyContainer } from "@symph/core";
-import { JoyReactAppClientConfig } from "../joy-server/lib/joy-react-app-client-config";
+import { JoyReactAppClientConfig } from "../react/joy-react-app-client-config";
 import {
   ReactAppContainer,
   ApplicationConfig,

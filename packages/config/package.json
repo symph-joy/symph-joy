@@ -1,0 +1,36 @@
+{
+  "name": "@symph/config",
+  "version": "2.0.0-alpha",
+  "description": "Joy core - modern, effect, powerful react application framework",
+  "module": "src/index.ts",
+  "_main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "repository": "https://github.com/lnlfps/symph-tempo",
+  "homepage": "https://github.com/lnlfps/symph-tempo",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -d --sourceMap  -p tsconfig.json",
+    "watch": "tsc -w -d --sourceMap  -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tsed/schema": "^6.0.0-rc.4",
+    "find-up": "4.1.0",
+    "dotenv": "8.2.0",
+    "dotenv-expand": "5.1.0",
+    "lodash.get": "4.4.2",
+    "lodash.has": "4.5.2",
+    "lodash.set": "4.3.2"
+  },
+  "devDependencies": {
+    "@types/lodash.get": "4.4.6",
+    "@types/lodash.has": "4.5.6",
+    "@types/lodash.set": "4.3.6"
+  },
+  "peerDependencies": {
+    "@symph/core": "^1.0.0"
+  }
+}

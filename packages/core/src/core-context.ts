@@ -19,9 +19,18 @@ import { IInjectableDependency } from "./interfaces/injectable-dependency.interf
 import { ProviderScanner } from "./injector/provider-scanner";
 import { providerNameGenerate } from "./injector/provider-name-generate";
 import { HookCenter } from "./hook/hook-center";
+import type { HookPipe } from "./hook/hook-center";
 import { HookResolver } from "./hook/hook-resolver";
 import { getInjectableMeta } from "./decorators/core";
 import { InstanceWrapper } from "./injector";
+import { Hook, HookType } from "./hook";
+
+interface CoreContextEventListener {
+  onContextInitialized(): Promise<void>;
+  onContextBeforeDispose(): Promise<void>;
+  onBeforeShutdownHook(): Promise<void>;
+  onShutdownHook(): Promise<void>;
+}
 
 /**
  * @publicApi
@@ -39,7 +48,7 @@ export class CoreContext implements IJoyContext {
   }
 
   constructor(
-    protected readonly entry: EntryType,
+    protected readonly entry: EntryType | EntryType[],
     public readonly container: JoyContainer = new JoyContainer()
   ) {
     this.hookCenter = new HookCenter();
@@ -48,9 +57,22 @@ export class CoreContext implements IJoyContext {
     this.instanceLoader = new InstanceLoader(container, this.injector);
 
     this.hookCenter.registerProviderHooks(this.container, JoyContainer);
+    this.hookCenter.registerProviderHooks(this);
   }
 
-  protected async initInternalProvider(): Promise<string[]> {
+  @Hook({ type: HookType.Traverse, async: true })
+  public onContextInitialized: HookPipe;
+
+  @Hook({ type: HookType.Traverse, async: true })
+  public onContextBeforeDispose: HookPipe;
+
+  @Hook({ type: HookType.Traverse, async: true })
+  public onBeforeShutdownHook: HookPipe;
+
+  @Hook({ type: HookType.Traverse, async: true })
+  public onShutdownHook: HookPipe;
+
+  protected async initContext(): Promise<string[]> {
     return this.loadModule({
       tempoContext: {
         id: "tempoContext",
@@ -197,9 +219,11 @@ export class CoreContext implements IJoyContext {
     if (this.isInitialized) {
       return this;
     }
-    await this.initInternalProvider();
+    await this.initContext();
     await this.loadModule(this.entry);
     this.isInitialized = true;
+
+    await this.onContextInitialized.call();
     return this;
   }
 
@@ -210,7 +234,10 @@ export class CoreContext implements IJoyContext {
   }
 
   public async close(): Promise<void> {
+    await this.onContextBeforeDispose.call();
+    await this.onBeforeShutdownHook.call();
     await this.dispose();
+    await this.onShutdownHook.call();
   }
 
   public useLogger(logger: LoggerService) {

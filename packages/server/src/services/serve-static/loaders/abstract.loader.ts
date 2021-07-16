@@ -1,7 +1,7 @@
 // import { Injectable } from '@nestjs/common';
 // import { AbstractHttpAdapter } from '@nestjs/core';
 import { join } from "path";
-import { ServeStaticModuleOptions } from "../interfaces/serve-static-options.interface";
+import { ServeStaticOptions } from "../interfaces/serve-static-options.interface";
 import { Injectable } from "@symph/core";
 import { AbstractHttpAdapter } from "../../../adapters";
 
@@ -9,7 +9,7 @@ import { AbstractHttpAdapter } from "../../../adapters";
 export abstract class AbstractLoader {
   public abstract register(
     httpAdapter: AbstractHttpAdapter,
-    options: ServeStaticModuleOptions[]
+    options: ServeStaticOptions[]
   ): void;
 
   public getIndexFilePath(clientPath: string): string {

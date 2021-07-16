@@ -18,7 +18,7 @@ describe("basic dev", () => {
   });
 
   test("start", async () => {
-    await waitForMoment();
+    // await waitForMoment();
   }, 999999999);
 
   describe("features", () => {

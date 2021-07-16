@@ -45,18 +45,10 @@ export function createPagesMapping(
     {}
   );
 
-  // pages['/_app'] = pages['/_app'] || 'next/dist/pages/_app'
-  // pages['/_error'] = pages['/_error'] || 'next/dist/pages/_error'
-  // pages['/_document'] = pages['/_document'] || 'next/dist/pages/_document'
-
-  // pages['/_app'] = pages['/_app'] || require.resolve('../pages/_app')
-  // pages['/_error'] = pages['/_error'] || require.resolve('../pages/_error')
-  // pages['/_document'] = pages['/_document'] || require.resolve('../pages/_document')
-
-  // todo 却换为编译后的dist目录中的文件。
-  pages["/_app"] = pages["/_app"] || "@symph/joy/src/pages/_app";
-  pages["/_error"] = pages["/_error"] || "@symph/joy/src/pages/_error";
-  pages["/_document"] = pages["/_document"] || "@symph/joy/src/pages/_document";
+  pages["/_app"] = pages["/_app"] || "@symph/joy/dist/pages/_app";
+  pages["/_error"] = pages["/_error"] || "@symph/joy/dist/pages/_error";
+  pages["/_document"] =
+    pages["/_document"] || "@symph/joy/dist/pages/_document";
 
   return pages;
 }

@@ -1,9 +1,12 @@
 import {
   CoreContext,
+  EntryType,
   IJoyContext,
   JoyContainer,
   JoyContextOptions,
   Logger,
+  LoggerService,
+  LogLevel,
   Type,
 } from "@symph/core";
 import { MESSAGES } from "@symph/core/dist/constants";
@@ -21,42 +24,86 @@ import { rethrow } from "./helpers/rethrow";
 import { ExceptionsZone } from "./errors/exceptions-zone";
 import { FastifyAdapter } from "./platform/fastify";
 import { INestApplication } from "./interfaces/nest-application.interface";
+import { SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
+import * as http from "http";
 
 export class ServerFactoryImplement {
   private readonly logger = new Logger("ServerFactory", true);
   private abortOnError = true;
 
+  public async create(
+    entry: EntryType,
+    options?: NestApplicationOptions
+  ): Promise<ServerApplication> {
+    return this.createServer(ServerApplication, entry, options);
+  }
+
   public async createServer<T extends ServerApplication = ServerApplication>(
-    entry: Record<string, unknown> | Type = {},
-    serverOrOptions?: AbstractHttpAdapter | NestApplicationOptions,
-    options?: JoyContextOptions,
-    contextClass?: { new (...args: any[]): T }
-  ): Promise<T> {
+    ApplicationContext: { new (...args: any[]): T },
+    entry: EntryType,
+    options: NestApplicationOptions = {}
+  ) {
     this.applyLogger(options);
-    const _ContextClass = contextClass || ServerApplication;
-    const [httpServer, appOptions] = this.isHttpServer(serverOrOptions)
-      ? [serverOrOptions, options]
-      : [this.createHttpAdapter(), serverOrOptions];
-    const applicationConfig = new ApplicationConfig();
-    this.setAbortOnError(serverOrOptions, options);
+    const httpServer = options.httpServer || this.createHttpAdapter();
+    const appOptions = options;
+    // const [httpServer, appOptions] = this.isHttpServer(serverOrOptions)
+    //   ? [serverOrOptions, options]
+    //   : [this.createHttpAdapter(), serverOrOptions];
+    // const applicationConfig = new ApplicationConfig();
+    this.setAbortOnError(appOptions);
     const container = new ServerContainer();
-    container.applicationConfig = applicationConfig;
-    const applicationContext = new _ContextClass(
+    // container.applicationConfig = applicationConfig;
+    const applicationContext = new ApplicationContext(
       entry,
       httpServer,
-      applicationConfig,
+      // applicationConfig,
+      appOptions,
       container
     );
-
-    await this.init(applicationContext);
+    await this.init(applicationContext, httpServer);
 
     const target = this.createProxy(applicationContext);
     return this.createAdapterProxy<T>(target, httpServer);
   }
 
-  protected async init<T extends ServerApplication>(context: T): Promise<T> {
+  // public async createServer<T extends ServerApplication = ServerApplication>(
+  //   entry: EntryType,
+  //   serverOrOptions?: AbstractHttpAdapter | NestApplicationOptions,
+  //   options?: JoyContextOptions,
+  //   contextClass?: { new(...args: any[]): T }
+  // ): Promise<T> {
+  //   this.applyLogger(options);
+  //   const _ContextClass = contextClass || ServerApplication;
+  //   const [httpServer, appOptions] = this.isHttpServer(serverOrOptions)
+  //     ? [serverOrOptions, options]
+  //     : [this.createHttpAdapter(), serverOrOptions];
+  //   const applicationConfig = new ApplicationConfig();
+  //   this.setAbortOnError(appOptions);
+  //   const container = new ServerContainer();
+  //   container.applicationConfig = applicationConfig;
+  //   const applicationContext = new _ContextClass(
+  //     entry,
+  //     httpServer,
+  //     applicationConfig,
+  //     container,
+  //     appOptions
+  //   );
+  //
+  //   await this.init(applicationContext);
+  //
+  //   const target = this.createProxy(applicationContext);
+  //   return this.createAdapterProxy<T>(target, httpServer);
+  // }
+
+  protected async init<T extends ServerApplication>(
+    context: T,
+    httpServer?: HttpServer
+  ): Promise<T> {
     this.logger.log(MESSAGES.APPLICATION_START);
     try {
+      if (httpServer && httpServer.init) {
+        await httpServer.init();
+      }
       await context.init();
     } catch (e) {
       this.logger.error("start error", e.stack);
@@ -74,12 +121,9 @@ export class ServerFactoryImplement {
   }
 
   private setAbortOnError(
-    serverOrOptions?: AbstractHttpAdapter | NestApplicationOptions,
     options?: NestApplicationContextOptions | NestApplicationOptions
   ) {
-    this.abortOnError = this.isHttpServer(serverOrOptions)
-      ? !(options && options.abortOnError === false)
-      : !(serverOrOptions && serverOrOptions.abortOnError === false);
+    this.abortOnError = !!(options && options.abortOnError === false);
   }
 
   private createProxy(target: any) {
@@ -166,6 +210,15 @@ export class ServerFactoryImplement {
 
     const { FastifyAdapter } = require("./platform/fastify");
     return new FastifyAdapter(httpServer);
+    // return new FastifyAdapter({
+    //   serverFactory: ((handler, opts) => {
+    //     const server = http.createServer((req, res) => {
+    //       console.log('ddd')
+    //       handler(req, res)
+    //     })
+    //     return server;
+    //   })
+    // });
   }
 }
 

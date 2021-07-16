@@ -31,12 +31,7 @@ export const startTask = (async () => {
     }
 
     // joyBoot = new JoyBoot(PresetJoyCore);
-    joyBoot = await ServerFactory.createServer(
-      PresetJoyCore,
-      undefined,
-      undefined,
-      JoyBoot
-    );
+    joyBoot = await ServerFactory.createServer(JoyBoot, PresetJoyCore);
     await joyBoot.init();
     await joyBoot.runCommand(command);
   } catch (e) {

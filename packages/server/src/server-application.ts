@@ -36,7 +36,12 @@ import { isNil } from "@symph/core/dist/utils/shared.utils";
 import { UnknownElementException } from "./errors/exceptions/unknown-element.exception";
 import { createContextId } from "./helpers";
 import { AbstractHttpAdapter } from "./adapters";
-import { raw } from "express";
+import {
+  ConfigConfiguration,
+  ConfigService,
+  ServerConfigConfiguration,
+  SYMPH_CONFIG_INIT_VALUE,
+} from "@symph/config";
 
 export class ServerApplication extends CoreContext implements INestApplication {
   private readonly logger = new Logger(ServerApplication.name, true);
@@ -44,23 +49,17 @@ export class ServerApplication extends CoreContext implements INestApplication {
   private httpServer: any;
   private isListening = false;
 
+  protected config = new ApplicationConfig();
+
   constructor(
     protected readonly entry: EntryType,
-    private readonly httpAdapter: HttpServer,
-    protected readonly config: ApplicationConfig,
-    public container: ServerContainer = new ServerContainer(),
-    private readonly appOptions: NestApplicationOptions = {}
+    public readonly httpAdapter: HttpServer,
+    // protected readonly config: ApplicationConfig,
+    private readonly appOptions: NestApplicationOptions = {},
+    public container: ServerContainer = new ServerContainer()
   ) {
     super(entry, container);
     this.container.setHttpAdapter(this.httpAdapter);
-    // this.registerInternalModules({
-    //   applicationConfig: {
-    //     id: "applicationConfig",
-    //     type: ApplicationConfig,
-    //     useValue: this.config,
-    //   },
-    // });
-
     this.registerHttpServer();
 
     this.routesResolver = new RoutesResolver(
@@ -68,6 +67,33 @@ export class ServerApplication extends CoreContext implements INestApplication {
       this.config,
       this.injector
     );
+  }
+
+  protected async initContext(): Promise<string[]> {
+    const ids = await super.initContext();
+    const thisIds = await this.loadModule([
+      {
+        [SYMPH_CONFIG_INIT_VALUE]: {
+          id: SYMPH_CONFIG_INIT_VALUE,
+          useValue: this.appOptions,
+        },
+        httpAdapter: {
+          id: "httpAdapter",
+          type: Object,
+          useValue: this.httpAdapter,
+        },
+      },
+      this.getServerConfigClass(),
+    ]);
+
+    const config = await this.get(ConfigConfiguration);
+    await config.initConfig();
+
+    return [...ids, ...thisIds];
+  }
+
+  public getServerConfigClass(): typeof ServerConfigConfiguration {
+    return ServerConfigConfiguration;
   }
 
   public registerHttpServer() {
@@ -185,7 +211,8 @@ export class ServerApplication extends CoreContext implements INestApplication {
   }
 
   private getProtocol(): "http" | "https" {
-    return this.appOptions && this.appOptions.httpsOptions ? "https" : "http";
+    // return this.appOptions && this.appOptions.httpsOptions ? "https" : "http";
+    return "http";
   }
 
   public async listen(

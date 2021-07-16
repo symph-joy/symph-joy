@@ -1,4 +1,3 @@
-import request from "supertest";
 import { ServerFactory } from "@symph/server";
 import { PipeConfig } from "../src/pipe/pipe-config";
 import { INestApplication } from "@symph/server";
@@ -12,7 +11,7 @@ describe("static", () => {
   let port: number;
 
   beforeAll(async () => {
-    app = await ServerFactory.createServer({});
+    app = await ServerFactory.create({});
 
     try {
       const root = path.resolve(__filename, "../../src/static");

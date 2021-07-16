@@ -68,11 +68,12 @@ import { FileScanner } from "../joy-server/server/scanner/file-scanner";
 import {
   IJoyReactRouteBuild,
   JoyReactRouterPlugin,
-} from "../router/joy-react-router-plugin";
+} from "../react/router/joy-react-router-plugin";
 import Worker from "jest-worker";
 import { ReactController } from "@symph/react";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
+import { getWebpackConfigForJoy } from "./webpack-config-for-joy";
 
 export type SsgRoute = {
   initialRevalidateSeconds: number | false;
@@ -117,7 +118,11 @@ export class JoyBuildService {
   ) {
     this.dir = joyConfig.resolveAppDir();
     this.distDir = joyConfig.resolveAppDir(joyConfig.distDir);
-    this.outDir = joyConfig.resolveAppDir(joyConfig.distDir, OUT_DIRECTORY);
+    this.outDir = joyConfig.resolveAppDir(
+      joyConfig.distDir,
+      OUT_DIRECTORY,
+      "react"
+    );
     this.buildManifestPath = path.join(this.outDir, BUILD_MANIFEST);
   }
 
@@ -190,7 +195,12 @@ export class JoyBuildService {
 
     await Promise.all(
       reactRoutes.map(async (reactRoute) => {
-        const { path: _pathname, providerId } = reactRoute;
+        const {
+          path: _pathname,
+          providerId,
+          hasState,
+          hasStaticState,
+        } = reactRoute;
         const path: string = _pathname as string;
         if (!providerId) {
           throw new Error(`The route${path} is not a provider.`);
@@ -211,18 +221,19 @@ export class JoyBuildService {
         //   config.experimental.modern
         // );
 
-        const routeModule = this.coreContext.getProviderDefinition<
-          ClassProvider
-        >(providerId);
-        const routeClass = (routeModule?.useClass as any) as typeof ReactController;
+        // const routeModule = this.coreContext.getProviderDefinition<
+        //   ClassProvider
+        // >(providerId);
+        // const routeClass = (routeModule?.useClass as any) as typeof ReactController;
         const pathIsDynamic = isDynamicRoute(path);
         const parentRoutes = this.joyReactRoute.getParentRoutes(
           reactRoute.path
         );
 
-        const hasStaticModelState = !!routeClass.prototype
-          .initialModelStaticState;
-        const hasModelState = !!routeClass.prototype.initialModelState;
+        // const hasStaticModelState = !!routeClass.prototype.initialModelStaticState;
+        const hasStaticModelState = !!hasStaticState;
+        // const hasModelState = !!routeClass.prototype.initialModelState;
+        const hasModelState = hasState;
         isSsg = hasStaticModelState;
         isStatic = !hasStaticModelState && !hasModelState;
 
@@ -444,7 +455,7 @@ export class JoyBuildService {
     const buildId = await this.buildConfig.getBuildId();
     // const outDir = path.join(dir, config.outDir);
     const distDir = config.resolveAppDir(config.distDir);
-    const outDir = config.resolveAppDir(config.distDir, OUT_DIRECTORY);
+    const outDir = config.resolveAppDir(config.distDir, OUT_DIRECTORY, "react");
 
     await promises.mkdir(outDir, { recursive: true });
 
@@ -683,6 +694,11 @@ export class JoyBuildService {
 
     const [clientConfig, serverConfig] = configs;
 
+    const joyWebpackConfig = await getWebpackConfigForJoy(
+      serverConfig,
+      this.joyConfig
+    );
+
     if (
       clientConfig.optimization &&
       (clientConfig.optimization.minimize !== true ||
@@ -697,7 +713,7 @@ export class JoyBuildService {
     const webpackBuildStart = process.hrtime();
 
     let result: CompilerResult = { warnings: [], errors: [] };
-    result = await runCompiler(configs);
+    result = await runCompiler([clientConfig, serverConfig, joyWebpackConfig]);
     result = {
       warnings: [...srcResult.warnings, ...result.warnings],
       errors: [...srcResult.errors, ...result.errors],

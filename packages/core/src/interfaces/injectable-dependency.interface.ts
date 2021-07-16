@@ -13,7 +13,7 @@ export interface IInjectableDependency {
   index?: number; // when constructor or usrFactory
   key?: string; // when property-base
   designType?: Type; // property type
-  name: string; // dependency provider name
+  name?: string; // dependency provider name
   type?: Type; // dependency provider type
   injectBy?: EnuInjectBy;
   isOptional?: boolean;

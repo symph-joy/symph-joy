@@ -152,7 +152,8 @@ export class JoyExportAppService {
     // const distDir = join(dir, joyConfig.distDir)
     const distDir = this.joyAppConfig.resolveAppDir(
       this.distDir,
-      OUT_DIRECTORY
+      OUT_DIRECTORY,
+      "react"
     );
 
     // const telemetry = options.buildExport ? null : new Telemetry({ distDir })

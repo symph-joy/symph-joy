@@ -1,4 +1,7 @@
-import { JoyServer, ServerConstructor } from "../joy-server/server/joy-server";
+import {
+  JoyReactServer,
+  ServerConstructor,
+} from "../joy-server/server/joy-react-server";
 import { NON_STANDARD_NODE_ENV } from "../lib/constants";
 import * as log from "../build/output/log";
 
@@ -10,7 +13,7 @@ type JoyServerConstructor = ServerConstructor & {
 };
 
 // This file is used for when users run `require('joy')`
-function createServer(options: JoyServerConstructor): JoyServer {
+function createServer(options: JoyServerConstructor): JoyReactServer {
   const standardEnv = ["production", "development", "test"];
 
   if (options == null) {
@@ -32,12 +35,12 @@ function createServer(options: JoyServerConstructor): JoyServer {
       );
     }
 
-    const JoyDevServer = require("./joy-dev-server").JoyDevServer;
+    const JoyDevServer = require("./joy-react-dev-server").JoyDevServer;
     return new JoyDevServer(options);
   }
 
   // @ts-ignore
-  return new JoyServer(options);
+  return new JoyReactServer(options);
 }
 
 // Support commonjs `require('@symph/joy')`

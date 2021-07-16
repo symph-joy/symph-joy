@@ -2,7 +2,7 @@
 // import { loadPackage } from '@nestjs/common/utils/load-package.util';
 // import { AbstractHttpAdapter } from '@nestjs/core';
 import * as fs from "fs";
-import { ServeStaticModuleOptions } from "../interfaces/serve-static-options.interface";
+import { ServeStaticOptions } from "../interfaces/serve-static-options.interface";
 import {
   DEFAULT_RENDER_PATH,
   DEFAULT_ROOT_PATH,
@@ -11,14 +11,15 @@ import { validatePath } from "../utils/validate-path.util";
 import { AbstractLoader } from "./abstract.loader";
 import { AbstractHttpAdapter } from "../../../adapters";
 import { Injectable } from "@symph/core";
+import { FastifyInstance } from "fastify";
 
 @Injectable()
 export class FastifyLoader extends AbstractLoader {
   public register(
     httpAdapter: AbstractHttpAdapter,
-    optionsArr: ServeStaticModuleOptions[]
+    optionsArr: ServeStaticOptions[]
   ) {
-    const app = httpAdapter.getInstance();
+    const app = httpAdapter.getInstance<FastifyInstance>();
     // const fastifyStatic = loadPackage(
     //   'fastify-static',
     //   'ServeStaticModule',
@@ -56,7 +57,7 @@ export class FastifyLoader extends AbstractLoader {
           ...(options.serveStaticOptions || {}),
           wildcard: false,
         });
-        app.get(options.renderPath, (req: any, res: any) => {
+        app.get(options.renderPath as string, (req: any, res: any) => {
           const stream = fs.createReadStream(indexFilePath);
           if (
             options.serveStaticOptions &&

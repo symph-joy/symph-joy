@@ -21,12 +21,7 @@ describe("joy", () => {
     }
 
     // const app = new JoyBoot(AppProvidersConfig);
-    const app = await ServerFactory.createServer(
-      AppProvidersConfig,
-      undefined,
-      undefined,
-      JoyBoot
-    );
+    const app = await ServerFactory.createServer(JoyBoot, AppProvidersConfig);
     await app.init();
 
     expect(await app.runCommand("sayHello", { message: "joy" })).toBe(

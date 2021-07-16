@@ -2,7 +2,7 @@
 // import { loadPackage } from '@nestjs/common/utils/load-package.util';
 import * as fs from "fs";
 // import { AbstractHttpAdapter } from '@nestjs/core';
-// import { ServeStaticModuleOptions } from '../interfaces/serve-static-options.interface';
+// import { ServeStaticOptions } from '../interfaces/serve-static-options.interface';
 // import {
 //   DEFAULT_RENDER_PATH,
 //   DEFAULT_ROOT_PATH
@@ -15,7 +15,7 @@ import * as fs from "fs";
 // export class ExpressLoader extends AbstractLoader {
 //   public register(
 //     httpAdapter: AbstractHttpAdapter,
-//     optionsArr: ServeStaticModuleOptions[]
+//     optionsArr: ServeStaticOptions[]
 //   ) {
 //     const app = httpAdapter.getInstance();
 //     const express = loadPackage('express', 'ServeStaticModule', () =>

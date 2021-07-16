@@ -188,7 +188,7 @@ describe("react-application", () => {
     });
 
     test("should dynamic load the model instance at run time", async () => {
-      @Model({ autoReg: true })
+      @Model({ autoLoad: true })
       class HelloModel extends ReactModel<{ status: string }> {
         getInitState(): { status: string } {
           return { status: "init" };

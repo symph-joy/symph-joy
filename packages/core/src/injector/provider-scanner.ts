@@ -2,6 +2,7 @@ import {
   ClassProvider,
   EntryType,
   FactoryProvider,
+  isClassProvider,
   Provider,
   Type,
   ValueProvider,
@@ -30,15 +31,11 @@ export class ProviderScanner {
         });
       }
     } else if (isFunction(config)) {
-      if (this.isConfigurationClass(config)) {
-        providers = this.scanForConfig(config, ctxRegistry);
-      }
+      // 模拟一个配置对象
+      providers = this.scanObject({ [config.name]: config });
     } else if (isObject(config)) {
       providers = this.scanObject(config, ctxRegistry);
     }
-    // providers.forEach((provider) => {
-    //   this.container.addProvider(provider);
-    // });
     return providers;
   }
 
@@ -62,21 +59,78 @@ export class ProviderScanner {
       }
 
       if (isFunction(propValue)) {
-        // 2. configuration class
+        // 2. provider class
+        const injectable = Reflect.getMetadata(INJECTABLE_METADATA, propValue);
+        if (!isNil(injectable)) {
+          providers.push({ id: prop, ...injectable });
+        }
+
+        // 3. configuration class
         if (this.isConfigurationClass(propValue)) {
           providers = providers.concat(
             this.scanForConfig(propValue, ctxRegistry)
           );
-          return;
-        }
-        // 3. origin provider class
-        const injectable = Reflect.getMetadata(INJECTABLE_METADATA, propValue);
-        if (!isNil(injectable)) {
-          providers.push({ ...injectable });
         }
       }
     });
     return providers;
+  }
+
+  public scanForConfig(
+    configClazz: Type<unknown>,
+    ctxRegistry: EntryType[] = []
+  ): Provider[] {
+    let providers: Provider[] = [];
+    if (!isFunction(configClazz)) {
+      return providers;
+    }
+    if (ctxRegistry.includes(configClazz)) {
+      return providers;
+    }
+    ctxRegistry.push(configClazz);
+
+    const reflectProviders = Reflect.getMetadata(
+      METADATA.PROVIDERS,
+      configClazz.prototype
+    ) as Provider[];
+
+    const configMeta = getConfigurationMeta(configClazz);
+    if (configMeta?.imports) {
+      const importKeys = Object.keys(configMeta.imports);
+      for (const importKey of importKeys) {
+        providers = providers.concat(
+          this.scan(configMeta.imports[importKey], ctxRegistry)
+        );
+      }
+
+      // for (let i = 0; i < configMeta.imports.length; i++) {
+      //   providers = providers.concat(
+      //     this.scan(configMeta.imports[i], ctxRegistry)
+      //   );
+      // }
+    }
+
+    if (reflectProviders) {
+      reflectProviders.forEach((provider) => {
+        // 识别导入的configuration类，将configuration类添加的imports中，以便后续扫描
+        if (this.isConfigurationClass(provider.type)) {
+          let typeProviders = this.scan(provider.type, ctxRegistry);
+          // 去取@Configuration类的本身定义，优先使用自定义属性
+          const index = typeProviders.findIndex(
+            (it) => isClassProvider(it) && it.useClass === provider.type
+          );
+          typeProviders.splice(index, 1);
+          providers = providers.concat(typeProviders);
+        }
+      });
+      providers = providers.concat(reflectProviders);
+    }
+
+    return providers;
+  }
+
+  public reflectMetadata(metatype: Type<any>, metadataKey: string) {
+    return Reflect.getMetadata(metadataKey, metatype) || [];
   }
 
   public isConfigurationClass(val: any): val is Type<unknown> {
@@ -96,43 +150,6 @@ export class ProviderScanner {
       typeof val === "object" &&
       (val.useFactory || val.useValue || val.useClass)
     );
-  }
-
-  public scanForConfig(
-    configClazz: Type<unknown>,
-    ctxRegistry: EntryType[] = []
-  ): Provider[] {
-    let providers: Provider[] = [];
-    if (!isFunction(configClazz)) {
-      return providers;
-    }
-    if (ctxRegistry.includes(configClazz)) {
-      return providers;
-    }
-    ctxRegistry.push(configClazz);
-
-    const reflectProviders = Reflect.getMetadata(
-      METADATA.PROVIDERS,
-      configClazz.prototype
-    );
-
-    const configMeta = getConfigurationMeta(configClazz);
-    if (configMeta?.imports) {
-      for (let i = 0; i < configMeta.imports.length; i++) {
-        providers = providers.concat(
-          this.scan(configMeta.imports[i], ctxRegistry)
-        );
-      }
-    }
-
-    if (reflectProviders) {
-      providers = providers.concat(reflectProviders);
-    }
-    return providers;
-  }
-
-  public reflectMetadata(metatype: Type<any>, metadataKey: string) {
-    return Reflect.getMetadata(metadataKey, metatype) || [];
   }
 
   public isCustomProvider(

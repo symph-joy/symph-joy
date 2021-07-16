@@ -1,4 +1,3 @@
-import request from "supertest";
 import { ServerFactory } from "@symph/server";
 import { HelloConfig } from "../src/hello-config";
 import { INestApplication } from "@symph/server";
@@ -6,15 +5,13 @@ import { findPort, getUrl } from "../../../utils/joy-test-utils";
 import got from "got";
 
 describe("Hello world", () => {
-  let server: any;
   let app: INestApplication;
   let port: number;
 
   beforeAll(async () => {
-    app = await ServerFactory.createServer({ HelloConfig });
+    app = await ServerFactory.create({ HelloConfig });
     port = await findPort();
     await app.listen(port);
-    server = app.getHttpServer();
   });
 
   describe("/GET", () => {

@@ -36,7 +36,7 @@ describe("server-factory", () => {
     }
 
     // const app = await ServerFactory.createServer({ServerProvidersConfig, AppConfig});
-    const app = await ServerFactory.createServer({ AppConfig });
+    const app = await ServerFactory.create({ AppConfig });
     // const helloProvider = await app.get(HelloProvider);
     await app.listen(5000);
     await new Promise((resolve) => setTimeout(resolve, 10000000));

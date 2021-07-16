@@ -2,6 +2,8 @@ import glob from "glob";
 import path from "path";
 import {
   CoreContext,
+  getConfigurationMeta,
+  getInjectableMeta,
   Hook,
   HookPipe,
   HookType,
@@ -9,14 +11,22 @@ import {
   JoyContainer,
   Provider,
   ProviderScanner,
+  Type,
 } from "@symph/core";
 import { EmitSrcService } from "../../../build/webpack/plugins/emit-src-plugin/emit-src-service";
+import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
+import { INJECTABLE_METADATA } from "@symph/core/dist/constants";
 
-interface IModuleLoaded {
+type TScanOutModuleProviders = Map<
+  string,
+  { type: "ClassProvider" | "Configuration"; providers: Provider[] }
+>;
+
+export interface IScanOutModule {
   path: string; // build dist file path
   resource: string | undefined; // source file path
   module: Record<string, unknown>;
-  providers?: Provider[];
+  providerDefines?: TScanOutModuleProviders;
   isAdd?: boolean;
   isModify?: boolean;
   isRemove?: boolean;
@@ -40,25 +50,27 @@ export class FileScanner {
   }
 
   @Hook({ type: HookType.Bail, parallel: false, async: true })
-  private afterModuleLoadHook: HookPipe;
+  private afterScanOutModuleHook: HookPipe;
 
-  private cachedModules: Map<string, IModuleLoaded> = new Map();
+  private cachedModules: Map<string, IScanOutModule> = new Map();
 
   public getCacheModuleByProviderId(
     providerId: string
-  ): IModuleLoaded | undefined {
+  ): IScanOutModule | undefined {
     const moduleKeys = new Array(...this.cachedModules.keys());
     for (let i = 0; i < moduleKeys.length; i++) {
       const key = moduleKeys[i];
       const cacheModule = this.cachedModules.get(key);
-      if (!cacheModule) {
+      if (!cacheModule || !cacheModule.providerDefines) {
         continue;
       }
-      const findOutProvider = cacheModule.providers?.find(
-        (p) => p.id === providerId
-      );
-      if (findOutProvider) {
-        return cacheModule;
+      for (const providerDefine of cacheModule.providerDefines.values()) {
+        const findOutProvider = providerDefine.providers?.find(
+          (p) => p.id === providerId
+        );
+        if (findOutProvider) {
+          return cacheModule;
+        }
       }
     }
     return undefined;
@@ -74,7 +86,9 @@ export class FileScanner {
 
   public async scan(dir: string): Promise<void> {
     this.emitSrcService.updateEmitManifest(); // todo 移动到hot-reload中，统一在emit-all完成后，刷新数据。
-    return new Promise((resolve, reject) => {
+    const existModuleKeys = Array.from(this.cachedModules.keys());
+    const scanOutModuleKeys: string[] = [];
+    await new Promise<void>((resolve, reject) => {
       glob("**/*.{js,jsx,ts,tsx}", { cwd: dir }, async (err, files) => {
         if (err) {
           reject(err);
@@ -86,6 +100,7 @@ export class FileScanner {
         for (let i = 0; i < files.length; i++) {
           const filePath = files[i];
           const fullPath = path.resolve(dir, filePath);
+          scanOutModuleKeys.push(fullPath);
           const emit = this.emitSrcService.getEmitInfo(fullPath);
           const emitHash = emit?.hash;
           const cached = this.cachedModules.get(fullPath);
@@ -99,12 +114,15 @@ export class FileScanner {
           }
 
           const requiredModule = require(fullPath);
+          if (!requiredModule) {
+            continue;
+          }
 
           const isAdd = !cached;
           const isModify = !!cached;
-          const isRemove = false;
+          const isRemove = false; // todo 实现remove逻辑
 
-          let moduleLoaded: IModuleLoaded = {
+          let moduleLoaded: IScanOutModule = {
             path: fullPath,
             resource: emit?.resource,
             module: requiredModule,
@@ -113,32 +131,64 @@ export class FileScanner {
             isRemove,
             hash: emitHash,
           };
-          moduleLoaded = await this.afterModuleLoadHook.call(moduleLoaded);
-          if (!requiredModule) {
-            continue;
-          }
-          const providers = await this.providerScanner.scan(
-            moduleLoaded.module
-          );
-          moduleLoaded.providers = providers;
+          // const providers = await this.providerScanner.scan(moduleLoaded.module);
+          moduleLoaded.providerDefines = this.scanModule(moduleLoaded.module);
           this.cachedModules.set(fullPath, moduleLoaded);
 
-          if (providers && providers.length > 0) {
-            if (isAdd) {
-              this.container.addProviders(providers);
-            } else if (isModify) {
-              providers.forEach((provider) => {
-                this.container.replace(provider.id, provider);
-              });
-            } else if (isRemove) {
-              providers.forEach((provider) => {
-                this.container.delete(provider.id);
-              });
-            }
-          }
+          moduleLoaded = await this.afterScanOutModuleHook.call(moduleLoaded);
+
+          // if (providers && providers.length > 0) {
+          //   if (isAdd) {
+          //     this.container.addProviders(providers);
+          //   } else if (isModify) {
+          //     providers.forEach((provider) => {
+          //       this.container.replace(provider.id, provider);
+          //     });
+          //   } else if (isRemove) {
+          //     providers.forEach((provider) => {
+          //       this.container.delete(provider.id);
+          //     });
+          //   }
+          // }
         }
         resolve();
       });
     });
+
+    const deleteModules = existModuleKeys.filter(
+      (it) => !scanOutModuleKeys.includes(it)
+    );
+    for (const deleteModule of deleteModules) {
+      const cache = this.cachedModules.get(deleteModule);
+      if (cache) {
+        await this.afterScanOutModuleHook.call(cache);
+        this.cachedModules.delete(deleteModule);
+      }
+    }
+  }
+
+  public scanModule(
+    mod: Record<string, unknown>
+  ): undefined | TScanOutModuleProviders {
+    if (mod === undefined || mod === null) {
+      return undefined;
+    }
+    let providerDefines = new Map() as TScanOutModuleProviders;
+    Object.keys(mod).forEach((prop) => {
+      const propValue = mod[prop];
+      if (isNil(propValue)) return;
+
+      if (isFunction(propValue)) {
+        const providers = this.providerScanner.scan(propValue as any);
+        // 1.configuration class
+        if (getConfigurationMeta(propValue)) {
+          providerDefines.set(prop, { type: "Configuration", providers });
+        } else if (getInjectableMeta(propValue)) {
+          // 2. provider class
+          providerDefines.set(prop, { type: "ClassProvider", providers });
+        }
+      }
+    });
+    return providerDefines;
   }
 }

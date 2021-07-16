@@ -9,6 +9,7 @@ import {
   EnuInjectBy,
 } from "../../interfaces/injectable-dependency.interface";
 import { Type } from "../../interfaces";
+import { InjectCustomOptionsInterface } from "../../interfaces/inject-custom-options.interface";
 
 /**
  * Decorator that marks a constructor parameter as a target for
@@ -37,12 +38,40 @@ export function Inject<T = any>(typeOrId?: string | Type<T>) {
   }
 
   return (target: Object, key: string, index?: number) => {
-    if (!isUndefined(index) && typeof index === "number") {
-      injectConstructor(target, index, providerName, providerType);
+    if (key === undefined) {
+      injectConstructor(target, index as number, providerName, providerType);
       return;
+    } else {
+      if (typeof index === "number") {
+        injectPropertyParam(target, key, index, providerName, providerType);
+      } else {
+        injectProperty(target, key, providerName, providerType);
+      }
     }
-    injectProperty(target, key, providerName, providerType);
   };
+}
+
+export const CUSTOM_INJECT_FUNC_PARAM_META = "__CUSTOM_INJECT_FUNC_PARAM";
+
+function injectPropertyParam(
+  target: Object,
+  key: string,
+  index: number,
+  providerName: string,
+  providerType: Type
+) {
+  const params: Map<number, InjectCustomOptionsInterface> =
+    Reflect.getMetadata(CUSTOM_INJECT_FUNC_PARAM_META, target, key) ||
+    new Map();
+  const param = providerName
+    ? {
+        name: providerName,
+      }
+    : {
+        type: providerType,
+      };
+  params.set(index, param);
+  Reflect.defineMetadata(CUSTOM_INJECT_FUNC_PARAM_META, params, target, key);
 }
 
 function injectProperty(

@@ -37,12 +37,7 @@ export const startJoy = (async () => {
   }
 
   // const joyBoot = new JoyBoot(PresetJoyCore);
-  const joyBoot = await ServerFactory.createServer(
-    PresetJoyCore,
-    undefined,
-    undefined,
-    JoyBoot
-  );
+  const joyBoot = await ServerFactory.createServer(JoyBoot, PresetJoyCore);
   await joyBoot.init();
 
   function onSignal(signal: string) {

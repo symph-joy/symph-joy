@@ -70,9 +70,7 @@ export class PipesContextCreator extends ContextCreator {
       return pipe as PipeTransform;
     }
     // const instanceWrapper = this.getInstanceByMetatype(pipe as Type<any>);
-    const instanceWrapper = this.container.getProvidersByType(
-      pipe as Type<any>
-    );
+    const instanceWrapper = this.container.getProviderByType(pipe as Type<any>);
     if (!instanceWrapper) {
       throw new Error(
         `could not find out pipe(class:${

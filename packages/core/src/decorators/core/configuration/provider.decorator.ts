@@ -6,7 +6,9 @@ import {
 } from "../../../interfaces/context/provider.interface";
 import { isNil, isUndefined } from "../../../utils/shared.utils";
 import { METADATA } from "../../../constants";
-import { Scope } from "../../../interfaces";
+import { Scope, Type } from "../../../interfaces";
+import { CUSTOM_INJECT_FUNC_PARAM_META } from "../inject.decorator";
+import { InjectCustomOptionsInterface } from "../../../interfaces/inject-custom-options.interface";
 
 export function Provider(options?: Partial<ProviderType>): PropertyDecorator {
   return (target, propertyKey) => {
@@ -21,18 +23,38 @@ export function Provider(options?: Partial<ProviderType>): PropertyDecorator {
       target,
       propertyKey
     );
+    // todo 支持@Inject()装饰入参
 
     let provider: ProviderType;
     if (!isUndefined(paramTypes)) {
       // FactoryProvider
-
+      const inject = [...paramTypes];
+      // 设置自定义注入的参数
+      const customParams = Reflect.getMetadata(
+        CUSTOM_INJECT_FUNC_PARAM_META,
+        target,
+        propertyKey
+      ) as Map<number, InjectCustomOptionsInterface>;
+      if (customParams && customParams.size > 0) {
+        customParams.forEach((customInject, index) => {
+          let { type, name, isOptional } = customInject;
+          if (type === undefined && name === undefined) {
+            type = inject[index];
+          }
+          inject[index] = {
+            type,
+            name,
+            isOptional,
+          } as InjectCustomOptionsInterface;
+        });
+      }
       provider = Object.assign(
         {
           id: propertyKey,
           type: returnType,
-          // @ts-ignore
-          useFactory: target[propertyKey],
-          inject: paramTypes, // todo 支持@inject(), 自定义注入的参数
+          // useFactory: target[propertyKey],
+          useFactory: { factory: target.constructor, property: propertyKey },
+          inject,
           scope: Scope.DEFAULT,
         },
         options

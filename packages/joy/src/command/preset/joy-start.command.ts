@@ -6,28 +6,25 @@ import { printAndExit } from "../../server/lib/utils";
 import { Configuration, CoreContext, Inject } from "@symph/core";
 import http from "http";
 import { JoyAppConfig } from "../../joy-server/server/joy-config/joy-app-config";
-import { JoyServer } from "../../joy-server/server/joy-server";
+import { JoyReactServer } from "../../joy-server/server/joy-react-server";
 import { ServerConfig } from "../../joy-server/server/server-config";
-import { ReactContextFactory } from "../../joy-server/server/react-context-factory";
-import { Protocol } from "playwright-chromium/types/protocol";
-import { JoyGenModuleServerProvider } from "../../plugin/joy-gen-module-server.provider";
-import { ReactRouterServer } from "../../router/react-router-server";
-import { getServerAutoGenerateModules } from "../../plugin/getServerGenModules";
-import { JoyReactRouterPluginDev } from "../../router/joy-react-router-plugin-dev";
+import { JoyReactModuleConfig } from "../../react/joy-react-module.config";
+import { JoyApiDevServer } from "../../server/joy-api-dev-server";
+import { JoyApiServer } from "../../joy-server/server/joy-api-server";
+import { JoyDevServer } from "../../server/joy-dev-server";
+import { JoyServer } from "../../joy-server/server/joy-server";
+import { ServerApplication } from "@symph/server";
 
-@Configuration()
-class JoyPluginsConfig {
-  @Configuration.Provider({ type: ReactRouterServer })
-  public reactRouter: ReactRouterServer;
-}
-
-@Configuration()
+@Configuration({ imports: { joyReactConfig: JoyReactModuleConfig } })
 export class JoyServerConfig {
   @Configuration.Provider()
   public serverConfig: ServerConfig;
 
   @Configuration.Provider()
-  public reactContextFactory: ReactContextFactory;
+  public joyReactServer: JoyReactServer;
+
+  @Configuration.Provider()
+  public joyApiServer: JoyApiServer;
 
   @Configuration.Provider()
   public joyServer: JoyServer;
@@ -39,7 +36,7 @@ export class JoyStartCommand extends JoyCommand {
 
   constructor(
     private joyAppConfig: JoyAppConfig,
-    @Inject() private appContext: CoreContext
+    @Inject() private appContext: ServerApplication
   ) {
     super();
   }
@@ -55,24 +52,21 @@ export class JoyStartCommand extends JoyCommand {
     };
   }
 
-  async startServer(appContext: CoreContext): Promise<JoyServer> {
+  async startServer(appContext: ServerApplication): Promise<JoyServer> {
     const distDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir);
     await appContext.loadModule([
-      ...getServerAutoGenerateModules(distDir),
-      JoyPluginsConfig,
+      // ...getServerAutoGenerateModules(distDir),
       JoyServerConfig,
     ]);
     const config = this.joyAppConfig;
     const { dir, hostname, port } = config;
     const server = await appContext.get(JoyServer);
 
-    const srv = http.createServer(server.getRequestHandler());
-    await new Promise<void>((resolve, reject) => {
-      // This code catches EADDRINUSE error if the port is already in use
-      srv.on("error", reject);
-      srv.on("listening", () => resolve());
-      srv.listen(port, hostname);
-    }).catch((err) => {
+    await server.prepare();
+
+    try {
+      await appContext.listenAsync(port, hostname);
+    } catch (err) {
       if (err.code === "EADDRINUSE") {
         let errorMessage = `Port ${port} is already in use.`;
         const pkgAppPath = require("find-up").sync("package.json", {
@@ -91,18 +85,7 @@ export class JoyStartCommand extends JoyCommand {
       } else {
         throw err;
       }
-    });
-
-    // todo 重新设计，当应用关闭时，也要关闭http模块，否则jest测试item无法结束。
-    // @ts-ignore
-    server.closeSrv = async () => {
-      await server.close();
-      return new Promise<void>((resolve, reject) => {
-        srv.close((err) => {
-          err ? reject(err) : resolve();
-        });
-      });
-    };
+    }
 
     return server;
   }
@@ -117,7 +100,7 @@ export class JoyStartCommand extends JoyCommand {
     this.joyAppConfig.mergeCustomConfig({ dir, hostname, port, dev: false });
     try {
       const server = await this.startServer(this.appContext);
-      await server.prepare();
+      // await server.prepare();
       console.log(
         `started server on http://${args["--hostname"] || "localhost"}:${port}`
       );

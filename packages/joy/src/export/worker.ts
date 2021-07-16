@@ -14,10 +14,9 @@ import { GetStaticProps } from "../types";
 import { requireFontManifest } from "../joy-server/server/require";
 import { FontManifest } from "../joy-server/server/font-utils";
 import { Configuration, CoreContext } from "@symph/core";
-import { ReactContextFactory } from "../joy-server/server/react-context-factory";
+import { ReactContextFactory } from "../react/react-context-factory";
 import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 // import {ValidateError} from "schema-utils/declarations/validate";
-import { JoyGenModuleServerProvider } from "../plugin/joy-gen-module-server.provider";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 
 const envConfig = require("../joy-server/lib/runtime-config");
@@ -87,8 +86,8 @@ export class JoyExportConfig {
   @Configuration.Provider()
   public joyAppConfig: JoyAppConfig;
 
-  @Configuration.Provider()
-  public joyGenModuleServerProvider: JoyGenModuleServerProvider;
+  // @Configuration.Provider()
+  // public joyGenModuleServerProvider: JoyGenModuleServerProvider;
 
   @Configuration.Provider()
   public reactContextFactory: ReactContextFactory;

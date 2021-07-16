@@ -5,34 +5,47 @@ import { JoyCommand, JoyCommandOptionType } from "../command";
 import * as Log from "../../build/output/log";
 import { startedDevelopmentServer } from "../../build/output";
 import { printAndExit } from "../../server/lib/utils";
-import { Configuration, CoreContext, Inject } from "@symph/core";
-import { JoyDevServer } from "../../server/joy-dev-server";
-import http from "http";
+import { Configuration, Inject } from "@symph/core";
+import { JoyReactDevServer } from "../../server/joy-react-dev-server";
 import { JoyAppConfig } from "../../joy-server/server/joy-config/joy-app-config";
 import { ServerConfigDev } from "../../server/server-config-dev";
 import { JoyBuildConfig } from "../../build/joy-build.config";
 import { ReactContextFactoryDev } from "../../server/react-context-factory-dev";
 import HotReloader from "../../server/hot-reloader";
-import { JoyReactRouterPluginDev } from "../../router/joy-react-router-plugin-dev";
-import { JoyGenModuleServerProvider } from "../../plugin/joy-gen-module-server.provider";
+import { JoyReactRouterPluginDev } from "../../react/router/joy-react-router-plugin-dev";
 import { JoyServerConfig } from "./joy-start.command";
+import { ServerApplication } from "@symph/server";
+import { JoyReactModuleConfig } from "../../react/joy-react-module.config";
+import { JoyApiDevServer } from "../../server/joy-api-dev-server";
+import { JoyDevServer } from "../../server/joy-dev-server";
 
 @Configuration()
-class JoyBuildConfigDev extends JoyBuildConfig {
+export class JoyReactConfigDev extends JoyReactModuleConfig {
   @Configuration.Provider()
   public joyReactRouter: JoyReactRouterPluginDev;
+
+  @Configuration.Provider()
+  public reactContextFactory: ReactContextFactoryDev;
 }
 
-@Configuration({ imports: [JoyBuildConfigDev] })
+@Configuration({
+  imports: {
+    joyReactConfig: JoyReactConfigDev,
+    joyBuildConfig: JoyBuildConfig,
+  },
+})
 export class JoyDevServerConfig extends JoyServerConfig {
   @Configuration.Provider()
   public serverConfig: ServerConfigDev;
 
   @Configuration.Provider()
-  public reactContextFactory: ReactContextFactoryDev;
+  public hotReloader: HotReloader;
 
   @Configuration.Provider()
-  public hotReloader: HotReloader;
+  public joyApiServer: JoyApiDevServer;
+
+  @Configuration.Provider()
+  public joyReactServer: JoyReactDevServer;
 
   @Configuration.Provider()
   public joyServer: JoyDevServer;
@@ -44,7 +57,7 @@ export class JoyDevCommand extends JoyCommand {
 
   constructor(
     private joyAppConfig: JoyAppConfig,
-    @Inject() private appContext: CoreContext
+    @Inject() private appContext: ServerApplication
   ) {
     super();
   }
@@ -106,27 +119,27 @@ export class JoyDevCommand extends JoyCommand {
     }
   }
 
-  // async startDevServer( appContext: CoreContext, {dir, hostname, port, dev, isJoyDevCommand}: {dir: string, hostname: string, port: number, dev: boolean, isJoyDevCommand: boolean}): Promise<JoyDevServer> {
+  // async startDevServer( appContext: CoreContext, {dir, hostname, port, dev, isJoyDevCommand}: {dir: string, hostname: string, port: number, dev: boolean, isJoyDevCommand: boolean}): Promise<JoyReactDevServer> {
 
-  async startDevServer(appContext: CoreContext): Promise<JoyDevServer> {
-    await appContext.loadModule(JoyDevServerConfig);
+  async startDevServer(appContext: ServerApplication): Promise<JoyDevServer> {
     const config = this.joyAppConfig;
+    await appContext.loadModule([JoyDevServerConfig]);
+
     if (config === undefined) {
       throw new Error("Start server error, can not find joy config provider");
     }
     const { dir, hostname, port } = config;
     const server = await appContext.get(JoyDevServer);
+    // const apiServer = await appContext.get(JoyApiDevServer);
     if (server === undefined) {
       throw new Error("Start server error, can not find joy server provider");
     }
 
-    const srv = http.createServer(server.getRequestHandler());
-    await new Promise<void>((resolve, reject) => {
-      // This code catches EADDRINUSE error if the port is already in use
-      srv.on("error", reject);
-      srv.on("listening", () => resolve());
-      srv.listen(port, hostname);
-    }).catch((err) => {
+    await server.prepare();
+
+    try {
+      await appContext.listenAsync(port, hostname);
+    } catch (err) {
       if (err.code === "EADDRINUSE") {
         let errorMessage = `Port ${port} is already in use.`;
         const pkgAppPath = require("find-up").sync("package.json", {
@@ -145,17 +158,13 @@ export class JoyDevCommand extends JoyCommand {
       } else {
         throw err;
       }
-    });
+    }
 
     // todo 重新设计，当应用关闭时，也要关闭http模块，否则jest测试item无法结束。
     // @ts-ignore
     server.closeSrv = async () => {
       await server.close();
-      return new Promise<void>((resolve, reject) => {
-        srv.close((err) => {
-          err ? reject(err) : resolve();
-        });
-      });
+      await appContext.close();
     };
     // It's up to caller to run `app.prepare()`, so it can notify that the server
     // is listening before starting any intensive operations.
@@ -175,9 +184,8 @@ export class JoyDevCommand extends JoyCommand {
     this.joyAppConfig.mergeCustomConfig({ dir, hostname, port, dev: true });
     this.preflight().catch(() => {});
     try {
-      const server = await this.startDevServer(this.appContext);
+      await this.startDevServer(this.appContext);
       startedDevelopmentServer(appUrl);
-      await server.prepare();
     } catch (err) {
       console.error(err);
       printAndExit(undefined, 1);

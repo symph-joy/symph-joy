@@ -1,7 +1,6 @@
 import { getInjectableMeta, Injectable, Type } from "@symph/core";
-import { getRouteMeta, IRouteMeta } from "@symph/react";
+import { getRouteMeta } from "@symph/react";
 import { isPrerenderClazz } from "./prerender.interface";
-import { route } from "../../joy-server/server/router";
 import { isDynamicRoute } from "../../joy-server/lib/router/utils";
 
 const JOY_PRERENDER_META = "__joy_prerender";

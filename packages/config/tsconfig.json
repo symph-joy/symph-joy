@@ -1,0 +1,31 @@
+{
+  //  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2015",
+    //    "module": "ESNext",
+    "module": "CommonJS",
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "jsx": "react",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "declaration": true,
+    "removeComments": false,
+    "noLib": false,
+    "resolveJsonModule": true,
+    "strictPropertyInitialization": false,
+    "outDir": "./dist/"
+  },
+  "include": ["./src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "fixtures",
+    "dist",
+    "examples",
+    "test",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ]
+}

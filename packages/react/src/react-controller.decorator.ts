@@ -41,7 +41,7 @@ export function Controller<T>(
       // { type: ExtReactControllerDeco, useClass: ExtReactControllerDeco },
       { id },
       options,
-      { scope: Scope.TRANSIENT }
+      { scope: Scope.TRANSIENT, autoLoad: false }
     );
     Injectable(options)(ExtReactControllerDeco);
 

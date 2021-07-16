@@ -11,6 +11,7 @@ export function startedDevelopmentServer(appUrl: string) {
 
 let previousClient: import("webpack").Compiler | null = null;
 let previousServer: import("webpack").Compiler | null = null;
+let previousJoy: import("webpack").Compiler | null = null;
 
 type CompilerDiagnosticsWithFile = {
   errors: { file: string | undefined; message: string }[] | null;
@@ -195,7 +196,8 @@ export function ampValidation(
 
 export function watchCompilers(
   client: import("webpack").Compiler,
-  server: import("webpack").Compiler
+  server: import("webpack").Compiler,
+  joy: import("webpack").Compiler
 ) {
   if (previousClient === client && previousServer === server) {
     return;
@@ -204,6 +206,7 @@ export function watchCompilers(
   buildStore.setState({
     client: { loading: true },
     server: { loading: true },
+    joy: { loading: true },
   });
 
   function tapCompiler(
@@ -242,7 +245,9 @@ export function watchCompilers(
   tapCompiler("server", server, (status) =>
     buildStore.setState({ server: status })
   );
+  tapCompiler("joy", joy, (status) => buildStore.setState({ server: status }));
 
   previousClient = client;
   previousServer = server;
+  previousServer = joy;
 }

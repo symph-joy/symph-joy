@@ -118,21 +118,21 @@ export interface IJoyConfig {
 
 @Injectable()
 export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
-  @Hook({
-    id: "addJoyConfigSchema",
-    type: HookType.Waterfall,
-    parallel: false,
-    async: true,
-  })
-  private addJoyConfigSchema: HookPipe;
-
-  @Hook({
-    id: "onJoyConfigChanged",
-    type: HookType.Waterfall,
-    parallel: false,
-    async: true,
-  })
-  private onJoyConfigChanged: HookPipe;
+  // @Hook({
+  //   id: "addJoyConfigSchema",
+  //   type: HookType.Waterfall,
+  //   parallel: false,
+  //   async: true,
+  // })
+  // private addJoyConfigSchema: HookPipe;
+  //
+  // @Hook({
+  //   id: "onJoyConfigChanged",
+  //   type: HookType.Waterfall,
+  //   parallel: false,
+  //   async: true,
+  // })
+  // private onJoyConfigChanged: HookPipe;
 
   @Tap()
   injectorAfterPropertiesSet<T>(
@@ -158,7 +158,7 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
   pagesDir?: string = undefined;
 
   dir = "./";
-  port = undefined;
+  port = 3000;
   hostname = undefined;
   dev = false;
   quiet = false;
@@ -248,6 +248,10 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
     }
 
     return this.pagesDir;
+  }
+
+  public resolveAutoGenOutDir(...subPaths: string[]) {
+    return this.resolveAppDir(this.distDir, this.autoGenOutputDir, ...subPaths);
   }
 
   public resolveBuildOutDir(...subPaths: string[]) {

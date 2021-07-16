@@ -60,7 +60,7 @@ export class FileGenerator implements ProviderLifecycle {
   async afterPropertiesSet() {
     await this.cleanTempFiles();
     await this.mkTempDirs();
-    await this.generateEntryModuleFiles();
+    // await this.generateEntryModuleFiles();
   }
 
   @Hook({ type: HookType.Traverse, async: true })
@@ -76,17 +76,17 @@ export class FileGenerator implements ProviderLifecycle {
     await this.onGenerateFiles.call();
   }
 
-  @Tap({ hookId: "onGenerateFiles" })
-  public async generateEntryModuleFiles() {
-    await Promise.all([
-      this.writeServerFile("../gen-server-modules.js", GEN_SERVER_CONTENT, {
-        skipTSCheck: true,
-      }),
-      this.writeClientFile("../gen-client-modules.js", GEN_CLIENT_CONTENT, {
-        skipTSCheck: true,
-      }),
-    ]);
-  }
+  // @Tap({ hookId: "onGenerateFiles" })
+  // public async generateEntryModuleFiles() {
+  //   await Promise.all([
+  //     this.writeServerFile("../gen-server-modules.js", GEN_SERVER_CONTENT, {
+  //       skipTSCheck: true,
+  //     }),
+  //     this.writeClientFile("../gen-client-modules.js", GEN_CLIENT_CONTENT, {
+  //       skipTSCheck: true,
+  //     }),
+  //   ]);
+  // }
 
   public async cleanTempFiles(): Promise<void> {
     const absPath = this.joyAppConfig.resolveAppDir(
@@ -100,23 +100,23 @@ export class FileGenerator implements ProviderLifecycle {
   }
 
   public async mkTempDirs() {
-    const common = this.joyAppConfig.resolveAppDir(
+    const joy = this.joyAppConfig.resolveAppDir(
       this.joyAppConfig.distDir,
       this.joyAppConfig.autoGenOutputDir,
-      "./common"
+      "./joy"
     );
     const serverPath = this.joyAppConfig.resolveAppDir(
       this.joyAppConfig.distDir,
       this.joyAppConfig.autoGenOutputDir,
-      "./server"
+      "./react/server"
     );
     const clientPath = this.joyAppConfig.resolveAppDir(
       this.joyAppConfig.distDir,
       this.joyAppConfig.autoGenOutputDir,
-      "./client"
+      "./react/client"
     );
-    if (!(await fileExists(common, "directory"))) {
-      await mkdirp(common);
+    if (!(await fileExists(joy, "directory"))) {
+      await mkdirp(joy);
     }
     if (!(await fileExists(serverPath, "directory"))) {
       await mkdirp(serverPath);
@@ -166,32 +166,49 @@ export class FileGenerator implements ProviderLifecycle {
     }
   }
 
-  public getServerFilePath(outputPath: string): string {
+  public getGenPath(outputPath: string): string {
     return this.joyAppConfig.resolveAppDir(
       this.joyAppConfig.distDir,
       this.joyAppConfig.autoGenOutputDir,
-      "./server",
       outputPath
     );
   }
 
-  public getClientFilePath(outputPath: string): string {
+  public getJoyGenFilePath(outputPath: string): string {
     return this.joyAppConfig.resolveAppDir(
       this.joyAppConfig.distDir,
       this.joyAppConfig.autoGenOutputDir,
-      "./client",
+      "./joy",
       outputPath
     );
   }
 
-  public getCommonFilePath(outputPath: string): string {
-    return this.joyAppConfig.resolveAppDir(
-      this.joyAppConfig.distDir,
-      this.joyAppConfig.autoGenOutputDir,
-      "./common",
-      outputPath
-    );
-  }
+  // public getServerFilePath(outputPath: string): string {
+  //   return this.joyAppConfig.resolveAppDir(
+  //     this.joyAppConfig.distDir,
+  //     this.joyAppConfig.autoGenOutputDir,
+  //     "./server",
+  //     outputPath
+  //   );
+  // }
+  //
+  // public getClientFilePath(outputPath: string): string {
+  //   return this.joyAppConfig.resolveAppDir(
+  //     this.joyAppConfig.distDir,
+  //     this.joyAppConfig.autoGenOutputDir,
+  //     "./client",
+  //     outputPath
+  //   );
+  // }
+  //
+  // public getCommonFilePath(outputPath: string): string {
+  //   return this.joyAppConfig.resolveAppDir(
+  //     this.joyAppConfig.distDir,
+  //     this.joyAppConfig.autoGenOutputDir,
+  //     "./common",
+  //     outputPath
+  //   );
+  // }
 
   private async writeTmpFile(
     absPath: string,
@@ -216,32 +233,50 @@ export class FileGenerator implements ProviderLifecycle {
     await promises.writeFile(absPath, content, "utf-8");
   }
 
-  public async writeCommonFile(
-    commonOutputPath: string,
+  public async writeFile(
+    outPath: string,
     content: string,
     options: TWriteFileOptions = { skipTSCheck: false }
-  ): Promise<void> {
-    const commonPath = this.getCommonFilePath(commonOutputPath);
+  ) {
+    const commonPath = this.getGenPath(outPath);
     return this.writeTmpFile(commonPath, content, options);
   }
 
-  public async writeServerFile(
-    serverOutputPath: string,
+  public async writeJoyFile(
+    outPath: string,
     content: string,
     options: TWriteFileOptions = { skipTSCheck: false }
-  ): Promise<void> {
-    const serverPath = this.getServerFilePath(serverOutputPath);
-    return this.writeTmpFile(serverPath, content, options);
+  ) {
+    const commonPath = this.getJoyGenFilePath(outPath);
+    return this.writeTmpFile(commonPath, content, options);
   }
 
-  public async writeClientFile(
-    clientOutputPath: string,
-    content: string,
-    options: TWriteFileOptions = { skipTSCheck: false }
-  ): Promise<void> {
-    const clientPath = this.getClientFilePath(clientOutputPath);
-    return this.writeTmpFile(clientPath, content, options);
-  }
+  // public async writeCommonFile(
+  //   commonOutputPath: string,
+  //   content: string,
+  //   options: TWriteFileOptions = { skipTSCheck: false }
+  // ): Promise<void> {
+  //   const commonPath = this.getCommonFilePath(commonOutputPath);
+  //   return this.writeTmpFile(commonPath, content, options);
+  // }
+  //
+  // public async writeServerFile(
+  //   serverOutputPath: string,
+  //   content: string,
+  //   options: TWriteFileOptions = { skipTSCheck: false }
+  // ): Promise<void> {
+  //   const serverPath = this.getServerFilePath(serverOutputPath);
+  //   return this.writeTmpFile(serverPath, content, options);
+  // }
+  //
+  // public async writeClientFile(
+  //   clientOutputPath: string,
+  //   content: string,
+  //   options: TWriteFileOptions = { skipTSCheck: false }
+  // ): Promise<void> {
+  //   const clientPath = this.getClientFilePath(clientOutputPath);
+  //   return this.writeTmpFile(clientPath, content, options);
+  // }
 }
 
 /**

@@ -101,7 +101,7 @@
     "ts-jest": "26.3.0",
     "ts-loader": "7.0.4",
     "ts-node": "^9.1.1",
-    "typescript": "^4.2.3",
+    "typescript": "^4.3.2",
     "wait-port": "0.2.9",
     "fs-extra": "^9.1.0",
     "got": "^11.8.2"

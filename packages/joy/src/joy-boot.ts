@@ -15,16 +15,16 @@ export class JoyBoot extends ServerApplication {
   constructor(
     protected readonly entry: EntryType,
     httpAdapter: HttpServer,
-    protected readonly config: ApplicationConfig,
-    public container: ServerContainer = new ServerContainer(),
-    appOptions: NestApplicationOptions = {}
+    // protected readonly config: ApplicationConfig,
+    appOptions: NestApplicationOptions = {},
+    public container: ServerContainer = new ServerContainer()
   ) {
-    super(entry, httpAdapter, config, container, appOptions);
+    super(entry, httpAdapter, appOptions, container);
     // this.registerInternalProviders();
   }
 
-  protected async initInternalProvider(): Promise<string[]> {
-    const superIds = await super.initInternalProvider();
+  protected async initContext(): Promise<string[]> {
+    const superIds = await super.initContext();
     const myIds = await this.loadModule({
       joyAppConfig: {
         id: "joyAppConfig",

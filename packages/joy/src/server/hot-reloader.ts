@@ -31,10 +31,12 @@ import { FileGenerator } from "../plugin/file-generator";
 import { EventEmitter } from "events";
 import OnDemandModuleHandler from "./on-demand-module-handler";
 import { getWebpackConfigForSrc } from "../build/webpack-config-for-src";
-import { Injectable } from "@symph/core";
+import { Inject, Injectable } from "@symph/core";
 import { BuildDevConfig } from "./build-dev-config";
 import crypto from "crypto";
-import { JoyReactRouterPluginDev } from "../router/joy-react-router-plugin-dev";
+import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
+import { ReactRouter } from "@symph/react";
+import { getWebpackConfigForJoy } from "../build/webpack-config-for-joy";
 
 export async function renderScriptError(
   res: ServerResponse,
@@ -167,7 +169,7 @@ export default class HotReloader {
     private fileGenerator: FileGenerator,
     private fileScanner: FileScanner,
     protected buildConfig: BuildDevConfig,
-    private joyReactRouter: JoyReactRouterPluginDev
+    @Inject(ReactRouter) private joyReactRouter: JoyReactRouterPluginDev
   ) {
     this.dir = this.joyAppConfig.resolveAppDir();
     this.middlewares = [];
@@ -330,7 +332,16 @@ export default class HotReloader {
     ]);
   }
 
+  private startPromise?: Promise<void>;
+
   public async start(): Promise<void> {
+    if (!this.startPromise) {
+      this.startPromise = this._start();
+    }
+    return this.startPromise;
+  }
+
+  private async _start(): Promise<void> {
     await this.clean();
     await this.fileGenerator.mkTempDirs();
 
@@ -388,19 +399,32 @@ export default class HotReloader {
       serverConfig,
       this.joyAppConfig
     );
-    const configs = [clientConfig, serverConfig, srcConfig];
+    const joyAppModulesConfig = await getWebpackConfigForJoy(
+      serverConfig,
+      this.joyAppConfig
+    );
+    const configs = [
+      clientConfig,
+      serverConfig,
+      joyAppModulesConfig,
+      srcConfig,
+    ];
     const multiCompiler = webpack(configs);
 
-    watchCompilers(multiCompiler.compilers[0], multiCompiler.compilers[1]);
+    watchCompilers(
+      multiCompiler.compilers[0],
+      multiCompiler.compilers[1],
+      multiCompiler.compilers[2]
+    );
 
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
-    multiCompiler.compilers[2].hooks.failed.tap(
+    multiCompiler.compilers[3].hooks.failed.tap(
       "JoyJSHotReloaderForSrc",
       (err: Error) => {
         console.log(err);
       }
     );
-    multiCompiler.compilers[2].hooks.done.tap(
+    multiCompiler.compilers[3].hooks.done.tap(
       "JoyJSHotReloaderForSrc",
       async (stats) => {
         //  ===== 扫描src目录
@@ -417,6 +441,7 @@ export default class HotReloader {
         // if (this.watcher){
         multiCompiler.compilers[0].watching.invalidate();
         multiCompiler.compilers[1].watching.invalidate();
+        multiCompiler.compilers[2].watching.invalidate();
         // this.watcher.watchings[0].invalidate()
         // this.watcher.watchings[1].invalidate()
         // }
@@ -561,6 +586,7 @@ export default class HotReloader {
   }
 
   public async stop(): Promise<void> {
+    this.startPromise = undefined;
     return new Promise((resolve, reject) => {
       this.watcher.close((err: any) => (err ? reject(err) : resolve()));
     });
@@ -631,11 +657,11 @@ export default class HotReloader {
   //   }))
   // }
 
-  public async ensureModules(moduleFilePaths: string[]) {
+  public async ensureModules(moduleFilePaths: string[]): Promise<void> {
     return this.onDemandModules.ensureModules(moduleFilePaths);
   }
 
-  public async ensurePath(page: string) {
+  public async ensurePath(page: string): Promise<void> {
     // Make sure we don't re-build or dispose prebuilt pages
     if (page !== "/_error" && BLOCKED_PAGES.indexOf(page) !== -1) {
       return;
@@ -649,6 +675,10 @@ export default class HotReloader {
       return;
     }
     await this.ensureModules(ensureFiles);
+  }
+
+  public async ensureCompilerDone(): Promise<void> {
+    return this.onDemandModules.ensureCompilerDone();
   }
 }
 

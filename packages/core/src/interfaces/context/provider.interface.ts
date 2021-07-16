@@ -1,7 +1,7 @@
 import { Abstract } from "../abstract.interface";
 import { Scope } from "./scope-options.interface";
 import { Type } from "../type.interface";
-import { isNil, isUndefined } from "../../utils/shared.utils";
+import { InjectCustomOptionsInterface } from "../inject-custom-options.interface";
 
 /**
  * Injection token type
@@ -58,10 +58,10 @@ export interface ClassProvider<T = any> extends IProvider<T> {
   scope?: Scope;
 
   /**
-   * where or not auto register into container, when load the class。
-   * default is false
+   * whether auto register into container, when file scan out the class。
+   * default is true
    */
-  autoReg?: boolean;
+  autoLoad?: boolean | "lazy";
 }
 
 /**
@@ -105,11 +105,11 @@ export interface FactoryProvider<T = any> extends IProvider<T> {
   /**
    * Factory function that returns an instance of the provider to be injected.
    */
-  useFactory: (...args: any[]) => T;
+  useFactory: (...args: any[]) => T | { factory: Type; property: string };
   /**
    * Optional list of providers to be injected into the context of the Factory function.
    */
-  inject?: Array<Type<any> | string>;
+  inject?: Array<Type<any> | string | InjectCustomOptionsInterface>;
   /**
    * Optional enum defining lifetime of the provider that is returned by the Factory function.
    */

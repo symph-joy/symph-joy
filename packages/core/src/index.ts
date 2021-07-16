@@ -10,4 +10,4 @@ export * from "./hook";
 export * from "./core-context";
 export * from "./injector/provider-scanner";
 
-export * from "./core-factory";
+export * from "./core-context-factory";

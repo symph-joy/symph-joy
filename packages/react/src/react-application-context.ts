@@ -27,8 +27,8 @@ export class ReactApplicationContext extends CoreContext
     this.reduxStore = new ReactReduxService(this.appConfig, initState);
   }
 
-  protected async initInternalProvider(): Promise<string[]> {
-    const superIds = await super.initInternalProvider();
+  protected async initContext(): Promise<string[]> {
+    const superIds = await super.initContext();
     const myIds = await this.loadModule({
       applicationConfig: {
         id: "applicationConfig",

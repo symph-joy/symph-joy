@@ -41,7 +41,7 @@ export function Injectable(
         type: target,
         useClass: target,
         scope: Scope.DEFAULT,
-        autoReg: false,
+        autoLoad: true,
       },
       options
     );

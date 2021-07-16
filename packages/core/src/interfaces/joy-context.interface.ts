@@ -22,7 +22,7 @@ export interface IJoyContext {
    * scan provider from module
    * @param module
    */
-  loadModule(module: EntryType): Promise<string[]>;
+  loadModule(module: EntryType | EntryType[]): Promise<string[]>;
 
   get<TInput = any>(
     typeOrToken: TypeOrTokenType<TInput>,
