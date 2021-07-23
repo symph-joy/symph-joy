@@ -1,5 +1,5 @@
 import { Inject, Injectable, Optional } from "../decorators/core";
-import { Scope } from "../interfaces";
+import { ProviderLifecycle, Scope } from "../interfaces";
 import { JoyContainer } from "../injector";
 import { InstanceWrapper } from "../injector/instance-wrapper";
 import { Injector } from "../injector/injector";
@@ -885,6 +885,68 @@ describe("injector-scopes-static", () => {
         container
       )) as Dep;
       expect(instance1.getMessage()).toBe("message1");
+    });
+  });
+
+  describe("life cycle", () => {
+    it("should call life cycle methods.", async () => {
+      @Injectable()
+      class MyProvider implements ProviderLifecycle {
+        public afterPropertiesSetMsg: string;
+        public initializeMsg: string;
+        afterPropertiesSet(): Promise<void> | void {
+          this.afterPropertiesSetMsg = "hello afterPropertiesSet";
+        }
+
+        initialize(): Promise<void> | void {
+          this.initializeMsg = "hello initialize";
+        }
+      }
+
+      const container = instanceContainer();
+      createProviderWrappers(container, MyProvider);
+      const myWrapper = container.getProvider(MyProvider)!;
+      const instance = (await injector.loadProvider(
+        myWrapper,
+        container
+      )) as MyProvider;
+      expect(instance.afterPropertiesSetMsg).toBe("hello afterPropertiesSet");
+      expect(instance.initializeMsg).toBe("hello initialize");
+    });
+
+    it("should call life cycle async methods.", async () => {
+      @Injectable()
+      class MyProvider implements ProviderLifecycle {
+        public afterPropertiesSetMsg: string;
+        public initializeMsg: string;
+        async afterPropertiesSet(): Promise<void> {
+          await new Promise<void>((resolve) => {
+            setTimeout(() => {
+              this.afterPropertiesSetMsg = "hello afterPropertiesSet";
+              resolve();
+            }, 5);
+          });
+        }
+
+        async initialize(): Promise<void> {
+          await new Promise<void>((resolve) => {
+            setTimeout(() => {
+              this.initializeMsg = "hello initialize";
+              resolve();
+            }, 5);
+          });
+        }
+      }
+
+      const container = instanceContainer();
+      createProviderWrappers(container, MyProvider);
+      const myWrapper = container.getProvider(MyProvider)!;
+      const instance = (await injector.loadProvider(
+        myWrapper,
+        container
+      )) as MyProvider;
+      expect(instance.afterPropertiesSetMsg).toBe("hello afterPropertiesSet");
+      expect(instance.initializeMsg).toBe("hello initialize");
     });
   });
 });

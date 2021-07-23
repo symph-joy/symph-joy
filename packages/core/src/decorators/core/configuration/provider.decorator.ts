@@ -23,7 +23,6 @@ export function Provider(options?: Partial<ProviderType>): PropertyDecorator {
       target,
       propertyKey
     );
-    // todo 支持@Inject()装饰入参
 
     let provider: ProviderType;
     if (!isUndefined(paramTypes)) {

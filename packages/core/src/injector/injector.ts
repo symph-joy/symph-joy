@@ -182,10 +182,24 @@ export class Injector {
         return instance;
       })
       .then((instance: any) => {
+        if (isFunction(instance.initialize)) {
+          const rst = instance.initialize();
+          if (isPromise(rst)) {
+            return new Promise((resolve, reject) => {
+              rst.then(() => {
+                resolve(instance);
+              }, reject);
+            });
+          }
+        }
+        return instance;
+      })
+      .then((instance: any) => {
+        instanceHost.isResolved = true;
+
         instance = this.afterPropertiesSetHook.call(instance, {
           instanceWrapper: wrapper,
         });
-        instanceHost.isResolved = true;
         return instance;
       });
 
@@ -605,7 +619,7 @@ export class Injector {
         const factoryWrapper = container.getProviderByType(factoryClass);
         if (isNil(factoryWrapper)) {
           throw new RuntimeException(
-            "instantiate provider failed, can not find factory instance in container"
+            `Instantiate factory provider failed, can not find factory instance(class: ${factoryClass.name}) in container.`
           );
         }
         return this.resolveInstance(container, factoryWrapper!, contextId).then(
