@@ -159,6 +159,7 @@ export class FastifyAdapter<
       response.statusCode = statusCode;
       return response;
     }
+    // @ts-ignore
     return response.code(statusCode);
   }
 

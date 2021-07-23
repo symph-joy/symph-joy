@@ -9,7 +9,6 @@ import {
   Logger,
   Type,
 } from "@symph/core";
-import { ServerProvidersConfig } from "./server-providers-config";
 import { ServerContainer } from "./server-container";
 import { Resolver } from "./router/interfaces/resolver.interface";
 import { RoutesResolver } from "./router/routes-resolver";
@@ -37,8 +36,6 @@ import { UnknownElementException } from "./errors/exceptions/unknown-element.exc
 import { createContextId } from "./helpers";
 import { AbstractHttpAdapter } from "./adapters";
 import {
-  ConfigConfiguration,
-  ConfigService,
   ServerConfigConfiguration,
   SYMPH_CONFIG_INIT_VALUE,
 } from "@symph/config";
@@ -85,9 +82,6 @@ export class ServerApplication extends CoreContext implements INestApplication {
       },
       this.getServerConfigClass(),
     ]);
-
-    const config = await this.get(ConfigConfiguration);
-    await config.initConfig();
 
     return [...ids, ...thisIds];
   }

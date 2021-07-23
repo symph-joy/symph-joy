@@ -65,7 +65,7 @@ export class BaseExceptionFilterContext extends ContextCreator {
   public getInstanceByMetatype<T extends Type>(
     filter: T
   ): InstanceWrapper | undefined {
-    return this.container.getProvidersByType(filter);
+    return this.container.getProviderByType(filter);
     // if (!this.moduleContext) {
     //   return;
     // }

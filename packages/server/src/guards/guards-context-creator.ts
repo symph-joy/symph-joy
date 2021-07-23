@@ -86,7 +86,7 @@ export class GuardsContextCreator extends ContextCreator {
   public getInstanceByMetatype<T extends Type<any>>(
     guard: T
   ): InstanceWrapper | undefined {
-    return this.container.getProvidersByType(guard);
+    return this.container.getProviderByType(guard);
 
     // if (!this.moduleContext) {
     //   return;

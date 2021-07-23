@@ -91,7 +91,7 @@ export class InterceptorsContextCreator extends ContextCreator {
   public getInstanceByMetatype<T extends Type>(
     metatype: T
   ): InstanceWrapper | undefined {
-    return this.container.getProvidersByType(metatype);
+    return this.container.getProviderByType(metatype);
 
     // if (!this.moduleContext) {
     //   return;
