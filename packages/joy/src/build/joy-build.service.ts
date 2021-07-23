@@ -1,50 +1,19 @@
 import { isWriteable } from "./is-writeable";
 import { loadEnvConfig } from "../lib/load-env-config";
-import {
-  BUILD_MANIFEST,
-  CLIENT_STATIC_FILES_PATH,
-  EXPORT_DETAIL,
-  EXPORT_MARKER,
-  OUT_DIRECTORY,
-  PAGES_MANIFEST,
-  PHASE_PRODUCTION_BUILD,
-  PRERENDER_MANIFEST,
-  ROUTES_MANIFEST,
-  SERVER_DIRECTORY,
-  SERVERLESS_DIRECTORY,
-} from "../joy-server/lib/constants";
+import { BUILD_MANIFEST, CLIENT_STATIC_FILES_PATH, EXPORT_DETAIL, EXPORT_MARKER, OUT_DIRECTORY, PAGES_MANIFEST, PHASE_PRODUCTION_BUILD, PRERENDER_MANIFEST, ROUTES_MANIFEST, SERVER_DIRECTORY, SERVERLESS_DIRECTORY } from "../joy-server/lib/constants";
 import path from "path";
-import loadCustomRoutes, {
-  getRedirectStatus,
-  normalizeRouteRegex,
-  Redirect,
-  RouteType,
-} from "../lib/load-custom-routes";
+import loadCustomRoutes, { getRedirectStatus, normalizeRouteRegex, Redirect, RouteType } from "../lib/load-custom-routes";
 import { fileExists } from "../lib/file-exists";
 import * as Log from "./output/log";
 import createSpinner from "./spinner";
 import { verifyTypeScriptSetup } from "../lib/verifyTypeScriptSetup";
-import {
-  getJsPageSizeInKb,
-  hasCustomGetInitialProps,
-  PageInfo,
-  printCustomRoutes,
-  printTreeView,
-  isPageStatic,
-} from "./utils";
+import { hasCustomGetInitialProps, isPageStatic, PageInfo, printCustomRoutes, printTreeView } from "./utils";
 import { __ApiPreviewProps } from "../joy-server/server/api-utils";
 import crypto from "crypto";
 import { createEntrypoints, createPagesMapping } from "./entries";
-import {
-  PAGES_404_GET_INITIAL_PROPS_ERROR,
-  PUBLIC_DIR_MIDDLEWARE_CONFLICT,
-} from "../lib/constants";
+import { PUBLIC_DIR_MIDDLEWARE_CONFLICT } from "../lib/constants";
 import { pathToRegexp } from "path-to-regexp";
-import {
-  getRouteRegex,
-  getSortedRoutes,
-  isDynamicRoute,
-} from "../joy-server/lib/router/utils";
+import { getRouteRegex, getSortedRoutes, isDynamicRoute } from "../joy-server/lib/router/utils";
 import { promises, writeFileSync } from "fs";
 import getBaseWebpackConfig from "./webpack-config";
 import { CompilerResult, runCompiler } from "./compiler";
@@ -56,21 +25,15 @@ import { getPagePath } from "../joy-server/server/require";
 import { normalizePagePath } from "../joy-server/server/normalize-page-path";
 import escapeStringRegexp from "escape-string-regexp";
 import { writeBuildId } from "./write-build-id";
-import { recursiveDelete } from "../lib/recursive-delete";
 import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
-import { ClassProvider, CoreContext, Injectable } from "@symph/core";
+import { CoreContext, Injectable } from "@symph/core";
 import { getWebpackConfigForSrc } from "./webpack-config-for-src";
-import webpack from "webpack";
 import { FileGenerator } from "../plugin/file-generator";
 import { FileScanner } from "../joy-server/server/scanner/file-scanner";
-import {
-  IJoyReactRouteBuild,
-  JoyReactRouterPlugin,
-} from "../react/router/joy-react-router-plugin";
 import Worker from "jest-worker";
-import { ReactController } from "@symph/react";
+import { ReactRouter } from "@symph/react";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
 import { getWebpackConfigForJoy } from "./webpack-config-for-joy";
@@ -112,17 +75,13 @@ export class JoyBuildService {
     private buildConfig: BuildConfig,
     private fileGenerator: FileGenerator,
     private fileScanner: FileScanner,
-    private joyReactRoute: JoyReactRouterPlugin,
+    private joyReactRoute: ReactRouter,
     private prerenderService: JoyPrerenderService,
     public joyExportAppService: JoyExportAppService
   ) {
     this.dir = joyConfig.resolveAppDir();
     this.distDir = joyConfig.resolveAppDir(joyConfig.distDir);
-    this.outDir = joyConfig.resolveAppDir(
-      joyConfig.distDir,
-      OUT_DIRECTORY,
-      "react"
-    );
+    this.outDir = joyConfig.resolveAppDir(joyConfig.distDir, OUT_DIRECTORY, "react");
     this.buildManifestPath = path.join(this.outDir, BUILD_MANIFEST);
   }
 
@@ -142,15 +101,9 @@ export class JoyBuildService {
       rewrites: [],
     });
 
-    const distPagesDir = this.joyConfig.resolveAppDir(
-      this.joyConfig.distDir,
-      "dist/src"
-    );
+    const distPagesDir = this.joyConfig.resolveAppDir(this.joyConfig.distDir, "dist/src");
 
-    const srcWebpackConfig = await getWebpackConfigForSrc(
-      serverWebpackConfig,
-      this.joyConfig
-    );
+    const srcWebpackConfig = await getWebpackConfigForSrc(serverWebpackConfig, this.joyConfig);
     const srcResult = await runCompiler(srcWebpackConfig);
     if (!srcResult.errors) {
       return srcResult;
@@ -180,27 +133,14 @@ export class JoyBuildService {
 
     // const reactRoutes = this.joyReactRoute.getRoutes()
 
-    const manifestPath = path.join(
-      this.outDir,
-      this.isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
-      PAGES_MANIFEST
-    );
+    const manifestPath = path.join(this.outDir, this.isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY, PAGES_MANIFEST);
 
-    const pagesManifest = JSON.parse(
-      await promises.readFile(manifestPath, "utf8")
-    ) as PagesManifest;
-    const buildManifest = JSON.parse(
-      await promises.readFile(this.buildManifestPath, "utf8")
-    ) as BuildManifest;
+    const pagesManifest = JSON.parse(await promises.readFile(manifestPath, "utf8")) as PagesManifest;
+    const buildManifest = JSON.parse(await promises.readFile(this.buildManifestPath, "utf8")) as BuildManifest;
 
     await Promise.all(
       reactRoutes.map(async (reactRoute) => {
-        const {
-          path: _pathname,
-          providerId,
-          hasState,
-          hasStaticState,
-        } = reactRoute;
+        const { path: _pathname, providerId, hasState, hasStaticState } = reactRoute;
         const path: string = _pathname as string;
         if (!providerId) {
           throw new Error(`The route${path} is not a provider.`);
@@ -226,9 +166,7 @@ export class JoyBuildService {
         // >(providerId);
         // const routeClass = (routeModule?.useClass as any) as typeof ReactController;
         const pathIsDynamic = isDynamicRoute(path);
-        const parentRoutes = this.joyReactRoute.getParentRoutes(
-          reactRoute.path
-        );
+        const parentRoutes = this.joyReactRoute.getParentRoutes(reactRoute.path);
 
         // const hasStaticModelState = !!routeClass.prototype.initialModelStaticState;
         const hasStaticModelState = !!hasStaticState;
@@ -315,9 +253,7 @@ export class JoyBuildService {
   //   return []
   // }
 
-  public async prerenderRoutes(
-    pageInfos: Map<string, PageInfo>
-  ): Promise<PrerenderManifest> {
+  public async prerenderRoutes(pageInfos: Map<string, PageInfo>): Promise<PrerenderManifest> {
     const distDir = this.distDir;
     const outDir = this.outDir;
     const dir = this.dir;
@@ -326,13 +262,10 @@ export class JoyBuildService {
     const prerenderInfos = await this.prerenderService.getPrerenderList();
 
     // const combinedPages = [...staticPages, ...ssgPages];
-    const combinedPages = prerenderInfos.reduce<string[]>(
-      (value, info, infoIndex) => {
-        value.push(...info.paths);
-        return value;
-      },
-      []
-    );
+    const combinedPages = prerenderInfos.reduce<string[]>((value, info, infoIndex) => {
+      value.push(...info.paths);
+      return value;
+    }, []);
     // const {exportApp} = require("../export");
 
     const exportConfig: any = {
@@ -386,8 +319,7 @@ export class JoyBuildService {
         const pathname = paths[i];
         const file = normalizePagePath(pathname);
         finalPrerenderRoutes[pathname] = {
-          initialRevalidateSeconds:
-            exportConfig.initialPageRevalidationMap[pathname],
+          initialRevalidateSeconds: exportConfig.initialPageRevalidationMap[pathname],
           srcRoute: isDynamic ? route : null,
           dataRoute: path.posix.join("/_joy/data", buildId, `${file}.json`),
         };
@@ -395,21 +327,12 @@ export class JoyBuildService {
 
       if (isDynamic) {
         const normalizedRoute = normalizePagePath(route);
-        const dataRoute = path.posix.join(
-          "/_joy/data",
-          buildId,
-          `${normalizedRoute}.json`
-        );
+        const dataRoute = path.posix.join("/_joy/data", buildId, `${normalizedRoute}.json`);
         finalDynamicRoutes[route] = {
           routeRegex: normalizeRouteRegex(getRouteRegex(route).re.source),
           dataRoute,
           fallback: isFallback ? `${normalizedRoute}.html` : false,
-          dataRouteRegex: normalizeRouteRegex(
-            getRouteRegex(dataRoute.replace(/\.json$/, "")).re.source.replace(
-              /\(\?:\\\/\)\?\$$/,
-              "\\.json$"
-            )
-          ),
+          dataRouteRegex: normalizeRouteRegex(getRouteRegex(dataRoute.replace(/\.json$/, "")).re.source.replace(/\(\?:\\\/\)\?\$$/, "\\.json$")),
         };
       }
     });
@@ -420,11 +343,7 @@ export class JoyBuildService {
       dynamicRoutes: finalDynamicRoutes,
     };
 
-    await promises.writeFile(
-      path.join(outDir, PRERENDER_MANIFEST),
-      JSON.stringify(prerenderManifest),
-      "utf8"
-    );
+    await promises.writeFile(path.join(outDir, PRERENDER_MANIFEST), JSON.stringify(prerenderManifest), "utf8");
     await this.generateClientSsgManifest(prerenderManifest, {
       outDir,
       buildId,
@@ -436,10 +355,7 @@ export class JoyBuildService {
     return prerenderManifest;
   }
 
-  public async build(
-    reactProductionProfiling = false,
-    debugOutput = false
-  ): Promise<void> {
+  public async build(reactProductionProfiling = false, debugOutput = false): Promise<void> {
     const config = this.joyConfig;
     const dir = this.dir;
     if (!(await isWriteable(dir))) {
@@ -467,9 +383,7 @@ export class JoyBuildService {
     if (!hasCache) {
       // Intentionally not piping to stderr in case people fail in CI when
       // stderr is detected.
-      console.log(
-        `${Log.prefixes.warn} No build cache found. Please configure build caching for faster rebuilds.`
-      );
+      console.log(`${Log.prefixes.warn} No build cache found. Please configure build caching for faster rebuilds.`);
     }
     // }
     const buildSpinner = createSpinner({
@@ -480,9 +394,7 @@ export class JoyBuildService {
     const pagesDir = this.joyConfig.resolvePagesDir();
     const hasPublicDir = await fileExists(publicDir);
 
-    const ignoreTypeScriptErrors = Boolean(
-      config.typescript?.ignoreBuildErrors
-    );
+    const ignoreTypeScriptErrors = Boolean(config.typescript?.ignoreBuildErrors);
     await verifyTypeScriptSetup(dir, pagesDir, !ignoreTypeScriptErrors);
 
     let tracer: any = null;
@@ -514,28 +426,15 @@ export class JoyBuildService {
 
     // const mappedPages = createPagesMapping(pagePaths, config.pageExtensions);
     const mappedPages = createPagesMapping(pagePaths, config.pageExtensions);
-    const entrypoints = createEntrypoints(
-      mappedPages,
-      target as any,
-      buildId,
-      previewProps,
-      config,
-      loadedEnvFiles
-    );
+    const entrypoints = createEntrypoints(mappedPages, target as any, buildId, previewProps, config, loadedEnvFiles);
     const pageKeys = Object.keys(mappedPages);
     const conflictingPublicFiles: string[] = [];
-    const hasCustomErrorPage = mappedPages["/_error"].startsWith(
-      "private-joy-pages"
-    );
-    const hasPages404 = Boolean(
-      mappedPages["/404"] && mappedPages["/404"].startsWith("private-joy-pages")
-    );
+    const hasCustomErrorPage = mappedPages["/_error"].startsWith("private-joy-pages");
+    const hasPages404 = Boolean(mappedPages["/404"] && mappedPages["/404"].startsWith("private-joy-pages"));
     let hasNonStaticErrorPage: boolean;
 
     if (hasPublicDir) {
-      const hasPublicUnderScoreJoyDir = await fileExists(
-        path.join(publicDir, "_joy")
-      );
+      const hasPublicUnderScoreJoyDir = await fileExists(path.join(publicDir, "_joy"));
       if (hasPublicUnderScoreJoyDir) {
         throw new Error(PUBLIC_DIR_MIDDLEWARE_CONFLICT);
       }
@@ -544,10 +443,7 @@ export class JoyBuildService {
     // Check if pages conflict with files in `public`
     // Only a page of public file can be served, not both.
     for (const page in mappedPages) {
-      const hasPublicPageFile = await fileExists(
-        path.join(publicDir, page === "/" ? "/index" : page),
-        "file"
-      );
+      const hasPublicPageFile = await fileExists(path.join(publicDir, page === "/" ? "/index" : page), "file");
       if (hasPublicPageFile) {
         conflictingPublicFiles.push(page);
       }
@@ -556,24 +452,15 @@ export class JoyBuildService {
     const numConflicting = conflictingPublicFiles.length;
 
     if (numConflicting) {
-      throw new Error(
-        `Conflicting public and page file${
-          numConflicting === 1 ? " was" : "s were"
-        } found. ${conflictingPublicFiles.join("\n")}`
-      );
+      throw new Error(`Conflicting public and page file${numConflicting === 1 ? " was" : "s were"} found. ${conflictingPublicFiles.join("\n")}`);
     }
 
     const nestedReservedPages = pageKeys.filter((page) => {
-      return (
-        page.match(/\/(_app|_document|_error)$/) && path.dirname(page) !== "/"
-      );
+      return page.match(/\/(_app|_document|_error)$/) && path.dirname(page) !== "/";
     });
 
     if (nestedReservedPages.length) {
-      Log.warn(
-        `The following reserved Joy.js pages were detected not directly under the pages directory:\n` +
-          nestedReservedPages.join("\n")
-      );
+      Log.warn(`The following reserved Joy.js pages were detected not directly under the pages directory:\n` + nestedReservedPages.join("\n"));
     }
 
     const buildCustomRoute = (
@@ -694,20 +581,10 @@ export class JoyBuildService {
 
     const [clientConfig, serverConfig] = configs;
 
-    const joyWebpackConfig = await getWebpackConfigForJoy(
-      serverConfig,
-      this.joyConfig
-    );
+    const joyWebpackConfig = await getWebpackConfigForJoy(serverConfig, this.joyConfig);
 
-    if (
-      clientConfig.optimization &&
-      (clientConfig.optimization.minimize !== true ||
-        (clientConfig.optimization.minimizer &&
-          clientConfig.optimization.minimizer.length === 0))
-    ) {
-      Log.warn(
-        `Production code optimization has been disabled in your project.`
-      );
+    if (clientConfig.optimization && (clientConfig.optimization.minimize !== true || (clientConfig.optimization.minimizer && clientConfig.optimization.minimizer.length === 0))) {
+      Log.warn(`Production code optimization has been disabled in your project.`);
     }
 
     const webpackBuildStart = process.hrtime();
@@ -735,28 +612,18 @@ export class JoyBuildService {
 
       console.error(chalk.red("Failed to compile.\n"));
 
-      if (
-        error.indexOf("private-joy-pages") > -1 &&
-        error.indexOf("does not contain a default export") > -1
-      ) {
+      if (error.indexOf("private-joy-pages") > -1 && error.indexOf("does not contain a default export") > -1) {
         const page_name_regex = /'private-joy-pages\/(?<page_name>[^']*)'/;
         const parsed = page_name_regex.exec(error);
         const page_name = parsed && parsed.groups && parsed.groups.page_name;
-        throw new Error(
-          `webpack build failed: found page without a React Component as default export in pages/${page_name}\n`
-        );
+        throw new Error(`webpack build failed: found page without a React Component as default export in pages/${page_name}\n`);
       }
 
       console.error(error);
       console.error();
 
-      if (
-        error.indexOf("private-joy-pages") > -1 ||
-        error.indexOf("__joy_polyfill__") > -1
-      ) {
-        throw new Error(
-          "> webpack config.resolve.alias was incorrectly overridden."
-        );
+      if (error.indexOf("private-joy-pages") > -1 || error.indexOf("__joy_polyfill__") > -1) {
+        throw new Error("> webpack config.resolve.alias was incorrectly overridden.");
       }
       throw new Error("> Build failed because of webpack errors");
     } else {
@@ -773,18 +640,12 @@ export class JoyBuildService {
       prefixText: `${Log.prefixes.info} Collecting page data`,
     });
 
-    const manifestPath = path.join(
-      outDir,
-      isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
-      PAGES_MANIFEST
-    );
+    const manifestPath = path.join(outDir, isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY, PAGES_MANIFEST);
     const buildManifestPath = path.join(outDir, BUILD_MANIFEST);
 
     const ssgPages = new Set<string>();
     const staticPages = new Set<string>();
-    const buildManifest = JSON.parse(
-      await promises.readFile(buildManifestPath, "utf8")
-    ) as BuildManifest;
+    const buildManifest = JSON.parse(await promises.readFile(buildManifestPath, "utf8")) as BuildManifest;
 
     let customAppGetInitialProps: boolean | undefined;
 
@@ -805,13 +666,7 @@ export class JoyBuildService {
       serverRuntimeConfig: config.serverRuntimeConfig,
     };
 
-    hasNonStaticErrorPage =
-      hasCustomErrorPage &&
-      (await hasCustomGetInitialProps(
-        getPagePath("/_error", outDir),
-        runtimeEnvConfig,
-        false
-      ));
+    hasNonStaticErrorPage = hasCustomErrorPage && (await hasCustomGetInitialProps(getPagePath("/_error", outDir), runtimeEnvConfig, false));
 
     const analysisBegin = process.hrtime();
 
@@ -840,11 +695,7 @@ export class JoyBuildService {
       // todo change name to  routePath
       // const pagePath = normalizePagePath(page);
       const pagePath = page;
-      const dataRoute = path.posix.join(
-        "/_joy/data",
-        buildId,
-        `${pagePath}.json`
-      );
+      const dataRoute = path.posix.join("/_joy/data", buildId, `${pagePath}.json`);
 
       let dataRouteRegex: string;
       let namedDataRouteRegex: string | undefined;
@@ -853,24 +704,11 @@ export class JoyBuildService {
       if (isDynamicRoute(page)) {
         const routeRegex = getRouteRegex(dataRoute.replace(/\.json$/, ""));
 
-        dataRouteRegex = normalizeRouteRegex(
-          routeRegex.re.source.replace(/\(\?:\\\/\)\?\$$/, "\\.json$")
-        );
-        namedDataRouteRegex = routeRegex.namedRegex!.replace(
-          /\(\?:\/\)\?\$$/,
-          "\\.json$"
-        );
+        dataRouteRegex = normalizeRouteRegex(routeRegex.re.source.replace(/\(\?:\\\/\)\?\$$/, "\\.json$"));
+        namedDataRouteRegex = routeRegex.namedRegex!.replace(/\(\?:\/\)\?\$$/, "\\.json$");
         routeKeys = routeRegex.routeKeys;
       } else {
-        dataRouteRegex = normalizeRouteRegex(
-          new RegExp(
-            `^${path.posix.join(
-              "/_joy/data",
-              escapeStringRegexp(buildId),
-              `${pagePath}.json`
-            )}$`
-          ).source
-        );
+        dataRouteRegex = normalizeRouteRegex(new RegExp(`^${path.posix.join("/_joy/data", escapeStringRegexp(buildId), `${pagePath}.json`)}$`).source);
       }
 
       return {
@@ -884,17 +722,12 @@ export class JoyBuildService {
     // @ts-ignore
     routesManifest.reactRoutes = reactRoutes;
 
-    await promises.writeFile(
-      routesManifestPath,
-      JSON.stringify(routesManifest),
-      "utf8"
-    );
+    await promises.writeFile(routesManifestPath, JSON.stringify(routesManifest), "utf8");
     // }
 
     // Since custom _app.js can wrap the 404 page we have to opt-out of static optimization if it has getInitialProps
     // Only export the static 404 when there is no /_error present
-    const useStatic404 =
-      !customAppGetInitialProps && (!hasNonStaticErrorPage || hasPages404);
+    const useStatic404 = !customAppGetInitialProps && (!hasNonStaticErrorPage || hasPages404);
 
     if (postCompileSpinner) postCompileSpinner.stopAndPersist();
 
@@ -919,34 +752,22 @@ export class JoyBuildService {
       allPageInfos.set(key, info);
     });
 
-    await printTreeView(
-      Object.keys(mappedPages),
-      allPageInfos,
-      isLikeServerless,
-      {
-        distPath: outDir,
-        buildId: buildId,
-        pagesDir,
-        useStatic404,
-        pageExtensions: config.pageExtensions,
-        buildManifest,
-        isModern: config.experimental.modern,
-      }
-    );
+    await printTreeView(Object.keys(mappedPages), allPageInfos, isLikeServerless, {
+      distPath: outDir,
+      buildId: buildId,
+      pagesDir,
+      useStatic404,
+      pageExtensions: config.pageExtensions,
+      buildManifest,
+      isModern: config.experimental.modern,
+    });
 
     if (debugOutput) {
       printCustomRoutes({ redirects, rewrites, headers });
     }
   }
 
-  private generateClientSsgManifest(
-    prerenderManifest: PrerenderManifest,
-    {
-      buildId,
-      outDir,
-      isModern,
-    }: { buildId: string; outDir: string; isModern: boolean }
-  ) {
+  private generateClientSsgManifest(prerenderManifest: PrerenderManifest, { buildId, outDir, isModern }: { buildId: string; outDir: string; isModern: boolean }) {
     const ssgPages: ClientSsgManifest = new Set<string>([
       ...Object.entries(prerenderManifest.routes)
         // Filter out dynamic routes
@@ -955,22 +776,8 @@ export class JoyBuildService {
       ...Object.keys(prerenderManifest.dynamicRoutes),
     ]);
 
-    const clientSsgManifestPaths = [
-      "_ssgManifest.js",
-      isModern && "_ssgManifest.module.js",
-    ]
-      .filter(Boolean)
-      .map((f) =>
-        path.join(`${CLIENT_STATIC_FILES_PATH}/${buildId}`, f as string)
-      );
-    const clientSsgManifestContent = `self.__SSG_MANIFEST=${devalue(
-      ssgPages
-    )};self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()`;
-    clientSsgManifestPaths.forEach((clientSsgManifestPath) =>
-      writeFileSync(
-        path.join(outDir, clientSsgManifestPath),
-        clientSsgManifestContent
-      )
-    );
+    const clientSsgManifestPaths = ["_ssgManifest.js", isModern && "_ssgManifest.module.js"].filter(Boolean).map((f) => path.join(`${CLIENT_STATIC_FILES_PATH}/${buildId}`, f as string));
+    const clientSsgManifestContent = `self.__SSG_MANIFEST=${devalue(ssgPages)};self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()`;
+    clientSsgManifestPaths.forEach((clientSsgManifestPath) => writeFileSync(path.join(outDir, clientSsgManifestPath), clientSsgManifestContent));
   }
 }

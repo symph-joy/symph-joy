@@ -20,7 +20,7 @@ import { JoyApiDevServer } from "../../server/joy-api-dev-server";
 import { JoyDevServer } from "../../server/joy-dev-server";
 
 @Configuration()
-export class JoyReactConfigDev extends JoyReactModuleConfig {
+export class JoyReactModuleConfigDev extends JoyReactModuleConfig {
   @Configuration.Provider()
   public joyReactRouter: JoyReactRouterPluginDev;
 
@@ -30,7 +30,7 @@ export class JoyReactConfigDev extends JoyReactModuleConfig {
 
 @Configuration({
   imports: {
-    joyReactConfig: JoyReactConfigDev,
+    joyReactConfig: JoyReactModuleConfigDev,
     joyBuildConfig: JoyBuildConfig,
   },
 })
@@ -55,10 +55,7 @@ export class JoyDevServerConfig extends JoyServerConfig {
 export class JoyDevCommand extends JoyCommand {
   private dir: string;
 
-  constructor(
-    private joyAppConfig: JoyAppConfig,
-    @Inject() private appContext: ServerApplication
-  ) {
+  constructor(private joyAppConfig: JoyAppConfig, @Inject() private appContext: ServerApplication) {
     super();
   }
 
@@ -82,40 +79,21 @@ export class JoyDevCommand extends JoyCommand {
       cwd: dir,
       name: "react",
     });
-    if (
-      reactVersion &&
-      semver.lt(reactVersion, "16.10.0") &&
-      semver.coerce(reactVersion)?.version !== "0.0.0"
-    ) {
-      Log.warn(
-        "Fast Refresh is disabled in your application due to an outdated `react` version. Please upgrade 16.10 or newer!"
-      );
+    if (reactVersion && semver.lt(reactVersion, "16.10.0") && semver.coerce(reactVersion)?.version !== "0.0.0") {
+      Log.warn("Fast Refresh is disabled in your application due to an outdated `react` version. Please upgrade 16.10 or newer!");
     } else {
       const reactDomVersion: string | null = await getPackageVersion({
         cwd: dir,
         name: "react-dom",
       });
-      if (
-        reactDomVersion &&
-        semver.lt(reactDomVersion, "16.10.0") &&
-        semver.coerce(reactDomVersion)?.version !== "0.0.0"
-      ) {
-        Log.warn(
-          "Fast Refresh is disabled in your application due to an outdated `react-dom` version. Please upgrade 16.10 or newer!"
-        );
+      if (reactDomVersion && semver.lt(reactDomVersion, "16.10.0") && semver.coerce(reactDomVersion)?.version !== "0.0.0") {
+        Log.warn("Fast Refresh is disabled in your application due to an outdated `react-dom` version. Please upgrade 16.10 or newer!");
       }
     }
 
-    const [sassVersion, nodeSassVersion] = await Promise.all([
-      getPackageVersion({ cwd: dir, name: "sass" }),
-      getPackageVersion({ cwd: dir, name: "node-sass" }),
-    ]);
+    const [sassVersion, nodeSassVersion] = await Promise.all([getPackageVersion({ cwd: dir, name: "sass" }), getPackageVersion({ cwd: dir, name: "node-sass" })]);
     if (sassVersion && nodeSassVersion) {
-      Log.warn(
-        "Your project has both `sass` and `node-sass` installed as dependencies, but should only use one or the other. " +
-          "Please remove the `node-sass` dependency from your project. " +
-          " #duplicate-sass"
-      );
+      Log.warn("Your project has both `sass` and `node-sass` installed as dependencies, but should only use one or the other. " + "Please remove the `node-sass` dependency from your project. " + " #duplicate-sass");
     }
   }
 
@@ -147,9 +125,7 @@ export class JoyDevCommand extends JoyCommand {
         });
         const appPackage = require(pkgAppPath);
         if (appPackage.scripts) {
-          const joyScript = Object.entries(appPackage.scripts).find(
-            (scriptLine) => scriptLine[1] === "joy"
-          );
+          const joyScript = Object.entries(appPackage.scripts).find((scriptLine) => scriptLine[1] === "joy");
           if (joyScript) {
             errorMessage += `\nUse \`npm run ${joyScript[0]} -- -p <some other port>\`.`;
           }

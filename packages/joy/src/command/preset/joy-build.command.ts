@@ -1,17 +1,30 @@
 import { CommandProvider } from "../command-provider.decorator";
 import { JoyCommand, JoyCommandOptionType } from "../command";
 import { printAndExit } from "../../server/lib/utils";
-import { CoreContext, Inject } from "@symph/core";
+import { Configuration, CoreContext, Inject } from "@symph/core";
 import { JoyAppConfig } from "../../joy-server/server/joy-config/joy-app-config";
 import { JoyBuildConfig } from "../../build/joy-build.config";
 import { JoyBuildService } from "../../build/joy-build.service";
+import { JoyReactModuleConfig } from "../../react/joy-react-module.config";
+import { JoyReactRouterPlugin } from "../../react/router/joy-react-router-plugin";
+
+@Configuration()
+export class JoyReactModuleConfigBuild extends JoyReactModuleConfig {
+  @Configuration.Provider()
+  public joyReactRouter: JoyReactRouterPlugin;
+}
+
+@Configuration({
+  imports: {
+    joyReactConfig: JoyReactModuleConfigBuild,
+    joyBuildConfig: JoyBuildConfig,
+  },
+})
+class JoyBuildCommandConfig {}
 
 @CommandProvider()
 export class JoyBuildCommand extends JoyCommand {
-  constructor(
-    private joyAppConfig: JoyAppConfig,
-    @Inject() private appContext: CoreContext
-  ) {
+  constructor(private joyAppConfig: JoyAppConfig, @Inject() private appContext: CoreContext) {
     super();
   }
 
@@ -56,7 +69,7 @@ export class JoyBuildCommand extends JoyCommand {
     const dir = args._[0] || ".";
     this.joyAppConfig.mergeCustomConfig({ dir, dev: true });
     try {
-      await this.appContext.loadModule(JoyBuildConfig);
+      await this.appContext.loadModule(JoyBuildCommandConfig);
       const buildService = await this.appContext.get(JoyBuildService);
       await buildService.build(args.profile, args.debug);
       printAndExit(undefined, 0);
