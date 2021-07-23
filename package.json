@@ -44,7 +44,7 @@
   },
   "lint-staged": {
     "packages/**/*.{js,jsx,ts,tsx,md,json}": [
-      "prettier --ignore-path ./.prettierignore --write"
+      "prettier --ignore-path ./.prettierignore --write --print-width=300"
     ]
   },
   "dependencies": {

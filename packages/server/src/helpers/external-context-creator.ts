@@ -62,9 +62,7 @@ export interface ExternalContextOptions {
 export class ExternalContextCreator {
   private readonly contextUtils = new ContextUtils();
   private readonly externalErrorProxy = new ExternalErrorProxy();
-  private readonly handlerMetadataStorage = new HandlerMetadataStorage<
-    ExternalHandlerMetadata
-  >();
+  private readonly handlerMetadataStorage = new HandlerMetadataStorage<ExternalHandlerMetadata>();
   private container: ServerContainer;
 
   constructor(
@@ -79,25 +77,13 @@ export class ExternalContextCreator {
   ) {}
 
   static fromContainer(container: ServerContainer): ExternalContextCreator {
-    const guardsContextCreator = new GuardsContextCreator(
-      container,
-      container.applicationConfig
-    );
+    const guardsContextCreator = new GuardsContextCreator(container, container.applicationConfig);
     const guardsConsumer = new GuardsConsumer();
-    const interceptorsContextCreator = new InterceptorsContextCreator(
-      container,
-      container.applicationConfig
-    );
+    const interceptorsContextCreator = new InterceptorsContextCreator(container, container.applicationConfig);
     const interceptorsConsumer = new InterceptorsConsumer();
-    const pipesContextCreator = new PipesContextCreator(
-      container,
-      container.applicationConfig
-    );
+    const pipesContextCreator = new PipesContextCreator(container, container.applicationConfig);
     const pipesConsumer = new PipesConsumer();
-    const filtersContextCreator = new ExternalExceptionFilterContext(
-      container,
-      container.applicationConfig
-    );
+    const filtersContextCreator = new ExternalExceptionFilterContext(container, container.applicationConfig);
 
     const externalContextCreator = new ExternalContextCreator(
       guardsContextCreator,
@@ -113,10 +99,7 @@ export class ExternalContextCreator {
     return externalContextCreator;
   }
 
-  public create<
-    TParamsMetadata extends ParamsMetadata = ParamsMetadata,
-    TContext extends string = ContextType
-  >(
+  public create<TParamsMetadata extends ParamsMetadata = ParamsMetadata, TContext extends string = ContextType>(
     instance: Controller,
     callback: (...args: unknown[]) => unknown,
     methodName: string,
@@ -132,10 +115,7 @@ export class ExternalContextCreator {
     contextType: TContext = "http" as TContext
   ) {
     // const module = this.getContextModuleName(instance.constructor);
-    const { argsLength, paramtypes, getParamsMetadata } = this.getMetadata<
-      TParamsMetadata,
-      TContext
-    >(instance, methodName, metadataKey, paramsFactory, contextType);
+    const { argsLength, paramtypes, getParamsMetadata } = this.getMetadata<TParamsMetadata, TContext>(instance, methodName, metadataKey, paramsFactory, contextType);
     const pipes = this.pipesContextCreator.create(
       instance,
       callback,
@@ -169,18 +149,11 @@ export class ExternalContextCreator {
 
     // const paramsMetadata = getParamsMetadata(module, contextId, inquirerId);
     const paramsMetadata = getParamsMetadata(contextId);
-    const paramsOptions = paramsMetadata
-      ? this.contextUtils.mergeParamsMetatypes(paramsMetadata, paramtypes)
-      : [];
+    const paramsOptions = paramsMetadata ? this.contextUtils.mergeParamsMetatypes(paramsMetadata, paramtypes) : [];
 
-    const fnCanActivate = options.guards
-      ? this.createGuardsFn(guards, instance, callback, contextType)
-      : null;
+    const fnCanActivate = options.guards ? this.createGuardsFn(guards, instance, callback, contextType) : null;
     const fnApplyPipes = this.createPipesFn(pipes, paramsOptions);
-    const handler = (
-      initialArgs: unknown[],
-      ...args: unknown[]
-    ) => async () => {
+    const handler = (initialArgs: unknown[], ...args: unknown[]) => async () => {
       if (fnApplyPipes) {
         await fnApplyPipes(initialArgs, ...args);
         return callback.apply(instance, initialArgs);
@@ -192,59 +165,24 @@ export class ExternalContextCreator {
       const initialArgs = this.contextUtils.createNullArray(argsLength);
       fnCanActivate && (await fnCanActivate(args));
 
-      const result = await this.interceptorsConsumer.intercept(
-        interceptors,
-        args,
-        instance,
-        callback,
-        handler(initialArgs, ...args),
-        contextType
-      );
+      const result = await this.interceptorsConsumer.intercept(interceptors, args, instance, callback, handler(initialArgs, ...args), contextType);
       return this.transformToResult(result);
     };
-    return options.filters
-      ? this.externalErrorProxy.createProxy(
-          target,
-          exceptionFilter,
-          contextType
-        )
-      : target;
+    return options.filters ? this.externalErrorProxy.createProxy(target, exceptionFilter, contextType) : target;
   }
 
-  public getMetadata<TMetadata, TContext extends string = ContextType>(
-    instance: Controller,
-    methodName: string,
-    metadataKey?: string,
-    paramsFactory?: ParamsFactory,
-    contextType?: TContext
-  ): ExternalHandlerMetadata {
+  public getMetadata<TMetadata, TContext extends string = ContextType>(instance: Controller, methodName: string, metadataKey?: string, paramsFactory?: ParamsFactory, contextType?: TContext): ExternalHandlerMetadata {
     const cacheMetadata = this.handlerMetadataStorage.get(instance, methodName);
     if (cacheMetadata) {
       return cacheMetadata;
     }
-    const metadata =
-      this.contextUtils.reflectCallbackMetadata<TMetadata>(
-        instance,
-        methodName,
-        metadataKey || ""
-      ) || {};
+    const metadata = this.contextUtils.reflectCallbackMetadata<TMetadata>(instance, methodName, metadataKey || "") || {};
     const keys = Object.keys(metadata);
     const argsLength = this.contextUtils.getArgumentsLength(keys, metadata);
-    const paramtypes = this.contextUtils.reflectCallbackParamtypes(
-      instance,
-      methodName
-    );
+    const paramtypes = this.contextUtils.reflectCallbackParamtypes(instance, methodName);
     // @ts-ignore
-    const contextFactory = this.contextUtils.getContextFactory<TContext>(
-      contextType,
-      instance,
-      instance[methodName]
-    );
-    const getParamsMetadata = (
-      moduleKey: string,
-      contextId = STATIC_CONTEXT,
-      inquirerId?: string
-    ) =>
+    const contextFactory = this.contextUtils.getContextFactory<TContext>(contextType, instance, instance[methodName]);
+    const getParamsMetadata = (moduleKey: string, contextId = STATIC_CONTEXT, inquirerId?: string) =>
       paramsFactory
         ? this.exchangeKeysForValues(
             keys,
@@ -258,11 +196,7 @@ export class ExternalContextCreator {
         : null;
 
     // @ts-ignore
-    const handlerMetadata: ExternalHandlerMetadata = {
-      argsLength,
-      paramtypes,
-      getParamsMetadata,
-    };
+    const handlerMetadata: ExternalHandlerMetadata = { argsLength, paramtypes, getParamsMetadata };
     this.handlerMetadataStorage.set(instance, methodName, handlerMetadata);
     return handlerMetadata;
   }
@@ -311,58 +245,31 @@ export class ExternalContextCreator {
 
       if (key.includes(CUSTOM_ROUTE_AGRS_METADATA)) {
         const { factory } = (metadata as any)[key];
-        const customExtractValue = this.contextUtils.getCustomFactory(
-          factory,
-          data,
-          contextFactory
-        );
+        const customExtractValue = this.contextUtils.getCustomFactory(factory, data, contextFactory);
         return { index, extractValue: customExtractValue, type, data, pipes };
       }
       const numericType = Number(type);
-      const extractValue = (...args: unknown[]) =>
-        paramsFactory.exchangeKeyForValue(numericType, data, args);
+      const extractValue = (...args: unknown[]) => paramsFactory.exchangeKeyForValue(numericType, data, args);
 
       return { index, extractValue, type: numericType, data, pipes };
     });
   }
 
-  public createPipesFn(
-    pipes: PipeTransform[],
-    paramsOptions: (ParamProperties & { metatype?: unknown })[]
-  ) {
+  public createPipesFn(pipes: PipeTransform[], paramsOptions: (ParamProperties & { metatype?: unknown })[]) {
     const pipesFn = async (args: unknown[], ...params: unknown[]) => {
-      const resolveParamValue = async (
-        param: ParamProperties & { metatype?: unknown }
-      ) => {
-        const {
-          index,
-          extractValue,
-          type,
-          data,
-          metatype,
-          pipes: paramPipes,
-        } = param;
+      const resolveParamValue = async (param: ParamProperties & { metatype?: unknown }) => {
+        const { index, extractValue, type, data, metatype, pipes: paramPipes } = param;
         const value = extractValue(...params);
 
-        args[index] = await this.getParamValue(
-          value,
-          { metatype, type, data },
-          pipes.concat(paramPipes)
-        );
+        args[index] = await this.getParamValue(value, { metatype, type, data }, pipes.concat(paramPipes));
       };
       await Promise.all(paramsOptions.map(resolveParamValue));
     };
     return paramsOptions.length ? pipesFn : null;
   }
 
-  public async getParamValue<T>(
-    value: T,
-    { metatype, type, data }: { metatype: any; type: any; data: any },
-    pipes: PipeTransform[]
-  ): Promise<any> {
-    return isEmpty(pipes)
-      ? value
-      : this.pipesConsumer.apply(value, { metatype, type, data }, pipes);
+  public async getParamValue<T>(value: T, { metatype, type, data }: { metatype: any; type: any; data: any }, pipes: PipeTransform[]): Promise<any> {
+    return isEmpty(pipes) ? value : this.pipesConsumer.apply(value, { metatype, type, data }, pipes);
   }
 
   public async transformToResult(resultOrDeffered: any) {
@@ -372,20 +279,9 @@ export class ExternalContextCreator {
     return resultOrDeffered;
   }
 
-  public createGuardsFn<TContext extends string = ContextType>(
-    guards: any[],
-    instance: Controller,
-    callback: (...args: any[]) => any,
-    contextType?: TContext
-  ): Function | null {
+  public createGuardsFn<TContext extends string = ContextType>(guards: any[], instance: Controller, callback: (...args: any[]) => any, contextType?: TContext): Function | null {
     const canActivateFn = async (args: any[]) => {
-      const canActivate = await this.guardsConsumer.tryActivate<TContext>(
-        guards,
-        args,
-        instance,
-        callback,
-        contextType
-      );
+      const canActivate = await this.guardsConsumer.tryActivate<TContext>(guards, args, instance, callback, contextType);
       if (!canActivate) {
         throw new ForbiddenException(FORBIDDEN_MESSAGE);
       }

@@ -1,9 +1,5 @@
 import { Configuration, Injectable } from "@symph/core";
-import {
-  ConfigConfiguration,
-  ConfigService,
-  FsConfigLoader,
-} from "@symph/config";
+import { ConfigConfiguration } from "@symph/config";
 
 @Injectable()
 export class HelloProvider {

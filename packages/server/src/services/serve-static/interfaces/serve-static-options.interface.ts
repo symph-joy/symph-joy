@@ -1,7 +1,7 @@
 // import { Provider, Type } from '@nestjs/common';
 // import { ModuleMetadata } from '@nestjs/common/interfaces';
 
-import { ModuleMetadata } from "../../../../dist/interfaces/modules";
+// import { ModuleMetadata } from "../../../../dist/interfaces/modules";
 import { Provider, Type } from "@symph/core";
 
 export interface ServeStaticOptions {
@@ -114,14 +114,12 @@ export interface ServeStaticModuleOptionsFactory {
   createLoggerOptions(): Promise<ServeStaticOptions[]> | ServeStaticOptions[];
 }
 
-export interface ServeStaticModuleAsyncOptions
-  extends Pick<ModuleMetadata, "imports"> {
+export interface ServeStaticModuleAsyncOptions {
+  // extends Pick<ModuleMetadata, "imports"> {
   isGlobal?: boolean;
   useExisting?: Type<ServeStaticModuleOptionsFactory>;
   useClass?: Type<ServeStaticModuleOptionsFactory>;
-  useFactory?: (
-    ...args: any[]
-  ) => Promise<ServeStaticOptions[]> | ServeStaticOptions[];
+  useFactory?: (...args: any[]) => Promise<ServeStaticOptions[]> | ServeStaticOptions[];
   inject?: any[];
   extraProviders?: Provider[];
 }
