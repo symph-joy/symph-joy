@@ -1,4 +1,4 @@
-import { Configurable, ConfigValue } from "../../../../src";
+import { Configurable, ConfigValue } from "@symph/config";
 import { Injectable } from "@symph/core";
 
 @Injectable()

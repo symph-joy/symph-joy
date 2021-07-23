@@ -1,7 +1,6 @@
-import { Injectable, RuntimeException } from "@symph/core";
 import fs from "fs";
 import findUp from "find-up";
-import path, { basename, extname } from "path";
+import { basename, extname } from "path";
 import { ConfigLoader } from "./config-loader";
 import { ConfigNotExistException } from "../errors/config-not-exist-exception";
 import { readConfigFile } from "./utils/read-config-file";

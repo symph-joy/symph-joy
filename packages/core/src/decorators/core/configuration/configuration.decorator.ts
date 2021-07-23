@@ -14,11 +14,7 @@ export function Configuration(
   return (target) => {
     const config = Object.assign({}, options);
     Reflect.defineMetadata(CONFIGURATION_METADATA, config, target);
-
-    const injectableMeta = getInjectableMeta(target);
-    if (!injectableMeta) {
-      Injectable()(target);
-    }
+    Injectable()(target);
   };
 }
 

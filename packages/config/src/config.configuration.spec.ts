@@ -21,13 +21,11 @@ async function createConfigServie(
     configClazz,
     entryModule,
   ]);
-  const configConfiguration = await context.get(ConfigConfiguration);
-  await configConfiguration.initConfig();
   return context.get(ConfigService);
 }
 
 describe("config.configuration", () => {
-  test(`should init with the initial value.`, async () => {
+  test(`Should init with the initial value.`, async () => {
     const configService = await createConfigServie(ConfigConfiguration, {
       initValue: {
         id: SYMPH_CONFIG_INIT_VALUE,
@@ -40,15 +38,17 @@ describe("config.configuration", () => {
     expect(configService.get("msg")).toBe("hello");
   });
 
-  test(`should load the special config file.`, async () => {
+  test(`Should load the special config file.`, async () => {
     @Configuration()
-    @Injectable()
     class CustomConfigConfiguration extends ConfigConfiguration {
-      @Configuration.Provider()
-      public fileLoader(configService: ConfigService): FileConfigLoader {
-        return new FileConfigLoader(
-          path.join(__dirname, "./fixtures/configs/config1.js")
-        );
+      protected async getConfigLoaders(
+        initConfig: Record<string, unknown>
+      ): Promise<ConfigLoader[]> {
+        return [
+          new FileConfigLoader(
+            path.join(__dirname, "./fixtures/configs/config1.js")
+          ),
+        ];
       }
     }
 
@@ -56,16 +56,18 @@ describe("config.configuration", () => {
     expect(configService.get("msg")).toBe("hello1");
   });
 
-  test(`should load the config file which in special dir.`, async () => {
+  test(`Should load the config file which in dir tree.`, async () => {
     @Configuration()
-    @Injectable()
     class CustomConfigConfiguration extends ConfigConfiguration {
-      @Configuration.Provider()
-      public fileLoader(configService: ConfigService): DirConfigLoader {
-        return new DirConfigLoader(
-          path.join(__dirname, "./fixtures/configs"),
-          "config1.js"
-        );
+      protected async getConfigLoaders(
+        initConfig: Record<string, unknown>
+      ): Promise<ConfigLoader[]> {
+        return [
+          new DirConfigLoader(
+            path.join(__dirname, "./fixtures/configs"),
+            "config1.js"
+          ),
+        ];
       }
     }
 
@@ -74,16 +76,18 @@ describe("config.configuration", () => {
     expect(configService.get("msg")).toBe("hello1");
   });
 
-  test(`should load the .env config file.`, async () => {
+  test(`Should load the .env config file.`, async () => {
     @Configuration()
-    @Injectable()
     class CustomConfigConfiguration extends ConfigConfiguration {
-      @Configuration.Provider()
-      public dotenvLoader(configService: ConfigService): DotenvConfigLoader {
-        return new DotenvConfigLoader(
-          path.join(__dirname, "./fixtures/configs/.env.test1"),
-          true
-        );
+      protected async getConfigLoaders(
+        initConfig: Record<string, unknown>
+      ): Promise<ConfigLoader[]> {
+        return [
+          new DotenvConfigLoader(
+            path.join(__dirname, "./fixtures/configs/.env.test1"),
+            true
+          ),
+        ];
       }
     }
 
@@ -92,11 +96,12 @@ describe("config.configuration", () => {
     expect(configService.get("ENV_MSG")).toBe("hello1");
   });
 
-  test(`should load config in custom order.`, async () => {
+  test(`Should load config in custom order. the next value should overwrite the before value.`, async () => {
     @Configuration()
-    @Injectable()
     class CustomConfigConfiguration extends ConfigConfiguration {
-      protected async getConfigLoaders(): Promise<ConfigLoader[]> {
+      protected async getConfigLoaders(
+        initConfig: Record<string, unknown>
+      ): Promise<ConfigLoader[]> {
         const fsLoader1 = new FileConfigLoader(
           path.join(__dirname, "./fixtures/configs/config1.js")
         );
@@ -109,6 +114,6 @@ describe("config.configuration", () => {
 
     const configService = await createConfigServie(CustomConfigConfiguration);
     expect(configService).toBeInstanceOf(ConfigService);
-    expect(configService.get("msg")).toBe("hello1");
+    expect(configService.get("msg")).toBe("hello2");
   });
 });

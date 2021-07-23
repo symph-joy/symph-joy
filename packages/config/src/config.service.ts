@@ -15,14 +15,9 @@ import {
   SYMPH_CONFIG_INIT_VALUE,
   SYMPH_CONFIG_LOADERS,
 } from "./constants";
-import path from "path";
 import { object } from "prop-types";
 import { isNil } from "@symph/core/dist/utils/shared.utils";
-import { FileConfigLoader } from "./loaders/file-config-loader";
-import {
-  CONFIGURATION_TOKEN,
-  VALIDATED_ENV_PROPNAME,
-} from "./config.constants";
+import { VALIDATED_ENV_PROPNAME } from "./config.constants";
 import get from "lodash.get";
 import has from "lodash.has";
 import set from "lodash.set";
@@ -84,37 +79,22 @@ export class ConfigService<K = Record<string, any>>
   private readonly cache: Partial<K> = {} as any;
 
   async afterPropertiesSet(): Promise<void> {
-    console.log(this.configLoaders);
+    await this.loadConfig();
   }
 
-  public async initConfig(configPath?: string): Promise<void> {
-    if (!configPath) {
-      configPath = this.getConfigPath();
-    }
-    return this.loadConfig(configPath);
+  public async initConfig(): Promise<void> {
+    return this.loadConfig();
   }
 
-  public getConfigPath(): string {
-    return process.cwd();
-  }
-
-  private async loadConfig(
-    // phase: string,
-    dirOrPath: string
-    // customConfig?: Partial<this> | null | any
-  ): Promise<void> {
+  private async loadConfig(): Promise<void> {
     if (!this.configLoaders || this.configLoaders.length === 0) {
-      console.warn("Config loader is not found.");
+      console.warn("Config value loader is not found.");
       return;
     }
     for (const configLoader of this.configLoaders) {
       const configValues = await configLoader.loadConfig();
       this.mergeConfig(configValues);
-      // this.internalConfig = configValues
     }
-    // const configValues = await this.fsConfigLoader.loadConfig(dirOrPath, this.internalConfig)
-
-    // this.mergeConfig(configValues)
   }
 
   get<T = any>(propertyPath: keyof K): T | undefined;
