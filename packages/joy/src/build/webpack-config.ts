@@ -635,7 +635,11 @@ export default async function getBaseWebpackConfig(
 
   function handleExternals(context: any, request: any, callback: any) {
     // return     callback()
+    // return  callback(undefined, `commonjs ${request}`);
     if (request === "@symph/joy") {
+      return callback(undefined, `commonjs ${request}`);
+    }
+    if (request === "@symph/joy/dist/index-server") {
       return callback(undefined, `commonjs ${request}`);
     }
     if (request === "@symph/joy/dist/react/service/joy-fetch.service") {
@@ -748,7 +752,7 @@ export default async function getBaseWebpackConfig(
 
     // Default pages have to be transpiled
     if (
-      !res.match(/joy[/\\]dist[/\\]next-server[/\\]/) &&
+      !res.match(/joy[/\\]dist[/\\]joy-server[/\\]/) &&
       (res.match(/[/\\]joy[/\\]dist[/\\]/) ||
         // This is the @babel/plugin-transform-runtime "helpers: true" option
         res.match(/node_modules[/\\]@babel[/\\]runtime[/\\]/))
@@ -770,7 +774,7 @@ export default async function getBaseWebpackConfig(
       const externalRequest = isJoyExternal
         ? // Generate Joy external import
           path.posix.join(
-            "joy",
+            "@symph/joy/dist/",
             path
               .relative(
                 // Root of Joy package:

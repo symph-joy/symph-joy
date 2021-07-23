@@ -623,13 +623,14 @@ export class JoyReactDevServer extends JoyReactServer {
     query: { [key: string]: string }
   ): Promise<string | null> {
     await this.devReady;
+
+    await this.hotReloader.ensurePath(pathname);
+
     const compilationErr = await this.getCompilationError(pathname);
     if (compilationErr) {
       res.statusCode = 500;
       return this.renderErrorToHTML(compilationErr, req, res, pathname, query);
     }
-
-    await this.hotReloader.ensurePath(pathname);
 
     // // In dev mode we use on demand entries to compile the page before rendering
     // try {
@@ -737,7 +738,7 @@ export class JoyReactDevServer extends JoyReactServer {
 
   async getCompilationError(page: string): Promise<any> {
     const errors = await this.hotReloader!.getCompilationErrors(page);
-    if (errors.length === 0) return;
+    if (!errors || errors.length === 0) return;
 
     // Return the very first error we found.
     return errors[0];

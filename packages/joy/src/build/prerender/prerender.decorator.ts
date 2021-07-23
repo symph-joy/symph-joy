@@ -20,10 +20,6 @@ export function Prerender(
 ): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
   return (constructor) => {
     if (isPrerenderClazz(constructor)) {
-      const injectableMeta = getInjectableMeta(constructor);
-      if (!injectableMeta) {
-        Injectable()(constructor);
-      }
       if (options) {
         throw new Error(
           `There is no need any options, when @Prerender() decorate a class${constructor.name} is implement JoyPrerenderInterface.`
@@ -33,6 +29,7 @@ export function Prerender(
         byProvider: true,
       } as PrerenderMetaByProvider;
       Reflect.defineMetadata(JOY_PRERENDER_META, meta, constructor);
+      Injectable(Object.assign({}, options, { autoLoad: "lazy" }))(constructor);
     } else {
       const routeMeta = getRouteMeta(constructor);
       if (!routeMeta) {

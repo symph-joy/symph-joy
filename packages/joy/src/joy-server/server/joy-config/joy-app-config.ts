@@ -262,7 +262,7 @@ export class JoyAppConfig implements IJoyConfig, InjectorHookTaps {
     return this.resolveAppDir(
       this.distDir,
       OUT_DIRECTORY,
-      "export",
+      "react/export",
       ...subPaths
     );
   }

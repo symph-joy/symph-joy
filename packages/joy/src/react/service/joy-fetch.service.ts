@@ -1,7 +1,5 @@
 import { RuntimeException } from "@symph/core";
 
-console.log(">>>>> JoyFetchService, dir:", __dirname);
-
 export class JoyFetchService {
   async fetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
     if (typeof window === "undefined" || typeof window.fetch === "undefined") {

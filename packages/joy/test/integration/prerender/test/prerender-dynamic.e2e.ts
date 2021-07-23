@@ -27,20 +27,12 @@ describe("prerender", () => {
 
   beforeAll(async () => {
     const appDir = path.resolve(__dirname, "../");
-    // await fs.remove(join(appDir, '.joy'))
     testContext = await JoyTestContext.createServerContext(appDir);
-    // testContext = await JoyTestContext.createDevServerContext(appDir);
-  }, 3000000);
+  }, 999999);
 
   afterAll(async () => {
     await testContext.killServer();
   });
-
-  // test("prerender run start", async () => {
-  //   const buildOutput = testContext?.buildState?.stdout;
-  //   console.log(">>> buildOutput:", buildOutput);
-  //   await waitForMoment();
-  // }, 9999999);
 
   describe("static page", () => {
     test("should output static html and data json file", async () => {
@@ -91,7 +83,7 @@ describe("prerender", () => {
       expect(resMatched).toBeTruthy();
       const resTs = resMatched![1];
       expect(resTs).toBe(prerenderTs);
-    }, 1111111111);
+    }, 999999);
   });
 
   describe("stateful page", () => {
@@ -140,12 +132,12 @@ describe("prerender", () => {
       // browser should not execute initStaticModelState, so the updateTime should not changed
       expect(ssgStaticUpdateTime).toBe(browserStaticUpdateTime);
       expect(Number(browserDynamicUpdateTime) > 0).toBeTruthy();
-    }, 1111111111);
+    }, 999999);
 
     test("should container route info in _ssgManifest.js file.", async () => {
       // _ssgManifest.js 文件在浏览器上用于标识已经ssg的路由，可以直接获取并使用route的data文件，不用再执行路由controller的initStaticModelState()方法.
       const staticOutput = testContext.joyAppConfig.resolveBuildOutDir(
-        `./static/${testContext.getBuildId()}/_ssgManifest.js`
+        `./react/static/${testContext.getBuildId()}/_ssgManifest.js`
       );
       const fileContext = await promises.readFile(staticOutput, {
         encoding: "utf-8",
@@ -225,7 +217,7 @@ describe("prerender", () => {
   describe("revalidate", () => {
     test("should export out initialRevalidateSeconds", async () => {
       const filePath = testContext.joyAppConfig.resolveBuildOutDir(
-        "prerender-manifest.json"
+        "react/prerender-manifest.json"
       );
       const fileContext = await promises.readFile(filePath, {
         encoding: "utf-8",

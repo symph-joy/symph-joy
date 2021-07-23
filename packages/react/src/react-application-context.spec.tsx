@@ -10,7 +10,7 @@ import { matchPath, MemoryRouter, useLocation } from "react-router-dom";
 import "reflect-metadata";
 import { ReactApplicationConfig } from "./react-application-config";
 import { Configuration, Inject, Injectable, JoyContainer } from "@symph/core";
-import { SymphReactFactory } from "./symph-react-factory";
+import { ReactApplicationFactory } from "./react-application-factory";
 
 describe("react-application", () => {
   describe("react-application", () => {
@@ -70,7 +70,7 @@ describe("react-application", () => {
         }
       }
 
-      const app = await SymphReactFactory.create();
+      const app = await ReactApplicationFactory.create();
       const App = app.start(() => (
         <HelloController propMsg={"hello propMsg"} />
       ));
@@ -102,7 +102,7 @@ describe("react-application", () => {
         }
       }
 
-      const app = await SymphReactFactory.create();
+      const app = await ReactApplicationFactory.create();
       const App = app.start(() => <HelloController />);
       const { getByTestId, container, rerender } = render(App);
       const statusDom = getByTestId("status");
@@ -238,7 +238,7 @@ describe("react-application", () => {
         }
       }
 
-      const app = await SymphReactFactory.create();
+      const app = await ReactApplicationFactory.create();
       const App = app.start(() => (
         <HelloController message={"hello from props"} />
       ));
@@ -297,7 +297,7 @@ describe("react-application", () => {
         }
       }
 
-      const app = await SymphReactFactory.create();
+      const app = await ReactApplicationFactory.create();
       const App = app.start(() => (
         <HelloController message={"hello from props"} />
       ));
@@ -414,7 +414,7 @@ describe("react-application", () => {
         },
       ];
 
-      const app = await SymphReactFactory.create();
+      const app = await ReactApplicationFactory.create();
       const App = app.start(() => (
         <MemoryRouter initialEntries={[location]} initialIndex={0}>
           {/*<Switch location={{pathname:'/user', search:'', state: '', hash: ''}}>*/}

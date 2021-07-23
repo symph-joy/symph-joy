@@ -123,7 +123,6 @@ export async function exportPage(
   }: ExportPageInput
 ): Promise<ExportPageResults> {
   // eslint-disable-next-line prefer-rest-params
-  console.log("》》》》》 export work arguments", arguments);
   let results: ExportPageResults = {
     ampValidations: [],
   };

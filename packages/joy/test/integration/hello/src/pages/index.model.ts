@@ -1,6 +1,5 @@
 import { Model, ReactModel } from "@symph/react";
-import { JoyFetchService } from "@symph/joy/dist/react/service/joy-fetch.service";
-// import {JoyFetchService} from "@symph/joy";
+import { JoyFetchService } from "@symph/joy";
 import { Inject } from "@symph/core";
 
 @Model()

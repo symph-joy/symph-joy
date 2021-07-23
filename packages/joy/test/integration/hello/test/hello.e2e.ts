@@ -18,10 +18,10 @@ describe("hello joy dev", () => {
   });
 
   test("api: should return hello message", async () => {
-    const response = (await got.get(testContext.getUrl("/api/hello"), {
+    const response = await got.get(testContext.getUrl("/api/hello"), {
       throwHttpErrors: false,
       responseType: "text",
-    })) as any;
+    });
     expect(response.body.trim()).toBe("Hello world!");
   }, 99999999);
 

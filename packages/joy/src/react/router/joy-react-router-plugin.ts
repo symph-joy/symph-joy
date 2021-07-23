@@ -80,7 +80,7 @@ export class JoyReactRouterPlugin<
     return route as T;
   }
 
-  protected addScanOutModule(module: IScanOutModule): boolean {
+  protected addFromScanOutModule(module: IScanOutModule): boolean {
     if (!module.providerDefines || module.providerDefines.size === 0) {
       return false;
     }
@@ -117,10 +117,10 @@ export class JoyReactRouterPlugin<
   @Tap()
   public async afterScanOutModuleHook(module: IScanOutModule) {
     if (module.isAdd) {
-      this.addScanOutModule(module);
+      this.addFromScanOutModule(module);
     } else if (module.isModify) {
       this.removeModule(module.path);
-      this.addScanOutModule(module);
+      this.addFromScanOutModule(module);
     } else if (module.isRemove) {
       this.removeModule(module.path);
     }

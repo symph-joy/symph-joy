@@ -4,7 +4,7 @@ import { ReactApplicationConfig } from "./react-application-config";
 import { ReactApplicationContext } from "./react-application-context";
 import { ApplicationConfig } from "./application-config";
 
-export class SymphReactFactoryImplement extends CoreFactoryImplement {
+export class ReactApplicationFactoryImplement extends CoreFactoryImplement {
   public async create(
     entry: Record<string, unknown> | Type = ReactApplicationConfig,
     options?: JoyApplicationOptions
@@ -21,4 +21,4 @@ export class SymphReactFactoryImplement extends CoreFactoryImplement {
   }
 }
 
-export const SymphReactFactory = new SymphReactFactoryImplement();
+export const ReactApplicationFactory = new ReactApplicationFactoryImplement();

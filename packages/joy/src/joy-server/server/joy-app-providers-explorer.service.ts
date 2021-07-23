@@ -47,7 +47,7 @@ export class JoyAppProvidersExplorerService {
     }
   }
 
-  protected addScanOutModule(module: IScanOutModule): boolean {
+  protected addFromScanOutModule(module: IScanOutModule): boolean {
     if (!module.providerDefines || module.providerDefines.size === 0) {
       return false;
     }
@@ -69,7 +69,7 @@ export class JoyAppProvidersExplorerService {
     }
     if (hasNotAutoLoadProvider) {
       throw new Error(
-        "Can not export auto load class and not auto load class in single js/ts file."
+        `Can not export auto load class and not auto load class in single js/ts file. module: ${module.resource}`
       );
     }
 
@@ -80,10 +80,10 @@ export class JoyAppProvidersExplorerService {
   @Tap()
   public async afterScanOutModuleHook(module: IScanOutModule) {
     if (module.isAdd) {
-      this.addScanOutModule(module);
+      this.addFromScanOutModule(module);
     } else if (module.isModify) {
       this.removeModule(module.path);
-      this.addScanOutModule(module);
+      this.addFromScanOutModule(module);
     } else if (module.isRemove) {
       this.removeModule(module.path);
     }

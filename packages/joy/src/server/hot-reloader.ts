@@ -37,6 +37,7 @@ import crypto from "crypto";
 import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
 import { ReactRouter } from "@symph/react";
 import { getWebpackConfigForJoy } from "../build/webpack-config-for-joy";
+import chalk from "chalk";
 
 export async function renderScriptError(
   res: ServerResponse,
@@ -149,8 +150,10 @@ export default class HotReloader {
   private middlewares: any[];
   private pagesDir: string;
   private webpackHotMiddleware: (NextHandleFunction & any) | null;
-  private stats: webpack.Stats | null;
+  private clientStats: webpack.Stats | null;
   private serverStats: webpack.Stats | null;
+  private srcStats: webpack.Stats | null;
+  private srcError: Error | null = null;
   private clientError: Error | null = null;
   private serverError: Error | null = null;
   private serverPrevDocumentHash: string | undefined;
@@ -175,7 +178,7 @@ export default class HotReloader {
     this.middlewares = [];
     this.pagesDir = this.joyAppConfig.resolvePagesDir();
     this.webpackHotMiddleware = null;
-    this.stats = null;
+    this.clientStats = null;
     this.serverStats = null;
     this.serverPrevDocumentHash = undefined;
   }
@@ -416,11 +419,12 @@ export default class HotReloader {
       multiCompiler.compilers[1],
       multiCompiler.compilers[2]
     );
-
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
     multiCompiler.compilers[3].hooks.failed.tap(
       "JoyJSHotReloaderForSrc",
       (err: Error) => {
+        this.srcError = err;
+        this.srcStats = null;
         console.log(err);
       }
     );
@@ -430,6 +434,21 @@ export default class HotReloader {
         //  ===== 扫描src目录
         // const distPagesDir = this.config.resolveDistPagesDir()
         // const distPagesDir = this.config.resolveAppDir(this.config.outDir, 'server', 'dist/src' )
+        if (stats.hasErrors()) {
+          // Deprecated: 错误信息在webpack.WellKnownErrorsPlugin得到更好的处理，保留以下逻辑，只做兜底处理。
+          for (let i = 0; i < stats.compilation.errors.length; i++) {
+            const message = stats.compilation.errors[i].message;
+            const coloredMessage = chalk`${message}`;
+            const plainMsg = stripAnsiColor(coloredMessage);
+            stats.compilation.errors[i].message = plainMsg;
+            // 默认最多只展示2两条，防止太多干扰console输出。
+            if (i < 2) {
+              console.error(coloredMessage);
+            }
+          }
+        }
+        this.srcStats = stats;
+        this.srcError = null;
         const distPagesDir = this.joyAppConfig.resolveAppDir(
           this.joyAppConfig.distDir,
           "dist/src"
@@ -490,14 +509,14 @@ export default class HotReloader {
       "JoyjsHotReloaderForClient",
       (err: Error) => {
         this.clientError = err;
-        this.stats = null;
+        this.clientStats = null;
       }
     );
     multiCompiler.compilers[0].hooks.done.tap(
       "JoyjsHotReloaderForClient",
       (stats) => {
         this.clientError = null;
-        this.stats = stats;
+        this.clientStats = stats;
 
         const { compilation } = stats;
         const chunkNames = new Set(
@@ -579,7 +598,7 @@ export default class HotReloader {
       this.webpackHotMiddleware.middleware,
       getOverlayMiddleware({
         rootDirectory: this.dir,
-        stats: () => this.stats,
+        stats: () => this.clientStats,
         serverStats: () => this.serverStats,
       }),
     ];
@@ -595,10 +614,10 @@ export default class HotReloader {
   public async getCompilationErrors(page: string) {
     const normalizedPage = normalizePathSep(page);
 
-    if (this.clientError || this.serverError) {
-      return [this.clientError || this.serverError];
-    } else if (this.stats?.hasErrors()) {
-      const { compilation } = this.stats;
+    if (this.srcError || this.clientError || this.serverError) {
+      return [this.srcError || this.clientError || this.serverError];
+    } else if (this.clientStats?.hasErrors()) {
+      const { compilation } = this.clientStats;
       const failedPages = erroredPages(compilation);
 
       // If there is an error related to the requesting page we display it instead of the first error
@@ -610,9 +629,14 @@ export default class HotReloader {
       }
 
       // If none were found we still have to show the other errors
-      return this.stats.compilation.errors;
+      return this.clientStats.compilation.errors;
     }
-
+    if (this.srcStats?.hasErrors()) {
+      return this.srcStats?.compilation.errors;
+    }
+    if (this.serverStats?.hasErrors()) {
+      return this.srcStats?.compilation.errors;
+    }
     return [];
   }
 
@@ -684,4 +708,13 @@ export default class HotReloader {
 
 function diff(a: Set<any>, b: Set<any>) {
   return new Set([...a].filter((v) => !b.has(v)));
+}
+
+function stripAnsiColor(str: string) {
+  const pattern = [
+    "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)",
+    "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))",
+  ].join("|");
+  const regColor = new RegExp(pattern, "g");
+  return str.replace(regColor, "");
 }

@@ -122,6 +122,8 @@ export function joyBabelPreset(
       ],
     ],
     plugins: [
+      [require("./plugins/joy-import-babel-plugin"), { isServer: isServer }],
+
       [
         require("./plugins/jsx-pragma"),
         {

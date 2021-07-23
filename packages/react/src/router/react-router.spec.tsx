@@ -7,11 +7,11 @@ import Hello1 from "./fixtures/router/pages/hello1";
 import { ReactApplicationConfig } from "../react-application-config";
 import { ReactRouter } from "./react-router";
 import DynamicRoutePath from "./fixtures/router/pages/dynamic-route-path";
-import { SymphReactFactory } from "../symph-react-factory";
+import { ReactApplicationFactory } from "../react-application-factory";
 
 describe("react-router", () => {
   test("should render the main route, by special component", async () => {
-    const app = await SymphReactFactory.create({
+    const app = await ReactApplicationFactory.create({
       ReactApplicationConfig,
       reactRouterProps: { type: Object, useValue: { initialEntries: ["/"] } },
       Main: Main,
@@ -29,7 +29,7 @@ describe("react-router", () => {
   });
 
   test("should render the main route, by special providerId", async () => {
-    const app = await SymphReactFactory.create({
+    const app = await ReactApplicationFactory.create({
       ReactApplicationConfig,
       reactRouterProps: { type: Object, useValue: { initialEntries: ["/"] } },
       Main: Main,
@@ -47,7 +47,7 @@ describe("react-router", () => {
   });
 
   test("should render the second level route", async () => {
-    const app = await SymphReactFactory.create({
+    const app = await ReactApplicationFactory.create({
       ReactApplicationConfig,
       reactRouterProps: {
         type: Object,
@@ -76,7 +76,7 @@ describe("react-router", () => {
   });
 
   test("should render the dynamic route, and bind the path param to prop", async () => {
-    const app = await SymphReactFactory.create({
+    const app = await ReactApplicationFactory.create({
       ReactApplicationConfig,
       reactRouterProps: {
         type: Object,

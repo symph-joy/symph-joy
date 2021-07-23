@@ -32,6 +32,7 @@ module.exports = {
     "/packages/react/dist",
     "/packages/core/dist",
     "/packages/server/dist",
+    "/packages/config/dist",
     "\\.pnp\\.[^\\/]+$",
   ],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],

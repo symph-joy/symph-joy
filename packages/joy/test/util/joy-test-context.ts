@@ -1,18 +1,19 @@
 import child_process from "child_process";
 import {
   findPort,
-  killApp,
-  joyDev,
   joyBuild,
+  joyDev,
   joyStart,
+  killApp,
+  RunOptions,
 } from "./joy-test-utils";
 import { stringify } from "querystring";
-import { CoreContext, EntryType } from "@symph/core";
+import { EntryType } from "@symph/core";
 import { JoyAppConfig } from "@symph/joy";
 import fs from "fs";
 
 export class JoyTestContext {
-  public buildState?: { code: number; stdout?: string; strerr?: string };
+  public buildState?: { code: number; stdout?: string; stderr?: string };
   public joyAppConfig: JoyAppConfig;
 
   public port = 80;
@@ -38,19 +39,30 @@ export class JoyTestContext {
     return this;
   }
 
-  async start(port?: number, args?: any[]) {
+  async start(
+    port?: number,
+    buildArgs?: any[],
+    buildOpts?: RunOptions,
+    startOpts?: RunOptions
+  ) {
     const workDir = this.workDir;
+    await this.init();
+    this.dev = true;
+
     if (!this.isInit) {
       await this.init();
     }
-    const buildState = await joyBuild(workDir, args);
+    const buildState = await joyBuild(workDir, buildArgs, buildOpts);
+    this.buildState = buildState;
+    if (buildState.code !== 0) {
+      if (!buildOpts?.ignoreFail) {
+        throw new Error(buildState.stderr || "JoyTestContext: build failed.");
+      }
+      return;
+    }
     port = 4000 || port || (await findPort());
     this.port = port;
-
-    await this.init();
-    this.buildState = buildState;
-    this.dev = true;
-    this.serverProcess = await joyStart(workDir, port);
+    this.serverProcess = await joyStart(workDir, port, startOpts);
     return this;
   }
 
@@ -71,7 +83,10 @@ export class JoyTestContext {
       return this.cachedBuildId;
     }
     this.cachedBuildId = fs
-      .readFileSync(this.joyAppConfig.resolveBuildOutDir("BUILD_ID"), "utf8")
+      .readFileSync(
+        this.joyAppConfig.resolveBuildOutDir("react/BUILD_ID"),
+        "utf8"
+      )
       .trim();
     return this.cachedBuildId;
   }
@@ -91,10 +106,12 @@ export class JoyTestContext {
   static async createServerContext(
     workDir: string,
     port?: number,
-    args?: any[]
+    buildArgs?: any[],
+    buildOpts?: RunOptions,
+    startOpts?: RunOptions
   ) {
     const testContext = new JoyTestContext(workDir);
-    await testContext.start(port, args);
+    await testContext.start(port, buildArgs, buildOpts, startOpts);
     return testContext;
   }
 
