@@ -58,7 +58,10 @@ export interface ClassProvider<T = any> extends IProvider<T> {
   scope?: Scope;
 
   /**
-   * whether auto register into container, when file scan out the class。
+   * whether auto register into container,
+   * ture: scan file system, and register to container.
+   * lazy: during app running, auto register to container and instance.
+   * false: do noting. register and instance should by developer.
    * default is true
    */
   autoLoad?: boolean | "lazy";

@@ -230,7 +230,7 @@ describe("provider-scanner", () => {
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.TRANSIENT,
-        autoLoad: false,
+        autoLoad: true,
       });
     });
 
@@ -255,7 +255,7 @@ describe("provider-scanner", () => {
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.TRANSIENT,
-        autoLoad: false,
+        autoLoad: true,
       });
       expect(testProvider1).toEqual({
         id: "testProvider1",

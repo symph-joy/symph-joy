@@ -364,7 +364,7 @@ describe("injector-scopes-static", () => {
         constructor(@Inject("thisIsWrong") public dep: Dep) {}
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
 
       const [
         mainWrapper,
@@ -380,11 +380,50 @@ describe("injector-scopes-static", () => {
       expect(instance.dep).toBeInstanceOf(Dep);
 
       let error;
+      let wrongInstance: WrongMain | undefined = undefined;
       try {
-        await injector.loadProvider<Main>(wrongMainWrapper, container);
+        wrongInstance = await injector.loadProvider<Main>(
+          wrongMainWrapper,
+          container
+        );
       } catch (e) {
+        console.warn(e);
         error = e;
       }
+      expect(wrongInstance).toBeUndefined();
+      expect(error).toBeTruthy();
+      expect(error).toBeInstanceOf(UnknownDependenciesException);
+    });
+
+    it("should throw an error, if provider name is wrong.", async () => {
+      @Injectable()
+      class Dep {}
+
+      @Injectable()
+      class Main {
+        constructor(@Inject("thisIsWrong") public dep: Dep) {}
+      }
+
+      const container = instanceContainer();
+
+      const [mainWrapper, depWrapper] = createProviderWrappers(
+        container,
+        Main,
+        Dep
+      );
+
+      let error;
+      let wrongInstance: Main | undefined = undefined;
+      try {
+        wrongInstance = await injector.loadProvider<Main>(
+          mainWrapper,
+          container
+        );
+      } catch (e) {
+        console.error(e);
+        error = e;
+      }
+      expect(wrongInstance).toBeUndefined();
       expect(error).toBeTruthy();
       expect(error).toBeInstanceOf(UnknownDependenciesException);
     });
@@ -815,7 +854,7 @@ describe("injector-scopes-static", () => {
     });
 
     it("should dynamic loading the model instance, at run time", async () => {
-      @Injectable({ autoLoad: true })
+      @Injectable({ autoLoad: "lazy" })
       class Dep {}
 
       @Injectable()

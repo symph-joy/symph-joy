@@ -503,7 +503,7 @@ export class Injector {
     name?: string
   ): InstanceWrapper | undefined {
     const meta = getInjectableMeta(type);
-    if (!meta || !meta.autoLoad) {
+    if (!meta || meta.autoLoad !== "lazy") {
       return undefined;
     }
     if (name) {
