@@ -45,10 +45,7 @@ describe("injector-scopes-static", () => {
         constructor(public singProvider: SingProvider) {}
       }
 
-      let singProviderWrapper: InstanceWrapper<SingProvider>,
-        transProviderWrapper: InstanceWrapper<TransProvider>,
-        mainTestWrapper: InstanceWrapper<MainTest>,
-        container: JoyContainer;
+      let singProviderWrapper: InstanceWrapper<SingProvider>, transProviderWrapper: InstanceWrapper<TransProvider>, mainTestWrapper: InstanceWrapper<MainTest>, container: JoyContainer;
 
       beforeAll(async () => {
         container = new JoyContainer();
@@ -79,41 +76,26 @@ describe("injector-scopes-static", () => {
       });
 
       test("should create a singleton instance of component", async () => {
-        const singProvider = await injector.loadProvider(
-          singProviderWrapper,
-          container
-        );
+        const singProvider = await injector.loadProvider(singProviderWrapper, container);
         expect(singProvider).not.toBeNull();
         expect(singProvider).toBeInstanceOf(SingProvider);
       });
 
       test("should return same instance of component when load twice", async () => {
-        const provider1 = await injector.loadProvider(
-          singProviderWrapper,
-          container
-        );
-        const provider2 = await injector.loadProvider(
-          singProviderWrapper,
-          container
-        );
+        const provider1 = await injector.loadProvider(singProviderWrapper, container);
+        const provider2 = await injector.loadProvider(singProviderWrapper, container);
         expect(provider1).toBe(provider2);
         expect(provider1).not.toBe(new SingProvider());
       });
 
       test("should create a transient instance of component", async () => {
-        const provider = await injector.loadProvider(
-          transProviderWrapper,
-          container
-        );
+        const provider = await injector.loadProvider(transProviderWrapper, container);
         expect(provider).not.toBeNull();
         expect(provider).toBeInstanceOf(TransProvider);
       });
 
       test("should create an instance of Component with proper dependencies", async () => {
-        const mainTest = await injector.loadProvider(
-          mainTestWrapper,
-          container
-        );
+        const mainTest = await injector.loadProvider(mainTestWrapper, container);
         expect(mainTest).toBeInstanceOf(MainTest);
         expect(mainTest.singProvider).toBeInstanceOf(SingProvider);
         expect(mainTest.prop).toBeInstanceOf(SingProvider);
@@ -122,14 +104,8 @@ describe("injector-scopes-static", () => {
 
       // transient
       test("should return different instances of component when load twice", async () => {
-        const provider1 = await injector.loadProvider(
-          transProviderWrapper,
-          container
-        );
-        const provider2 = await injector.loadProvider(
-          transProviderWrapper,
-          container
-        );
+        const provider1 = await injector.loadProvider(transProviderWrapper, container);
+        const provider2 = await injector.loadProvider(transProviderWrapper, container);
         expect(provider1).not.toBeNull();
         expect(provider2).not.toBeNull();
         expect(provider1).not.toBe(provider2);
@@ -138,10 +114,7 @@ describe("injector-scopes-static", () => {
       test("should inject different instance into one hostInstance, when scope is SCOPE.TRANSIENT", async () => {
         @Injectable()
         class TransDepsMain {
-          constructor(
-            public transProvider1: TransProvider,
-            public transProvider2: TransProvider
-          ) {}
+          constructor(public transProvider1: TransProvider, public transProvider2: TransProvider) {}
         }
 
         const transDepsMainWrapper = new InstanceWrapper<TransDepsMain>({
@@ -152,10 +125,7 @@ describe("injector-scopes-static", () => {
         });
         container.addWrapper(transDepsMainWrapper);
 
-        const main = await injector.loadProvider(
-          transDepsMainWrapper,
-          container
-        );
+        const main = await injector.loadProvider(transDepsMainWrapper, container);
         expect(main).toBeInstanceOf(TransDepsMain);
         expect(main.transProvider1).not.toBeNull();
         expect(main.transProvider2).not.toBeNull();
@@ -257,16 +227,9 @@ describe("injector-scopes-static", () => {
       }
 
       const container = new JoyContainer();
-      const [mainWrapper, helloWrapper] = createProviderWrappers(
-        container,
-        Main,
-        Hello
-      );
+      const [mainWrapper, helloWrapper] = createProviderWrappers(container, Main, Hello);
 
-      const instance = await injector.loadProvider<Main>(
-        mainWrapper,
-        container
-      );
+      const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance.hello).toBeInstanceOf(Hello);
       expect(instance.helloOptional).toBeUndefined();
     });
@@ -280,23 +243,13 @@ describe("injector-scopes-static", () => {
 
       @Injectable()
       class Main {
-        constructor(
-          @Optional() @Inject() public hello: Hello,
-          @Optional() @Inject() public helloOptional: HelloOptional
-        ) {}
+        constructor(@Optional() @Inject() public hello: Hello, @Optional() @Inject() public helloOptional: HelloOptional) {}
       }
 
       const container = new JoyContainer();
-      const [mainWrapper, helloWrapper] = createProviderWrappers(
-        container,
-        Main,
-        Hello
-      );
+      const [mainWrapper, helloWrapper] = createProviderWrappers(container, Main, Hello);
 
-      const instance = await injector.loadProvider<Main>(
-        mainWrapper,
-        container
-      );
+      const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance.hello).toBeInstanceOf(Hello);
       expect(instance.helloOptional).toBeUndefined();
     });
@@ -315,10 +268,7 @@ describe("injector-scopes-static", () => {
 
       const wrapper = container.getProvider(SuperClazz);
       expect(wrapper?.type).toBe(Sub1);
-      const instance = await injector.loadProvider<SuperClazz>(
-        wrapper!,
-        container
-      );
+      const instance = await injector.loadProvider<SuperClazz>(wrapper!, container);
       expect(instance).toBeInstanceOf(Sub1);
     });
 
@@ -333,11 +283,7 @@ describe("injector-scopes-static", () => {
       class Sub2 extends SuperClazz {}
 
       const container = new JoyContainer();
-      const [sub1Wrapper, sub2Wrapper] = createProviderWrappers(
-        container,
-        Sub1,
-        Sub2
-      );
+      const [sub1Wrapper, sub2Wrapper] = createProviderWrappers(container, Sub1, Sub2);
 
       let err: Error | undefined = undefined;
       try {
@@ -366,26 +312,16 @@ describe("injector-scopes-static", () => {
 
       const container = instanceContainer();
 
-      const [
-        mainWrapper,
-        depWrapper,
-        wrongMainWrapper,
-      ] = createProviderWrappers(container, Main, Dep, WrongMain);
+      const [mainWrapper, depWrapper, wrongMainWrapper] = createProviderWrappers(container, Main, Dep, WrongMain);
 
-      const instance = await injector.loadProvider<Main>(
-        mainWrapper,
-        container
-      );
+      const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance).toBeTruthy();
       expect(instance.dep).toBeInstanceOf(Dep);
 
       let error;
       let wrongInstance: WrongMain | undefined = undefined;
       try {
-        wrongInstance = await injector.loadProvider<Main>(
-          wrongMainWrapper,
-          container
-        );
+        wrongInstance = await injector.loadProvider<Main>(wrongMainWrapper, container);
       } catch (e) {
         console.warn(e);
         error = e;
@@ -406,19 +342,12 @@ describe("injector-scopes-static", () => {
 
       const container = instanceContainer();
 
-      const [mainWrapper, depWrapper] = createProviderWrappers(
-        container,
-        Main,
-        Dep
-      );
+      const [mainWrapper, depWrapper] = createProviderWrappers(container, Main, Dep);
 
       let error;
       let wrongInstance: Main | undefined = undefined;
       try {
-        wrongInstance = await injector.loadProvider<Main>(
-          mainWrapper,
-          container
-        );
+        wrongInstance = await injector.loadProvider<Main>(mainWrapper, container);
       } catch (e) {
         console.error(e);
         error = e;
@@ -437,10 +366,7 @@ describe("injector-scopes-static", () => {
 
       @Injectable()
       class Main {
-        constructor(
-          @Inject(Dep) public constructorDep: Dep,
-          @Inject(SubDep) public constructorSubDep: Dep
-        ) {}
+        constructor(@Inject(Dep) public constructorDep: Dep, @Inject(SubDep) public constructorSubDep: Dep) {}
 
         @Inject(Dep)
         public propDep: Dep;
@@ -450,17 +376,9 @@ describe("injector-scopes-static", () => {
       }
 
       const container = new JoyContainer();
-      const [mainWrapper, depWrapper, subDepWrapper] = createProviderWrappers(
-        container,
-        Main,
-        Dep,
-        SubDep
-      );
+      const [mainWrapper, depWrapper, subDepWrapper] = createProviderWrappers(container, Main, Dep, SubDep);
 
-      const instance = await injector.loadProvider<Main>(
-        mainWrapper,
-        container
-      );
+      const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance).toBeTruthy();
       expect(instance.constructorDep).toBeInstanceOf(Dep);
       expect(instance.constructorSubDep).toBeInstanceOf(SubDep);
@@ -482,17 +400,10 @@ describe("injector-scopes-static", () => {
       }
 
       const container = new JoyContainer();
-      const [mainWrapper, depWrapper] = createProviderWrappers(
-        container,
-        Main,
-        Dep
-      );
+      const [mainWrapper, depWrapper] = createProviderWrappers(container, Main, Dep);
 
       try {
-        const instance = await injector.loadProvider<Main>(
-          mainWrapper,
-          container
-        );
+        const instance = await injector.loadProvider<Main>(mainWrapper, container);
         throw new Error();
       } catch (e) {
         expect(e).toBeInstanceOf(InvalidDependencyTypeException);
@@ -520,18 +431,10 @@ describe("injector-scopes-static", () => {
       }
 
       const container = new JoyContainer();
-      const [mainWrapper, dep1Wrapper, dep2Wrapper] = createProviderWrappers(
-        container,
-        Main,
-        Dep1,
-        Dep2
-      );
+      const [mainWrapper, dep1Wrapper, dep2Wrapper] = createProviderWrappers(container, Main, Dep1, Dep2);
 
       try {
-        const instance = await injector.loadProvider<Main>(
-          mainWrapper,
-          container
-        );
+        const instance = await injector.loadProvider<Main>(mainWrapper, container);
         throw new Error();
       } catch (e) {
         expect(e).toBeInstanceOf(InvalidDependencyTypeException);
@@ -558,18 +461,10 @@ describe("injector-scopes-static", () => {
       }
 
       const container = new JoyContainer();
-      const [mainWrapper, baseDepWrapper, depWrapper] = createProviderWrappers(
-        container,
-        Main,
-        BaseDep,
-        Dep
-      );
+      const [mainWrapper, baseDepWrapper, depWrapper] = createProviderWrappers(container, Main, BaseDep, Dep);
 
       try {
-        const instance = await injector.loadProvider<Main>(
-          mainWrapper,
-          container
-        );
+        const instance = await injector.loadProvider<Main>(mainWrapper, container);
         throw new Error();
       } catch (e) {
         expect(e).toBeInstanceOf(InvalidDependencyTypeException);
@@ -593,16 +488,8 @@ describe("injector-scopes-static", () => {
       }
 
       const container = new JoyContainer();
-      const [mainWrapper, dep1Wrapper, dep2Wrapper] = createProviderWrappers(
-        container,
-        Main,
-        SubDep1,
-        SubDep2
-      );
-      const instance = await injector.loadProvider<Main>(
-        mainWrapper,
-        container
-      );
+      const [mainWrapper, dep1Wrapper, dep2Wrapper] = createProviderWrappers(container, Main, SubDep1, SubDep2);
+      const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance).toBeTruthy();
       expect(instance.subDep2).toBeInstanceOf(SubDep2);
     });
@@ -634,18 +521,9 @@ describe("injector-scopes-static", () => {
 
       class TestModule {}
 
-      const [
-        dep1Wrapper,
-        dep2Wrapper,
-        mainWrapper,
-      ] = createProviderWrappers(container, Dep1, Dep2, [
-        Main,
-        { scope: Scope.DEFAULT },
-      ]);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, [Main, { scope: Scope.DEFAULT }]);
 
-      const instance = injector
-        .loadInstance(mainWrapper, container)
-        .getResult() as Main;
+      const instance = injector.loadInstance(mainWrapper, container).getResult() as Main;
 
       expect(instance).toBeInstanceOf(Main);
       expect(instance.dep1).toBeInstanceOf(Dep1);
@@ -671,9 +549,7 @@ describe("injector-scopes-static", () => {
       });
       container.addWrapper(dep1ProviderWrapper);
 
-      const instance = injector
-        .loadInstance(dep1ProviderWrapper, container)
-        .getResult() as Promise<Dep1>;
+      const instance = injector.loadInstance(dep1ProviderWrapper, container).getResult() as Promise<Dep1>;
 
       expect(instance).toBeInstanceOf(Promise);
       expect(await instance).toBeInstanceOf(Dep1);
@@ -704,9 +580,7 @@ describe("injector-scopes-static", () => {
       });
       container.addWrapper(dep1ProviderWrapper);
 
-      const loadResult = injector
-        .loadInstance(mainWrapper, container)
-        .getResult() as Promise<Main>;
+      const loadResult = injector.loadInstance(mainWrapper, container).getResult() as Promise<Main>;
 
       expect(loadResult).toBeInstanceOf(Promise);
       const instance = await loadResult;
@@ -735,27 +609,14 @@ describe("injector-scopes-static", () => {
 
       const container = new JoyContainer();
 
-      const [
-        dep1Wrapper,
-        dep2Wrapper,
-        mainWrapper,
-      ] = createProviderWrappers(container, Dep1, Dep2, [
-        Main,
-        { scope: Scope.TRANSIENT },
-      ]);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, [Main, { scope: Scope.TRANSIENT }]);
 
       const loadCtorMetadata = sinonBox.spy(injector, "loadCtorMetadata");
 
-      const instance = (await injector.loadProvider(
-        mainWrapper,
-        container
-      )) as Main;
+      const instance = (await injector.loadProvider(mainWrapper, container)) as Main;
       expect(instance).toBeTruthy();
       expect(loadCtorMetadata.notCalled).toBeTruthy();
-      const instance1 = (await injector.loadProvider(
-        mainWrapper,
-        container
-      )) as Main;
+      const instance1 = (await injector.loadProvider(mainWrapper, container)) as Main;
       expect(instance1).toBeTruthy();
       expect(loadCtorMetadata.calledOnce).toBeTruthy();
       expect(instance1.dep1).toBeInstanceOf(Dep1);
@@ -787,30 +648,17 @@ describe("injector-scopes-static", () => {
 
       const container = new JoyContainer();
 
-      const [
-        dep1Wrapper,
-        dep2Wrapper,
-        mainWrapper,
-      ] = createProviderWrappers(container, Dep1, Dep2, [
-        Main,
-        { scope: Scope.TRANSIENT },
-      ]);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, [Main, { scope: Scope.TRANSIENT }]);
 
       const loadCtorMetadata = sinonBox.spy(injector, "loadPropertiesMetadata");
 
-      const instance = (await injector.loadProvider(
-        mainWrapper,
-        container
-      )) as Main;
+      const instance = (await injector.loadProvider(mainWrapper, container)) as Main;
       expect(instance).toBeTruthy();
       expect(loadCtorMetadata.notCalled).toBeTruthy();
       expect(instance.dep1).toBeInstanceOf(Dep1);
       expect(instance.dep2).toBeInstanceOf(Dep2);
 
-      const instance1 = (await injector.loadProvider(
-        mainWrapper,
-        container
-      )) as Main;
+      const instance1 = (await injector.loadProvider(mainWrapper, container)) as Main;
       expect(instance1).toBeTruthy();
       expect(loadCtorMetadata.calledOnce).toBeTruthy();
       expect(instance1.dep1).toBeInstanceOf(Dep1);
@@ -836,18 +684,11 @@ describe("injector-scopes-static", () => {
 
       const container = new JoyContainer();
 
-      const [mainWrapper, depWrapper] = createProviderWrappers(
-        container,
-        Main,
-        Dep
-      );
+      const [mainWrapper, depWrapper] = createProviderWrappers(container, Main, Dep);
 
       const addProvider = sinonBox.spy(container, "addProvider");
 
-      const instance = (await injector.loadProvider(
-        mainWrapper,
-        container
-      )) as Main;
+      const instance = (await injector.loadProvider(mainWrapper, container)) as Main;
       expect(instance).toBeTruthy();
       expect(addProvider.notCalled).toBeTruthy();
       expect(instance.dep).toBeInstanceOf(Dep);
@@ -869,19 +710,13 @@ describe("injector-scopes-static", () => {
 
       const addProvider = sinonBox.spy(container, "addProvider");
 
-      const instance = (await injector.loadProvider(
-        mainWrapper,
-        container
-      )) as Main;
+      const instance = (await injector.loadProvider(mainWrapper, container)) as Main;
       expect(instance).toBeTruthy();
       expect(addProvider.calledOnce).toBeTruthy();
       expect(instance.dep).toBeInstanceOf(Dep);
 
       // try again
-      const instance1 = (await injector.loadProvider(
-        mainWrapper,
-        container
-      )) as Main;
+      const instance1 = (await injector.loadProvider(mainWrapper, container)) as Main;
       expect(instance1).toBeTruthy();
       expect(addProvider.calledOnce).toBeTruthy();
       expect(instance1.dep).toBeInstanceOf(Dep);
@@ -910,19 +745,13 @@ describe("injector-scopes-static", () => {
 
       const depWrapper = container.getProvider(Dep)!;
 
-      const instance = (await injector.loadProvider(
-        depWrapper,
-        container
-      )) as Dep;
+      const instance = (await injector.loadProvider(depWrapper, container)) as Dep;
       expect(instance.getMessage()).toBe("message");
 
       container.replace("dep", { type: Dep1, useClass: Dep1 });
       const dep1Wrapper = container.getProvider(Dep)!;
 
-      const instance1 = (await injector.loadProvider(
-        dep1Wrapper,
-        container
-      )) as Dep;
+      const instance1 = (await injector.loadProvider(dep1Wrapper, container)) as Dep;
       expect(instance1.getMessage()).toBe("message1");
     });
   });
@@ -945,10 +774,7 @@ describe("injector-scopes-static", () => {
       const container = instanceContainer();
       createProviderWrappers(container, MyProvider);
       const myWrapper = container.getProvider(MyProvider)!;
-      const instance = (await injector.loadProvider(
-        myWrapper,
-        container
-      )) as MyProvider;
+      const instance = (await injector.loadProvider(myWrapper, container)) as MyProvider;
       expect(instance.afterPropertiesSetMsg).toBe("hello afterPropertiesSet");
       expect(instance.initializeMsg).toBe("hello initialize");
     });
@@ -980,12 +806,37 @@ describe("injector-scopes-static", () => {
       const container = instanceContainer();
       createProviderWrappers(container, MyProvider);
       const myWrapper = container.getProvider(MyProvider)!;
-      const instance = (await injector.loadProvider(
-        myWrapper,
-        container
-      )) as MyProvider;
+      const instance = (await injector.loadProvider(myWrapper, container)) as MyProvider;
       expect(instance.afterPropertiesSetMsg).toBe("hello afterPropertiesSet");
       expect(instance.initializeMsg).toBe("hello initialize");
+    });
+
+    it("should not call life cycle methods, when registered as a factory provider.", async () => {
+      @Injectable()
+      class MyProvider implements ProviderLifecycle {
+        public afterPropertiesSetMsg = "hello";
+        public initializeMsg = "hello";
+        afterPropertiesSet(): Promise<void> | void {
+          this.afterPropertiesSetMsg = "hello afterPropertiesSet";
+        }
+
+        initialize(): Promise<void> | void {
+          this.initializeMsg = "hello initialize";
+        }
+      }
+
+      const container = instanceContainer();
+      container.addCustomFactory({
+        id: "MyProvider",
+        type: MyProvider,
+        useFactory: () => {
+          return new MyProvider();
+        },
+      });
+      const myWrapper = container.getProvider(MyProvider)!;
+      const instance = (await injector.loadProvider(myWrapper, container)) as MyProvider;
+      expect(instance.afterPropertiesSetMsg).toBe("hello");
+      expect(instance.initializeMsg).toBe("hello");
     });
   });
 });
