@@ -1,26 +1,18 @@
 import assert from "assert";
 import { ICommandHandler } from "./interface/command-handler.interface";
 import { getCommandsMetadata } from "./command.decorator";
-import {
-  IInstanceWrapper,
-  Injectable,
-  InjectorHookTaps,
-  Tap,
-} from "@symph/core";
+import { IComponentWrapper, Component, InjectorHookTaps, RegisterTap } from "@symph/core";
 import { getCommandMetadata } from "./command-provider.decorator";
 import { JoyCommand } from "./command";
 
-@Injectable()
+@Component()
 export class CommandCenter implements InjectorHookTaps {
   public commands: {
     [name: string]: ICommandHandler | string;
   } = {};
 
-  @Tap()
-  injectorAfterPropertiesSet<T = any>(
-    instance: T,
-    args: { instanceWrapper: IInstanceWrapper }
-  ): T {
+  @RegisterTap()
+  componentAfterPropertiesSet<T = any>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
     const { instanceWrapper } = args;
     // register provider's method as a command
     const commandHandlers = getCommandsMetadata(instanceWrapper.type);
@@ -50,10 +42,7 @@ export class CommandCenter implements InjectorHookTaps {
 
   public registerCommand(command: ICommandHandler) {
     const { name, alias } = command.command;
-    assert(
-      !this.commands[name],
-      `registerCommand() failed, the command ${name} is exists.`
-    );
+    assert(!this.commands[name], `registerCommand() failed, the command ${name} is exists.`);
     this.commands[name] = command;
     if (alias) {
       this.commands[alias] = name;
@@ -70,17 +59,12 @@ export class CommandCenter implements InjectorHookTaps {
     // shift the command itself
     if (args._[0] === name) args._.shift();
 
-    const command =
-      typeof this.commands[name] === "string"
-        ? this.commands[this.commands[name] as string]
-        : this.commands[name];
+    const command = typeof this.commands[name] === "string" ? this.commands[this.commands[name] as string] : this.commands[name];
     assert(command, `run command failed, command "${name}" does not exists.`);
 
     const { provider, methodKey } = command as ICommandHandler;
     if (provider === undefined || provider === null) {
-      throw new Error(
-        `run command failed, command "${name}" does not initialized`
-      );
+      throw new Error(`run command failed, command "${name}" does not initialized`);
     }
     return provider[methodKey](args);
   }

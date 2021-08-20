@@ -1,7 +1,7 @@
-import { ClassProvider, Injectable } from "@symph/core";
+import { ClassProvider, Component } from "@symph/core";
 
-export function Model(options: Partial<ClassProvider> = {}): ClassDecorator {
+export function ReactModel(options: Partial<ClassProvider> = {}): ClassDecorator {
   return (target) => {
-    return Injectable(Object.assign({ autoLoad: "lazy" }, options))(target);
+    return Component(Object.assign({ autoLoad: "lazy" }, options))(target);
   };
 }

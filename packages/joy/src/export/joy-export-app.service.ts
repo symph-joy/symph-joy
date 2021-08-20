@@ -1,13 +1,7 @@
 import chalk from "chalk";
 import findUp from "find-up";
-import {
-  promises,
-  existsSync,
-  exists as existsOrig,
-  readFileSync,
-  writeFileSync,
-} from "fs";
-import Worker from "jest-worker";
+import { promises, existsSync, exists as existsOrig, readFileSync, writeFileSync } from "fs";
+import { Worker } from "jest-worker";
 import { cpus } from "os";
 import { dirname, join, resolve, sep } from "path";
 import { promisify } from "util";
@@ -17,36 +11,19 @@ import createSpinner from "../build/spinner";
 import { API_ROUTE, SSG_FALLBACK_EXPORT_ERROR } from "../lib/constants";
 import { recursiveCopy } from "../lib/recursive-copy";
 import { recursiveDelete } from "../lib/recursive-delete";
-import {
-  BUILD_ID_FILE,
-  CLIENT_PUBLIC_FILES_PATH,
-  CLIENT_STATIC_FILES_PATH,
-  CONFIG_FILE,
-  EXPORT_DETAIL,
-  PAGES_MANIFEST,
-  PHASE_EXPORT,
-  PRERENDER_MANIFEST,
-  SERVERLESS_DIRECTORY,
-  SERVER_DIRECTORY,
-  OUT_DIRECTORY,
-} from "../joy-server/lib/constants";
-import loadConfig, {
-  isTargetLikeServerless,
-} from "../joy-server/server/config";
+import { BUILD_ID_FILE, CLIENT_PUBLIC_FILES_PATH, CLIENT_STATIC_FILES_PATH, CONFIG_FILE, EXPORT_DETAIL, PAGES_MANIFEST, PHASE_EXPORT, PRERENDER_MANIFEST, SERVERLESS_DIRECTORY, SERVER_DIRECTORY, OUT_DIRECTORY } from "../joy-server/lib/constants";
+import loadConfig, { isTargetLikeServerless } from "../joy-server/server/config";
 // import { eventCliSession } from '../telemetry/events'
 // import { Telemetry } from '../telemetry/storage'
-import {
-  normalizePagePath,
-  denormalizePagePath,
-} from "../joy-server/server/normalize-page-path";
+import { normalizePagePath, denormalizePagePath } from "../joy-server/server/normalize-page-path";
 import { loadEnvConfig } from "../lib/load-env-config";
 import { PrerenderManifest } from "../build/joy-build.service";
 import { ExportRenderOpts } from "./worker";
 import type exportPage from "./worker";
 import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
 import { getPagePath } from "../joy-server/server/require";
-import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
-import { Injectable } from "@symph/core";
+import { JoyAppConfig } from "../joy-server/server/joy-app-config";
+import { Component } from "@symph/core";
 
 const exists = promisify(existsOrig);
 
@@ -54,23 +31,7 @@ const createProgress = (total: number, label = "Exporting") => {
   let curProgress = 0;
   let progressSpinner = createSpinner(`${label} (${curProgress}/${total})`, {
     spinner: {
-      frames: [
-        "[    ]",
-        "[=   ]",
-        "[==  ]",
-        "[=== ]",
-        "[ ===]",
-        "[  ==]",
-        "[   =]",
-        "[    ]",
-        "[   =]",
-        "[  ==]",
-        "[ ===]",
-        "[====]",
-        "[=== ]",
-        "[==  ]",
-        "[=   ]",
-      ],
+      frames: ["[    ]", "[=   ]", "[==  ]", "[=== ]", "[ ===]", "[  ==]", "[   =]", "[    ]", "[   =]", "[  ==]", "[ ===]", "[====]", "[=== ]", "[==  ]", "[=   ]"],
       interval: 80,
     },
   });
@@ -109,7 +70,7 @@ interface ExportOptions {
   trailingSlash?: boolean;
 }
 
-@Injectable()
+@Component()
 export class JoyExportAppService {
   private distDir: string;
 
@@ -135,9 +96,7 @@ export class JoyExportAppService {
       // Get the exportPathMap from the config file
       if (typeof joyConfig.exportPathMap !== "function") {
         if (!options.silent) {
-          Log.info(
-            `No "exportPathMap" found in "${CONFIG_FILE}". Generating map from "./pages"`
-          );
+          Log.info(`No "exportPathMap" found in "${CONFIG_FILE}". Generating map from "./pages"`);
         }
         exportPathMapFn = async (defaultMap: ExportPathMap) => {
           return defaultMap;
@@ -150,11 +109,7 @@ export class JoyExportAppService {
     // const threads = options.threads || Math.max(Math.min(cpus().length - 1, 4), 1)
     const threads = 2; // todo remove
     // const distDir = join(dir, joyConfig.distDir)
-    const distDir = this.joyAppConfig.resolveAppDir(
-      this.distDir,
-      OUT_DIRECTORY,
-      "react"
-    );
+    const distDir = this.joyAppConfig.resolveAppDir(this.distDir, OUT_DIRECTORY, "react");
 
     // const telemetry = options.buildExport ? null : new Telemetry({ distDir })
     // if (telemetry) {
@@ -177,19 +132,11 @@ export class JoyExportAppService {
     }
 
     if (!existsSync(distDir)) {
-      throw new Error(
-        `Build directory ${distDir} does not exist. Make sure you run "joy build" before running "joy start" or "joy export".`
-      );
+      throw new Error(`Build directory ${distDir} does not exist. Make sure you run "joy build" before running "joy start" or "joy export".`);
     }
 
     const buildId = readFileSync(join(distDir, BUILD_ID_FILE), "utf8");
-    const pagesManifest =
-      !options.pages &&
-      (require(join(
-        distDir,
-        isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
-        PAGES_MANIFEST
-      )) as PagesManifest);
+    const pagesManifest = !options.pages && (require(join(distDir, isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY, PAGES_MANIFEST)) as PagesManifest);
 
     let prerenderManifest: PrerenderManifest | undefined = undefined;
     try {
@@ -231,9 +178,7 @@ export class JoyExportAppService {
     const outDir = options.outdir;
 
     if (outDir === join(dir, "public")) {
-      throw new Error(
-        `The 'public' directory is reserved in Joy.js and can not be used as the export out directory.`
-      );
+      throw new Error(`The 'public' directory is reserved in Joy.js and can not be used as the export out directory.`);
     }
 
     await recursiveDelete(join(outDir));
@@ -258,17 +203,11 @@ export class JoyExportAppService {
     }
 
     // Copy .joy/out/static directory
-    if (
-      !options.buildExport &&
-      existsSync(join(distDir, CLIENT_STATIC_FILES_PATH))
-    ) {
+    if (!options.buildExport && existsSync(join(distDir, CLIENT_STATIC_FILES_PATH))) {
       if (!options.silent) {
         Log.info('Copying "static build" directory');
       }
-      await recursiveCopy(
-        join(distDir, CLIENT_STATIC_FILES_PATH),
-        join(outDir, "_joy", CLIENT_STATIC_FILES_PATH)
-      );
+      await recursiveCopy(join(distDir, CLIENT_STATIC_FILES_PATH), join(outDir, "_joy", CLIENT_STATIC_FILES_PATH));
     }
 
     // // Get the exportPathMap from the config file
@@ -332,13 +271,7 @@ export class JoyExportAppService {
     }
 
     // make sure to prevent duplicates
-    const exportPaths = [
-      ...new Set(
-        Object.keys(exportPathMap).map((path) =>
-          denormalizePagePath(normalizePagePath(path))
-        )
-      ),
-    ];
+    const exportPaths = [...new Set(Object.keys(exportPathMap).map((path) => denormalizePagePath(normalizePagePath(path))))];
 
     const filteredPaths = exportPaths.filter(
       // Remove API routes
@@ -364,11 +297,7 @@ export class JoyExportAppService {
       }
 
       if (fallbackEnabledPages.size) {
-        console.warn(
-          `Found pages with \`fallback\` enabled:\n${[
-            ...fallbackEnabledPages,
-          ].join("\n")}\n${SSG_FALLBACK_EXPORT_ERROR}\n`
-        );
+        console.warn(`Found pages with \`fallback\` enabled:\n${[...fallbackEnabledPages].join("\n")}\n${SSG_FALLBACK_EXPORT_ERROR}\n`);
         // throw new Error(
         //   `Found pages with \`fallback\` enabled:\n${[
         //     ...fallbackEnabledPages,
@@ -381,32 +310,17 @@ export class JoyExportAppService {
     if (hasApiRoutes) {
       if (!options.silent) {
         Log.warn(
-          chalk.yellow(
-            `Statically exporting a Joy.js application via \`joy export\` disables API routes.`
-          ) +
+          chalk.yellow(`Statically exporting a Joy.js application via \`joy export\` disables API routes.`) +
             `\n` +
-            chalk.yellow(
-              `This command is meant for static-only hosts, and is` +
-                " " +
-                chalk.bold(`not necessary to make your application static.`)
-            ) +
+            chalk.yellow(`This command is meant for static-only hosts, and is` + " " + chalk.bold(`not necessary to make your application static.`)) +
             `\n` +
-            chalk.yellow(
-              `Pages in your application without server-side data dependencies will be automatically statically exported by \`joy build\`, including pages powered by \`getStaticProps\`.`
-            )
+            chalk.yellow(`Pages in your application without server-side data dependencies will be automatically statically exported by \`joy build\`, including pages powered by \`getStaticProps\`.`)
         );
       }
     }
 
-    const progress =
-      !options.silent &&
-      createProgress(
-        filteredPaths.length,
-        `${Log.prefixes.info} ${options.statusMessage}`
-      );
-    const pagesDataDir = options.buildExport
-      ? outDir
-      : join(outDir, "_joy/data", buildId);
+    const progress = !options.silent && createProgress(filteredPaths.length, `${Log.prefixes.info} ${options.statusMessage}`);
+    const pagesDataDir = options.buildExport ? outDir : join(outDir, "_joy/data", buildId);
 
     const ampValidations: AmpPageStatus = {};
     let hadValidationError = false;
@@ -459,18 +373,12 @@ export class JoyExportAppService {
         for (const validation of result.ampValidations || []) {
           const { page, result: ampValidationResult } = validation;
           ampValidations[page] = ampValidationResult;
-          hadValidationError =
-            hadValidationError ||
-            (Array.isArray(ampValidationResult?.errors) &&
-              ampValidationResult.errors.length > 0);
+          hadValidationError = hadValidationError || (Array.isArray(ampValidationResult?.errors) && ampValidationResult.errors.length > 0);
         }
         renderError = renderError || !!result.error;
         if (!!result.error) errorPaths.push(path);
 
-        if (
-          options.buildExport &&
-          typeof result.fromBuildExportRevalidate !== "undefined"
-        ) {
+        if (options.buildExport && typeof result.fromBuildExportRevalidate !== "undefined") {
           initialPageRevalidationMap[path] = result.fromBuildExportRevalidate;
         }
         if (progress) progress();
@@ -500,16 +408,8 @@ export class JoyExportAppService {
           route = normalizePagePath(route);
 
           const orig = join(distPagesDir, route);
-          const htmlDest = join(
-            outDir,
-            `${route}${
-              subFolders && route !== "/index" ? `${sep}index` : ""
-            }.html`
-          );
-          const ampHtmlDest = join(
-            outDir,
-            `${route}.amp${subFolders ? `${sep}index` : ""}.html`
-          );
+          const htmlDest = join(outDir, `${route}${subFolders && route !== "/index" ? `${sep}index` : ""}.html`);
+          const ampHtmlDest = join(outDir, `${route}.amp${subFolders ? `${sep}index` : ""}.html`);
           const jsonDest = join(pagesDataDir, `${route}.json`);
 
           await promises.mkdir(dirname(htmlDest), { recursive: true });
@@ -533,11 +433,7 @@ export class JoyExportAppService {
     }
 
     if (renderError) {
-      throw new Error(
-        `Export encountered errors on following paths:\n\t${errorPaths
-          .sort()
-          .join("\n\t")}`
-      );
+      throw new Error(`Export encountered errors on following paths:\n\t${errorPaths.sort().join("\n\t")}`);
     }
 
     writeFileSync(

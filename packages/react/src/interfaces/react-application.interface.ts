@@ -1,6 +1,5 @@
-import React, { DOMElement, ReactElement } from "react";
-import { IReactRoute } from "./react-route.interface";
-import { IJoyContext } from "@symph/core";
+import { DOMElement, ReactElement } from "react";
+import { ICoreContext } from "@symph/core";
 import { TReactAppComponent } from "../react-app-component";
 
 /**
@@ -8,12 +7,9 @@ import { TReactAppComponent } from "../react-app-component";
  *
  * @publicApi
  */
-export interface IReactApplication extends IJoyContext {
+export interface IReactApplication extends ICoreContext {
   start(rootComponent?: TReactAppComponent): ReactElement;
-  start(
-    rootComponent: TReactAppComponent,
-    domContainer?: DOMElement<any, any> | string
-  ): ReactElement;
+  start(rootComponent: TReactAppComponent, domContainer?: DOMElement<any, any> | string): ReactElement;
 
   dispatch(action: any): Promise<any> | null | undefined;
 

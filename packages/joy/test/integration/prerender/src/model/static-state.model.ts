@@ -1,7 +1,7 @@
-import { Model, ReactModel } from "@symph/react";
+import { ReactBaseModel, ReactModel } from "@symph/react";
 
-@Model()
-export class StaticStateModel extends ReactModel<{
+@ReactModel()
+export class StaticStateModel extends ReactBaseModel<{
   staticMessage: string;
   dynamicMessage: string;
 }> {

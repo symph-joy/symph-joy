@@ -1,13 +1,13 @@
 // import { PIPES_METADATA } from '@nestjs/common/constants';
 // import { Controller, PipeTransform } from '@nestjs/common/interfaces';
 // import { isEmpty, isFunction } from '@nestjs/common/utils/shared.utils';
-import { InstanceWrapper, Type } from "@symph/core";
+import { ComponentWrapper, Type } from "@symph/core";
 import { iterate } from "iterare";
 import { ApplicationConfig } from "../application-config";
 import { ContextCreator } from "../helpers/context-creator";
 // import { STATIC_CONTEXT } from '../injector/constants';
 // import { NestContainer } from '../injector/container';
-// import { InstanceWrapper } from '../injector/instance-wrapper';
+// import { ComponentWrapper } from '../injector/instance-wrapper';
 import { ServerContainer } from "../server-container";
 import { isEmpty, isFunction } from "@symph/core/dist/utils/shared.utils";
 import { STATIC_CONTEXT } from "@symph/core/dist/injector/constants";
@@ -19,10 +19,7 @@ import { UnknownElementException } from "@symph/core/dist/errors/exceptions/unkn
 export class PipesContextCreator extends ContextCreator {
   // private moduleContext: string;
 
-  constructor(
-    private readonly container: ServerContainer,
-    private readonly config?: ApplicationConfig
-  ) {
+  constructor(private readonly container: ServerContainer, private readonly config?: ApplicationConfig) {
     super();
   }
 
@@ -54,9 +51,7 @@ export class PipesContextCreator extends ContextCreator {
     return iterate(metadata)
       .filter((pipe: any) => pipe && (pipe.name || pipe.transform))
       .map((pipe) => this.getPipeInstance(pipe, contextId))
-      .filter(
-        (pipe) => !!(pipe && pipe.transform && isFunction(pipe.transform))
-      )
+      .filter((pipe) => !!(pipe && pipe.transform && isFunction(pipe.transform)))
       .toArray() as R;
   }
 
@@ -72,11 +67,7 @@ export class PipesContextCreator extends ContextCreator {
     // const instanceWrapper = this.getInstanceByMetatype(pipe as Type<any>);
     const instanceWrapper = this.container.getProviderByType(pipe as Type<any>);
     if (!instanceWrapper) {
-      throw new Error(
-        `could not find out pipe(class:${
-          (pipe as Type<any>).name
-        }) in the current context`
-      );
+      throw new Error(`could not find out pipe(class:${(pipe as Type<any>).name}) in the current context`);
       // return null;
     }
     const instanceHost = instanceWrapper.getInstanceByContextId(
@@ -86,9 +77,7 @@ export class PipesContextCreator extends ContextCreator {
     return instanceHost && instanceHost.instance;
   }
 
-  public getInstanceByMetatype<T extends Type>(
-    metatype: T
-  ): InstanceWrapper | undefined {
+  public getInstanceByMetatype<T extends Type>(metatype: T): ComponentWrapper | undefined {
     return this.container.getProviderByType(metatype);
     // if (!this.moduleContext) {
     //   return;
@@ -101,10 +90,7 @@ export class PipesContextCreator extends ContextCreator {
     // return moduleRef.injectables.get(metatype.name);
   }
 
-  public getGlobalMetadata<T extends unknown[]>(
-    contextId = STATIC_CONTEXT,
-    inquirerId?: string
-  ): T {
+  public getGlobalMetadata<T extends unknown[]>(contextId = STATIC_CONTEXT, inquirerId?: string): T {
     if (!this.config) {
       return [] as any;
     }
@@ -112,7 +98,7 @@ export class PipesContextCreator extends ContextCreator {
     if (contextId === STATIC_CONTEXT && !inquirerId) {
       return globalPipes;
     }
-    const scopedPipeWrappers = this.config.getGlobalRequestPipes() as InstanceWrapper[];
+    const scopedPipeWrappers = this.config.getGlobalRequestPipes() as ComponentWrapper[];
     const scopedPipes = iterate(scopedPipeWrappers)
       .map((wrapper) => wrapper.getInstanceByContextId(contextId))
       .filter((host) => !!host)

@@ -1,14 +1,12 @@
 import { Scope, Type } from "../../src/interfaces";
-import { InstanceWrapper } from "../../src/injector/instance-wrapper";
-import { JoyContainer } from "../../src/injector";
+import { ComponentWrapper } from "../../src/injector/component-wrapper";
+import { CoreContainer } from "../../src/injector";
 import { providerNameGenerate } from "../../src/injector/provider-name-generate";
+import { getInjectableMeta, Provider } from "../../src";
 
-export function createInstanceWrapper<T>(
-  providerClazz: Type<T>,
-  matedata?: Partial<InstanceWrapper>
-): InstanceWrapper<T> {
-  return new InstanceWrapper({
-    name: providerNameGenerate(providerClazz),
+export function createInstanceWrapper<T>(providerClazz: Type<T>, matedata?: Partial<ComponentWrapper>): ComponentWrapper<T> {
+  return new ComponentWrapper({
+    name: [providerNameGenerate(providerClazz)],
     type: providerClazz,
     instance: Object.create(providerClazz.prototype),
     scope: Scope.DEFAULT,
@@ -19,25 +17,31 @@ export function createInstanceWrapper<T>(
   });
 }
 
-export function createProviderWrappers<T>(
-  container: JoyContainer,
-  ...providerClazzes: (Type<any> | [Type<any>, any])[]
-): [...InstanceWrapper<any>[]] {
+export function createProviderWrappers<T>(container: CoreContainer, ...providerDefines: (Type<any> | Provider)[]): [...ComponentWrapper<any>[]] {
   const wrappers: any[] = [];
-  if (providerClazzes && providerClazzes.length) {
-    providerClazzes.forEach((providerClz) => {
-      let clz: Type<any>,
-        providerMateData: Partial<InstanceWrapper> | undefined;
-      if (Array.isArray(providerClz)) {
-        [clz, providerMateData] = providerClz;
+  if (providerDefines && providerDefines.length) {
+    providerDefines.forEach((providerDefine) => {
+      // let clz: Type<any>,
+      //   providerMateData: Partial<ComponentWrapper> | undefined;
+      // if (Array.isArray(providerClz)) {
+      //   [clz, providerMateData] = providerClz;
+      // } else {
+      //   clz = providerClz;
+      //   providerMateData = getInjectableMeta(providerClz);
+      // }
+      // const wrapper = createInstanceWrapper(clz, providerMateData);
+
+      let meta: Provider;
+      if (typeof providerDefine === "function") {
+        meta = getInjectableMeta(providerDefine)!;
       } else {
-        clz = providerClz;
-        providerMateData = undefined;
+        meta = providerDefine;
       }
-      const wrapper = createInstanceWrapper(clz, providerMateData);
+
+      const wrapper = container.addProvider(meta);
       wrappers.push(wrapper);
       // container.providers.set(clz.name, wrapper)
-      container.addWrapper(wrapper);
+      // container.addWrapper(wrapper);
     });
   }
 

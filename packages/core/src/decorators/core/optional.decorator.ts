@@ -1,10 +1,7 @@
-import {
-  OPTIONAL_DEPS_METADATA,
-  OPTIONAL_PROPERTY_DEPS_METADATA,
-} from "../../constants";
+import { OPTIONAL_DEPS_METADATA, OPTIONAL_PROPERTY_DEPS_METADATA } from "../../constants";
 import { isUndefined } from "../../utils/shared.utils";
 import { InjectCustomOptionsInterface } from "../../interfaces/inject-custom-options.interface";
-import { CUSTOM_INJECT_FUNC_PARAM_META } from "./inject.decorator";
+import { CUSTOM_INJECT_FUNC_PARAM_META } from "./autowire.decorator";
 
 /**
  * Parameter decorator for an injected dependency marking the
@@ -20,29 +17,14 @@ export function Optional() {
       return;
     } else {
       if (typeof index === "number") {
-        const params: Map<number, InjectCustomOptionsInterface> =
-          Reflect.getMetadata(CUSTOM_INJECT_FUNC_PARAM_META, target, key) ||
-          new Map();
+        const params: Map<number, InjectCustomOptionsInterface> = Reflect.getMetadata(CUSTOM_INJECT_FUNC_PARAM_META, target, key) || new Map();
         const param = params.get(index) || {};
         param.isOptional = true;
         params.set(index, param);
-        Reflect.defineMetadata(
-          CUSTOM_INJECT_FUNC_PARAM_META,
-          params,
-          target,
-          key
-        );
+        Reflect.defineMetadata(CUSTOM_INJECT_FUNC_PARAM_META, params, target, key);
       } else {
-        const properties =
-          Reflect.getMetadata(
-            OPTIONAL_PROPERTY_DEPS_METADATA,
-            target.constructor
-          ) || [];
-        Reflect.defineMetadata(
-          OPTIONAL_PROPERTY_DEPS_METADATA,
-          [...properties, key],
-          target.constructor
-        );
+        const properties = Reflect.getMetadata(OPTIONAL_PROPERTY_DEPS_METADATA, target.constructor) || [];
+        Reflect.defineMetadata(OPTIONAL_PROPERTY_DEPS_METADATA, [...properties, key], target.constructor);
       }
     }
 

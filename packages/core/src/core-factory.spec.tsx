@@ -1,12 +1,12 @@
 import { CoreContextFactory } from "./core-context-factory";
-import { Injectable } from "../src/decorators/core";
+import { Component } from "../src/decorators/core";
 import React from "react";
 import { Configuration } from "./decorators/core/configuration/configuration.decorator";
 import { Provider } from "./decorators/core/configuration/provider.decorator";
 
 describe("temp-factory", () => {
   test("create", async () => {
-    @Injectable()
+    @Component()
     class HelloProvider {
       private message = "hello world";
       hello() {

@@ -1,8 +1,8 @@
-import { IJoyContext } from "@symph/core";
+import { ICoreContext } from "@symph/core";
 
 export const NAMESPACE_SEP = "/";
 
-export default function createModelMiddleware(app: IJoyContext) {
+export default function createModelMiddleware(app: ICoreContext) {
   return (store: any) => (next: any) => (action: any) => {
     const { type } = action;
     if (type.indexOf("/") <= 0) {

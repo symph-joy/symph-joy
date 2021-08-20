@@ -1,7 +1,7 @@
-import { Inject, Injectable, Optional } from "../decorators/core";
+import { Autowire, Component, Optional } from "../decorators/core";
 import { ProviderLifecycle, Scope } from "../interfaces";
-import { JoyContainer } from "../injector";
-import { InstanceWrapper } from "../injector/instance-wrapper";
+import { CoreContainer } from "../injector";
+import { ComponentWrapper } from "./component-wrapper";
 import { Injector } from "../injector/injector";
 import { createProviderWrappers } from "../../test/injector/helper";
 import sinon from "sinon";
@@ -10,14 +10,14 @@ import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dep
 import { HookCenter } from "../hook/hook-center";
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
 
-function instanceContainer(): JoyContainer {
-  const container = new JoyContainer();
+function instanceContainer(): CoreContainer {
+  const container = new CoreContainer();
   const hookCenter = new HookCenter();
-  hookCenter.registerProviderHooks(container, JoyContainer);
+  hookCenter.registerProviderHooks(container);
   return container;
 }
 
-describe("injector-scopes-static", () => {
+describe("injector", () => {
   let injector: Injector;
 
   beforeAll(async () => {
@@ -31,41 +31,40 @@ describe("injector-scopes-static", () => {
 
   describe("loadProvider", () => {
     describe("load class provider", () => {
-      @Injectable({ scope: Scope.TRANSIENT })
+      @Component({ scope: Scope.TRANSIENT })
       class TransProvider {}
 
-      @Injectable({ scope: Scope.DEFAULT })
+      @Component({ scope: Scope.DEFAULT })
       class SingProvider {}
 
-      @Injectable()
+      @Component()
       class MainTest {
-        @Inject()
+        @Autowire()
         public prop: SingProvider;
 
         constructor(public singProvider: SingProvider) {}
       }
 
-      let singProviderWrapper: InstanceWrapper<SingProvider>, transProviderWrapper: InstanceWrapper<TransProvider>, mainTestWrapper: InstanceWrapper<MainTest>, container: JoyContainer;
+      let singProviderWrapper: ComponentWrapper<SingProvider>, transProviderWrapper: ComponentWrapper<TransProvider>, mainTestWrapper: ComponentWrapper<MainTest>, container: CoreContainer;
 
       beforeAll(async () => {
-        container = new JoyContainer();
-        // container = new Module(TestModule))
-        transProviderWrapper = new InstanceWrapper({
-          name: "transProvider",
+        container = instanceContainer();
+        transProviderWrapper = new ComponentWrapper({
+          name: ["transProvider"],
           type: TransProvider,
           instance: Object.create(TransProvider.prototype),
           scope: Scope.TRANSIENT,
           isResolved: false,
         });
-        singProviderWrapper = new InstanceWrapper({
-          name: "singProvider",
+        singProviderWrapper = new ComponentWrapper({
+          name: ["singProvider"],
           type: SingProvider,
           instance: Object.create(SingProvider.prototype),
           scope: Scope.DEFAULT,
           isResolved: false,
         });
-        mainTestWrapper = new InstanceWrapper({
-          name: "mainTest",
+        mainTestWrapper = new ComponentWrapper({
+          name: ["mainTest"],
           type: MainTest,
           instance: Object.create(MainTest.prototype),
           isResolved: false,
@@ -112,13 +111,13 @@ describe("injector-scopes-static", () => {
       });
 
       test("should inject different instance into one hostInstance, when scope is SCOPE.TRANSIENT", async () => {
-        @Injectable()
+        @Component()
         class TransDepsMain {
           constructor(public transProvider1: TransProvider, public transProvider2: TransProvider) {}
         }
 
-        const transDepsMainWrapper = new InstanceWrapper<TransDepsMain>({
-          name: "TransDepsMain",
+        const transDepsMainWrapper = new ComponentWrapper<TransDepsMain>({
+          name: ["TransDepsMain"],
           type: TransDepsMain,
           instance: Object.create(TransDepsMain.prototype),
           isResolved: false,
@@ -135,12 +134,13 @@ describe("injector-scopes-static", () => {
 
     describe("load factory provider", () => {
       test("should return the value created by factory", async () => {
-        const container = new JoyContainer();
+        const container = instanceContainer();
 
         class Provider1 {}
+
         let createInstance = undefined;
         const wrapper = container.addCustomFactory({
-          id: "customFactory",
+          name: "customFactory",
           type: Provider1,
           useFactory: () => {
             createInstance = new Provider1();
@@ -148,33 +148,56 @@ describe("injector-scopes-static", () => {
           },
           inject: [],
         });
-        const instance = await injector.loadProvider(wrapper, container);
+        const instance1 = await injector.loadProvider(wrapper, container);
+        const instance2 = await injector.loadProvider(wrapper, container);
 
-        expect(instance).toBeInstanceOf(Provider1);
-        expect(instance === createInstance).toBeTruthy();
+        expect(instance1).toBeInstanceOf(Provider1);
+        expect(instance1 === createInstance).toBeTruthy();
+        expect(instance1 === instance2).toBeTruthy();
+      });
+
+      test("should return different instance, when cope=TRANSIENT", async () => {
+        const container = instanceContainer();
+
+        class Provider1 {}
+
+        const wrapper = container.addCustomFactory({
+          name: "customFactory",
+          type: Provider1,
+          scope: Scope.TRANSIENT,
+          useFactory: () => {
+            return new Provider1();
+          },
+          inject: [],
+        });
+        const instance1 = await injector.loadProvider(wrapper, container);
+        const instance2 = await injector.loadProvider(wrapper, container);
+        expect(instance1).not.toBeNull();
+        expect(instance1).not.toBe(instance2);
       });
 
       test("should return the value created by factory, with custom inject param.", async () => {
-        const container = new JoyContainer();
+        const container = instanceContainer();
 
         class Provider1 {
           constructor(public msg: string) {}
         }
+
         let createInstance = undefined;
         container.addCustomValue({
-          id: "initMsg",
+          name: "initMsg",
           type: String,
           useValue: "hello",
         });
         const wrapper = container.addCustomFactory({
-          id: "customFactory",
+          name: "customFactory",
           type: Provider1,
           useFactory: (initMsg: string) => {
             createInstance = new Provider1(initMsg);
             return createInstance;
           },
           inject: ["initMsg"],
-        }) as InstanceWrapper<Provider1>;
+        }) as ComponentWrapper<Provider1>;
         const instance = await injector.loadProvider(wrapper, container);
 
         expect(instance).toBeInstanceOf(Provider1);
@@ -183,21 +206,22 @@ describe("injector-scopes-static", () => {
       });
 
       test("should return the value created by factory, with optional param.", async () => {
-        const container = new JoyContainer();
+        const container = instanceContainer();
 
         class Provider1 {
           constructor(public msg: string) {}
         }
+
         let createInstance = undefined;
         const wrapper = container.addCustomFactory({
-          id: "customFactory",
+          name: "customFactory",
           type: Provider1,
           useFactory: (initMsg: string | undefined) => {
             createInstance = new Provider1(initMsg || "defaultValue");
             return createInstance;
           },
           inject: [{ name: "initMsg", isOptional: true }],
-        }) as InstanceWrapper<Provider1>;
+        }) as ComponentWrapper<Provider1>;
         const instance = await injector.loadProvider(wrapper, container);
 
         expect(instance).toBeInstanceOf(Provider1);
@@ -207,26 +231,55 @@ describe("injector-scopes-static", () => {
     });
   });
 
+  describe("name", () => {
+    test("name's type is a symbol", async () => {
+      const symbolName = Symbol("myProvider");
+
+      @Component({ name: symbolName })
+      class MyProvider {}
+
+      const container = instanceContainer();
+      const [myWrapper] = createProviderWrappers(container, MyProvider);
+      const wrapperA = container.getProvider(symbolName);
+      const wrapperB = container.getProvider(MyProvider);
+
+      expect(wrapperA).not.toBeNull();
+      expect(wrapperA).toBe(wrapperB);
+    });
+
+    test("name's type is an array", async () => {
+      @Component({ name: ["a", "b"] })
+      class MyProvider {}
+
+      const container = instanceContainer();
+      const [myWrapper] = createProviderWrappers(container, MyProvider);
+      const wrapperA = container.getProvider("a");
+      const wrapperB = container.getProvider("b");
+      expect(wrapperA).not.toBeNull();
+      expect(wrapperA).toBe(wrapperB);
+    });
+  });
+
   describe("inject", () => {
     test("should inject undefined if the constructor param's type is not found and param is optional.", async () => {
-      @Injectable()
+      @Component()
       class Hello {}
 
-      @Injectable()
+      @Component()
       class HelloOptional {}
 
-      @Injectable()
+      @Component()
       class Main {
         @Optional()
-        @Inject()
+        @Autowire()
         public hello: Hello;
 
         @Optional()
-        @Inject()
+        @Autowire()
         public helloOptional: HelloOptional;
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [mainWrapper, helloWrapper] = createProviderWrappers(container, Main, Hello);
 
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
@@ -235,18 +288,18 @@ describe("injector-scopes-static", () => {
     });
 
     test("should inject undefined if the property's type is not found and property is optional.", async () => {
-      @Injectable()
+      @Component()
       class Hello {}
 
-      @Injectable()
+      @Component()
       class HelloOptional {}
 
-      @Injectable()
+      @Component()
       class Main {
-        constructor(@Optional() @Inject() public hello: Hello, @Optional() @Inject() public helloOptional: HelloOptional) {}
+        constructor(@Optional() @Autowire() public hello: Hello, @Optional() @Autowire() public helloOptional: HelloOptional) {}
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [mainWrapper, helloWrapper] = createProviderWrappers(container, Main, Hello);
 
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
@@ -257,13 +310,13 @@ describe("injector-scopes-static", () => {
 
   describe("with sub class", () => {
     test("should return child instance when get by super class", async () => {
-      @Injectable()
+      @Component()
       class SuperClazz {}
 
-      @Injectable()
+      @Component()
       class Sub1 extends SuperClazz {}
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [subWrapper] = createProviderWrappers(container, Sub1);
 
       const wrapper = container.getProvider(SuperClazz);
@@ -273,16 +326,16 @@ describe("injector-scopes-static", () => {
     });
 
     test("should rise an error, when super class more than one sub providers.", async () => {
-      @Injectable()
+      @Component()
       class SuperClazz {}
 
-      @Injectable()
+      @Component()
       class Sub1 extends SuperClazz {}
 
-      @Injectable()
+      @Component()
       class Sub2 extends SuperClazz {}
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [sub1Wrapper, sub2Wrapper] = createProviderWrappers(container, Sub1, Sub2);
 
       let err: Error | undefined = undefined;
@@ -297,17 +350,17 @@ describe("injector-scopes-static", () => {
 
   describe("injectBy", () => {
     it("should inject by provider name", async () => {
-      @Injectable()
+      @Component()
       class Dep {}
 
-      @Injectable()
+      @Component()
       class Main {
-        constructor(@Inject("dep") public dep: Dep) {}
+        constructor(@Autowire("dep") public dep: Dep) {}
       }
 
-      @Injectable()
+      @Component()
       class WrongMain {
-        constructor(@Inject("thisIsWrong") public dep: Dep) {}
+        constructor(@Autowire("thisIsWrong") public dep: Dep) {}
       }
 
       const container = instanceContainer();
@@ -332,12 +385,12 @@ describe("injector-scopes-static", () => {
     });
 
     it("should throw an error, if provider name is wrong.", async () => {
-      @Injectable()
+      @Component()
       class Dep {}
 
-      @Injectable()
+      @Component()
       class Main {
-        constructor(@Inject("thisIsWrong") public dep: Dep) {}
+        constructor(@Autowire("thisIsWrong") public dep: Dep) {}
       }
 
       const container = instanceContainer();
@@ -358,24 +411,24 @@ describe("injector-scopes-static", () => {
     });
 
     it("should inject by provider type", async () => {
-      @Injectable()
+      @Component()
       class Dep {}
 
-      @Injectable()
+      @Component()
       class SubDep extends Dep {}
 
-      @Injectable()
+      @Component()
       class Main {
-        constructor(@Inject(Dep) public constructorDep: Dep, @Inject(SubDep) public constructorSubDep: Dep) {}
+        constructor(@Autowire(Dep) public constructorDep: Dep, @Autowire(SubDep) public constructorSubDep: Dep) {}
 
-        @Inject(Dep)
+        @Autowire(Dep)
         public propDep: Dep;
 
-        @Inject(SubDep)
+        @Autowire(SubDep)
         public propSubDep: Dep;
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [mainWrapper, depWrapper, subDepWrapper] = createProviderWrappers(container, Main, Dep, SubDep);
 
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
@@ -387,19 +440,19 @@ describe("injector-scopes-static", () => {
     });
 
     it("should not set a obscure type to constructor argument type.", async () => {
-      @Injectable()
+      @Component()
       class Dep {
         save() {
           // no-op
         }
       }
 
-      @Injectable()
+      @Component()
       class Main {
-        constructor(@Inject(Object) public constructorDep2: Dep) {}
+        constructor(@Autowire(Object) public constructorDep2: Dep) {}
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [mainWrapper, depWrapper] = createProviderWrappers(container, Main, Dep);
 
       try {
@@ -411,26 +464,26 @@ describe("injector-scopes-static", () => {
     });
 
     it("should throw an error, when the inject type not compatible with design type.", async () => {
-      @Injectable()
+      @Component()
       class Dep1 {
         save() {
           // no-op
         }
       }
 
-      @Injectable()
+      @Component()
       class Dep2 {
         save() {
           // no-op
         }
       }
 
-      @Injectable()
+      @Component()
       class Main {
-        constructor(@Inject(Dep1) public constructorDep2: Dep2) {}
+        constructor(@Autowire(Dep1) public constructorDep2: Dep2) {}
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [mainWrapper, dep1Wrapper, dep2Wrapper] = createProviderWrappers(container, Main, Dep1, Dep2);
 
       try {
@@ -442,25 +495,26 @@ describe("injector-scopes-static", () => {
     });
 
     it("should not inject superclass into subclass", async () => {
+      @Component()
       class BaseDep {
         save() {
           // no-op
         }
       }
 
-      @Injectable()
+      @Component()
       class Dep extends BaseDep {
         save() {
           // no-op
         }
       }
 
-      @Injectable()
+      @Component()
       class Main {
-        constructor(@Inject(BaseDep) public constructorDep2: Dep) {}
+        constructor(@Autowire(BaseDep) public constructorDep2: Dep) {}
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [mainWrapper, baseDepWrapper, depWrapper] = createProviderWrappers(container, Main, BaseDep, Dep);
 
       try {
@@ -472,22 +526,22 @@ describe("injector-scopes-static", () => {
     });
 
     it("should inject by type and then by name", async () => {
-      @Injectable()
+      @Component()
       class Dep {}
 
-      @Injectable()
+      @Component()
       class SubDep1 extends Dep {}
 
-      @Injectable()
+      @Component()
       class SubDep2 extends Dep {}
 
-      @Injectable()
+      @Component()
       class Main {
-        @Inject()
+        @Autowire()
         public subDep2: Dep;
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [mainWrapper, dep1Wrapper, dep2Wrapper] = createProviderWrappers(container, Main, SubDep1, SubDep2);
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance).toBeTruthy();
@@ -501,27 +555,27 @@ describe("injector-scopes-static", () => {
     });
 
     it("should get a plain object, when all dependencies is sync", async () => {
-      const wrapper = new InstanceWrapper();
+      const wrapper = new ComponentWrapper();
 
-      @Injectable()
+      @Component()
       class Dep1 {}
 
-      @Injectable()
+      @Component()
       class Dep2 {}
 
-      @Injectable()
+      @Component({ scope: Scope.DEFAULT })
       class Main {
         constructor(public dep1: Dep1) {}
 
-        @Inject()
+        @Autowire()
         public dep2: Dep2;
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
 
       class TestModule {}
 
-      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, [Main, { scope: Scope.DEFAULT }]);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, Main);
 
       const instance = injector.loadInstance(mainWrapper, container).getResult() as Main;
 
@@ -531,12 +585,12 @@ describe("injector-scopes-static", () => {
     });
 
     it("should get a promise, when it is a async factory function", async () => {
-      @Injectable()
+      @Component()
       class Dep1 {}
 
-      const container = new JoyContainer();
-      const dep1ProviderWrapper = new InstanceWrapper({
-        name: "dep1",
+      const container = instanceContainer();
+      const dep1ProviderWrapper = new ComponentWrapper({
+        name: ["dep1"],
         type: Dep1,
         factory: async function () {
           return new Dep1();
@@ -556,18 +610,18 @@ describe("injector-scopes-static", () => {
     });
 
     it("should get a promise, when has a async dependency", async () => {
-      @Injectable()
+      @Component()
       class Dep1 {}
 
-      @Injectable()
+      @Component()
       class Main {
-        constructor(@Inject() public dep1: Dep1) {}
+        constructor(@Autowire() public dep1: Dep1) {}
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
       const [mainWrapper] = createProviderWrappers(container, Main);
-      const dep1ProviderWrapper = new InstanceWrapper({
-        name: "dep1",
+      const dep1ProviderWrapper = new ComponentWrapper({
+        name: ["dep1"],
         type: Dep1,
         factory: async function () {
           return new Dep1();
@@ -596,20 +650,20 @@ describe("injector-scopes-static", () => {
     });
 
     it("should resolve ctor metadata", async () => {
-      @Injectable()
+      @Component()
       class Dep1 {}
 
-      @Injectable()
+      @Component()
       class Dep2 {}
 
-      @Injectable()
+      @Component({ scope: Scope.TRANSIENT })
       class Main {
         constructor(public dep1: Dep1, public dep2: Dep2) {}
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
 
-      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, [Main, { scope: Scope.TRANSIENT }]);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, Main);
 
       const loadCtorMetadata = sinonBox.spy(injector, "loadCtorMetadata");
 
@@ -631,24 +685,24 @@ describe("injector-scopes-static", () => {
     });
 
     it("should resolve properties metadata", async () => {
-      @Injectable()
+      @Component()
       class Dep1 {}
 
-      @Injectable()
+      @Component()
       class Dep2 {}
 
-      @Injectable()
+      @Component({ scope: Scope.TRANSIENT })
       class Main {
-        @Inject()
+        @Autowire()
         public dep1: Dep1;
 
-        @Inject()
+        @Autowire()
         public dep2: Dep2;
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
 
-      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, [Main, { scope: Scope.TRANSIENT }]);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, Main);
 
       const loadCtorMetadata = sinonBox.spy(injector, "loadPropertiesMetadata");
 
@@ -673,16 +727,16 @@ describe("injector-scopes-static", () => {
     });
 
     it("should not try to load a new wrapper", async () => {
-      @Injectable()
+      @Component()
       class Dep {}
 
-      @Injectable()
+      @Component()
       class Main {
-        @Inject()
+        @Autowire()
         public dep: Dep;
       }
 
-      const container = new JoyContainer();
+      const container = instanceContainer();
 
       const [mainWrapper, depWrapper] = createProviderWrappers(container, Main, Dep);
 
@@ -695,12 +749,12 @@ describe("injector-scopes-static", () => {
     });
 
     it("should dynamic loading the model instance, at run time", async () => {
-      @Injectable({ autoLoad: "lazy" })
+      @Component({ autoLoad: "lazy" })
       class Dep {}
 
-      @Injectable()
+      @Component()
       class Main {
-        @Inject()
+        @Autowire()
         public dep: Dep;
       }
 
@@ -725,14 +779,14 @@ describe("injector-scopes-static", () => {
 
   describe("replaceProvider", () => {
     it("should replace a class provider", async () => {
-      @Injectable()
+      @Component()
       class Dep {
         getMessage() {
           return "message";
         }
       }
 
-      @Injectable()
+      @Component()
       class Dep1 {
         getMessage() {
           return "message1";
@@ -758,10 +812,11 @@ describe("injector-scopes-static", () => {
 
   describe("life cycle", () => {
     it("should call life cycle methods.", async () => {
-      @Injectable()
+      @Component()
       class MyProvider implements ProviderLifecycle {
         public afterPropertiesSetMsg: string;
         public initializeMsg: string;
+
         afterPropertiesSet(): Promise<void> | void {
           this.afterPropertiesSetMsg = "hello afterPropertiesSet";
         }
@@ -780,10 +835,11 @@ describe("injector-scopes-static", () => {
     });
 
     it("should call life cycle async methods.", async () => {
-      @Injectable()
+      @Component()
       class MyProvider implements ProviderLifecycle {
         public afterPropertiesSetMsg: string;
         public initializeMsg: string;
+
         async afterPropertiesSet(): Promise<void> {
           await new Promise<void>((resolve) => {
             setTimeout(() => {
@@ -812,10 +868,11 @@ describe("injector-scopes-static", () => {
     });
 
     it("should not call life cycle methods, when registered as a factory provider.", async () => {
-      @Injectable()
+      @Component()
       class MyProvider implements ProviderLifecycle {
         public afterPropertiesSetMsg = "hello";
         public initializeMsg = "hello";
+
         afterPropertiesSet(): Promise<void> | void {
           this.afterPropertiesSetMsg = "hello afterPropertiesSet";
         }
@@ -827,7 +884,7 @@ describe("injector-scopes-static", () => {
 
       const container = instanceContainer();
       container.addCustomFactory({
-        id: "MyProvider",
+        name: "MyProvider",
         type: MyProvider,
         useFactory: () => {
           return new MyProvider();

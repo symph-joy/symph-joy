@@ -1,10 +1,5 @@
-import {
-  CONTROLLER_METADATA,
-  HOST_METADATA,
-  PATH_METADATA,
-  SCOPE_OPTIONS_METADATA,
-} from "../../constants";
-import { Injectable, ScopeOptions } from "@symph/core";
+import { CONTROLLER_METADATA, HOST_METADATA, PATH_METADATA, SCOPE_OPTIONS_METADATA } from "../../constants";
+import { Component, ScopeOptions } from "@symph/core";
 import { isString, isUndefined } from "@symph/core/dist/utils/shared.utils";
 // import { ScopeOptions } from '../../interfaces/scope-options.interface';
 // import { isString, isUndefined } from '../../utils/shared.utils';
@@ -139,26 +134,20 @@ export function Controller(options: ControllerOptions): ClassDecorator;
  *
  * @publicApi
  */
-export function Controller(
-  prefixOrOptions?: string | string[] | ControllerOptions
-): ClassDecorator {
+export function Controller(prefixOrOptions?: string | string[] | ControllerOptions): ClassDecorator {
   const defaultPath = "/";
 
   const [path, host, scopeOptions] = isUndefined(prefixOrOptions)
     ? [defaultPath, undefined, undefined]
     : isString(prefixOrOptions) || Array.isArray(prefixOrOptions)
     ? [prefixOrOptions, undefined, undefined]
-    : [
-        prefixOrOptions.path || defaultPath,
-        prefixOrOptions.host,
-        { scope: prefixOrOptions.scope },
-      ];
+    : [prefixOrOptions.path || defaultPath, prefixOrOptions.host, { scope: prefixOrOptions.scope }];
 
   return (target) => {
     Reflect.defineMetadata(CONTROLLER_METADATA, true, target);
     Reflect.defineMetadata(PATH_METADATA, path, target);
     Reflect.defineMetadata(HOST_METADATA, host, target);
     Reflect.defineMetadata(SCOPE_OPTIONS_METADATA, scopeOptions, target);
-    Injectable(scopeOptions)(target);
+    Component(scopeOptions)(target);
   };
 }

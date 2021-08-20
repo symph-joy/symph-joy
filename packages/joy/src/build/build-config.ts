@@ -1,9 +1,9 @@
-import { Injectable } from "@symph/core";
-import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
+import { Component } from "@symph/core";
+import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { generateBuildId } from "./generate-build-id";
 import nanoid from "nanoid/index.js";
 
-@Injectable()
+@Component()
 export class BuildConfig {
   constructor(private joyAppConfig: JoyAppConfig) {}
   private _buildId: string;

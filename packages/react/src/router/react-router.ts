@@ -1,6 +1,6 @@
 import { IReactRoute } from "../interfaces";
 import { matchPath } from "react-router";
-import { ClassProvider, Type } from "@symph/core";
+import { ClassProvider, TProviderName, Type } from "@symph/core";
 import { getRouteMeta, IRouteMeta } from "./react-route.decorator";
 import * as H from "history";
 
@@ -141,14 +141,9 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     return addedRoutes;
   }
 
-  public replaceRouteProvider(
-    nextProvider: ClassProvider,
-    preProviderId: string
-  ): { added: T[]; removed: T[]; modified: T[] } {
+  public replaceRouteProvider(nextProvider: ClassProvider, preProviderName: string): { added: T[]; removed: T[]; modified: T[] } {
     const nextRoutes = this.scanProvider(nextProvider) || [];
-    const preProviders = this.filterRoutes(
-      (route) => route.providerId === preProviderId
-    );
+    const preProviders = this.filterRoutes((route) => route.providerName === preProviderName);
 
     const added: T[] = [];
     const removed: T[] = [];
@@ -183,37 +178,35 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     return { added, removed, modified };
   }
 
-  protected fromRouteMeta(
-    path: string,
-    providerId: string,
-    meta: IRouteMeta,
-    useClass: Type
-  ): T {
+  protected fromRouteMeta(path: string, providerName: TProviderName, meta: IRouteMeta, useClass: Type): T {
     const hasStaticState = !!useClass.prototype.initialModelStaticState;
     const hasState = !!useClass.prototype.initialModelState;
     return {
       ...meta,
       path,
-      providerId,
+      providerName,
       hasStaticState,
       hasState,
     } as T;
   }
 
-  protected scanProvider(provider: ClassProvider): T[] | undefined {
-    const { useClass, id } = provider;
+  public scanProvider(provider: ClassProvider): T[] | undefined {
+    const { useClass, name } = provider;
     const routeMeta = getRouteMeta(useClass);
     if (!routeMeta) {
       return;
     }
+    if (Array.isArray(name)) {
+      throw new Error("ReactController component name must not be an array");
+    }
     const routes: T[] = [];
     if (Array.isArray(routeMeta.path)) {
       routeMeta.path?.forEach((path) => {
-        const route = this.fromRouteMeta(path, id, routeMeta, useClass);
+        const route = this.fromRouteMeta(path, name, routeMeta, useClass);
         routes.push(route);
       });
     } else {
-      const route = this.fromRouteMeta(routeMeta.path, id, routeMeta, useClass);
+      const route = this.fromRouteMeta(routeMeta.path, name, routeMeta, useClass);
       routes.push(route);
     }
     return routes;

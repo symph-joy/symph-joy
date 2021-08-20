@@ -4,7 +4,7 @@
 import { iterate } from "iterare";
 import { ApplicationConfig } from "../application-config";
 import { ContextCreator } from "../helpers/context-creator";
-import { InstanceWrapper, Type } from "@symph/core";
+import { ComponentWrapper, Type } from "@symph/core";
 import { NestInterceptor } from "../interfaces/features/nest-interceptor.interface";
 import { isEmpty, isFunction } from "@symph/core/dist/utils/shared.utils";
 import { STATIC_CONTEXT } from "@symph/core/dist/injector/constants";
@@ -13,15 +13,12 @@ import { ServerContainer } from "../server-container";
 import { INTERCEPTORS_METADATA } from "../constants";
 // import { STATIC_CONTEXT } from '../injector/constants';
 // import { NestContainer } from '../injector/container';
-// import { InstanceWrapper } from '../injector/instance-wrapper';
+// import { ComponentWrapper } from '../injector/instance-wrapper';
 
 export class InterceptorsContextCreator extends ContextCreator {
   // private moduleContext: string;
 
-  constructor(
-    private readonly container: ServerContainer,
-    private readonly config?: ApplicationConfig
-  ) {
+  constructor(private readonly container: ServerContainer, private readonly config?: ApplicationConfig) {
     super();
   }
 
@@ -51,15 +48,9 @@ export class InterceptorsContextCreator extends ContextCreator {
       return [] as any;
     }
     return iterate(metadata)
-      .filter(
-        (interceptor) =>
-          interceptor && (interceptor.name || interceptor.intercept)
-      )
+      .filter((interceptor) => interceptor && (interceptor.name || interceptor.intercept))
       .map((interceptor) => this.getInterceptorInstance(interceptor, contextId))
-      .filter(
-        (interceptor) =>
-          (interceptor && isFunction(interceptor.intercept)) as boolean
-      )
+      .filter((interceptor) => (interceptor && isFunction(interceptor.intercept)) as boolean)
       .toArray() as R;
   }
 
@@ -74,11 +65,7 @@ export class InterceptorsContextCreator extends ContextCreator {
     }
     const instanceWrapper = this.getInstanceByMetatype(interceptor as Type);
     if (!instanceWrapper) {
-      throw new Error(
-        `could not find out interceptor(class:${
-          (interceptor as Type<any>).name
-        }) in the current context`
-      );
+      throw new Error(`could not find out interceptor(class:${(interceptor as Type<any>).name}) in the current context`);
       // return null;
     }
     const instanceHost = instanceWrapper.getInstanceByContextId(
@@ -88,9 +75,7 @@ export class InterceptorsContextCreator extends ContextCreator {
     return instanceHost && instanceHost.instance;
   }
 
-  public getInstanceByMetatype<T extends Type>(
-    metatype: T
-  ): InstanceWrapper | undefined {
+  public getInstanceByMetatype<T extends Type>(metatype: T): ComponentWrapper | undefined {
     return this.container.getProviderByType(metatype);
 
     // if (!this.moduleContext) {
@@ -116,7 +101,7 @@ export class InterceptorsContextCreator extends ContextCreator {
     if (contextId === STATIC_CONTEXT) {
       return globalInterceptors;
     }
-    const scopedInterceptorWrappers = this.config.getGlobalRequestInterceptors() as InstanceWrapper[];
+    const scopedInterceptorWrappers = this.config.getGlobalRequestInterceptors() as ComponentWrapper[];
     const scopedInterceptors = iterate(scopedInterceptorWrappers)
       .map((wrapper) => wrapper.getInstanceByContextId(contextId))
       .filter((host) => !!host)

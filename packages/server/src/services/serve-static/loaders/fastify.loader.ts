@@ -1,24 +1,18 @@
-// import { Injectable } from '@nestjs/common';
+// import { Component } from '@nestjs/common';
 // import { loadPackage } from '@nestjs/common/utils/load-package.util';
 // import { AbstractHttpAdapter } from '@nestjs/core';
 import * as fs from "fs";
 import { ServeStaticOptions } from "../interfaces/serve-static-options.interface";
-import {
-  DEFAULT_RENDER_PATH,
-  DEFAULT_ROOT_PATH,
-} from "../serve-static.constants";
+import { DEFAULT_RENDER_PATH, DEFAULT_ROOT_PATH } from "../serve-static.constants";
 import { validatePath } from "../utils/validate-path.util";
 import { AbstractLoader } from "./abstract.loader";
 import { AbstractHttpAdapter } from "../../../adapters";
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 import { FastifyInstance } from "fastify";
 
-@Injectable()
+@Component()
 export class FastifyLoader extends AbstractLoader {
-  public register(
-    httpAdapter: AbstractHttpAdapter,
-    optionsArr: ServeStaticOptions[]
-  ) {
+  public register(httpAdapter: AbstractHttpAdapter, optionsArr: ServeStaticOptions[]) {
     const app = httpAdapter.getInstance<FastifyInstance>();
     // const fastifyStatic = loadPackage(
     //   'fastify-static',
@@ -42,10 +36,7 @@ export class FastifyLoader extends AbstractLoader {
           prefix: options.serveRoot,
         });
 
-        const renderPath =
-          typeof options.serveRoot === "string"
-            ? options.serveRoot + validatePath(options.renderPath as string)
-            : options.serveRoot;
+        const renderPath = typeof options.serveRoot === "string" ? options.serveRoot + validatePath(options.renderPath as string) : options.serveRoot;
 
         app.get(renderPath, (req: any, res: any) => {
           const stream = fs.createReadStream(indexFilePath);
@@ -59,10 +50,7 @@ export class FastifyLoader extends AbstractLoader {
         });
         app.get(options.renderPath as string, (req: any, res: any) => {
           const stream = fs.createReadStream(indexFilePath);
-          if (
-            options.serveStaticOptions &&
-            options.serveStaticOptions.setHeaders
-          ) {
+          if (options.serveStaticOptions && options.serveStaticOptions.setHeaders) {
             const stat = fs.statSync(indexFilePath);
             options.serveStaticOptions.setHeaders(res, indexFilePath, stat);
           }

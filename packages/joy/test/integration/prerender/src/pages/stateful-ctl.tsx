@@ -1,16 +1,10 @@
 import React, { ReactNode } from "react";
-import {
-  Controller,
-  Model,
-  ReactController,
-  ReactModel,
-  Route,
-} from "@symph/react";
-import { Inject } from "@symph/core";
+import { ReactModel, ReactBaseController, ReactController, ReactBaseModel, Route } from "@symph/react";
+import { Autowire } from "@symph/core";
 import { Prerender } from "@symph/joy/dist/build/prerender";
 
-@Model()
-export class StatefulModel extends ReactModel<{
+@ReactModel()
+export class StatefulModel extends ReactBaseModel<{
   staticMessage: string;
   staticUpdateTime: number;
   dynamicMessage: string;
@@ -57,15 +51,13 @@ export class StatefulModel extends ReactModel<{
 
 @Prerender()
 @Route({ path: "/stateful" })
-@Controller()
-export default class StatefulCtl extends ReactController {
-  @Inject()
+@ReactController()
+export default class StatefulCtl extends ReactBaseController {
+  @Autowire()
   public statefulModel: StatefulModel;
 
   async initialModelStaticState(urlParams: any): Promise<void> {
-    await this.statefulModel.setStaticMessage(
-      "hello from initialModelStaticState"
-    );
+    await this.statefulModel.setStaticMessage("hello from initialModelStaticState");
   }
 
   async initialModelState(context: any): Promise<void> {
@@ -73,12 +65,7 @@ export default class StatefulCtl extends ReactController {
   }
 
   renderView(): ReactNode {
-    const {
-      staticMessage,
-      staticUpdateTime,
-      dynamicUpdateTime,
-      dynamicMessage,
-    } = this.statefulModel.state;
+    const { staticMessage, staticUpdateTime, dynamicUpdateTime, dynamicMessage } = this.statefulModel.state;
     return (
       <>
         <div id="staticMessage">{staticMessage}</div>

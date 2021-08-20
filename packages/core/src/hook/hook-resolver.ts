@@ -1,27 +1,21 @@
-import { Injectable } from "../decorators/core";
 import { HookCenter } from "./hook-center";
-import { InstanceWrapper } from "../injector/instance-wrapper";
+import { ComponentWrapper } from "../injector/component-wrapper";
 import { InjectorHookTaps } from "../injector/injector";
-import { getHooksMetadata } from "./hook.decorator";
-import { getTapsMetadata, Tap } from "./tap.decorator";
+import { getTapsMetadata } from "./register-tap.decorator";
+import { Scope } from "../interfaces";
 
-// @Injectable()
 export class HookResolver implements InjectorHookTaps {
   constructor(private pluginCenter: HookCenter) {
-    pluginCenter.registerTap("injectorAfterPropertiesSet", {
+    pluginCenter.registerTap("componentAfterPropertiesSet", {
       id: "plugin-center-resolve-hooks",
-      propKey: "injectorAfterPropertiesSet",
+      propKey: "componentAfterPropertiesSet",
       provider: this,
     });
   }
 
-  injectorAfterPropertiesSet<T>(
-    instance: T,
-    args: { instanceWrapper: InstanceWrapper }
-  ): T {
+  componentAfterPropertiesSet<T>(instance: T, args: { instanceWrapper: ComponentWrapper }): T {
     const { instanceWrapper } = args;
-    const hooks = getHooksMetadata(instanceWrapper.type);
-    if (hooks && hooks.length > 0) {
+    if (instanceWrapper.scope === Scope.DEFAULT) {
       this.pluginCenter.registerProviderHooks(instance, instanceWrapper.type);
     }
 

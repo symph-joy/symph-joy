@@ -1,11 +1,5 @@
-import React, { Component, useContext } from "react";
-import {
-  Route,
-  Switch,
-  SwitchProps,
-  useLocation,
-  RouteProps,
-} from "react-router-dom";
+import React from "react";
+import { Route, Switch, SwitchProps, useLocation } from "react-router-dom";
 import { useJoyContext } from "../hooks";
 import { IReactRoute } from "../interfaces";
 
@@ -14,11 +8,7 @@ interface RouterContainerType extends SwitchProps {
   extraProps?: any;
 }
 
-export function RouteSwitch({
-  routes,
-  location,
-  extraProps,
-}: RouterContainerType) {
+export function RouteSwitch({ routes, location, extraProps }: RouterContainerType) {
   if (!location) {
     location = useLocation();
   }
@@ -31,7 +21,7 @@ export function RouteSwitch({
         const RouteComponent = route.component;
         return (
           <Route
-            key={route.providerId || i}
+            key={typeof route.providerName === "string" ? route.providerName : i}
             path={route.path}
             exact={route.exact}
             strict={route.strict}
@@ -41,31 +31,21 @@ export function RouteSwitch({
               } else if (RouteComponent) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                return (
-                  <RouteComponent {...props} {...extraProps} route={route} />
-                );
-              } else if (route.providerId) {
-                const instanceWrapper = joyContext.getProviderDefinition(
-                  route.providerId
-                );
+                return <RouteComponent {...props} {...extraProps} route={route} />;
+              } else if (route.providerName) {
+                let instanceWrapper = joyContext.getProviderDefinition(route.providerName);
+                if (!instanceWrapper && route.providerModule) {
+                  joyContext.registerModule(route.providerModule);
+                  instanceWrapper = joyContext.getProviderDefinition(route.providerName);
+                }
                 if (!instanceWrapper) {
-                  throw new Error(
-                    `Missing controller(id:${route.providerId}) in the container`
-                  );
+                  throw new Error(`Missing controller(id:${String(route.providerName)}) in the container`);
                 }
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                return (
-                  <instanceWrapper.type
-                    {...props}
-                    {...extraProps}
-                    route={route}
-                  />
-                );
+                return <instanceWrapper.type {...props} {...extraProps} route={route} />;
               } else {
-                throw new Error(
-                  `Can not render the route(${route.path}), there is no property named 'render' or 'component' or 'providerId' used to render`
-                );
+                throw new Error(`Can not render the route(${route.path}), there is no property named 'render' or 'component' or 'providerName' used to render`);
               }
             }}
           />

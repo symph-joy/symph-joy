@@ -5,12 +5,12 @@
 //   PipeTransform,
 //   WebSocketAdapter,
 // } from '@nestjs/common';
-// import { InstanceWrapper } from './injector/instance-wrapper';
+// import { ComponentWrapper } from './injector/instance-wrapper';
 import { CanActivate } from "./interfaces/features/can-activate.interface";
 import { NestInterceptor } from "./interfaces/features/nest-interceptor.interface";
 import { ExceptionFilter } from "./interfaces/exceptions";
 import { PipeTransform } from "./interfaces/features/pipe-transform.interface";
-import { InstanceWrapper } from "@symph/core";
+import { ComponentWrapper } from "@symph/core";
 import { WebSocketAdapter } from "./interfaces/websockets/web-socket-adapter.interface";
 
 export class ApplicationConfig {
@@ -21,14 +21,10 @@ export class ApplicationConfig {
   private globalFilters: ExceptionFilter[] = [];
   private globalInterceptors: NestInterceptor[] = [];
   private globalGuards: CanActivate[] = [];
-  private readonly globalRequestPipes: InstanceWrapper<PipeTransform>[] = [];
-  private readonly globalRequestFilters: InstanceWrapper<
-    ExceptionFilter
-  >[] = [];
-  private readonly globalRequestInterceptors: InstanceWrapper<
-    NestInterceptor
-  >[] = [];
-  private readonly globalRequestGuards: InstanceWrapper<CanActivate>[] = [];
+  private readonly globalRequestPipes: ComponentWrapper<PipeTransform>[] = [];
+  private readonly globalRequestFilters: ComponentWrapper<ExceptionFilter>[] = [];
+  private readonly globalRequestInterceptors: ComponentWrapper<NestInterceptor>[] = [];
+  private readonly globalRequestGuards: ComponentWrapper<CanActivate>[] = [];
 
   constructor(private ioAdapter: WebSocketAdapter | null = null) {}
 
@@ -97,37 +93,35 @@ export class ApplicationConfig {
     this.globalGuards = this.globalGuards.concat(guards);
   }
 
-  public addGlobalRequestInterceptor(
-    wrapper: InstanceWrapper<NestInterceptor>
-  ) {
+  public addGlobalRequestInterceptor(wrapper: ComponentWrapper<NestInterceptor>) {
     this.globalRequestInterceptors.push(wrapper);
   }
 
-  public getGlobalRequestInterceptors(): InstanceWrapper<NestInterceptor>[] {
+  public getGlobalRequestInterceptors(): ComponentWrapper<NestInterceptor>[] {
     return this.globalRequestInterceptors;
   }
 
-  public addGlobalRequestPipe(wrapper: InstanceWrapper<PipeTransform>) {
+  public addGlobalRequestPipe(wrapper: ComponentWrapper<PipeTransform>) {
     this.globalRequestPipes.push(wrapper);
   }
 
-  public getGlobalRequestPipes(): InstanceWrapper<PipeTransform>[] {
+  public getGlobalRequestPipes(): ComponentWrapper<PipeTransform>[] {
     return this.globalRequestPipes;
   }
 
-  public addGlobalRequestFilter(wrapper: InstanceWrapper<ExceptionFilter>) {
+  public addGlobalRequestFilter(wrapper: ComponentWrapper<ExceptionFilter>) {
     this.globalRequestFilters.push(wrapper);
   }
 
-  public getGlobalRequestFilters(): InstanceWrapper<ExceptionFilter>[] {
+  public getGlobalRequestFilters(): ComponentWrapper<ExceptionFilter>[] {
     return this.globalRequestFilters;
   }
 
-  public addGlobalRequestGuard(wrapper: InstanceWrapper<CanActivate>) {
+  public addGlobalRequestGuard(wrapper: ComponentWrapper<CanActivate>) {
     this.globalRequestGuards.push(wrapper);
   }
 
-  public getGlobalRequestGuards(): InstanceWrapper<CanActivate>[] {
+  public getGlobalRequestGuards(): ComponentWrapper<CanActivate>[] {
     return this.globalRequestGuards;
   }
 }

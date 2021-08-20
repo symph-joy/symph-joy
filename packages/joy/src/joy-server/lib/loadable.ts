@@ -144,11 +144,7 @@ function createLoadableComponent(loadFn: any, options: any) {
   }
 
   // Client only
-  if (
-    !initialized &&
-    typeof window !== "undefined" &&
-    typeof opts.webpack === "function"
-  ) {
+  if (!initialized && typeof window !== "undefined" && typeof opts.webpack === "function") {
     const moduleIds = opts.webpack();
     READY_INITIALIZERS.push((ids: any) => {
       for (const moduleId of moduleIds) {
@@ -182,7 +178,7 @@ function createLoadableComponent(loadFn: any, options: any) {
     return React.useMemo(() => {
       if (state.loading || state.error) {
         return React.createElement(opts.loading, {
-          isLoading: state.loading,
+          isDataLoading: state.loading,
           pastDelay: state.pastDelay,
           timedOut: state.timedOut,
           error: state.error,
@@ -326,10 +322,7 @@ function flushInitializers(initializers: any, ids: any): any {
 
 Loadable.preloadAll = () => {
   return new Promise((resolveInitializers, reject) => {
-    flushInitializers(ALL_INITIALIZERS, undefined).then(
-      resolveInitializers,
-      reject
-    );
+    flushInitializers(ALL_INITIALIZERS, undefined).then(resolveInitializers, reject);
   });
 };
 

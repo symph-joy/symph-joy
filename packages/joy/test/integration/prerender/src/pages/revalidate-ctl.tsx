@@ -1,16 +1,10 @@
 import React, { ReactNode } from "react";
-import {
-  Controller,
-  Model,
-  ReactController,
-  ReactModel,
-  Route,
-} from "@symph/react";
-import { Inject } from "@symph/core";
+import { ReactModel, ReactBaseController, ReactController, ReactBaseModel, Route } from "@symph/react";
+import { Autowire } from "@symph/core";
 import { Prerender } from "@symph/joy/dist/build/prerender";
 
-@Model()
-export class RevalidateModel extends ReactModel<{
+@ReactModel()
+export class RevalidateModel extends ReactBaseModel<{
   msg: string;
   updateTime: number;
 }> {
@@ -39,15 +33,13 @@ export class RevalidateModel extends ReactModel<{
 
 @Prerender()
 @Route({ path: "/revalidate" })
-@Controller()
-export default class RevalidateCtl extends ReactController {
-  @Inject()
+@ReactController()
+export default class RevalidateCtl extends ReactBaseController {
+  @Autowire()
   public revalidateModel: RevalidateModel;
 
   async initialModelStaticState(urlParams: any): Promise<number> {
-    await this.revalidateModel.setStaticMessage(
-      "hello from initialModelStaticState"
-    );
+    await this.revalidateModel.setStaticMessage("hello from initialModelStaticState");
     return 1;
   }
 

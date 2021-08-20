@@ -1,26 +1,23 @@
-import { ClassProvider, Tap } from "@symph/core";
+import { ClassProvider, Component, RegisterTap } from "@symph/core";
 import { getJsonSchema, JsonSchema } from "@tsed/schema";
 import { getConfigMetadata } from "./config-value.decorator";
 import Ajv from "ajv";
 import { PROP_KEY_JOY_CONFIG_SET_VALUE } from "./constants";
-import { Inject } from "@symph/core";
+import { Autowire } from "@symph/core";
 import { ConfigService } from "./config.service";
 
 class EmptySchemaClass {}
 
-export function Configurable(
-  options: Partial<ClassProvider> = {}
-): ClassDecorator {
+export function Configurable(options: Partial<ClassProvider> = {}): ClassDecorator {
   return (target) => {
-    const configMetas = getConfigMetadata(target);
-    const propKeys: string[] = new Array(configMetas.length);
+    const configMetas = getConfigMetadata(target) || [];
+    // const propKeys: string[] = new Array(configMetas.length);
     const configKeys: string[] = new Array(configMetas.length);
-    const configJsonSchema: JsonSchema = new JsonSchema(
-      getJsonSchema(EmptySchemaClass)
-    );
+    const configJsonSchema: JsonSchema = new JsonSchema(getJsonSchema(EmptySchemaClass));
+
     for (let i = 0; i < configMetas.length; i++) {
       const { configKey, propKey, schema } = configMetas[i];
-      propKeys[i] = propKey;
+      // propKeys[i] = propKey;
       configKeys[i] = configKey;
       configJsonSchema.addProperty(configKey, new JsonSchema(schema));
     }
@@ -31,7 +28,7 @@ export function Configurable(
       schema.assign(configJsonSchema);
     }
     target.prototype[validSchemaPropKey] = addSchema;
-    Tap({ hookId: "addJoyConfigSchema" })(target, validSchemaPropKey);
+    RegisterTap({ hookId: "addJoyConfigSchema" })(target, validSchemaPropKey);
 
     // 注册config的值变化
     const onConfigChangedPropKey = `__joy_config_changed`;
@@ -46,13 +43,15 @@ export function Configurable(
         throw new Error(errMsg);
       }
 
-      if (instance.setConfigValue) {
-        instance.setConfigValue(configInstance, configKeys);
+      // custom implement setConfigValue
+      if (instance.setConfigValue && instance.setConfigValue(configInstance)) {
         return;
       }
 
-      for (let i = 0; i < propKeys.length; i++) {
-        instance[propKeys[i]] = configInstance[configKeys[i]];
+      for (let i = 0; i < configMetas.length; i++) {
+        const configMeta = configMetas[i];
+        const value = configInstance[configMeta.configKey];
+        instance[configMeta.propKey] = typeof value === "undefined" ? configMeta.default : value;
       }
     }
 
@@ -68,9 +67,11 @@ export function Configurable(
     }
     target.prototype[PROP_KEY_JOY_CONFIG_SET_VALUE] = setConfigValue;
     target.prototype[onConfigChangedPropKey] = onConfigChanged;
-    Tap({ hookId: "onJoyConfigChanged" })(target, onConfigChangedPropKey);
+    RegisterTap({ hookId: "onJoyConfigChanged" })(target, onConfigChangedPropKey);
 
     // 声明一个隐藏的私有依赖属性，确保在ConfigService实例化后，才实例化被装饰的类。
-    Inject(ConfigService)(target.prototype, "__joy_config_service");
+    Autowire(ConfigService)(target.prototype, "__joy_config_service");
+
+    Component(options)(target);
   };
 }

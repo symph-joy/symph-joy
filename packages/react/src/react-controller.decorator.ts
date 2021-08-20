@@ -1,4 +1,4 @@
-import { ClassProvider, Injectable, Scope } from "@symph/core";
+import { ClassProvider, Component, Scope } from "@symph/core";
 
 export interface ControllerMeta {
   path: string;
@@ -10,9 +10,7 @@ export interface PathVariable {
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export function Controller<T>(
-  options: Partial<ClassProvider & ControllerMeta> = {}
-): <TFunction extends Function>(target: TFunction) => TFunction | void {
+export function ReactController<T>(options: Partial<ClassProvider & ControllerMeta> = {}): <TFunction extends Function>(target: TFunction) => TFunction | void {
   return (constructor) => {
     class ExtReactControllerDeco extends (constructor as any) {
       public wrapperComponent: typeof constructor;
@@ -30,20 +28,19 @@ export function Controller<T>(
         return constructor.toString();
       }
 
-      static displayName =
-        "RCTL_" + ((constructor as any).displayName || constructor.name);
+      static displayName = "RCTL_" + ((constructor as any).displayName || constructor.name);
     }
 
     // react-controller is instanced by react, so it's scope must be transient
     const clazzName = constructor.name;
-    const id = clazzName.replace(clazzName[0], clazzName[0].toLowerCase());
+    const name = clazzName.replace(clazzName[0], clazzName[0].toLowerCase());
     options = Object.assign(
       // { type: ExtReactControllerDeco, useClass: ExtReactControllerDeco },
-      { id },
+      { name },
       options,
       { scope: Scope.TRANSIENT, autoLoad: false }
     );
-    Injectable(options)(ExtReactControllerDeco);
+    Component(options)(ExtReactControllerDeco);
 
     return (ExtReactControllerDeco as unknown) as typeof constructor;
   };

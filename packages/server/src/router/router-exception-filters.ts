@@ -7,11 +7,11 @@
 // import { ExceptionsHandler } from '../exceptions/exceptions-handler';
 // import { STATIC_CONTEXT } from '../injector/constants';
 // import { NestContainer } from '../injector/container';
-// import { InstanceWrapper } from '../injector/instance-wrapper';
+// import { ComponentWrapper } from '../injector/instance-wrapper';
 // import { RouterProxyCallback } from './router-proxy';
 // import { iterate } from 'iterare';
 
-import { InstanceWrapper } from "@symph/core";
+import { ComponentWrapper } from "@symph/core";
 import { STATIC_CONTEXT } from "@symph/core/dist/injector/constants";
 import { BaseExceptionFilterContext } from "../exceptions/base-exception-filter-context";
 import { HttpServer } from "../interfaces/http";
@@ -25,11 +25,7 @@ import { isEmpty } from "@symph/core/dist/utils/shared.utils";
 import { ServerContainer } from "../server-container";
 
 export class RouterExceptionFilters extends BaseExceptionFilterContext {
-  constructor(
-    container: ServerContainer,
-    private readonly config: ApplicationConfig,
-    private readonly applicationRef: HttpServer
-  ) {
+  constructor(container: ServerContainer, private readonly config: ApplicationConfig, private readonly applicationRef: HttpServer) {
     super(container);
   }
 
@@ -57,15 +53,12 @@ export class RouterExceptionFilters extends BaseExceptionFilterContext {
     return exceptionHandler;
   }
 
-  public getGlobalMetadata<T extends unknown[]>(
-    contextId = STATIC_CONTEXT,
-    inquirerId?: string
-  ): T {
+  public getGlobalMetadata<T extends unknown[]>(contextId = STATIC_CONTEXT, inquirerId?: string): T {
     const globalFilters = this.config.getGlobalFilters() as T;
     if (contextId === STATIC_CONTEXT && !inquirerId) {
       return globalFilters;
     }
-    const scopedFilterWrappers = this.config.getGlobalRequestFilters() as InstanceWrapper[];
+    const scopedFilterWrappers = this.config.getGlobalRequestFilters() as ComponentWrapper[];
     const scopedFilters = iterate(scopedFilterWrappers)
       // .map(wrapper => wrapper.getInstanceByContextId(contextId, inquirerId))
       .map((wrapper) => wrapper.getInstanceByContextId(contextId))

@@ -1,24 +1,13 @@
 /**
  * @publicApi
  */
-import {
-  Abstract,
-  ContextId,
-  CoreContext,
-  EntryType,
-  Logger,
-  Type,
-} from "@symph/core";
+import { Abstract, ContextId, CoreContext, EntryType, ComponentWrapper, Logger, Type, ValueProvider } from "@symph/core";
 import { ServerContainer } from "./server-container";
 import { Resolver } from "./router/interfaces/resolver.interface";
 import { RoutesResolver } from "./router/routes-resolver";
 import { ApplicationConfig } from "./application-config";
-import { HttpServer } from "./interfaces/http";
 import { INestApplication } from "./interfaces/nest-application.interface";
-import {
-  CorsOptions,
-  CorsOptionsDelegate,
-} from "./interfaces/external/cors-options.interface";
+import { CorsOptions, CorsOptionsDelegate } from "./interfaces/external/cors-options.interface";
 import { NestInterceptor } from "./interfaces/features/nest-interceptor.interface";
 import { INestMicroservice } from "./interfaces/nest-microservice.interface";
 import { ExceptionFilter } from "./interfaces/exceptions";
@@ -35,76 +24,72 @@ import { isNil } from "@symph/core/dist/utils/shared.utils";
 import { UnknownElementException } from "./errors/exceptions/unknown-element.exception";
 import { createContextId } from "./helpers";
 import { AbstractHttpAdapter } from "./adapters";
-import {
-  ServerConfigConfiguration,
-  SYMPH_CONFIG_INIT_VALUE,
-} from "@symph/config";
+import { SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
+import { ServerConfiguration } from "./server.configuration";
 
 export class ServerApplication extends CoreContext implements INestApplication {
   private readonly logger = new Logger(ServerApplication.name, true);
-  private readonly routesResolver: Resolver;
+  private routesResolver: Resolver;
   private httpServer: any;
   private isListening = false;
 
   protected config = new ApplicationConfig();
+  public httpAdapter: AbstractHttpAdapter;
+  public readonly container: ServerContainer;
 
   constructor(
     protected readonly entry: EntryType,
-    public readonly httpAdapter: HttpServer,
+    public readonly configurationClass: typeof ServerConfiguration = ServerConfiguration,
+    // public readonly httpAdapter: HttpServer,
     // protected readonly config: ApplicationConfig,
-    private readonly appOptions: NestApplicationOptions = {},
-    public container: ServerContainer = new ServerContainer()
+    protected readonly appOptions: NestApplicationOptions = {} // public container: ServerContainer = new ServerContainer()
   ) {
-    super(entry, container);
-    this.container.setHttpAdapter(this.httpAdapter);
-    this.registerHttpServer();
-
-    this.routesResolver = new RoutesResolver(
-      this.container,
-      this.config,
-      this.injector
-    );
+    super(entry, new ServerContainer());
   }
 
-  protected async initContext(): Promise<string[]> {
-    const ids = await super.initContext();
-    const thisIds = await this.loadModule([
+  protected async initContext(): Promise<ComponentWrapper[]> {
+    const providers = await super.initContext();
+    const thisProviders = this.registerModule([
       {
         [SYMPH_CONFIG_INIT_VALUE]: {
-          id: SYMPH_CONFIG_INIT_VALUE,
+          name: SYMPH_CONFIG_INIT_VALUE,
           useValue: this.appOptions,
-        },
-        httpAdapter: {
-          id: "httpAdapter",
-          type: Object,
-          useValue: this.httpAdapter,
-        },
+        } as ValueProvider,
+        // httpAdapter: {
+        //   name: "httpAdapter",
+        //   type: Object,
+        //   useValue: this.httpAdapter,
+        // } as ValueProvider,
       },
-      this.getServerConfigClass(),
+      this.configurationClass,
     ]);
 
-    return [...ids, ...thisIds];
+    this.registerHttpServer();
+    return [...providers, ...thisProviders];
   }
 
-  public getServerConfigClass(): typeof ServerConfigConfiguration {
-    return ServerConfigConfiguration;
+  async init(): Promise<this> {
+    await super.init();
+    await this.httpAdapter.init();
+    return this;
   }
 
   public registerHttpServer() {
+    this.httpAdapter = this.syncGet(AbstractHttpAdapter);
+    this.container.setHttpAdapter(this.httpAdapter);
+    this.routesResolver = new RoutesResolver(this.container, this.config, this.injector);
+
     this.httpServer = this.createServer();
   }
 
   public createServer<T = any>(): T {
-    this.httpAdapter.initHttpServer(this.appOptions);
+    this.httpAdapter.initHttpServer();
     return this.httpAdapter.getHttpServer() as T;
   }
 
-  async loadModule(module: EntryType | EntryType[]): Promise<string[]> {
-    const loadedProviderIds = await super.loadModule(module);
-
-    await this.registerRouter(loadedProviderIds);
-
-    return loadedProviderIds;
+  protected async initProviders(instanceWrappers: ComponentWrapper[]): Promise<void> {
+    await super.initProviders(instanceWrappers);
+    await this.registerRouter(instanceWrappers);
   }
 
   // public async init(): Promise<this> {
@@ -119,22 +104,15 @@ export class ServerApplication extends CoreContext implements INestApplication {
   //   return this;
   // }
 
-  public async registerRouter(providerIds: string[]) {
+  public async registerRouter(wrappers: ComponentWrapper[]) {
     // await this.registerMiddleware(this.httpAdapter);
 
     const prefix = this.config.getGlobalPrefix();
-    const basePath = prefix
-      ? prefix.charAt(0) !== "/"
-        ? "/" + prefix
-        : prefix
-      : "";
-    this.routesResolver.resolve(this.httpAdapter, basePath, providerIds);
+    const basePath = prefix ? (prefix.charAt(0) !== "/" ? "/" + prefix : prefix) : "";
+    this.routesResolver.resolve(this.httpAdapter, basePath, wrappers);
   }
 
-  connectMicroservice<T extends object = any>(
-    options: T,
-    hybridOptions?: NestHybridApplicationOptions
-  ): INestMicroservice {
+  connectMicroservice<T extends object = any>(options: T, hybridOptions?: NestHybridApplicationOptions): INestMicroservice {
     // @ts-ignore
     return undefined;
   }
@@ -191,8 +169,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
   }
 
   public setViewEngine(engineOrOptions: any): this {
-    this.httpAdapter.setViewEngine &&
-      this.httpAdapter.setViewEngine(engineOrOptions);
+    this.httpAdapter.setViewEngine && this.httpAdapter.setViewEngine(engineOrOptions);
     return this;
   }
 
@@ -209,40 +186,31 @@ export class ServerApplication extends CoreContext implements INestApplication {
     return "http";
   }
 
-  public async listen(
-    port: number | string,
-    callback?: () => void
-  ): Promise<any>;
-  public async listen(
-    port: number | string,
-    hostname?: string,
-    callback?: () => void
-  ): Promise<any>;
+  public async listen(port: number | string, callback?: () => void): Promise<any>;
+  public async listen(port: number | string, hostname?: string, callback?: (err: Error) => void): Promise<any>;
   public async listen(port: number | string, ...args: any[]): Promise<any> {
     !this.isInitialized && (await this.init());
     this.isListening = true;
-    this.httpAdapter.listen(port, ...args);
+    await this.httpAdapter.listen(port, ...args);
     return this.httpServer;
   }
 
   listenAsync(port: number | string, hostname?: string): Promise<any> {
-    return new Promise((resolve) => {
-      const server: any = this.listen(port, hostname, () => resolve(server));
+    return new Promise((resolve, reject) => {
+      const server: any = this.listen(port, hostname, (e) => {
+        if (e) {
+          reject(e);
+        }
+        resolve(server);
+      });
     });
   }
 
-  registerRequestByContextId<T = any>(
-    request: T,
-    contextId: { id: number }
-  ): void {
+  registerRequestByContextId<T = any>(request: T, contextId: { id: number }): void {
     this.container.registerRequestProvider(request, contextId);
   }
 
-  resolve<TInput = any>(
-    typeOrToken: Type<TInput> | Abstract<TInput> | string,
-    contextId = createContextId(),
-    options?: { strict: boolean }
-  ): Promise<TInput> {
+  resolve<TInput = any>(typeOrToken: Type<TInput> | Abstract<TInput> | string, contextId = createContextId(), options?: { strict: boolean }): Promise<TInput> {
     return Promise.resolve(this.resolvePerContext(typeOrToken, contextId));
   }
 
@@ -304,11 +272,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
     if (isNil(instanceWrapper)) {
       throw new UnknownElementException();
     }
-    const provider = this.injector.loadProvider(
-      instanceWrapper,
-      this.container,
-      contextId
-    );
+    const provider = this.injector.loadProvider(instanceWrapper, this.container, contextId);
     return provider as Promise<TInput> | TInput;
   }
 

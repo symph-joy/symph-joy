@@ -1,59 +1,45 @@
-import {
-  Hook,
-  HookPipe,
-  HookType,
-  IInstanceWrapper,
-  Inject,
-  Injectable,
-  InjectorHookTaps,
-  Optional,
-  ProviderLifecycle,
-  Tap,
-} from "@symph/core";
-import {
-  PROP_KEY_JOY_CONFIG_SET_VALUE,
-  SYMPH_CONFIG_INIT_VALUE,
-  SYMPH_CONFIG_LOADERS,
-} from "./constants";
+import { HookType, IComponentWrapper, Autowire, Component, InjectorHookTaps, Optional, ProviderLifecycle, RegisterTap, AutowireHook, IHook } from "@symph/core";
+import { PROP_KEY_JOY_CONFIG_SET_VALUE, SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_INIT_VALUE, SYMPH_CONFIG_LOADERS, SYMPH_CONFIG_OPTIONS } from "./constants";
 import { object } from "prop-types";
 import { isNil } from "@symph/core/dist/utils/shared.utils";
 import { VALIDATED_ENV_PROPNAME } from "./config.constants";
 import get from "lodash.get";
 import has from "lodash.has";
 import set from "lodash.set";
+import merge from "lodash.merge";
 import { NoInferType } from "./types";
-import { ConfigLoader } from "./loaders/config-loader";
+import { ConfigLoader } from "./loader/loaders/config-loader";
+import { ConfigLoaderFactory } from "./loader/factories/config-loader-factory";
 
 const CONFIG_FILE = "joy.config.js";
 
-@Injectable()
-export class ConfigService<K = Record<string, any>>
-  implements InjectorHookTaps, ProviderLifecycle {
-  @Optional()
-  @Inject(SYMPH_CONFIG_LOADERS)
-  public configLoaders: ConfigLoader[];
+export interface ConfigServiceOptions {
+  isAutoLoadConfig: boolean;
+}
 
-  @Hook({
+@Component()
+export class ConfigService<K = Record<string, any>> implements InjectorHookTaps, ProviderLifecycle {
+  @Autowire()
+  public configLoaderFactory: ConfigLoaderFactory;
+
+  @AutowireHook({
     id: "addJoyConfigSchema",
     type: HookType.Waterfall,
     parallel: false,
     async: true,
   })
-  private addJoyConfigSchema: HookPipe;
+  private addJoyConfigSchema: IHook;
 
-  @Hook({
+  @AutowireHook({
     id: "onJoyConfigChanged",
     type: HookType.Waterfall,
     parallel: false,
     async: true,
   })
-  private onJoyConfigChanged: HookPipe;
+  private onJoyConfigChanged: IHook;
 
-  @Tap()
-  injectorAfterPropertiesSet<T>(
-    instance: T,
-    args: { instanceWrapper: IInstanceWrapper }
-  ): T {
+  @RegisterTap()
+  componentAfterPropertiesSet<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
     const setConfigValue = (instance as any)[PROP_KEY_JOY_CONFIG_SET_VALUE];
     if (setConfigValue) {
       setConfigValue.call(instance, this.internalConfig);
@@ -61,11 +47,21 @@ export class ConfigService<K = Record<string, any>>
     return instance;
   }
 
+  private internalConfig: Record<string, unknown>;
+
   constructor(
     @Optional()
-    @Inject(SYMPH_CONFIG_INIT_VALUE)
-    private internalConfig: Record<string, any> = {}
-  ) {}
+    @Autowire(SYMPH_CONFIG_OPTIONS)
+    private configOptions: ConfigServiceOptions = { isAutoLoadConfig: true },
+    @Optional()
+    @Autowire(SYMPH_CONFIG_DEFAULT_VALUE)
+    defaultConfig: Record<string, unknown> = {},
+    @Optional()
+    @Autowire(SYMPH_CONFIG_INIT_VALUE)
+    initConfig: Record<string, unknown> = {}
+  ) {
+    this.internalConfig = merge({}, defaultConfig, initConfig);
+  }
 
   private _isCacheEnabled = false;
   get isCacheEnabled(): boolean {
@@ -79,24 +75,28 @@ export class ConfigService<K = Record<string, any>>
   private readonly cache: Partial<K> = {} as any;
 
   async afterPropertiesSet(): Promise<void> {
-    await this.loadConfig();
+    if (this.configOptions.isAutoLoadConfig) {
+      await this.loadConfig();
+    }
   }
 
-  public async initConfig(): Promise<void> {
-    return this.loadConfig();
-  }
-
-  private async loadConfig(): Promise<void> {
-    if (!this.configLoaders || this.configLoaders.length === 0) {
-      console.warn("Config value loader is not found.");
+  public async loadConfig(): Promise<void> {
+    const configLoaders = this.configLoaderFactory.getLoaders(this.internalConfig);
+    if (!configLoaders || configLoaders.length === 0) {
+      console.warn("There is no config loader.");
       return;
     }
-    for (const configLoader of this.configLoaders) {
+    const loadedValues = {};
+    for (const configLoader of configLoaders) {
       const configValues = await configLoader.loadConfig();
-      this.mergeConfig(configValues);
+      if (configValues) {
+        merge(loadedValues, configValues);
+      }
     }
+    Object.keys(loadedValues).length > 0 && this.mergeConfig(loadedValues);
   }
 
+  get<T = Record<string, unknown>>(): Record<string, unknown>;
   get<T = any>(propertyPath: keyof K): T | undefined;
 
   get<T = any>(propertyPath: keyof K, defaultValue: NoInferType<T>): T;
@@ -107,7 +107,10 @@ export class ConfigService<K = Record<string, any>>
    * @param propertyPath
    * @param defaultValue
    */
-  get<T = any>(propertyPath: keyof K, defaultValue?: T): T | undefined {
+  get<T = any>(propertyPath?: keyof K, defaultValue?: T): T | undefined {
+    if (typeof propertyPath === "undefined") {
+      return this.internalConfig as any;
+    }
     const validatedEnvValue = this.getFromValidatedEnv(propertyPath);
     if (validatedEnvValue !== undefined) {
       return validatedEnvValue;
@@ -130,21 +133,14 @@ export class ConfigService<K = Record<string, any>>
     return this.addJoyConfigSchema.call({});
   }
 
-  public mergeConfig(
-    customConfig: { [key: string]: any },
-    deepMerge = true
-  ): void {
+  public mergeConfig(customConfig: { [key: string]: any }, deepMerge = true): void {
     const configs = this.internalConfig;
     Object.keys(customConfig).forEach((key) => {
       const value = customConfig[key];
       if (isNil(value)) {
         return;
       }
-      if (
-        deepMerge &&
-        typeof value === "object" &&
-        value.constructor !== Array
-      ) {
+      if (deepMerge && typeof value === "object" && value.constructor !== Array) {
         if (isNil(configs[key])) {
           configs[key] = {} as any;
         }
@@ -184,40 +180,24 @@ export class ConfigService<K = Record<string, any>>
       config = config({ defaultConfig: this });
 
       if (typeof config.then === "function") {
-        throw new Error(
-          "> Promise returned in joy config. #promise-in-next-config"
-        );
+        throw new Error("> Promise returned in joy config. #promise-in-next-config");
       }
     }
     return config;
   }
 
-  private getFromCache<T = any>(
-    propertyPath: keyof K,
-    defaultValue?: T
-  ): T | undefined {
+  private getFromCache<T = any>(propertyPath: keyof K, defaultValue?: T): T | undefined {
     const cachedValue = get(this.cache, propertyPath);
-    return cachedValue === undefined
-      ? defaultValue
-      : ((cachedValue as unknown) as T);
+    return cachedValue === undefined ? defaultValue : ((cachedValue as unknown) as T);
   }
 
   private getFromValidatedEnv<T = any>(propertyPath: keyof K): T | undefined {
-    const validatedEnvValue = get(
-      this.internalConfig[VALIDATED_ENV_PROPNAME],
-      propertyPath
-    );
+    const validatedEnvValue = get(this.internalConfig[VALIDATED_ENV_PROPNAME], propertyPath);
     return (validatedEnvValue as unknown) as T;
   }
 
-  private getFromProcessEnv<T = any>(
-    propertyPath: keyof K,
-    defaultValue: any
-  ): T | undefined {
-    if (
-      this.isCacheEnabled &&
-      has(this.cache as Record<any, any>, propertyPath)
-    ) {
+  private getFromProcessEnv<T = any>(propertyPath: keyof K, defaultValue: any): T | undefined {
+    if (this.isCacheEnabled && has(this.cache as Record<any, any>, propertyPath)) {
       const cachedValue = this.getFromCache(propertyPath, defaultValue);
       return cachedValue !== undefined ? cachedValue : defaultValue;
     }

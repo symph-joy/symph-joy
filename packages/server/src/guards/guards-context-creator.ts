@@ -5,7 +5,7 @@
 import { iterate } from "iterare";
 import { ApplicationConfig } from "../application-config";
 import { ContextCreator } from "../helpers/context-creator";
-import { InstanceWrapper, Type } from "@symph/core";
+import { ComponentWrapper, Type } from "@symph/core";
 import { isEmpty, isFunction } from "@symph/core/dist/utils/shared.utils";
 import { STATIC_CONTEXT } from "@symph/core/dist/injector/constants";
 import { Controller } from "../interfaces/controllers";
@@ -14,15 +14,12 @@ import { ServerContainer } from "../server-container";
 import { GUARDS_METADATA } from "../constants";
 // import { STATIC_CONTEXT } from '../injector/constants';
 // import { NestContainer } from '../injector/container';
-// import { InstanceWrapper } from '../injector/instance-wrapper';
+// import { ComponentWrapper } from '../injector/instance-wrapper';
 
 export class GuardsContextCreator extends ContextCreator {
   private moduleContext: string;
 
-  constructor(
-    private readonly container: ServerContainer,
-    private readonly config?: ApplicationConfig
-  ) {
+  constructor(private readonly container: ServerContainer, private readonly config?: ApplicationConfig) {
     super();
   }
 
@@ -43,11 +40,7 @@ export class GuardsContextCreator extends ContextCreator {
     );
   }
 
-  public createConcreteContext<T extends unknown[], R extends unknown[]>(
-    metadata: T,
-    contextId = STATIC_CONTEXT,
-    inquirerId?: string
-  ): R {
+  public createConcreteContext<T extends unknown[], R extends unknown[]>(metadata: T, contextId = STATIC_CONTEXT, inquirerId?: string): R {
     if (isEmpty(metadata)) {
       return [] as any;
     }
@@ -69,11 +62,7 @@ export class GuardsContextCreator extends ContextCreator {
     }
     const instanceWrapper = this.getInstanceByMetatype(guard as Type);
     if (!instanceWrapper) {
-      throw new Error(
-        `could not find out guard(class:${
-          (guard as Type<any>).name
-        }) in the current context`
-      );
+      throw new Error(`could not find out guard(class:${(guard as Type<any>).name}) in the current context`);
       // return null;
     }
     const instanceHost = instanceWrapper.getInstanceByContextId(
@@ -83,9 +72,7 @@ export class GuardsContextCreator extends ContextCreator {
     return instanceHost && instanceHost.instance;
   }
 
-  public getInstanceByMetatype<T extends Type<any>>(
-    guard: T
-  ): InstanceWrapper | undefined {
+  public getInstanceByMetatype<T extends Type<any>>(guard: T): ComponentWrapper | undefined {
     return this.container.getProviderByType(guard);
 
     // if (!this.moduleContext) {
@@ -112,7 +99,7 @@ export class GuardsContextCreator extends ContextCreator {
     if (contextId === STATIC_CONTEXT) {
       return globalGuards;
     }
-    const scopedGuardWrappers = this.config.getGlobalRequestGuards() as InstanceWrapper[];
+    const scopedGuardWrappers = this.config.getGlobalRequestGuards() as ComponentWrapper[];
     const scopedGuards = iterate(scopedGuardWrappers)
       .map((wrapper) => wrapper.getInstanceByContextId(contextId))
       .filter((host) => !!host)

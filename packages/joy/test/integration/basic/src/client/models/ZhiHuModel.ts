@@ -1,5 +1,4 @@
-import { Inject } from "@symph/core";
-import { Model, ReactModel } from "@symph/react";
+import { ReactModel, ReactBaseModel } from "@symph/react";
 
 class ZhiHuArticle {
   news_id: string;
@@ -8,8 +7,8 @@ class ZhiHuArticle {
   thumbnail: string;
 }
 
-@Model()
-export class ZhiHuModel extends ReactModel<{
+@ReactModel()
+export class ZhiHuModel extends ReactBaseModel<{
   count: number;
   recent?: ZhiHuArticle[];
 }> {

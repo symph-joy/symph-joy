@@ -1,4 +1,4 @@
-import { ContextId } from "./instance-wrapper";
+import { ContextId } from "./component-wrapper";
 
 const STATIC_CONTEXT_ID = 1;
 export const STATIC_CONTEXT: ContextId = Object.freeze({

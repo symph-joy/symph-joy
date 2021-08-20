@@ -5,65 +5,22 @@ import { IncomingMessage, ServerResponse } from "http";
 import Proxy from "http-proxy";
 import { join, relative, resolve, sep } from "path";
 import { parse as parseQs, ParsedUrlQuery } from "querystring";
-import {
-  format as formatUrl,
-  parse as parseUrl,
-  UrlWithParsedQuery,
-} from "url";
+import { format as formatUrl, parse as parseUrl, UrlWithParsedQuery } from "url";
 import { PrerenderManifest } from "../../build/joy-build.service";
-import {
-  CustomRoutes,
-  getRedirectStatus,
-  Header,
-  Redirect,
-  Rewrite,
-  RouteType,
-} from "../../lib/load-custom-routes";
+import { CustomRoutes, getRedirectStatus, Header, Redirect, Rewrite, RouteType } from "../../lib/load-custom-routes";
 import { withCoalescedInvoke } from "../../lib/coalesced-function";
-import {
-  BUILD_ID_FILE,
-  CLIENT_PUBLIC_FILES_PATH,
-  CLIENT_STATIC_FILES_PATH,
-  CLIENT_STATIC_FILES_RUNTIME,
-  OUT_DIRECTORY,
-  PAGES_MANIFEST,
-  PHASE_PRODUCTION_SERVER,
-  PRERENDER_MANIFEST,
-  ROUTES_MANIFEST,
-  SERVER_DIRECTORY,
-  SERVERLESS_DIRECTORY,
-} from "../lib/constants";
-import {
-  getRouteMatcher,
-  getRouteRegex,
-  getSortedRoutes,
-  isDynamicRoute,
-} from "../lib/router/utils";
+import { BUILD_ID_FILE, CLIENT_PUBLIC_FILES_PATH, CLIENT_STATIC_FILES_PATH, CLIENT_STATIC_FILES_RUNTIME, OUT_DIRECTORY, PAGES_MANIFEST, PHASE_PRODUCTION_SERVER, PRERENDER_MANIFEST, ROUTES_MANIFEST, SERVER_DIRECTORY, SERVERLESS_DIRECTORY } from "../lib/constants";
+import { getRouteMatcher, getRouteRegex, getSortedRoutes, isDynamicRoute } from "../lib/router/utils";
 import * as envConfig from "../lib/runtime-config";
-import {
-  execOnce,
-  isResSent,
-  JoyApiRequest,
-  JoyApiResponse,
-} from "../lib/utils";
+import { execOnce, isResSent, JoyApiRequest, JoyApiResponse } from "../lib/utils";
 // import { tryGetPreviewData, __ApiPreviewProps } from './api-utils'
 import { __ApiPreviewProps } from "./api-utils";
 import pathMatch from "../lib/router/utils/path-match";
 import { recursiveReadDirSync } from "./lib/recursive-readdir-sync";
-import {
-  loadComponent,
-  loadComponents,
-  LoadComponentsReturnType,
-} from "./load-components";
+import { loadComponent, loadComponents, LoadComponentsReturnType } from "./load-components";
 import { RenderOpts, RenderOptsPartial, renderToHTML } from "./render";
 import { getPagePath, requireFontManifest } from "./require";
-import Router, {
-  DynamicRoutes,
-  PageChecker,
-  Params,
-  route,
-  Route,
-} from "./router";
+import Router, { DynamicRoutes, PageChecker, Params, route, Route } from "./router";
 import prepareDestination from "../lib/router/utils/prepare-destination";
 import { sendPayload } from "./send-payload";
 import { serveStatic } from "./serve-static";
@@ -76,14 +33,8 @@ import { PagesManifest } from "../../build/webpack/plugins/pages-manifest-plugin
 import { removePathTrailingSlash } from "../../client/normalize-trailing-slash";
 import getRouteFromAssetPath from "../lib/router/utils/get-route-from-asset-path";
 import { FontManifest } from "./font-utils";
-import {
-  Hook,
-  HookPipe,
-  HookType,
-  Injectable,
-  ProviderLifecycle,
-} from "@symph/core";
-import { JoyAppConfig } from "./joy-config/joy-app-config";
+import { HookType, Component, ProviderLifecycle, AutowireHook, IHook } from "@symph/core";
+import { JoyAppConfig } from "./joy-app-config";
 // import { ServerConfig } from "./server-config";
 // import { JoyReactAppServerConfig } from "../lib/joy-react-app-server-config";
 import { ReactApplicationContext, ReactRouter } from "@symph/react";
@@ -96,11 +47,7 @@ const getCustomRouteMatcher = pathMatch(true);
 
 type JoyConfig = any;
 
-type Middleware = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  next: (err?: Error) => void
-) => void;
+type Middleware = (req: IncomingMessage, res: ServerResponse, next: (err?: Error) => void) => void;
 
 type FindComponentsResult = {
   components: LoadComponentsReturnType;
@@ -124,7 +71,7 @@ export type ServerConstructor = {
   customServer?: boolean;
 };
 
-@Injectable()
+@Component()
 export class JoyReactServer implements ProviderLifecycle {
   dir: string;
   quiet: boolean;
@@ -164,8 +111,8 @@ export class JoyReactServer implements ProviderLifecycle {
   /**
    * 在服务端渲染html之前调用的hook
    */
-  @Hook({ parallel: false, type: HookType.Waterfall })
-  private onBeforeRender: HookPipe;
+  @AutowireHook({ parallel: false, type: HookType.Waterfall })
+  private onBeforeRender: IHook;
 
   // public constructor({
   //   dir = '.',
@@ -174,12 +121,7 @@ export class JoyReactServer implements ProviderLifecycle {
   //   dev = false,
   //   customServer = true,
   // }: ServerConstructor = {}) {
-  public constructor(
-    protected joyAppConfig: JoyAppConfig,
-    protected reactRouter: ReactRouter,
-    // protected serverConfig: ServerConfig,
-    protected reactContextFactory: ReactContextFactory
-  ) {
+  public constructor(protected joyAppConfig: JoyAppConfig, protected reactRouter: ReactRouter, protected reactContextFactory: ReactContextFactory) {
     const { dir, quiet, dev, customServer, distDir } = joyAppConfig;
     this.dir = joyAppConfig.resolveAppDir(dir);
     this.quiet = quiet;
@@ -194,13 +136,7 @@ export class JoyReactServer implements ProviderLifecycle {
 
     // Only serverRuntimeConfig needs the default
     // publicRuntimeConfig gets it's default in client/index.js
-    const {
-      serverRuntimeConfig = {},
-      publicRuntimeConfig,
-      assetPrefix,
-      generateEtags,
-      compress,
-    } = this.joyConfig;
+    const { serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, generateEtags, compress } = this.joyConfig;
 
     this.renderOpts = {
       initStage: EnumReactAppInitStage.DYNAMIC,
@@ -214,10 +150,7 @@ export class JoyReactServer implements ProviderLifecycle {
       ampOptimizerConfig: this.joyConfig.experimental.amp?.optimizer,
       basePath: this.joyConfig.basePath,
       optimizeFonts: this.joyConfig.experimental.optimizeFonts && !dev,
-      fontManifest:
-        this.joyConfig.experimental.optimizeFonts && !dev
-          ? requireFontManifest(this.outDir, this._isLikeServerless)
-          : null,
+      fontManifest: this.joyConfig.experimental.optimizeFonts && !dev ? requireFontManifest(this.outDir, this._isLikeServerless) : null,
       optimizeImages: this.joyConfig.experimental.optimizeImages,
     };
 
@@ -237,10 +170,7 @@ export class JoyReactServer implements ProviderLifecycle {
       publicRuntimeConfig,
     });
 
-    this.serverBuildDir = join(
-      this.outDir,
-      this._isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY
-    );
+    this.serverBuildDir = join(this.outDir, this._isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY);
     const pagesManifestPath = join(this.serverBuildDir, PAGES_MANIFEST);
 
     if (!dev) {
@@ -254,12 +184,8 @@ export class JoyReactServer implements ProviderLifecycle {
     // call init-server middleware, this is also handled
     // individually in serverless bundles when deployed
     if (!dev && this.joyConfig.experimental.plugins) {
-      const initServer = require(join(this.serverBuildDir, "init-server.js"))
-        .default;
-      this.onErrorMiddleware = require(join(
-        this.serverBuildDir,
-        "on-error-server.js"
-      )).default;
+      const initServer = require(join(this.serverBuildDir, "init-server.js")).default;
+      this.onErrorMiddleware = require(join(this.serverBuildDir, "on-error-server.js")).default;
       initServer();
     }
 
@@ -306,11 +232,7 @@ export class JoyReactServer implements ProviderLifecycle {
     console.error(err);
   }
 
-  private async handleRequest(
-    req: IncomingMessage,
-    res: ServerResponse,
-    parsedUrl?: UrlWithParsedQuery
-  ): Promise<void> {
+  private async handleRequest(req: IncomingMessage, res: ServerResponse, parsedUrl?: UrlWithParsedQuery): Promise<void> {
     // Parse url if parsedUrl not provided
     if (!parsedUrl || typeof parsedUrl !== "object") {
       const url: any = req.url;
@@ -388,9 +310,7 @@ export class JoyReactServer implements ProviderLifecycle {
     useFileSystemPublicRoutes: boolean;
     dynamicRoutes: DynamicRoutes | undefined;
   } {
-    const publicRoutes = fs.existsSync(this.publicDir)
-      ? this.generatePublicRoutes()
-      : [];
+    const publicRoutes = fs.existsSync(this.publicDir) ? this.generatePublicRoutes() : [];
 
     const staticFilesRoute = this.hasStaticDir
       ? [
@@ -401,11 +321,7 @@ export class JoyReactServer implements ProviderLifecycle {
             match: route("/static/:path*"),
             name: "static catchall",
             fn: async (req, res, params, parsedUrl) => {
-              const p = join(
-                this.dir,
-                "static",
-                ...(params.path || []).map(encodeURIComponent)
-              );
+              const p = join(this.dir, "static", ...(params.path || []).map(encodeURIComponent));
               await this.serveStatic(req, res, p, parsedUrl);
               return {
                 finished: true,
@@ -429,22 +345,10 @@ export class JoyReactServer implements ProviderLifecycle {
             };
           }
 
-          if (
-            params.path[0] === CLIENT_STATIC_FILES_RUNTIME ||
-            params.path[0] === "chunks" ||
-            params.path[0] === "css" ||
-            params.path[0] === "media" ||
-            params.path[0] === this.buildId ||
-            params.path[0] === "pages" ||
-            params.path[1] === "pages"
-          ) {
+          if (params.path[0] === CLIENT_STATIC_FILES_RUNTIME || params.path[0] === "chunks" || params.path[0] === "css" || params.path[0] === "media" || params.path[0] === this.buildId || params.path[0] === "pages" || params.path[1] === "pages") {
             this.setImmutableAssetCacheControl(res);
           }
-          const p = join(
-            this.outDir,
-            CLIENT_STATIC_FILES_PATH,
-            ...(params.path || [])
-          );
+          const p = join(this.outDir, CLIENT_STATIC_FILES_PATH, ...(params.path || []));
           await this.serveStatic(req, res, p, parsedUrl);
           return {
             finished: true,
@@ -487,13 +391,7 @@ export class JoyReactServer implements ProviderLifecycle {
 
           const parsedUrl = parseUrl(pathname, true);
 
-          await this.render(
-            req,
-            res,
-            pathname,
-            { ..._parsedUrl.query, _joyDataReq: "1" },
-            parsedUrl
-          );
+          await this.render(req, res, pathname, { ..._parsedUrl.query, _joyDataReq: "1" }, parsedUrl);
           return {
             finished: true,
           };
@@ -516,9 +414,7 @@ export class JoyReactServer implements ProviderLifecycle {
     ];
 
     const getCustomRouteBasePath = (r: { basePath?: false }) => {
-      return r.basePath !== false && this.renderOpts.dev
-        ? this.joyConfig.basePath
-        : "";
+      return r.basePath !== false && this.renderOpts.dev ? this.joyConfig.basePath : "";
     };
 
     const getCustomRoute = (r: Rewrite | Redirect | Header, type: RouteType) =>
@@ -538,22 +434,10 @@ export class JoyReactServer implements ProviderLifecycle {
       for (const key of Object.keys(params)) {
         if (value.includes(`:${key}`)) {
           value = value
-            .replace(
-              new RegExp(`:${key}\\*`, "g"),
-              `:${key}--ESCAPED_PARAM_ASTERISKS`
-            )
-            .replace(
-              new RegExp(`:${key}\\?`, "g"),
-              `:${key}--ESCAPED_PARAM_QUESTION`
-            )
-            .replace(
-              new RegExp(`:${key}\\+`, "g"),
-              `:${key}--ESCAPED_PARAM_PLUS`
-            )
-            .replace(
-              new RegExp(`:${key}(?!\\w)`, "g"),
-              `--ESCAPED_PARAM_COLON${key}`
-            );
+            .replace(new RegExp(`:${key}\\*`, "g"), `:${key}--ESCAPED_PARAM_ASTERISKS`)
+            .replace(new RegExp(`:${key}\\?`, "g"), `:${key}--ESCAPED_PARAM_QUESTION`)
+            .replace(new RegExp(`:${key}\\+`, "g"), `:${key}--ESCAPED_PARAM_PLUS`)
+            .replace(new RegExp(`:${key}(?!\\w)`, "g"), `--ESCAPED_PARAM_COLON${key}`);
         }
       }
       value = value
@@ -565,9 +449,7 @@ export class JoyReactServer implements ProviderLifecycle {
 
       // the value needs to start with a forward-slash to be compiled
       // correctly
-      return compilePathToRegex(`/${value}`, { validate: false })(
-        params
-      ).substr(1);
+      return compilePathToRegex(`/${value}`, { validate: false })(params).substr(1);
     };
 
     // Headers come very first
@@ -601,13 +483,7 @@ export class JoyReactServer implements ProviderLifecycle {
         statusCode: redirectRoute.statusCode,
         name: `Redirect route`,
         fn: async (_req, res, params, parsedUrl) => {
-          const { parsedDestination } = prepareDestination(
-            redirectRoute.destination,
-            params,
-            parsedUrl.query,
-            false,
-            getCustomRouteBasePath(redirectRoute)
-          );
+          const { parsedDestination } = prepareDestination(redirectRoute.destination, params, parsedUrl.query, false, getCustomRouteBasePath(redirectRoute));
           const updatedDestination = formatUrl(parsedDestination);
 
           res.setHeader("Location", updatedDestination);
@@ -636,13 +512,7 @@ export class JoyReactServer implements ProviderLifecycle {
         name: `Rewrite route`,
         match: rewriteRoute.match,
         fn: async (req, res, params, parsedUrl) => {
-          const { newUrl, parsedDestination } = prepareDestination(
-            rewriteRoute.destination,
-            params,
-            parsedUrl.query,
-            true,
-            getCustomRouteBasePath(rewriteRoute)
-          );
+          const { newUrl, parsedDestination } = prepareDestination(rewriteRoute.destination, params, parsedUrl.query, true, getCustomRouteBasePath(rewriteRoute));
 
           // external rewrite, proxy it
           if (parsedDestination.protocol) {
@@ -688,12 +558,7 @@ export class JoyReactServer implements ProviderLifecycle {
         pathname = removePathTrailingSlash(pathname);
 
         if (params?.path?.[0] === "api") {
-          const handled = await this.handleApiRequest(
-            req as JoyApiRequest,
-            res as JoyApiResponse,
-            pathname,
-            query
-          );
+          const handled = await this.handleApiRequest(req as JoyApiRequest, res as JoyApiResponse, pathname, query);
           if (handled) {
             return { finished: true };
           }
@@ -743,12 +608,7 @@ export class JoyReactServer implements ProviderLifecycle {
     return found;
   }
 
-  protected async _beforeCatchAllRender(
-    _req: IncomingMessage,
-    _res: ServerResponse,
-    _params: Params,
-    _parsedUrl: UrlWithParsedQuery
-  ): Promise<boolean> {
+  protected async _beforeCatchAllRender(_req: IncomingMessage, _res: ServerResponse, _params: Params, _parsedUrl: UrlWithParsedQuery): Promise<boolean> {
     return false;
   }
 
@@ -761,12 +621,7 @@ export class JoyReactServer implements ProviderLifecycle {
    * @param res http response
    * @param pathname path of request
    */
-  private async handleApiRequest(
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathname: string,
-    query: ParsedUrlQuery
-  ): Promise<boolean> {
+  private async handleApiRequest(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery): Promise<boolean> {
     let page = pathname;
     let params: Params | boolean = false;
     let pageFound = await this.hasPage(page);
@@ -823,9 +678,7 @@ export class JoyReactServer implements ProviderLifecycle {
   }
 
   protected generatePublicRoutes(): Route[] {
-    const publicFiles = new Set(
-      recursiveReadDirSync(this.publicDir).map((p) => p.replace(/\\/g, "/"))
-    );
+    const publicFiles = new Set(recursiveReadDirSync(this.publicDir).map((p) => p.replace(/\\/g, "/")));
 
     return [
       {
@@ -878,11 +731,7 @@ export class JoyReactServer implements ProviderLifecycle {
     }
   }
 
-  protected async run(
-    req: IncomingMessage,
-    res: ServerResponse,
-    parsedUrl: UrlWithParsedQuery
-  ): Promise<void> {
+  protected async run(req: IncomingMessage, res: ServerResponse, parsedUrl: UrlWithParsedQuery): Promise<void> {
     this.handleCompression(req, res);
 
     try {
@@ -901,11 +750,7 @@ export class JoyReactServer implements ProviderLifecycle {
     await this.render404(req, res, parsedUrl);
   }
 
-  protected async sendHTML(
-    req: IncomingMessage,
-    res: ServerResponse,
-    html: string
-  ): Promise<void> {
+  protected async sendHTML(req: IncomingMessage, res: ServerResponse, html: string): Promise<void> {
     const { generateEtags, poweredByHeader } = this.renderOpts;
     return sendPayload(req, res, html, "html", {
       generateEtags,
@@ -913,24 +758,12 @@ export class JoyReactServer implements ProviderLifecycle {
     });
   }
 
-  public async render(
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathname: string,
-    query: ParsedUrlQuery = {},
-    parsedUrl?: UrlWithParsedQuery
-  ): Promise<void> {
+  public async render(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery = {}, parsedUrl?: UrlWithParsedQuery): Promise<void> {
     if (!pathname.startsWith("/")) {
-      console.warn(
-        `Cannot render page with path "${pathname}", did you mean "/${pathname}"?. #render-no-starting-slash`
-      );
+      console.warn(`Cannot render page with path "${pathname}", did you mean "/${pathname}"?. #render-no-starting-slash`);
     }
 
-    if (
-      this.renderOpts.customServer &&
-      pathname === "/index" &&
-      !(await this.hasPage("/index"))
-    ) {
+    if (this.renderOpts.customServer && pathname === "/index" && !(await this.hasPage("/index"))) {
       // maintain backwards compatibility for custom server
       // (see custom-server integration tests)
       pathname = "/";
@@ -942,11 +775,7 @@ export class JoyReactServer implements ProviderLifecycle {
     // so check if we need to serve a static _joy file or not.
     // we don't modify the URL for _joy/data request but still
     // call render so we special case this to prevent an infinite loop
-    if (
-      !query._joyDataReq &&
-      (url.match(/^\/_joy\//) ||
-        (this.hasStaticDir && url.match(/^\/static\//)))
-    ) {
+    if (!query._joyDataReq && (url.match(/^\/_joy\//) || (this.hasStaticDir && url.match(/^\/static\//)))) {
       return this.handleRequest(req, res, parsedUrl);
     }
 
@@ -963,11 +792,7 @@ export class JoyReactServer implements ProviderLifecycle {
     return this.sendHTML(req, res, html);
   }
 
-  private async findPageComponents(
-    pathname: string,
-    query: ParsedUrlQuery = {},
-    params: Params | null = null
-  ): Promise<FindComponentsResult | null> {
+  private async findPageComponents(pathname: string, query: ParsedUrlQuery = {}, params: Params | null = null): Promise<FindComponentsResult | null> {
     const paths = [
       // try serving a static AMP version first
       // query.amp ? normalizePagePath(pathname) + ".amp" : null,
@@ -975,11 +800,7 @@ export class JoyReactServer implements ProviderLifecycle {
     ].filter(Boolean);
     for (const routePath of paths) {
       try {
-        const components = await loadComponents(
-          this.outDir,
-          routePath!,
-          !this.renderOpts.dev && this._isLikeServerless
-        );
+        const components = await loadComponents(this.outDir, routePath!, !this.renderOpts.dev && this._isLikeServerless);
         return {
           components,
           // query: {
@@ -999,16 +820,12 @@ export class JoyReactServer implements ProviderLifecycle {
     return null;
   }
 
-  protected async findErrorComponent(): Promise<
-    React.ComponentType<{ error: Error }>
-  > {
+  protected async findErrorComponent(): Promise<React.ComponentType<{ error: Error }>> {
     const ErrorComponent = loadComponent(this.outDir, "/_error");
     return ErrorComponent.default || ErrorComponent;
   }
 
-  protected async find404ErrorComponent(): Promise<
-    React.ComponentType<{ error: Error }>
-  > {
+  protected async find404ErrorComponent(): Promise<React.ComponentType<{ error: Error }>> {
     const ErrorComponent = loadComponent(this.outDir, "/_error");
     return ErrorComponent.default || ErrorComponent;
   }
@@ -1024,17 +841,11 @@ export class JoyReactServer implements ProviderLifecycle {
     const staticPaths = undefined;
 
     // Read whether or not fallback should exist from the manifest.
-    const fallbackField = this.getPrerenderManifest().dynamicRoutes[pathname]
-      .fallback;
+    const fallbackField = this.getPrerenderManifest().dynamicRoutes[pathname].fallback;
 
     return {
       staticPaths,
-      fallbackMode:
-        typeof fallbackField === "string"
-          ? "static"
-          : fallbackField === null
-          ? "blocking"
-          : false,
+      fallbackMode: typeof fallbackField === "string" ? "static" : fallbackField === null ? "blocking" : false,
     };
   }
 
@@ -1088,9 +899,7 @@ export class JoyReactServer implements ProviderLifecycle {
     // Compute the iSSG cache key. We use the rewroteUrl since
     // pages with fallback: false are allowed to be rewritten to
     // and we need to look up the path by the rewritten path
-    let urlPathname = (req as any)._joyRewroteUrl
-      ? (req as any)._joyRewroteUrl
-      : `${parseUrl(req.url || "").pathname!}`;
+    let urlPathname = (req as any)._joyRewroteUrl ? (req as any)._joyRewroteUrl : `${parseUrl(req.url || "").pathname!}`;
 
     // remove trailing slash
     urlPathname = urlPathname.replace(/(?!^)\/$/, "");
@@ -1098,9 +907,7 @@ export class JoyReactServer implements ProviderLifecycle {
     // remove /_joy/data prefix from urlPathname so it matches
     // for direct page visit and /_joy/data visit
     if (isDataReq && urlPathname.includes(this.buildId)) {
-      urlPathname = (urlPathname.split(this.buildId).pop() || "/")
-        .replace(/\.json$/, "")
-        .replace(/\/index$/, "/");
+      urlPathname = (urlPathname.split(this.buildId).pop() || "/").replace(/\.json$/, "").replace(/\/index$/, "/");
     }
 
     const ssgCacheKey = !isSSG
@@ -1108,14 +915,10 @@ export class JoyReactServer implements ProviderLifecycle {
       : `${urlPathname}${query.amp ? ".amp" : ""}`;
 
     // Complete the response with cached data if its present
-    const cachedData = ssgCacheKey
-      ? await this.incrementalCache.get(ssgCacheKey)
-      : undefined;
+    const cachedData = ssgCacheKey ? await this.incrementalCache.get(ssgCacheKey) : undefined;
 
     if (cachedData) {
-      const data = isDataReq
-        ? JSON.stringify(cachedData.pageData)
-        : cachedData.html;
+      const data = isDataReq ? JSON.stringify(cachedData.pageData) : cachedData.html;
 
       sendPayload(
         req,
@@ -1130,10 +933,7 @@ export class JoyReactServer implements ProviderLifecycle {
           ? {
               private: false,
               stateful: false, // GSP response
-              revalidate:
-                cachedData.curRevalidate !== undefined
-                  ? cachedData.curRevalidate
-                  : /* default to minimum revalidate (this should be an invariant) */ 1,
+              revalidate: cachedData.curRevalidate !== undefined ? cachedData.curRevalidate : /* default to minimum revalidate (this should be an invariant) */ 1,
             }
           : undefined
       );
@@ -1179,7 +979,7 @@ export class JoyReactServer implements ProviderLifecycle {
         //   sprRevalidate = renderResult.renderOpts.revalidate
         // } else {
         // const applicationConfig = new ApplicationConfig();
-        // const joyContainer = new JoyContainer();
+        // const joyContainer = new CoreContainer();
         // const reactApplicationContext = new ReactApplicationContext(
         //   {},
         //   applicationConfig,
@@ -1203,13 +1003,7 @@ export class JoyReactServer implements ProviderLifecycle {
           isDataReq,
           reactApplicationContext: reactAppContext,
         };
-        const renderResult = await renderToHTML(
-          req,
-          res,
-          pathname,
-          query,
-          renderOpts
-        );
+        const renderResult = await renderToHTML(req, res, pathname, query, renderOpts);
 
         const html = renderResult;
         // TODO: change this to a different passing mechanism
@@ -1225,9 +1019,7 @@ export class JoyReactServer implements ProviderLifecycle {
     const isDynamicPathname = isDynamicRoute(pathname);
     const didRespond = isResSent(res);
 
-    const { staticPaths, fallbackMode } = hasStaticPaths
-      ? await this.getStaticPaths(pathname)
-      : { staticPaths: undefined, fallbackMode: false };
+    const { staticPaths, fallbackMode } = hasStaticPaths ? await this.getStaticPaths(pathname) : { staticPaths: undefined, fallbackMode: false };
 
     // When we did not respond from cache, we need to choose to block on
     // rendering or return a skeleton.
@@ -1318,11 +1110,7 @@ export class JoyReactServer implements ProviderLifecycle {
 
     // Update the cache if the head request and cacheable
     if (isOrigin && ssgCacheKey) {
-      await this.incrementalCache.set(
-        ssgCacheKey,
-        { html: html!, pageData },
-        sprRevalidate
-      );
+      await this.incrementalCache.set(ssgCacheKey, { html: html!, pageData }, sprRevalidate);
     }
 
     return resHtml;
@@ -1354,7 +1142,7 @@ export class JoyReactServer implements ProviderLifecycle {
   //   query: ParsedUrlQuery
   // ): Promise<ReactApplicationContext> {
   //   const applicationConfig = new ApplicationConfig();
-  //   const joyContainer = new JoyContainer();
+  //   const joyContainer = new CoreContainer();
   //   const reactApplicationContext = new ReactApplicationContext(
   //     {},
   //     applicationConfig,
@@ -1370,22 +1158,12 @@ export class JoyReactServer implements ProviderLifecycle {
   //   return reactApplicationContext;
   // }
 
-  public async renderToHTML(
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathname: string,
-    query: ParsedUrlQuery = {}
-  ): Promise<string | null> {
+  public async renderToHTML(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery = {}): Promise<string | null> {
     // ssg
 
     await this.onBeforeRender.call({ req, res, pathname, query });
 
-    const reactAppContext = await this.reactContextFactory.getReactAppContext(
-      req,
-      res,
-      pathname,
-      query
-    );
+    const reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, pathname, query);
 
     if (res.writableEnded) {
       // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
@@ -1395,14 +1173,7 @@ export class JoyReactServer implements ProviderLifecycle {
       const result = await this.findPageComponents(pathname, query);
       if (result) {
         try {
-          return await this.renderToHTMLWithComponents(
-            req,
-            res,
-            pathname,
-            reactAppContext,
-            result,
-            { ...this.renderOpts }
-          );
+          return await this.renderToHTMLWithComponents(req, res, pathname, reactAppContext, result, { ...this.renderOpts });
         } catch (err) {
           if (!(err instanceof NoFallbackError)) {
             throw err;
@@ -1417,21 +1188,10 @@ export class JoyReactServer implements ProviderLifecycle {
             continue;
           }
 
-          const dynamicRouteResult = await this.findPageComponents(
-            dynamicRoute.page,
-            query,
-            params
-          );
+          const dynamicRouteResult = await this.findPageComponents(dynamicRoute.page, query, params);
           if (dynamicRouteResult) {
             try {
-              return await this.renderToHTMLWithComponents(
-                req,
-                res,
-                dynamicRoute.page,
-                reactAppContext,
-                dynamicRouteResult,
-                { ...this.renderOpts, params }
-              );
+              return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, { ...this.renderOpts, params });
             } catch (err) {
               if (!(err instanceof NoFallbackError)) {
                 throw err;
@@ -1450,17 +1210,8 @@ export class JoyReactServer implements ProviderLifecycle {
     return await this.renderErrorToHTML(null, req, res, pathname, query);
   }
 
-  public async renderError(
-    err: Error | null,
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathname: string,
-    query: ParsedUrlQuery = {}
-  ): Promise<void> {
-    res.setHeader(
-      "Cache-Control",
-      "no-cache, no-store, max-age=0, must-revalidate"
-    );
+  public async renderError(err: Error | null, req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery = {}): Promise<void> {
+    res.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
     const html = await this.renderErrorToHTML(err, req, res, pathname, query);
     if (html === null) {
       return;
@@ -1469,21 +1220,10 @@ export class JoyReactServer implements ProviderLifecycle {
   }
 
   private customErrorNo404Warn = execOnce(() => {
-    console.warn(
-      chalk.bold.yellow(`Warning: `) +
-        chalk.yellow(
-          `You have added a custom /_error page without a custom /404 page. This prevents the 404 page from being auto statically optimized. #custom-error-no-custom-404`
-        )
-    );
+    console.warn(chalk.bold.yellow(`Warning: `) + chalk.yellow(`You have added a custom /_error page without a custom /404 page. This prevents the 404 page from being auto statically optimized. #custom-error-no-custom-404`));
   });
 
-  public async renderErrorToHTML(
-    err: Error | null,
-    req: IncomingMessage,
-    res: ServerResponse,
-    _pathname: string,
-    query: ParsedUrlQuery = {}
-  ) {
+  public async renderErrorToHTML(err: Error | null, req: IncomingMessage, res: ServerResponse, _pathname: string, query: ParsedUrlQuery = {}) {
     let result: null | FindComponentsResult = null;
     result = await this.findPageComponents("/_error", query);
     let ErrorComponent = null;
@@ -1511,30 +1251,18 @@ export class JoyReactServer implements ProviderLifecycle {
     let reactAppContext: ReactApplicationContext | undefined;
     if (!err) {
       // 404 page
-      reactAppContext = await this.reactContextFactory.getReactAppContext(
-        req,
-        res,
-        _pathname,
-        query
-      );
+      reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, _pathname, query);
     }
     // const reactAppContext: any = undefined;
 
     let html: string | null;
     try {
       try {
-        html = await this.renderToHTMLWithComponents(
-          req,
-          res,
-          is404 ? "/404" : "/_error",
-          reactAppContext,
-          result!,
-          {
-            ...this.renderOpts,
-            err,
-            ErrorComponent,
-          }
-        );
+        html = await this.renderToHTMLWithComponents(req, res, is404 ? "/404" : "/_error", reactAppContext, result!, {
+          ...this.renderOpts,
+          err,
+          ErrorComponent,
+        });
       } catch (maybeFallbackError) {
         if (maybeFallbackError instanceof NoFallbackError) {
           throw new Error("invariant: failed to render error page");
@@ -1549,23 +1277,14 @@ export class JoyReactServer implements ProviderLifecycle {
     return html;
   }
 
-  public async render404(
-    req: IncomingMessage,
-    res: ServerResponse,
-    parsedUrl?: UrlWithParsedQuery
-  ): Promise<void> {
+  public async render404(req: IncomingMessage, res: ServerResponse, parsedUrl?: UrlWithParsedQuery): Promise<void> {
     const url: any = req.url;
     const { pathname, query } = parsedUrl ? parsedUrl : parseUrl(url, true);
     res.statusCode = 404;
     return this.renderError(null, req, res, pathname!, query);
   }
 
-  public async serveStatic(
-    req: IncomingMessage,
-    res: ServerResponse,
-    path: string,
-    parsedUrl?: UrlWithParsedQuery
-  ): Promise<void> {
+  public async serveStatic(req: IncomingMessage, res: ServerResponse, path: string, parsedUrl?: UrlWithParsedQuery): Promise<void> {
     if (!this.isServeableUrl(path)) {
       return this.render404(req, res, parsedUrl);
     }
@@ -1600,28 +1319,18 @@ export class JoyReactServer implements ProviderLifecycle {
     const pathUserFilesStatic = join(this.dir, "static");
     let userFilesStatic: string[] = [];
     if (this.hasStaticDir && fs.existsSync(pathUserFilesStatic)) {
-      userFilesStatic = recursiveReadDirSync(pathUserFilesStatic).map((f) =>
-        join(".", "static", f)
-      );
+      userFilesStatic = recursiveReadDirSync(pathUserFilesStatic).map((f) => join(".", "static", f));
     }
 
     let userFilesPublic: string[] = [];
     if (this.publicDir && fs.existsSync(this.publicDir)) {
-      userFilesPublic = recursiveReadDirSync(this.publicDir).map((f) =>
-        join(".", "public", f)
-      );
+      userFilesPublic = recursiveReadDirSync(this.publicDir).map((f) => join(".", "public", f));
     }
 
     let joyFilesStatic: string[] = [];
-    joyFilesStatic = recursiveReadDirSync(
-      join(this.outDir, "static")
-    ).map((f) => join(".", relative(this.dir, this.outDir), "static", f));
+    joyFilesStatic = recursiveReadDirSync(join(this.outDir, "static")).map((f) => join(".", relative(this.dir, this.outDir), "static", f));
 
-    return (this._validFilesystemPathSet = new Set<string>([
-      ...joyFilesStatic,
-      ...userFilesPublic,
-      ...userFilesStatic,
-    ]));
+    return (this._validFilesystemPathSet = new Set<string>([...joyFilesStatic, ...userFilesPublic, ...userFilesStatic]));
   }
 
   protected isServeableUrl(untrustedFileUrl: string): boolean {
@@ -1650,11 +1359,7 @@ export class JoyReactServer implements ProviderLifecycle {
 
     // Check if .joy/out/static, static and public are in the path.
     // If not the path is not available.
-    if (
-      (untrustedFilePath.startsWith(join(this.outDir, "static") + sep) ||
-        untrustedFilePath.startsWith(join(this.dir, "static") + sep) ||
-        untrustedFilePath.startsWith(join(this.dir, "public") + sep)) === false
-    ) {
+    if ((untrustedFilePath.startsWith(join(this.outDir, "static") + sep) || untrustedFilePath.startsWith(join(this.dir, "static") + sep) || untrustedFilePath.startsWith(join(this.dir, "public") + sep)) === false) {
       return false;
     }
 
@@ -1670,9 +1375,7 @@ export class JoyReactServer implements ProviderLifecycle {
       return fs.readFileSync(buildIdFile, "utf8").trim();
     } catch (err) {
       if (!fs.existsSync(buildIdFile)) {
-        throw new Error(
-          `Could not find a valid build in the '${this.outDir}' directory! Try building your app with 'joy build' before starting the server.`
-        );
+        throw new Error(`Could not find a valid build in the '${this.outDir}' directory! Try building your app with 'joy build' before starting the server.`);
       }
       throw err;
     }
@@ -1683,10 +1386,7 @@ export class JoyReactServer implements ProviderLifecycle {
   }
 }
 
-function prepareServerlessUrl(
-  req: IncomingMessage,
-  query: ParsedUrlQuery
-): void {
+function prepareServerlessUrl(req: IncomingMessage, query: ParsedUrlQuery): void {
   const curUrl = parseUrl(req.url!, true);
   req.url = formatUrl({
     ...curUrl,

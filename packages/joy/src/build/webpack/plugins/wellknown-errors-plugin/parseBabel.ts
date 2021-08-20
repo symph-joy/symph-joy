@@ -1,7 +1,7 @@
-import Chalk from "chalk";
+import chalk from "chalk";
 import { SimpleWebpackError } from "./simpleWebpackError";
 
-const chalk = new Chalk.constructor({ enabled: true });
+// const chalk = new Chalk({ enabled: true });
 
 export function getBabelError(
   fileName: string,
@@ -23,17 +23,9 @@ export function getBabelError(
       // Remove file information, which instead is provided by webpack.
       .replace(/^.+?: /, "")
       // Remove column information from message
-      .replace(
-        new RegExp(`[^\\S\\r\\n]*\\(${lineNumber}:${column}\\)[^\\S\\r\\n]*`),
-        ""
-      );
+      .replace(new RegExp(`[^\\S\\r\\n]*\\(${lineNumber}:${column}\\)[^\\S\\r\\n]*`), "");
 
-    return new SimpleWebpackError(
-      `${chalk.cyan(fileName)}:${chalk.yellow(
-        lineNumber.toString()
-      )}:${chalk.yellow(column.toString())}`,
-      chalk.red.bold("Syntax error").concat(`: ${message}`)
-    );
+    return new SimpleWebpackError(`${chalk.cyan(fileName)}:${chalk.yellow(lineNumber.toString())}:${chalk.yellow(column.toString())}`, chalk.red.bold("Syntax error").concat(`: ${message}`));
   }
 
   return false;

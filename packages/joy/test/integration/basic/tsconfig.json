@@ -1,8 +1,9 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["./**/*"],
-  "exclude": [".joy"],
+  "include": ["./src/**/*"],
   "compilerOptions": {
+    "rootDir": "./src",
     "jsx": "preserve"
-  }
+  },
+  "exclude": ["node_modules"]
 }

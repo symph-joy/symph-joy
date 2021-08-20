@@ -1,7 +1,4 @@
-import {
-  CorsOptions,
-  CorsOptionsDelegate,
-} from "./external/cors-options.interface";
+import { CorsOptions, CorsOptionsDelegate } from "./external/cors-options.interface";
 import { HttpsOptions } from "./external/https-options.interface";
 import { NestApplicationContextOptions } from "./nest-application-context-options.interface";
 import { AbstractHttpAdapter } from "../adapters";
@@ -24,12 +21,7 @@ export interface NestApplicationOptions extends NestApplicationContextOptions {
   //  */
   // httpsOptions?: HttpsOptions;
 
-  /**
-   * config file path or dir, default is current work dir.
-   */
-  configPath?: string;
-
-  httpServer?: AbstractHttpAdapter;
+  // httpServer?: AbstractHttpAdapter;
   logger?: LoggerService | LogLevel[] | boolean;
 
   [configKey: string]: any;

@@ -20,31 +20,28 @@ export const store = createStore<OutputState>({
   bootstrap: true,
 });
 
-let lastStore: OutputState = { appUrl: null, bootstrap: true };
-function hasStoreChanged(nextStore: OutputState) {
-  if (
-    ([
-      ...new Set([...Object.keys(lastStore), ...Object.keys(nextStore)]),
-    ] as Array<keyof OutputState>).every((key) =>
-      Object.is(lastStore[key], nextStore[key])
-    )
-  ) {
+let preState: OutputState = { appUrl: null, bootstrap: true };
+function hasStoreChanged(nextState: OutputState) {
+  if (([...new Set([...Object.keys(preState), ...Object.keys(nextState)])] as Array<keyof OutputState>).every((key) => Object.is(preState[key], nextState[key]))) {
     return false;
   }
 
-  lastStore = nextStore;
+  preState = nextState;
   return true;
 }
 
-store.subscribe((state: any) => {
+store.subscribe((state) => {
+  const previousState = preState;
   if (!hasStoreChanged(state)) {
     return;
   }
 
   if (state.bootstrap) {
-    if (state.appUrl) {
-      Log.ready(`started server on ${state.appUrl}`);
-    }
+    return;
+  }
+
+  if (!previousState.appUrl && state.appUrl) {
+    Log.ready(`started server on ${state.appUrl}`);
     return;
   }
 
@@ -62,9 +59,7 @@ store.subscribe((state: any) => {
       if (matches) {
         for (const match of matches) {
           const prop = (match.split("]").shift() || "").substr(1);
-          console.log(
-            `AMP bind syntax [${prop}]='' is not supported in JSX, use 'data-amp-bind-${prop}' instead.`
-          );
+          console.log(`AMP bind syntax [${prop}]='' is not supported in JSX, use 'data-amp-bind-${prop}' instead.`);
         }
         return;
       }

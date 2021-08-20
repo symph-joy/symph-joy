@@ -1,4 +1,4 @@
-import { Model, ReactModel } from "@symph/react";
+import { ReactBaseModel, ReactModel } from "@symph/react";
 
 interface Post {
   id: number;
@@ -16,8 +16,8 @@ interface PostsModelState {
   curEntity?: Post;
 }
 
-@Model()
-export class PostsModel extends ReactModel<PostsModelState> {
+@ReactModel()
+export class PostsModel extends ReactBaseModel<PostsModelState> {
   getInitState(): PostsModelState {
     return {
       isListLoading: false,

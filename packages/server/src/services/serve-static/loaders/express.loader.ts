@@ -1,4 +1,4 @@
-// import { Injectable } from '@nestjs/common';
+// import { Component } from '@nestjs/common';
 // import { loadPackage } from '@nestjs/common/utils/load-package.util';
 import * as fs from "fs";
 // import { AbstractHttpAdapter } from '@nestjs/core';
@@ -11,7 +11,7 @@ import * as fs from "fs";
 // import { validatePath } from '../utils/validate-path.util';
 // import { AbstractLoader } from './abstract.loader';
 //
-// @Injectable()
+// @Component()
 // export class ExpressLoader extends AbstractLoader {
 //   public register(
 //     httpAdapter: AbstractHttpAdapter,

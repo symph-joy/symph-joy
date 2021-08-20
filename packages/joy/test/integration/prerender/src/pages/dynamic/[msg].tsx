@@ -1,27 +1,11 @@
 import React, { ReactNode } from "react";
-import {
-  Controller,
-  IReactRouteStaticPathGenerator,
-  ReactController,
-  Route,
-  ParsedUrlQuery,
-  RouteParam,
-} from "@symph/react";
-import { IJoyContext, Injectable } from "@symph/core";
-import {
-  JoyPrerenderInterface,
-  Prerender,
-} from "@symph/joy/dist/build/prerender";
+import { ReactBaseController, ReactController, Route, RouteParam } from "@symph/react";
+import { ICoreContext } from "@symph/core";
+import { JoyPrerenderInterface, Prerender } from "@symph/joy/dist/build/prerender";
 
 @Prerender()
 export class DynamicStaticPathGenerator implements JoyPrerenderInterface {
-  getRoute():
-    | string
-    | ReactController<
-        Record<string, unknown>,
-        Record<string, unknown>,
-        IJoyContext
-      > {
+  getRoute(): string | ReactBaseController<Record<string, unknown>, Record<string, unknown>, ICoreContext> {
     return "/dynamic/:id";
   }
 
@@ -35,9 +19,9 @@ export class DynamicStaticPathGenerator implements JoyPrerenderInterface {
   }
 }
 
-@Route<{ id: string }>({ path: "/dynamic/:msg" })
-@Controller()
-export default class DynamicRouteCtl extends ReactController {
+@Route({ path: "/dynamic/:msg" })
+@ReactController()
+export default class DynamicRouteCtl extends ReactBaseController {
   initialModelStaticState(urlParams: any): Promise<void> {
     return;
   }

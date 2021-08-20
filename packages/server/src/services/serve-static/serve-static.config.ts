@@ -1,9 +1,4 @@
-import {
-  Configuration,
-  Inject,
-  Injectable,
-  ProviderLifecycle,
-} from "@symph/core";
+import { Configuration, Autowire, Component, ProviderLifecycle } from "@symph/core";
 import { AbstractHttpAdapter } from "../../adapters";
 import { ServeStaticService } from "./serve-static.service";
 import { ServeStaticOptions } from "./interfaces/serve-static-options.interface";
@@ -13,25 +8,21 @@ import { AbstractLoader } from "./loaders/abstract.loader";
 
 @Configurable()
 @Configuration()
-@Injectable()
+@Component()
 export class ServeStaticConfig implements ProviderLifecycle {
-  @Inject()
+  @Autowire()
   private httpAdapter: AbstractHttpAdapter;
 
   @ConfigValue()
   private static: ServeStaticOptions[];
 
   @Configuration.Provider()
-  @Inject()
+  @Autowire()
   public loader: FastifyLoader;
 
   @Configuration.Provider()
   public staticServer(): ServeStaticService {
-    return this.instanceService(
-      this.httpAdapter,
-      this.getConfigs(),
-      this.loader
-    );
+    return this.instanceService(this.httpAdapter, this.getConfigs(), this.loader);
   }
 
   afterPropertiesSet(): Promise<void> | void {}
@@ -40,11 +31,7 @@ export class ServeStaticConfig implements ProviderLifecycle {
     return this.static;
   }
 
-  public instanceService(
-    httpAdapter: AbstractHttpAdapter,
-    options: ServeStaticOptions[],
-    loader: AbstractLoader
-  ): ServeStaticService {
+  public instanceService(httpAdapter: AbstractHttpAdapter, options: ServeStaticOptions[], loader: AbstractLoader): ServeStaticService {
     return new ServeStaticService(httpAdapter, options, loader);
   }
 }

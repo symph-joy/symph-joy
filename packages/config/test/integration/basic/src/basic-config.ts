@@ -1,7 +1,7 @@
 import { Configurable, ConfigValue } from "@symph/config";
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 
-@Injectable()
+@Component()
 @Configurable()
 export class BasicConfig {
   @ConfigValue()

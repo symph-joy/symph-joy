@@ -1,5 +1,3 @@
-import * as tapable from "tapable";
-
 export interface ITap {
   id: string;
   stage?: number;

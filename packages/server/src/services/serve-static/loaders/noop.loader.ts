@@ -2,13 +2,10 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { ServeStaticOptions } from "../interfaces/serve-static-options.interface";
 import { AbstractLoader } from "./abstract.loader";
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 import { AbstractHttpAdapter } from "../../../adapters";
 
-@Injectable()
+@Component()
 export class NoopLoader extends AbstractLoader {
-  public register(
-    httpAdapter: AbstractHttpAdapter,
-    options: ServeStaticOptions[]
-  ) {}
+  public register(httpAdapter: AbstractHttpAdapter, options: ServeStaticOptions[]) {}
 }

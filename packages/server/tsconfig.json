@@ -16,16 +16,9 @@
     "noLib": false,
     "resolveJsonModule": true,
     "strictPropertyInitialization": false,
-    "outDir": "./dist/"
+    "outDir": "dist/",
+    "rootDir": "src"
   },
-  "include": ["./src/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "fixtures",
-    "dist",
-    "examples",
-    "test",
-    "**/*.spec.ts",
-    "**/*.spec.tsx"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "fixtures", "dist", "examples", "test", "**/*.spec.ts", "**/*.spec.tsx"]
 }

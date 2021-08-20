@@ -1,18 +1,13 @@
-import { ClassProvider, Injectable, Provider, Tap, Type } from "@symph/core";
-import { FileScanner, IScanOutModule } from "./scanner/file-scanner";
+import { ClassProvider, Component, RegisterTap } from "@symph/core";
+import { IScanOutModule } from "./scanner/file-scanner";
 import { handlebars } from "../../lib/handlebars";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { FileGenerator } from "../../plugin/file-generator";
+import { FileGenerator, IGenerateFiles } from "../../plugin/file-generator";
 
-@Injectable()
+@Component()
 export class JoyAppProvidersExplorerService {
-  protected moduleTemplate = handlebars.compile(
-    readFileSync(
-      join(__dirname, "./joy-app-providers-explorer.handlebars"),
-      "utf-8"
-    )
-  );
+  protected moduleTemplate = handlebars.compile(readFileSync(join(__dirname, "./joy-app-providers-explorer.handlebars"), "utf-8"));
 
   protected providerModules: IScanOutModule[] = [];
 
@@ -57,27 +52,23 @@ export class JoyAppProvidersExplorerService {
       /**
        * the item in position 0:
        * 1. when type is ClassProvider,it is the ClassProvider definition .
-       * 2. when type is Configuration, it is the Configuration class's Injectable definition.
+       * 2. when type is Configuration, it is the Configuration class's Component definition.
        */
       const provider = providerDefine.providers[0];
-      (provider as ClassProvider).autoLoad === true
-        ? (hasAutoLoadProvider = true)
-        : (hasNotAutoLoadProvider = true);
+      (provider as ClassProvider).autoLoad === true ? (hasAutoLoadProvider = true) : (hasNotAutoLoadProvider = true);
     });
     if (!hasAutoLoadProvider) {
       return false;
     }
     if (hasNotAutoLoadProvider) {
-      throw new Error(
-        `Can not export auto load class and not auto load class in single js/ts file. module: ${module.resource}`
-      );
+      throw new Error(`Can not export auto load class and not auto load class in single js/ts file. module: ${module.resource}`);
     }
 
     this.providerModules.push(module);
     return true;
   }
 
-  @Tap()
+  @RegisterTap()
   public async afterScanOutModuleHook(module: IScanOutModule) {
     if (module.isAdd) {
       this.addFromScanOutModule(module);
@@ -89,8 +80,8 @@ export class JoyAppProvidersExplorerService {
     }
   }
 
-  @Tap()
-  protected async onGenerateFiles() {
+  @RegisterTap()
+  public async onGenerateFiles(genFiles: IGenerateFiles) {
     const modules = this.providerModules.map((mod) => {
       return {
         path: mod.resource,
@@ -112,9 +103,11 @@ export class JoyAppProvidersExplorerService {
 
     const moduleFileContent = this.moduleTemplate({ modules });
     // await this.fileGenerator.writeClientFile("./routes.js", clientFileContent);
-    await this.fileGenerator.writeJoyFile(
-      "./app-modules.config.js",
-      moduleFileContent
-    );
+    // await this.fileGenerator.writeJoyFile(
+    //   "./app-providers.config.js",
+    //   moduleFileContent
+    // );
+    genFiles["./joy/app-providers.config.js"] = moduleFileContent;
+    return genFiles;
   }
 }

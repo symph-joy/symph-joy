@@ -1,26 +1,28 @@
 import { CONFIGURATION_METADATA } from "../../../constants";
 import { Provider } from "./provider.decorator";
-import { EntryType, Type } from "../../../interfaces";
-import { getInjectableMeta, Injectable } from "../injectable.decorator";
+import { EntryType } from "../../../interfaces";
+import { Component } from "../component.decorator";
 
 export interface IConfigurationOptions {
   imports?: Record<string, EntryType>;
 }
 
-// todo import 需要数组合并，否则子类的配置会覆盖父类的配置
-export function Configuration(
-  options: IConfigurationOptions = {}
-): ClassDecorator {
+export function Configuration(options: IConfigurationOptions = {}): ClassDecorator {
   return (target) => {
-    const config = Object.assign({}, options);
-    Reflect.defineMetadata(CONFIGURATION_METADATA, config, target);
-    Injectable()(target);
+    const superMeta = getConfigurationMeta(target) || {};
+    const metaData = Object.assign({ imports: {} }, superMeta);
+    if (options.imports) {
+      for (const importKey of Object.keys(options.imports)) {
+        // const superImport = superMeta.imports?.[importKey]
+        metaData.imports[importKey] = options.imports?.[importKey];
+      }
+    }
+    Reflect.defineMetadata(CONFIGURATION_METADATA, metaData, target);
+    Component()(target);
   };
 }
 
-export function getConfigurationMeta(
-  val: any
-): IConfigurationOptions | undefined {
+export function getConfigurationMeta(val: any): IConfigurationOptions | undefined {
   const configMetaData = Reflect.getMetadata(CONFIGURATION_METADATA, val);
   return configMetaData;
 }

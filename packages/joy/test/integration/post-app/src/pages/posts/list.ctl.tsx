@@ -1,21 +1,14 @@
 import React, { ReactNode } from "react";
-import {
-  Controller,
-  Model,
-  ReactController,
-  ReactModel,
-  Route,
-} from "@symph/react";
-import { Inject } from "@symph/core";
+import { ReactBaseController, ReactController, Route } from "@symph/react";
+import { Autowire } from "@symph/core";
 import { Prerender } from "@symph/joy/dist/build/prerender";
 import { PostsModel } from "../../model/posts.model";
-import Link from "@symph/joy/dist/client/link";
 
 @Prerender()
 @Route({ path: "/posts", exact: true })
-@Controller()
-export default class ListCtl extends ReactController {
-  @Inject()
+@ReactController()
+export default class ListCtl extends ReactBaseController {
+  @Autowire()
   public postsModel: PostsModel;
 
   async initialModelStaticState(urlParams: any): Promise<void> {
@@ -41,10 +34,7 @@ export default class ListCtl extends ReactController {
             // return <div key={post.id+''}><span>{post.id}</span>: <Link href={`/posts/${post.id}`}><a >{post.title}</a></Link></div>
             return (
               <div key={post.id + ""}>
-                <span>{post.id}</span>:{" "}
-                <a onClick={this.onClickItem.bind(this, `/posts/${post.id}`)}>
-                  {post.title}
-                </a>
+                <span>{post.id}</span>: <a onClick={this.onClickItem.bind(this, `/posts/${post.id}`)}>{post.title}</a>
               </div>
             );
           })}

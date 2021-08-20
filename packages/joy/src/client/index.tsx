@@ -6,11 +6,7 @@ import mitt from "../joy-server/lib/mitt";
 import { RouterContext } from "../joy-server/lib/router-context";
 import { delBasePath, hasBasePath } from "../joy-server/lib/router/router";
 import type Router from "../joy-server/lib/router/router";
-import type {
-  AppComponent,
-  AppProps,
-  PrivateRouteInfo,
-} from "../joy-server/lib/router/router";
+import type { AppComponent, AppProps, PrivateRouteInfo } from "../joy-server/lib/router/router";
 import { isDynamicRoute } from "../joy-server/lib/router/utils/is-dynamic";
 import * as querystring from "../joy-server/lib/router/utils/querystring";
 import * as envConfig from "../joy-server/lib/runtime-config";
@@ -20,13 +16,9 @@ import initHeadManager from "./head-manager";
 import PageLoader, { looseToArray, StyleSheetTuple } from "./page-loader";
 import measureWebVitals from "./performance-relayer";
 import { createRouter, makePublicRouterInstance } from "./router";
-import { JoyContainer } from "@symph/core";
+import { CoreContainer } from "@symph/core";
 import { JoyReactAppClientConfig } from "../react/joy-react-app-client-config";
-import {
-  ReactAppContainer,
-  ApplicationConfig,
-  ReactApplicationContext,
-} from "@symph/react";
+import { ReactAppContainer, ApplicationConfig, ReactApplicationContext } from "@symph/react";
 import { JoyClientConfig } from "./joy-client-config";
 
 /// <reference types="react-dom/experimental" />
@@ -52,25 +44,12 @@ type RenderRouteInfo = PrivateRouteInfo & {
 };
 type RenderErrorProps = Omit<RenderRouteInfo, "Component" | "styleSheets">;
 
-const data: typeof window["__JOY_DATA__"] = JSON.parse(
-  document.getElementById("__JOY_DATA__")!.textContent!
-);
+const data: typeof window["__JOY_DATA__"] = JSON.parse(document.getElementById("__JOY_DATA__")!.textContent!);
 window.__JOY_DATA__ = data;
 
 export const version = process.env.__JOY_VERSION;
 
-const {
-  initState: hydrateInitState,
-  props: hydrateProps,
-  err: hydrateErr,
-  page,
-  query,
-  buildId,
-  assetPrefix,
-  runtimeConfig,
-  dynamicIds,
-  isFallback,
-} = data;
+const { initState: hydrateInitState, props: hydrateProps, err: hydrateErr, page, query, buildId, assetPrefix, runtimeConfig, dynamicIds, isFallback } = data;
 
 const prefix = assetPrefix || "";
 
@@ -127,37 +106,20 @@ class Container extends React.Component<{
     // - the page was (auto) exported and has a query string or search (hash)
     // - it was auto exported and is a dynamic route (to provide params)
     // - if it is a client-side skeleton (fallback render)
-    if (
-      router.isSsr &&
-      (isFallback ||
-        (data.joyExport &&
-          (isDynamicRoute(router.pathname) || location.search)) ||
-        (hydrateProps && hydrateProps.__N_SSG && location.search))
-    ) {
+    if (router.isSsr && (isFallback || (data.joyExport && (isDynamicRoute(router.pathname) || location.search)) || (hydrateProps && hydrateProps.__N_SSG && location.search))) {
       // update query on mount for exported pages
-      router.replace(
-        router.pathname +
-          "?" +
-          String(
-            querystring.assign(
-              querystring.urlQueryToSearchParams(router.query),
-              new URLSearchParams(location.search)
-            )
-          ),
-        asPath,
-        {
-          // @ts-ignore
-          // WARNING: `_h` is an internal option for handing Joy.js
-          // client-side hydration. Your app should _never_ use this property.
-          // It may change at any time without notice.
-          _h: 1,
-          // Fallback pages must trigger the data fetch, so the transition is
-          // not shallow.
-          // Other pages (strictly updating query) happens shallowly, as data
-          // requirements would already be present.
-          shallow: !isFallback,
-        }
-      );
+      router.replace(router.pathname + "?" + String(querystring.assign(querystring.urlQueryToSearchParams(router.query), new URLSearchParams(location.search))), asPath, {
+        // @ts-ignore
+        // WARNING: `_h` is an internal option for handing Joy.js
+        // client-side hydration. Your app should _never_ use this property.
+        // It may change at any time without notice.
+        _h: 1,
+        // Fallback pages must trigger the data fetch, so the transition is
+        // not shallow.
+        // Other pages (strictly updating query) happens shallowly, as data
+        // requirements would already be present.
+        shallow: !isFallback,
+      });
     }
 
     if (process.env.__JOY_TEST_MODE) {
@@ -207,19 +169,9 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   CachedApp = app as AppComponent;
 
   if (mod && mod.reportWebVitals) {
-    onPerfEntry = ({
-      id,
-      name,
-      startTime,
-      value,
-      duration,
-      entryType,
-      entries,
-    }) => {
+    onPerfEntry = ({ id, name, startTime, value, duration, entryType, entries }) => {
       // Combines timestamp with random number for unique ID
-      const uniqueID = `${Date.now()}-${
-        Math.floor(Math.random() * (9e12 - 1)) + 1e12
-      }`;
+      const uniqueID = `${Date.now()}-${Math.floor(Math.random() * (9e12 - 1)) + 1e12}`;
       let perfStartEntry;
 
       if (entries && entries.length) {
@@ -231,10 +183,7 @@ export default async (opts: { webpackHMR?: any } = {}) => {
         name,
         startTime: startTime || perfStartEntry,
         value: value == null ? duration : value,
-        label:
-          entryType === "mark" || entryType === "measure"
-            ? "custom"
-            : "web-vital",
+        label: entryType === "mark" || entryType === "measure" ? "custom" : "web-vital",
       });
     };
   }
@@ -252,9 +201,7 @@ export default async (opts: { webpackHMR?: any } = {}) => {
     if (process.env.NODE_ENV !== "production") {
       const { isValidElementType } = require("react-is");
       if (!isValidElementType(CachedComponent)) {
-        throw new Error(
-          `The default export is not a React Component in page: "${page}"`
-        );
+        throw new Error(`The default export is not a React Component in page: "${page}"`);
       }
     }
   } catch (error) {
@@ -334,7 +281,7 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   }
 
   const applicationConfig = new ApplicationConfig();
-  const joyContainer = new JoyContainer();
+  const joyContainer = new CoreContainer();
   const reactApplicationContext = new ReactApplicationContext(
     {
       JoyReactAppClientConfig,
@@ -423,42 +370,33 @@ export function renderError(renderErrorProps: RenderErrorProps) {
         return onClientErrorModule.default({ err });
       })
       .catch((onClientErrorErr) => {
-        console.error(
-          "error calling on-error-client for plugins",
-          onClientErrorErr
-        );
+        console.error("error calling on-error-client for plugins", onClientErrorErr);
       });
   }
 
   // Make sure we log the error to the console, otherwise users can't track down issues.
   console.error(err);
-  return pageLoader
-    .loadPage("/_error")
-    .then(({ page: ErrorComponent, styleSheets }) => {
-      // In production we do a normal render with the `ErrorComponent` as component.
-      // If we've gotten here upon initial render, we can use the props from the server.
-      // Otherwise, we need to call `getInitialProps` on `App` before mounting.
-      const AppTree = wrapApp(App);
-      const appCtx = {
+  return pageLoader.loadPage("/_error").then(({ page: ErrorComponent, styleSheets }) => {
+    // In production we do a normal render with the `ErrorComponent` as component.
+    // If we've gotten here upon initial render, we can use the props from the server.
+    // Otherwise, we need to call `getInitialProps` on `App` before mounting.
+    const AppTree = wrapApp(App);
+    const appCtx = {
+      Component: ErrorComponent,
+      AppTree,
+      router,
+      ctx: { err, pathname: page, query, asPath, AppTree },
+    };
+    return Promise.resolve(renderErrorProps.props ? renderErrorProps.props : loadGetInitialProps(App, appCtx)).then((initProps) =>
+      doRender({
+        ...renderErrorProps,
+        err,
         Component: ErrorComponent,
-        AppTree,
-        router,
-        ctx: { err, pathname: page, query, asPath, AppTree },
-      };
-      return Promise.resolve(
-        renderErrorProps.props
-          ? renderErrorProps.props
-          : loadGetInitialProps(App, appCtx)
-      ).then((initProps) =>
-        doRender({
-          ...renderErrorProps,
-          err,
-          Component: ErrorComponent,
-          styleSheets,
-          props: initProps,
-        })
-      );
-    });
+        styleSheets,
+        props: initProps,
+      })
+    );
+  });
 }
 
 // If hydrate does not exist, eg in preact.
@@ -469,10 +407,7 @@ function renderReactElement(reactEl: JSX.Element, domEl: HTMLElement) {
   if (process.env.__JOY_REACT_MODE !== "legacy") {
     if (!reactRoot) {
       const opts = { hydrate: true };
-      reactRoot =
-        process.env.__JOY_REACT_MODE === "concurrent"
-          ? (ReactDOM as any).unstable_createRoot(domEl, opts)
-          : (ReactDOM as any).unstable_createBlockingRoot(domEl, opts);
+      reactRoot = process.env.__JOY_REACT_MODE === "concurrent" ? (ReactDOM as any).unstable_createRoot(domEl, opts) : (ReactDOM as any).unstable_createBlockingRoot(domEl, opts);
     }
     reactRoot.render(reactEl);
   } else {
@@ -500,11 +435,7 @@ function markHydrateComplete() {
 
   performance.mark("afterHydrate"); // mark end of hydration
 
-  performance.measure(
-    "Joy.js-before-hydration",
-    "navigationStart",
-    "beforeRender"
-  );
+  performance.measure("Joy.js-before-hydration", "navigationStart", "beforeRender");
   performance.measure("Joy.js-hydration", "beforeRender", "afterHydrate");
 
   if (onPerfEntry) {
@@ -523,57 +454,36 @@ function markRenderComplete() {
     return;
   }
 
-  performance.measure(
-    "Joy.js-route-change-to-render",
-    navStartEntries[0].name,
-    "beforeRender"
-  );
+  performance.measure("Joy.js-route-change-to-render", navStartEntries[0].name, "beforeRender");
   performance.measure("Joy.js-render", "beforeRender", "afterRender");
   if (onPerfEntry) {
     performance.getEntriesByName("Joy.js-render").forEach(onPerfEntry);
-    performance
-      .getEntriesByName("Joy.js-route-change-to-render")
-      .forEach(onPerfEntry);
+    performance.getEntriesByName("Joy.js-route-change-to-render").forEach(onPerfEntry);
   }
   clearMarks();
-  ["Joy.js-route-change-to-render", "Joy.js-render"].forEach((measure) =>
-    performance.clearMeasures(measure)
-  );
+  ["Joy.js-route-change-to-render", "Joy.js-render"].forEach((measure) => performance.clearMeasures(measure));
 }
 
 function clearMarks() {
-  [
-    "beforeRender",
-    "afterHydrate",
-    "afterRender",
-    "routeChange",
-  ].forEach((mark) => performance.clearMarks(mark));
+  ["beforeRender", "afterHydrate", "afterRender", "routeChange"].forEach((mark) => performance.clearMarks(mark));
 }
 
-function AppContainer({
-  children,
-}: React.PropsWithChildren<{}>): React.ReactElement {
+function AppContainer({ children }: React.PropsWithChildren<{}>): React.ReactElement {
   return (
     <Container
       fn={(error) =>
         // @ts-ignore todo ！！！ 添加reactApplicationContext:入参
-        renderError({ App: CachedApp, err: error }).catch((err) =>
-          console.error("Error rendering page: ", err)
-        )
+        renderError({ App: CachedApp, err: error }).catch((err) => console.error("Error rendering page: ", err))
       }
     >
       <RouterContext.Provider value={makePublicRouterInstance(router)}>
-        <HeadManagerContext.Provider value={headManager}>
-          {children}
-        </HeadManagerContext.Provider>
+        <HeadManagerContext.Provider value={headManager}>{children}</HeadManagerContext.Provider>
       </RouterContext.Provider>
     </Container>
   );
 }
 
-const wrapApp = (App: AppComponent) => (
-  wrappedAppProps: Record<string, any>
-) => {
+const wrapApp = (App: AppComponent) => (wrappedAppProps: Record<string, any>) => {
   const appProps: AppProps = {
     ...wrappedAppProps,
     Component: CachedComponent,
@@ -587,14 +497,7 @@ const wrapApp = (App: AppComponent) => (
   );
 };
 
-function doRender({
-  App,
-  Component,
-  props,
-  err,
-  styleSheets,
-  reactApplicationContext,
-}: RenderRouteInfo): Promise<any> {
+function doRender({ App, Component, props, err, styleSheets, reactApplicationContext }: RenderRouteInfo): Promise<any> {
   Component = Component || lastAppProps.Component;
   props = props || lastAppProps.props;
 
@@ -641,12 +544,8 @@ function doRender({
       return false;
     }
 
-    const currentStyleTags = looseToArray<HTMLStyleElement>(
-      document.querySelectorAll("style[data-n-href]")
-    );
-    const currentHrefs = new Set(
-      currentStyleTags.map((tag) => tag.getAttribute("data-n-href"))
-    );
+    const currentStyleTags = looseToArray<HTMLStyleElement>(document.querySelectorAll("style[data-n-href]"));
+    const currentHrefs = new Set(currentStyleTags.map((tag) => tag.getAttribute("data-n-href")));
 
     styleSheets.forEach(({ href, text }) => {
       if (!currentHrefs.has(href)) {
@@ -673,12 +572,8 @@ function doRender({
       !canceled
     ) {
       const desiredHrefs = new Set(styleSheets.map((s) => s.href));
-      const currentStyleTags = looseToArray<HTMLStyleElement>(
-        document.querySelectorAll("style[data-n-href]")
-      );
-      const currentHrefs = currentStyleTags.map(
-        (tag) => tag.getAttribute("data-n-href")!
-      );
+      const currentStyleTags = looseToArray<HTMLStyleElement>(document.querySelectorAll("style[data-n-href]"));
+      const currentHrefs = currentStyleTags.map((tag) => tag.getAttribute("data-n-href")!);
 
       // Toggle `<style>` tags on or off depending on if they're needed:
       for (let idx = 0; idx < currentHrefs.length; ++idx) {
@@ -696,26 +591,19 @@ function doRender({
         referenceNode
       ) {
         styleSheets.forEach(({ href }) => {
-          const targetTag = document.querySelector(
-            `style[data-n-href="${href}"]`
-          );
+          const targetTag = document.querySelector(`style[data-n-href="${href}"]`);
           if (
             // This should be an invariant:
             targetTag
           ) {
-            referenceNode!.parentNode!.insertBefore(
-              targetTag,
-              referenceNode!.nextSibling
-            );
+            referenceNode!.parentNode!.insertBefore(targetTag, referenceNode!.nextSibling);
             referenceNode = targetTag;
           }
         });
       }
 
       // Finally, clean up server rendered stylesheets:
-      looseToArray<HTMLLinkElement>(
-        document.querySelectorAll("link[data-n-p]")
-      ).forEach((el) => {
+      looseToArray<HTMLLinkElement>(document.querySelectorAll("link[data-n-p]")).forEach((el) => {
         el.parentNode!.removeChild(el);
       });
 
@@ -741,14 +629,7 @@ function doRender({
   onStart();
 
   // We catch runtime errors using componentDidCatch which will trigger renderError
-  renderReactElement(
-    process.env.__JOY_STRICT_MODE ? (
-      <React.StrictMode>{elem}</React.StrictMode>
-    ) : (
-      elem
-    ),
-    appElement!
-  );
+  renderReactElement(process.env.__JOY_STRICT_MODE ? <React.StrictMode>{elem}</React.StrictMode> : elem, appElement!);
 
   return renderPromise;
 }

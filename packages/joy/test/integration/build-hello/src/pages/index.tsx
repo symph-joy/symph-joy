@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
-import { Controller, ReactController, Route } from "@symph/react";
+import { ReactBaseController, ReactController, Route } from "@symph/react";
 
 @Route({ path: "/" })
-@Controller()
-export default class HelloController extends ReactController {
+@ReactController()
+export default class HelloController extends ReactBaseController {
   async hello() {
     return "a";
   }

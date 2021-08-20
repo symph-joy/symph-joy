@@ -1,16 +1,16 @@
-import React, { Component, ReactNode } from "react";
+import React, { ReactNode } from "react";
 import { ZhiHuModel } from "../models/ZhiHuModel";
-import { Controller, ReactController } from "@symph/react";
-import { Inject } from "@symph/core";
+import { ReactBaseController, ReactController } from "@symph/react";
+import { Autowire } from "@symph/core";
 
 // @Route({path: '/aaa/zhihu'})
-@Controller()
-export default class ZhiHuController extends ReactController {
+@ReactController()
+export default class ZhiHuController extends ReactBaseController {
   async initialModelState(context: any): Promise<void> {
     await this.zhiHuModel.getRecent();
   }
 
-  @Inject(ZhiHuModel)
+  @Autowire(ZhiHuModel)
   private zhiHuModel: ZhiHuModel;
 
   renderView(): ReactNode {

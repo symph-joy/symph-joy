@@ -8,20 +8,13 @@
 
 import { HttpServer, RequestHandler } from "../interfaces/http";
 import { NestApplicationOptions } from "../interfaces/nest-application-options.interface";
-import {
-  CorsOptions,
-  CorsOptionsDelegate,
-} from "../interfaces/external/cors-options.interface";
+import { CorsOptions, CorsOptionsDelegate } from "../interfaces/external/cors-options.interface";
 import { RequestMethod } from "../enums";
 
 /**
  * @publicApi
  */
-export abstract class AbstractHttpAdapter<
-  TServer = any,
-  TRequest = any,
-  TResponse = any
-> implements HttpServer<TRequest, TResponse> {
+export abstract class AbstractHttpAdapter<TServer = any, TRequest = any, TResponse = any> implements HttpServer<TRequest, TResponse> {
   protected httpServer: TServer;
 
   constructor(protected readonly instance: any) {}
@@ -84,11 +77,7 @@ export abstract class AbstractHttpAdapter<
   }
 
   public listen(port: string | number, callback?: () => void): any;
-  public listen(
-    port: string | number,
-    hostname: string,
-    callback?: () => void
-  ): any;
+  public listen(port: string | number, hostname: string, callback?: () => void): any;
   public listen(port: any, hostname?: any, callback?: any) {
     return this.instance.listen(port, hostname, callback);
   }
@@ -106,7 +95,7 @@ export abstract class AbstractHttpAdapter<
   }
 
   abstract close(): any;
-  abstract initHttpServer(options: NestApplicationOptions): any;
+  abstract initHttpServer(): any;
   abstract useStaticAssets(...args: any[]): any;
   abstract setViewEngine(engine: string): any;
   abstract getRequestHostname(request: TRequest): any;
@@ -120,14 +109,7 @@ export abstract class AbstractHttpAdapter<
   abstract setNotFoundHandler(handler: Function, prefix?: string): any;
   abstract setHeader(response: any, name: string, value: string): any;
   abstract registerParserMiddleware(prefix?: string): any;
-  abstract enableCors(
-    options: CorsOptions | CorsOptionsDelegate<TRequest>,
-    prefix?: string
-  ): any;
-  abstract createMiddlewareFactory(
-    requestMethod: RequestMethod
-  ):
-    | ((path: string, callback: Function) => any)
-    | Promise<(path: string, callback: Function) => any>;
+  abstract enableCors(options: CorsOptions | CorsOptionsDelegate<TRequest>, prefix?: string): any;
+  abstract createMiddlewareFactory(requestMethod: RequestMethod): ((path: string, callback: Function) => any) | Promise<(path: string, callback: Function) => any>;
   abstract getType(): string;
 }

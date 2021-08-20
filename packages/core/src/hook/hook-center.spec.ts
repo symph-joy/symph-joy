@@ -1,19 +1,18 @@
-import { HookType } from "./interface/hook.interface";
-import { Hook } from "./hook.decorator";
-import { Configuration, Injectable } from "../decorators/core";
+import { HookType, IHook } from "./interface/hook.interface";
+import { AutowireHook } from "./autowire-hook.decorator";
+import { Configuration, Component } from "../decorators/core";
 import { CoreContext } from "../core-context";
-import { Tap } from "./tap.decorator";
-import { HookPipe } from "./hook-center";
-import { JoyContainer } from "../injector";
+import { RegisterTap } from "./register-tap.decorator";
+import { CoreContainer } from "../injector";
 
 describe("hook", () => {
   test("basic usage", async () => {
-    @Injectable()
+    @Component()
     class APlugin {
       key: string;
 
-      @Hook({ id: "modifyContent", parallel: false, type: HookType.Waterfall })
-      public modifyContent: HookPipe;
+      @AutowireHook({ id: "modifyContent", parallel: false, type: HookType.Waterfall })
+      public modifyContent: IHook;
 
       public async content() {
         return await this.modifyContent.call("a");
@@ -24,13 +23,12 @@ describe("hook", () => {
       modifyContent(mono: string): string;
     }
 
-    @Injectable()
+    @Component()
     class BPlugin implements IAPluginHooks {
       key: string;
 
-      @Tap()
+      @RegisterTap()
       modifyContent(a: string): string {
-        console.log("====== modifyContent:", a);
         return a + "-b";
       }
     }
@@ -44,11 +42,64 @@ describe("hook", () => {
       public bPlugin!: BPlugin;
     }
 
-    const container = new JoyContainer();
+    const container = new CoreContainer();
     const app = new CoreContext(AppConfig, container);
     await app.init();
 
     const helloProvider = await app.get<APlugin>(APlugin)!;
     expect(await helloProvider.content()).toBe("a-b");
+  });
+
+  test("Should override the onDidLoad method by child class.", async () => {
+    @Component()
+    class APlugin {
+      key: string;
+
+      @AutowireHook({ parallel: false, type: HookType.Waterfall })
+      public ahook: IHook;
+
+      public async content() {
+        return await this.ahook.call("a");
+      }
+    }
+
+    @Component()
+    class BPlugin {
+      key: string;
+
+      @RegisterTap()
+      ahook(a: string): string {
+        return a + "-b";
+      }
+    }
+
+    @Component()
+    class CPlugin extends BPlugin {
+      key: string;
+
+      @RegisterTap()
+      ahook(a: string): string {
+        return a + "-c";
+      }
+    }
+
+    @Configuration()
+    class AppConfig {
+      @Configuration.Provider()
+      public aPlugin: APlugin;
+
+      // @Configuration.Provider()
+      // public bPlugin: BPlugin;
+
+      @Configuration.Provider()
+      public cPlugin: CPlugin;
+    }
+
+    const container = new CoreContainer();
+    const app = new CoreContext(AppConfig, container);
+    await app.init();
+
+    const helloProvider = await app.get<APlugin>(APlugin)!;
+    expect(await helloProvider.content()).toBe("a-c");
   });
 });

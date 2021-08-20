@@ -1,9 +1,9 @@
 import React from "react";
-import { Controller, ReactController, Route } from "../../../../index";
+import { ReactController, ReactBaseController, Route } from "../../../../index";
 
 @Route({ path: "/hello1" })
-@Controller()
-export default class Hello1 extends ReactController {
+@ReactController()
+export default class Hello1 extends ReactBaseController {
   renderView() {
     return (
       <div data-testid="hello1">

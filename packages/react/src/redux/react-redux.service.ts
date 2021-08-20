@@ -1,19 +1,9 @@
-import {
-  Action,
-  applyMiddleware,
-  combineReducers,
-  compose,
-  createStore as _createStore,
-  Middleware,
-  Reducer,
-  ReducersMapObject,
-  Store,
-} from "./index";
+import { Action, applyMiddleware, combineReducers, compose, createStore as _createStore, Middleware, Reducer, ReducersMapObject, Store } from "./index";
 import { ApplicationConfig } from "../application-config";
 // @ts-ignore
 import flatten from "flatten";
 import { IModel } from "../interfaces/model.interface";
-import { IJoyContext, RuntimeException } from "@symph/core";
+import { ICoreContext, RuntimeException } from "@symph/core";
 
 declare global {
   interface Window {
@@ -25,11 +15,7 @@ declare global {
 const returnSelf = (self: any) => self;
 
 export interface ModelStateChangeHandler {
-  (
-    changedModels: string[],
-    nextState: Record<string, unknown>,
-    previousState: Record<string, unknown>
-  ): boolean | undefined | void;
+  (changedModels: string[], nextState: Record<string, unknown>, previousState: Record<string, unknown>): boolean | undefined | void;
 }
 
 export interface ModelStateListener {
@@ -46,11 +32,10 @@ interface ActionSetState extends Action<any> {
   nextState: Record<string, unknown>;
 }
 
-const noopReduxMiddleware = (store: any) => (next: any) => (action: any) =>
-  next();
+const noopReduxMiddleware = (store: any) => (next: any) => (action: any) => next();
 
 export class ReactReduxService {
-  public app: IJoyContext;
+  public app: ICoreContext;
   public store: Store;
   public models: { [namespace: string]: RegisteredModel } = {};
   public asyncReducers: ReducersMapObject = {};
@@ -59,10 +44,7 @@ export class ReactReduxService {
 
   private stateListenerIdCounter = 1;
 
-  constructor(
-    public appConfig: ApplicationConfig,
-    initState: Record<string, any>
-  ) {
+  constructor(public appConfig: ApplicationConfig, initState: Record<string, any>) {
     // const modelMiddleware = createModelMiddleware(app)
 
     this.store = this.createStore({
@@ -76,32 +58,18 @@ export class ReactReduxService {
 
   createStore({ reducers, initialState, middlewares = [] }: any) {
     // extra enhancers
-    const reduxMiddlewaresEnhancer =
-      this.appConfig.getReduxMiddlewaresEnhancer() || returnSelf;
+    const reduxMiddlewaresEnhancer = this.appConfig.getReduxMiddlewaresEnhancer() || returnSelf;
     const storeEnhancer = this.appConfig.getStoreEnhancer();
     const extraMiddlewares = this.appConfig.getReduxMiddlewares();
 
-    const enhancedMiddlewares = reduxMiddlewaresEnhancer([
-      ...middlewares,
-      ...flatten(extraMiddlewares),
-    ]);
+    const enhancedMiddlewares = reduxMiddlewaresEnhancer([...middlewares, ...flatten(extraMiddlewares)]);
 
     let devtools: any;
-    if (
-      process.env.NODE_ENV !== "production" &&
-      typeof window !== "undefined" &&
-      window.__REDUX_DEVTOOLS_EXTENSION__
-    ) {
+    if (process.env.NODE_ENV !== "production" && typeof window !== "undefined" && window.__REDUX_DEVTOOLS_EXTENSION__) {
       devtools = window.__REDUX_DEVTOOLS_EXTENSION__;
     }
 
-    const enhancers = [
-      applyMiddleware(...enhancedMiddlewares),
-      typeof window !== "undefined" &&
-        devtools &&
-        devtools(window.__REDUX_DEVTOOLS_EXTENSION__OPTIONS),
-      ...storeEnhancer,
-    ].filter(Boolean);
+    const enhancers = [applyMiddleware(...enhancedMiddlewares), typeof window !== "undefined" && devtools && devtools(window.__REDUX_DEVTOOLS_EXTENSION__OPTIONS), ...storeEnhancer].filter(Boolean);
     return _createStore(reducers, initialState, compose(...enhancers));
   }
 
@@ -119,10 +87,7 @@ export class ReactReduxService {
     return combined;
   }
 
-  rmModelStateListener(
-    modelNameSpaces: string[],
-    listener: ModelStateChangeHandler
-  ): number {
+  rmModelStateListener(modelNameSpaces: string[], listener: ModelStateChangeHandler): number {
     let count = 0;
     if (!(modelNameSpaces && modelNameSpaces.length > 0)) {
       return count;
@@ -132,9 +97,7 @@ export class ReactReduxService {
       if (!registeredModel?.listeners?.length) {
         continue;
       }
-      const index = registeredModel.listeners.findIndex(
-        (it) => it.listener === listener
-      );
+      const index = registeredModel.listeners.findIndex((it) => it.listener === listener);
       if (index >= 0) {
         count++;
         registeredModel.listeners.splice(index, 1);
@@ -143,10 +106,7 @@ export class ReactReduxService {
     return count;
   }
 
-  addModelStateListener(
-    modelNameSpaces: string[],
-    listener: ModelStateChangeHandler
-  ): number {
+  addModelStateListener(modelNameSpaces: string[], listener: ModelStateChangeHandler): number {
     if (!(modelNameSpaces && modelNameSpaces.length > 0)) {
       return 0;
     }
@@ -156,10 +116,7 @@ export class ReactReduxService {
       if (typeof registeredModel === "undefined" || registeredModel === null) {
         throw new RuntimeException(`${modelNameSpaces[i]} is not existed`);
       }
-      if (
-        typeof registeredModel.listeners === "undefined" ||
-        registeredModel.listeners === null
-      ) {
+      if (typeof registeredModel.listeners === "undefined" || registeredModel.listeners === null) {
         registeredModel.listeners = [];
       }
       registeredModel.listeners.push(listenerWrapper);
@@ -175,10 +132,7 @@ export class ReactReduxService {
     let index = 0;
     for (const namespace of Object.getOwnPropertyNames(this.models)) {
       const registeredModel = this.models[namespace];
-      if (
-        preState[namespace] !== storeState[namespace] &&
-        registeredModel.listeners
-      ) {
+      if (preState[namespace] !== storeState[namespace] && registeredModel.listeners) {
         for (index = 0; index < registeredModel.listeners.length; index++) {
           const listener = registeredModel.listeners[index];
           let changedModels = effectListeners.get(listener);
@@ -192,13 +146,13 @@ export class ReactReduxService {
       }
     }
     if (effectListeners.size > 0) {
-      new Array(...effectListeners.entries())
-        .sort((a, b) => a[0].id - b[0].id)
-        .forEach((item) => {
-          const handler = item[0].listener;
-          const changedModels = item[1];
-          handler(changedModels, storeState, preState);
-        });
+      let arr = Array.from(effectListeners);
+      arr = arr.sort((a, b) => a[0].id - b[0].id);
+      arr.forEach((item) => {
+        const handler = item[0].listener;
+        const changedModels = item[1];
+        handler(changedModels, storeState, preState);
+      });
     }
   };
 

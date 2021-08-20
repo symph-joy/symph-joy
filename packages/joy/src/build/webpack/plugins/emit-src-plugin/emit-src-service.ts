@@ -1,13 +1,13 @@
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 import { IWebpackEmitModule } from "./emit-src-plugin";
 import path from "path";
 import { existsSync } from "fs";
-import { JoyAppConfig } from "../../../../joy-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../../../../joy-server/server/joy-app-config";
 import { fileExists } from "../../../../lib/file-exists";
 
 type TEmitManifest = Record<string, IWebpackEmitModule>;
 
-@Injectable()
+@Component()
 export class EmitSrcService {
   private manifest?: TEmitManifest;
 
@@ -32,10 +32,7 @@ export class EmitSrcService {
   }
 
   private readCurrentEmitManifest(): TEmitManifest | undefined {
-    const emitManifestPath = this.joyConfig.resolveAppDir(
-      this.joyConfig.distDir,
-      "./dist/emit-manifest.json"
-    );
+    const emitManifestPath = this.joyConfig.resolveAppDir(this.joyConfig.distDir, "./dist/emit-manifest.json");
     if (!fileExists(emitManifestPath, "file")) {
       return;
     }

@@ -22,7 +22,7 @@
 // import { STATIC_CONTEXT } from '../injector/constants';
 // import { NestContainer } from '../injector/container';
 // import { Injector } from '../injector/injector';
-// import { ContextId, InstanceWrapper } from '../injector/instance-wrapper';
+// import { ContextId, ComponentWrapper } from '../injector/instance-wrapper';
 // import { Module } from '../injector/module';
 // import { InterceptorsConsumer } from '../interceptors/interceptors-consumer';
 // import { InterceptorsContextCreator } from '../interceptors/interceptors-context-creator';
@@ -38,14 +38,7 @@
 import * as pathToRegexp from "path-to-regexp";
 import { STATIC_CONTEXT } from "@symph/core/dist/injector/constants";
 import { ContextIdFactory } from "../helpers";
-import {
-  ContextId,
-  Injector,
-  InstanceWrapper,
-  JoyContainer,
-  Logger,
-  Type,
-} from "@symph/core";
+import { ContextId, Injector, ComponentWrapper, CoreContainer, Logger, Type } from "@symph/core";
 import { GuardsContextCreator } from "../guards/guards-context-creator";
 import { HttpServer } from "../interfaces/http";
 import { GuardsConsumer } from "../guards/guards-consumer";
@@ -79,8 +72,7 @@ export interface RoutePathProperties {
   methodName: string;
 }
 
-export const addLeadingSlash = (path?: string): string =>
-  path ? (path.charAt(0) !== "/" ? "/" + path : path) : "";
+export const addLeadingSlash = (path?: string): string => (path ? (path.charAt(0) !== "/" ? "/" + path : path) : "");
 
 export class RouterExplorer {
   private readonly executionContextCreator: RouterExecutionContext;
@@ -88,14 +80,7 @@ export class RouterExplorer {
   private readonly logger = new Logger(RouterExplorer.name, true);
   private readonly exceptionFiltersCache = new WeakMap();
 
-  constructor(
-    private readonly metadataScanner: MetadataScanner,
-    private readonly container: ServerContainer,
-    private readonly injector?: Injector,
-    private readonly routerProxy?: RouterProxy,
-    private readonly exceptionsFilter?: ExceptionsFilter,
-    config?: ApplicationConfig
-  ) {
+  constructor(private readonly metadataScanner: MetadataScanner, private readonly container: ServerContainer, private readonly injector?: Injector, private readonly routerProxy?: RouterProxy, private readonly exceptionsFilter?: ExceptionsFilter, config?: ApplicationConfig) {
     this.executionContextCreator = new RouterExecutionContext(
       new RouteParamsFactory(),
       new PipesContextCreator(container, config),
@@ -110,7 +95,7 @@ export class RouterExplorer {
   }
 
   public explore<T extends HttpServer = any>(
-    instanceWrapper: InstanceWrapper,
+    instanceWrapper: ComponentWrapper,
     // module: string,
     applicationRef: T,
     basePath: string,
@@ -144,27 +129,13 @@ export class RouterExplorer {
     return path.map((p: any) => addLeadingSlash(p));
   }
 
-  public scanForPaths(
-    instance: Controller,
-    prototype?: object
-  ): RoutePathProperties[] {
-    const instancePrototype = isUndefined(prototype)
-      ? Object.getPrototypeOf(instance)
-      : prototype;
+  public scanForPaths(instance: Controller, prototype?: object): RoutePathProperties[] {
+    const instancePrototype = isUndefined(prototype) ? Object.getPrototypeOf(instance) : prototype;
 
-    return this.metadataScanner.scanFromPrototype<
-      Controller,
-      RoutePathProperties
-    >(instance, instancePrototype, (method) =>
-      this.exploreMethodMetadata(instance, instancePrototype, method)
-    );
+    return this.metadataScanner.scanFromPrototype<Controller, RoutePathProperties>(instance, instancePrototype, (method) => this.exploreMethodMetadata(instance, instancePrototype, method));
   }
 
-  public exploreMethodMetadata(
-    instance: Controller,
-    prototype: object,
-    methodName: string
-  ): RoutePathProperties {
+  public exploreMethodMetadata(instance: Controller, prototype: object, methodName: string): RoutePathProperties {
     // @ts-ignore
     const instanceCallback = instance[methodName];
     // @ts-ignore
@@ -174,13 +145,8 @@ export class RouterExplorer {
       // @ts-ignore
       return null;
     }
-    const requestMethod: RequestMethod = Reflect.getMetadata(
-      METHOD_METADATA,
-      prototypeCallback
-    );
-    const path = isString(routePath)
-      ? [addLeadingSlash(routePath)]
-      : routePath.map((p: any) => addLeadingSlash(p));
+    const requestMethod: RequestMethod = Reflect.getMetadata(METHOD_METADATA, prototypeCallback);
+    const path = isString(routePath) ? [addLeadingSlash(routePath)] : routePath.map((p: any) => addLeadingSlash(p));
     return {
       path,
       requestMethod,
@@ -192,7 +158,7 @@ export class RouterExplorer {
   public applyPathsToRouterProxy<T extends HttpServer>(
     router: T,
     routePaths: RoutePathProperties[],
-    instanceWrapper: InstanceWrapper,
+    instanceWrapper: ComponentWrapper,
     // moduleKey: string,
     basePath: string,
     host: string | string[]
@@ -221,21 +187,14 @@ export class RouterExplorer {
   private applyCallbackToRouter<T extends HttpServer>(
     router: T,
     pathProperties: RoutePathProperties,
-    instanceWrapper: InstanceWrapper,
+    instanceWrapper: ComponentWrapper,
     // moduleKey: string,
     basePath: string,
     host: string | string[]
   ) {
-    const {
-      path: paths,
-      requestMethod,
-      targetCallback,
-      methodName,
-    } = pathProperties;
+    const { path: paths, requestMethod, targetCallback, methodName } = pathProperties;
     const { instance } = instanceWrapper;
-    const routerMethod = this.routerMethodFactory
-      .get(router, requestMethod)
-      .bind(router);
+    const routerMethod = this.routerMethodFactory.get(router, requestMethod).bind(router);
 
     const isRequestScoped = !instanceWrapper.isDependencyTreeStatic();
     const proxy = isRequestScoped
@@ -276,17 +235,9 @@ export class RouterExplorer {
       return { regexp, keys };
     });
 
-    const unsupportedFilteringErrorMessage = Array.isArray(host)
-      ? `HTTP adapter does not support filtering on hosts: ["${host.join(
-          '", "'
-        )}"]`
-      : `HTTP adapter does not support filtering on host: "${host}"`;
+    const unsupportedFilteringErrorMessage = Array.isArray(host) ? `HTTP adapter does not support filtering on hosts: ["${host.join('", "')}"]` : `HTTP adapter does not support filtering on host: "${host}"`;
 
-    return <TRequest extends Record<string, any> = any, TResponse = any>(
-      req: TRequest,
-      res: TResponse,
-      next: () => void
-    ) => {
+    return <TRequest extends Record<string, any> = any, TResponse = any>(req: TRequest, res: TResponse, next: () => void) => {
       (req as Record<string, any>).hosts = {};
       // @ts-ignore
       const hostname = httpAdapterRef.getRequestHostname(req) || "";
@@ -299,9 +250,7 @@ export class RouterExplorer {
         }
       }
       if (!next) {
-        throw new InternalServerErrorException(
-          unsupportedFilteringErrorMessage
-        );
+        throw new InternalServerErrorException(unsupportedFilteringErrorMessage);
       }
       return next();
     };
@@ -337,19 +286,15 @@ export class RouterExplorer {
   }
 
   public createRequestScopedHandler(
-    instanceWrapper: InstanceWrapper,
+    instanceWrapper: ComponentWrapper,
     requestMethod: RequestMethod,
-    moduleRef: JoyContainer,
+    moduleRef: CoreContainer,
     // moduleKey: string,
     methodName: string
   ) {
     const { instance } = instanceWrapper;
     // const collection = moduleRef.controllers;
-    return async <TRequest extends Record<any, any>, TResponse>(
-      req: TRequest,
-      res: TResponse,
-      next: () => void
-    ) => {
+    return async <TRequest extends Record<any, any>, TResponse>(req: TRequest, res: TResponse, next: () => void) => {
       try {
         const contextId = this.getContextId(req);
         // const contextInstance = await this.injector.loadPerContext(
@@ -358,11 +303,7 @@ export class RouterExplorer {
         //   collection,
         //   contextId,
         // );
-        const contextInstance = await this.injector?.loadInstance(
-          instanceWrapper,
-          moduleRef,
-          contextId
-        );
+        const contextInstance = await this.injector?.loadInstance(instanceWrapper, moduleRef, contextId);
         await this.createCallbackProxy(
           contextInstance,
           contextInstance[methodName],
@@ -373,9 +314,7 @@ export class RouterExplorer {
           // instanceWrapper.id,
         )(req, res, next);
       } catch (err) {
-        let exceptionFilter = this.exceptionFiltersCache.get(
-          instance[methodName]
-        );
+        let exceptionFilter = this.exceptionFiltersCache.get(instance[methodName]);
         if (!exceptionFilter) {
           exceptionFilter = this.exceptionsFilter!.create(
             instance,
@@ -391,9 +330,7 @@ export class RouterExplorer {
     };
   }
 
-  private getContextId<T extends Record<any, unknown> = any>(
-    request: T
-  ): ContextId {
+  private getContextId<T extends Record<any, unknown> = any>(request: T): ContextId {
     const contextId = ContextIdFactory.getByRequest(request);
     if (!request[REQUEST_CONTEXT_ID as any]) {
       Object.defineProperty(request, REQUEST_CONTEXT_ID, {

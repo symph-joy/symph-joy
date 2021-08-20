@@ -1,4 +1,4 @@
-import { ReactModel } from "./react-model";
+import { ReactBaseModel } from "./react-base-model";
 import { EnumReactAppInitStage } from "./react-app-init-stage.enum";
 
 export enum JoyRouteInitState {
@@ -8,7 +8,7 @@ export enum JoyRouteInitState {
   ERROR,
 }
 
-export class ReactAppInitManager extends ReactModel<
+export class ReactAppInitManager extends ReactBaseModel<
   Record<
     string,
     {
@@ -25,10 +25,7 @@ export class ReactAppInitManager extends ReactModel<
     super();
   }
 
-  getInitState(): Record<
-    string,
-    { init: JoyRouteInitState; initStatic: JoyRouteInitState }
-  > {
+  getInitState(): Record<string, { init: JoyRouteInitState; initStatic: JoyRouteInitState }> {
     return {};
   }
 
@@ -51,9 +48,7 @@ export class ReactAppInitManager extends ReactModel<
     }
   }
 
-  async waitAllFinished(
-    pathname: string
-  ): Promise<{ revalidate: number | undefined }> {
+  async waitAllFinished(pathname: string): Promise<{ revalidate: number | undefined }> {
     let tasks = this.initTasks[pathname] || [];
     const results = await Promise.all(tasks);
     let minRevalidate = Number.MAX_VALUE;
@@ -63,18 +58,11 @@ export class ReactAppInitManager extends ReactModel<
       }
     });
     return {
-      revalidate:
-        minRevalidate === Number.MAX_VALUE ? undefined : minRevalidate,
+      revalidate: minRevalidate === Number.MAX_VALUE ? undefined : minRevalidate,
     };
   }
 
-  setInitState(
-    pathname: string,
-    {
-      initStatic,
-      init,
-    }: { initStatic?: JoyRouteInitState; init?: JoyRouteInitState }
-  ): void {
+  setInitState(pathname: string, { initStatic, init }: { initStatic?: JoyRouteInitState; init?: JoyRouteInitState }): void {
     const nextState = Object.assign(
       {
         initStatic: JoyRouteInitState.NONE,
@@ -93,9 +81,7 @@ export class ReactAppInitManager extends ReactModel<
     });
   }
 
-  getState(
-    pathname: string
-  ): { initStatic: JoyRouteInitState; init: JoyRouteInitState } {
+  getState(pathname: string): { initStatic: JoyRouteInitState; init: JoyRouteInitState } {
     return (
       this.state[pathname] || {
         initStatic: JoyRouteInitState.NONE,

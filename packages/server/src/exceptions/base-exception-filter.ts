@@ -19,21 +19,19 @@ import { ExceptionFilter } from "../interfaces/exceptions";
 import { HttpServer } from "../interfaces/http";
 import { ArgumentsHost } from "../interfaces/features/arguments-host.interface";
 import { HttpStatus } from "../enums";
-import { Inject, Logger, Optional } from "@symph/core";
+import { Autowire, Logger, Optional } from "@symph/core";
 
 export class BaseExceptionFilter<T = any> implements ExceptionFilter<T> {
   private static readonly logger = new Logger("ExceptionsHandler");
 
   @Optional()
-  @Inject()
+  @Autowire()
   protected readonly httpAdapterHost?: HttpAdapterHost;
 
   constructor(protected readonly applicationRef?: HttpServer) {}
 
   catch(exception: T, host: ArgumentsHost) {
-    const applicationRef =
-      this.applicationRef ||
-      (this.httpAdapterHost && this.httpAdapterHost.httpAdapter);
+    const applicationRef = this.applicationRef || (this.httpAdapterHost && this.httpAdapterHost.httpAdapter);
 
     if (!(exception instanceof HttpException)) {
       return this.handleUnknownError(exception, host, applicationRef!);
@@ -46,28 +44,17 @@ export class BaseExceptionFilter<T = any> implements ExceptionFilter<T> {
           message: res,
         };
 
-    applicationRef!.reply(
-      host.getArgByIndex(1),
-      message,
-      exception.getStatus()
-    );
+    applicationRef!.reply(host.getArgByIndex(1), message, exception.getStatus());
   }
 
-  public handleUnknownError(
-    exception: T,
-    host: ArgumentsHost,
-    applicationRef: AbstractHttpAdapter | HttpServer
-  ) {
+  public handleUnknownError(exception: T, host: ArgumentsHost, applicationRef: AbstractHttpAdapter | HttpServer) {
     const body = {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message: MESSAGES.UNKNOWN_EXCEPTION_MESSAGE,
     };
     applicationRef.reply(host.getArgByIndex(1), body, body.statusCode);
     if (this.isExceptionObject(exception)) {
-      return BaseExceptionFilter.logger.error(
-        exception.message,
-        exception.stack
-      );
+      return BaseExceptionFilter.logger.error(exception.message, exception.stack);
     }
     return BaseExceptionFilter.logger.error(exception);
   }

@@ -8,11 +8,11 @@ import { ServerContainer } from "../server-container";
 import { STATIC_CONTEXT } from "@symph/core/dist/injector/constants";
 import { isEmpty, isFunction } from "@symph/core/dist/utils/shared.utils";
 import { ExceptionFilter } from "../interfaces/exceptions";
-import { InstanceWrapper, Type } from "@symph/core";
+import { ComponentWrapper, Type } from "@symph/core";
 import { FILTER_CATCH_EXCEPTIONS } from "../constants";
 // import { STATIC_CONTEXT } from '../injector/constants';
 // import { NestContainer } from '../injector/container';
-// import { InstanceWrapper } from '../injector/instance-wrapper';
+// import { ComponentWrapper } from '../injector/instance-wrapper';
 
 export class BaseExceptionFilterContext extends ContextCreator {
   protected moduleContext: string;
@@ -30,9 +30,7 @@ export class BaseExceptionFilterContext extends ContextCreator {
       return [] as any;
     }
     return iterate(metadata)
-      .filter(
-        (instance) => instance && (isFunction(instance.catch) || instance.name)
-      )
+      .filter((instance) => instance && (isFunction(instance.catch) || instance.name))
       .map((filter) => this.getFilterInstance(filter, contextId))
       .filter((item) => !!item)
       .map((instance) => ({
@@ -62,9 +60,7 @@ export class BaseExceptionFilterContext extends ContextCreator {
     return instanceHost && instanceHost.instance;
   }
 
-  public getInstanceByMetatype<T extends Type>(
-    filter: T
-  ): InstanceWrapper | undefined {
+  public getInstanceByMetatype<T extends Type>(filter: T): ComponentWrapper | undefined {
     return this.container.getProviderByType(filter);
     // if (!this.moduleContext) {
     //   return;
@@ -79,8 +75,6 @@ export class BaseExceptionFilterContext extends ContextCreator {
 
   public reflectCatchExceptions(instance: ExceptionFilter): Type<any>[] {
     const prototype = Object.getPrototypeOf(instance);
-    return (
-      Reflect.getMetadata(FILTER_CATCH_EXCEPTIONS, prototype.constructor) || []
-    );
+    return Reflect.getMetadata(FILTER_CATCH_EXCEPTIONS, prototype.constructor) || [];
   }
 }

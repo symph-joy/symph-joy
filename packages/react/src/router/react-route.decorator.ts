@@ -16,29 +16,25 @@ export interface ParsedUrlQuery {
   [key: string]: string | string[];
 }
 
-export interface IReactRouteStaticPathGenerator<
-  P extends ParsedUrlQuery = ParsedUrlQuery
-> {
+export interface IReactRouteStaticPathGenerator<P extends ParsedUrlQuery = ParsedUrlQuery> {
   isFallback(): Promise<boolean> | boolean;
   getPaths(): Promise<Array<string | { params: P }>>;
 }
 
-export type IRouteMeta<TParams extends ParsedUrlQuery = ParsedUrlQuery> = {
+// export type IRouteMeta<TParams extends ParsedUrlQuery = ParsedUrlQuery> = {
+export type IRouteMeta = {
   path: string | string[];
-  staticPathGenerator?:
-    | IReactRouteStaticPathGenerator<TParams>
-    | (new (...args: any[]) => IReactRouteStaticPathGenerator<TParams>);
+  dynamic?: boolean;
+  // staticPathGenerator?:
+  //   | IReactRouteStaticPathGenerator<TParams>
+  //   | (new (...args: any[]) => IReactRouteStaticPathGenerator<TParams>);
 } & Pick<IReactRoute, "exact" | "sensitive" | "strict">;
 
-export function Route<TParams extends ParsedUrlQuery = ParsedUrlQuery>(
-  options: Partial<IRouteMeta<TParams>> = {}
-): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
+export function Route(options: IRouteMeta): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
   return (constructor) => {
     const injectableMeta = getInjectableMeta(constructor);
     if (!injectableMeta) {
-      throw new Error(
-        `@Route() decorator used on ${constructor.name} class, but ${constructor.name} is not an injectable component`
-      );
+      throw new Error(`@Route() decorator used on ${constructor.name} class, but ${constructor.name} is not an injectable component`);
     }
 
     options = Object.assign({}, options);
@@ -59,40 +55,25 @@ export type IReactRouteParamBind = {
   isOptional: boolean;
 };
 
-export function RouteParam(
-  options: Partial<Omit<IReactRouteParamBind, "propKey">> = {}
-) {
+export function RouteParam(options: Partial<Omit<IReactRouteParamBind, "propKey">> = {}) {
   return (target: Object, propKey: string) => {
     const { name, type, isOptional = false, ...restOps } = options;
     const paramName = name || propKey;
-    const paramType =
-      type || Reflect.getMetadata("design:type", target, propKey) || String;
+    const paramType = type || Reflect.getMetadata("design:type", target, propKey) || String;
 
-    let params: IReactRouteParamBind[] =
-      Reflect.getMetadata("ROUTE_PARAMS", target) || [];
+    let params: IReactRouteParamBind[] = Reflect.getMetadata("ROUTE_PARAMS", target) || [];
 
-    params = [
-      ...params,
-      { propKey, name: paramName, type: paramType, isOptional, ...restOps },
-    ];
+    params = [...params, { propKey, name: paramName, type: paramType, isOptional, ...restOps }];
     Reflect.defineMetadata("ROUTE_PARAMS", params, target);
   };
 }
 
-export function bindRouteFromCompProps(
-  routeCompInstance: Component<any>,
-  props: Record<string, any>
-): IReactRouteParamBind[] {
-  const parmas: IReactRouteParamBind[] = Reflect.getMetadata(
-    "ROUTE_PARAMS",
-    routeCompInstance
-  );
+export function bindRouteFromCompProps(routeCompInstance: Component<any>, props: Record<string, any>): IReactRouteParamBind[] {
+  const parmas: IReactRouteParamBind[] = Reflect.getMetadata("ROUTE_PARAMS", routeCompInstance);
 
   const match = props.match as IReactRouteMatched | undefined;
   if (!match) {
-    throw new Error(
-      "@RouteParam() decorator must be used on Component, which is decorated by @Route()"
-    );
+    throw new Error("@RouteParam() decorator must be used on Component, which is decorated by @Route()");
   }
   const matchedParams = match.params || {};
   if (parmas && parmas.length) {
@@ -100,9 +81,7 @@ export function bindRouteFromCompProps(
       const { propKey, name, type, transform, isOptional } = parmas[i];
       const value: string = matchedParams[name];
       if ((value === undefined || value === null) && isOptional) {
-        throw new Error(
-          `route param(${name}) must not to be null, on property${propKey}`
-        );
+        throw new Error(`route param(${name}) must not to be null, on property${propKey}`);
       }
       let transformedValue: typeof type = value;
       const strTypeof = typeof type;
@@ -116,9 +95,7 @@ export function bindRouteFromCompProps(
         } else if ((type as any) === String || strTypeof === "string") {
           transformedValue = value;
         } else {
-          throw new Error(
-            `can't recognise type to route param(${name}) type, on property${propKey}`
-          );
+          throw new Error(`can't recognise type to route param(${name}) type, on property${propKey}`);
         }
       }
 

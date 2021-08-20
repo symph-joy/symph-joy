@@ -1,15 +1,8 @@
-import {
-  ClassProvider,
-  EntryType,
-  IJoyContext,
-  Scope,
-  Type,
-  TypeOrTokenType,
-} from "./interfaces";
+import { ClassProvider, EntryType, ICoreContext, Scope, Type, TypeOrTokenType } from "./interfaces";
 import { Logger, LoggerService } from "./services/logger.service";
 import { isFunction, isNil } from "./utils/shared.utils";
 import { UnknownElementException } from "./errors/exceptions/unknown-element.exception";
-import { JoyContainer } from "./injector/joy-container";
+import { CoreContainer } from "./injector/core-container";
 import { Injector } from "./injector/injector";
 import { STATIC_CONTEXT } from "./injector/constants";
 import { InstanceLoader } from "./injector/instance-loader";
@@ -19,83 +12,182 @@ import { IInjectableDependency } from "./interfaces/injectable-dependency.interf
 import { ProviderScanner } from "./injector/provider-scanner";
 import { providerNameGenerate } from "./injector/provider-name-generate";
 import { HookCenter } from "./hook/hook-center";
-import type { HookPipe } from "./hook/hook-center";
 import { HookResolver } from "./hook/hook-resolver";
 import { getInjectableMeta } from "./decorators/core";
-import { InstanceWrapper } from "./injector";
-import { Hook, HookType } from "./hook";
+import { ComponentWrapper } from "./injector";
+import { HookType, IHook } from "./hook";
 
 interface CoreContextEventListener {
   onContextInitialized(): Promise<void>;
+
   onContextBeforeDispose(): Promise<void>;
+
   onBeforeShutdownHook(): Promise<void>;
+
   onShutdownHook(): Promise<void>;
 }
 
 /**
  * @publicApi
  */
-export class CoreContext implements IJoyContext {
+export class CoreContext implements ICoreContext {
   protected isInitialized = false;
 
   private instanceLoader: InstanceLoader;
   private dependenciesScanner: ProviderScanner;
   protected readonly hookCenter: HookCenter;
+  protected readonly hookResolver: HookResolver;
   protected readonly injector;
 
   public hasInitialized(): boolean {
     return this.isInitialized;
   }
 
-  constructor(
-    protected readonly entry: EntryType | EntryType[],
-    public readonly container: JoyContainer = new JoyContainer()
-  ) {
+  constructor(protected readonly entry: EntryType | EntryType[], public readonly container: CoreContainer = new CoreContainer()) {
     this.hookCenter = new HookCenter();
     this.injector = new Injector(this.hookCenter);
-    this.dependenciesScanner = new ProviderScanner(container);
+    this.dependenciesScanner = new ProviderScanner();
     this.instanceLoader = new InstanceLoader(container, this.injector);
+    this.registerHooks();
 
-    this.hookCenter.registerProviderHooks(this.container, JoyContainer);
-    this.hookCenter.registerProviderHooks(this);
+    this.registerCoreProviders();
+    this.hookResolver = new HookResolver(this.hookCenter);
   }
 
-  @Hook({ type: HookType.Traverse, async: true })
-  public onContextInitialized: HookPipe;
+  // @AutowireHook({type: HookType.Traverse, async: true})
+  public onDidProvidersRegister: IHook;
 
-  @Hook({ type: HookType.Traverse, async: true })
-  public onContextBeforeDispose: HookPipe;
+  // @AutowireHook({type: HookType.Traverse, async: true})
+  public onContextInitialized: IHook;
 
-  @Hook({ type: HookType.Traverse, async: true })
-  public onBeforeShutdownHook: HookPipe;
+  // @AutowireHook({type: HookType.Traverse, async: true})
+  public onContextBeforeDispose: IHook;
 
-  @Hook({ type: HookType.Traverse, async: true })
-  public onShutdownHook: HookPipe;
+  // @AutowireHook({type: HookType.Traverse, async: true})
+  public onBeforeShutdownHook: IHook;
 
-  protected async initContext(): Promise<string[]> {
-    return this.loadModule({
+  // @AutowireHook({type: HookType.Traverse, async: true})
+  public onShutdownHook: IHook;
+
+  private registerHooks() {
+    this.hookCenter.registerProviderHooks(this.container);
+
+    this.onDidProvidersRegister = this.hookCenter.registerHook({
+      id: "onDidProvidersRegister",
+      type: HookType.Traverse,
+      async: true,
+      parallel: false,
+    });
+
+    this.onContextInitialized = this.hookCenter.registerHook({
+      id: "onContextInitialized",
+      type: HookType.Traverse,
+      async: true,
+      parallel: false,
+    });
+    this.onContextBeforeDispose = this.hookCenter.registerHook({
+      id: "onContextBeforeDispose",
+      type: HookType.Traverse,
+      async: true,
+      parallel: false,
+    });
+    this.onBeforeShutdownHook = this.hookCenter.registerHook({
+      id: "onBeforeShutdownHook",
+      type: HookType.Traverse,
+      async: true,
+      parallel: false,
+    });
+    this.onShutdownHook = this.hookCenter.registerHook({
+      id: "onShutdownHook",
+      type: HookType.Traverse,
+      async: true,
+      parallel: false,
+    });
+  }
+
+  private registerCoreProviders() {
+    this.registerModule({
       tempoContext: {
-        id: "tempoContext",
-        // @ts-ignore
+        name: Symbol("coreContext"),
         type: this.constructor,
         useValue: this,
       },
       providerScanner: {
-        id: "providerScanner",
+        name: Symbol("providerScanner"),
         type: ProviderScanner,
         useValue: this.dependenciesScanner,
       },
       hookCenter: {
-        id: "hookCenter",
+        name: Symbol("hookCenter"),
         type: HookCenter,
         useValue: this.hookCenter,
       },
-      hookResolver: {
-        id: "hookResolver",
-        type: HookResolver,
-        useValue: new HookResolver(this.hookCenter),
-      },
     });
+  }
+
+  public getProviderDefinition<TInput = any>(typeOrToken: TypeOrTokenType<TInput>): ComponentWrapper<TInput> | undefined {
+    const instanceWrapper = this.container.getProvider(typeOrToken);
+    return instanceWrapper;
+  }
+
+  public tryGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined {
+    const instanceWrapper = this.container.getProvider(typeOrToken);
+    if (isNil(instanceWrapper)) {
+      return undefined;
+    }
+
+    const provider = this.injector.loadProvider(instanceWrapper, this.container);
+    return provider as Promise<TInput> | TInput;
+  }
+
+  public get<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput {
+    const instance = this.tryGet<TInput>(typeOrToken, options);
+    if (isNil(instance)) {
+      const providerId = this.getProviderId(typeOrToken);
+      throw new UnknownElementException(providerId);
+    }
+    return instance as Promise<TInput> | TInput;
+  }
+
+  public syncTryGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput | undefined {
+    const loadRst = this.tryGet<TInput>(typeOrToken, options);
+    if (loadRst instanceof Promise) {
+      throw new RuntimeException("Its an async provider, can not load as sync");
+    }
+    return loadRst;
+  }
+
+  public syncGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput {
+    const loadRst = this.get<TInput>(typeOrToken, options);
+    if (loadRst instanceof Promise) {
+      throw new RuntimeException("Its an async provider, can not load as sync");
+    }
+    return loadRst;
+  }
+
+  /**
+   * inject properties for instance
+   */
+  public resolveProperties<TInstance>(instance: TInstance, typeOfInstance: TypeOrTokenType<unknown>): ThenableResult<IInjectableDependency[]> {
+    const providerId: string = this.getProviderId(typeOfInstance);
+    let instanceWrapper = this.container.getProvider(providerId);
+    if (isNil(instanceWrapper)) {
+      // 生成一个临时的wrapper，用于缓存注入信息
+      const provider: ClassProvider = {
+        name: providerId,
+        type: typeOfInstance as Type,
+        useClass: typeOfInstance as Type, // todo 限定为只能是类型
+        scope: Scope.DEFAULT,
+      };
+      instanceWrapper = this.container.addProvider(provider);
+    }
+    const injectedProps = this.injector.loadInstanceProperties(instance, instanceWrapper, this.container, STATIC_CONTEXT).getResult();
+
+    return injectedProps;
+  }
+
+  protected async initContext(): Promise<ComponentWrapper[]> {
+    return [];
   }
 
   // protected registerInternalModules(moduleConfig: EntryType) {
@@ -113,104 +205,25 @@ export class CoreContext implements IJoyContext {
   //   await this.instanceLoader.createInstancesOfDependencies(providerIds);
   // }
 
-  public async loadModule(module: EntryType | EntryType[]): Promise<string[]> {
+  public registerModule(module: EntryType | EntryType[]): ComponentWrapper[] {
     const providers = this.dependenciesScanner.scan(module);
-    this.container.addProviders(providers);
-    const providerIds = providers.map((it) => it.id);
-    await this.instanceLoader.createInstancesOfDependencies(providerIds);
-    return providerIds;
+    const wrappers = this.container.addProviders(providers);
+    // const providerIds = []
+    // for (const wrapper of wrappers) {
+    //   providerIds.push(wrapper.id)
+    // }
+    return wrappers;
   }
 
-  public getProviderDefinition<TInput = any>(
-    typeOrToken: TypeOrTokenType<TInput>
-  ): InstanceWrapper<TInput> | undefined {
-    const instanceWrapper = this.container.getProvider(typeOrToken);
-    return instanceWrapper;
-  }
-
-  public tryGet<TInput = any>(
-    typeOrToken: TypeOrTokenType<TInput>,
-    options?: { strict?: boolean }
-  ): Promise<TInput> | TInput | undefined {
-    const instanceWrapper = this.container.getProvider(typeOrToken);
-    if (isNil(instanceWrapper)) {
-      return undefined;
-    }
-
-    const provider = this.injector.loadProvider(
-      instanceWrapper,
-      this.container
-    );
-    return provider as Promise<TInput> | TInput;
-  }
-
-  public get<TInput = any>(
-    typeOrToken: TypeOrTokenType<TInput>,
-    options?: { strict?: boolean }
-  ): Promise<TInput> | TInput {
-    const instance = this.tryGet<TInput>(typeOrToken, options);
-    if (isNil(instance)) {
-      const providerId = this.getProviderId(typeOrToken);
-      throw new UnknownElementException(providerId);
-    }
-    return instance as Promise<TInput> | TInput;
-  }
-
-  public syncTryGetProvider<TInput = any>(
-    typeOrToken: TypeOrTokenType<TInput>,
-    options?: { strict?: boolean }
-  ): TInput | undefined {
-    const loadRst = this.tryGet<TInput>(typeOrToken, options);
-    if (loadRst instanceof Promise) {
-      throw new RuntimeException("Its an async provider, can not load as sync");
-    }
-    return loadRst;
-  }
-
-  public syncGetProvider<TInput = any>(
-    typeOrToken: TypeOrTokenType<TInput>,
-    options?: { strict?: boolean }
-  ): TInput {
-    const loadRst = this.get<TInput>(typeOrToken, options);
-    if (loadRst instanceof Promise) {
-      throw new RuntimeException("Its an async provider, can not load as sync");
-    }
-    return loadRst;
+  public async loadModule(module: EntryType | EntryType[]): Promise<ComponentWrapper[]> {
+    const providers = this.registerModule(module);
+    await this.initProviders(providers);
+    // await this.triggerInstanceOnModuleLoad(providerIds)
+    return providers;
   }
 
   /**
-   * inject properties for instance
-   */
-  public resolveProperties<TInstance>(
-    instance: TInstance,
-    typeOfInstance: TypeOrTokenType<unknown>
-  ): ThenableResult<IInjectableDependency[]> {
-    const providerId: string = this.getProviderId(typeOfInstance);
-    let instanceWrapper = this.container.getProvider(providerId);
-    if (isNil(instanceWrapper)) {
-      // 生成一个临时的wrapper，用于缓存注入信息
-      const provider: ClassProvider = {
-        id: providerId,
-        type: typeOfInstance as Type,
-        useClass: typeOfInstance as Type, // todo 限定为只能是类型
-        scope: Scope.DEFAULT,
-      };
-      instanceWrapper = this.container.addProvider(provider);
-    }
-    const injectedProps = this.injector
-      .loadInstanceProperties(
-        instance,
-        instanceWrapper,
-        this.container,
-        STATIC_CONTEXT
-      )
-      .getResult();
-
-    return injectedProps;
-  }
-
-  /**
-   * Initalizes the Temp application.
+   * Initalizes the application.
    * Calls the Joy lifecycle events.
    *
    * @returns {Promise<this>} The JoyApplicationContext instance as Promise
@@ -219,12 +232,20 @@ export class CoreContext implements IJoyContext {
     if (this.isInitialized) {
       return this;
     }
-    await this.initContext();
-    await this.loadModule(this.entry);
     this.isInitialized = true;
+
+    let providers = await this.initContext();
+    providers = providers.concat(this.registerModule(this.entry));
+    await this.initProviders(providers);
 
     await this.onContextInitialized.call();
     return this;
+  }
+
+  protected async initProviders(instanceWrappers: ComponentWrapper[]): Promise<void> {
+    this.hookCenter.registerHooksFromWrappers(instanceWrappers);
+    await this.instanceLoader.createInstancesOfDependencies(instanceWrappers);
+    await this.onDidProvidersRegister.call(instanceWrappers);
   }
 
   protected async dispose(): Promise<void> {
@@ -247,8 +268,8 @@ export class CoreContext implements IJoyContext {
   private getProviderId(typeOrToken: TypeOrTokenType<unknown>): string {
     if (isFunction(typeOrToken)) {
       const meta = getInjectableMeta(typeOrToken);
-      if (meta?.id) {
-        return meta.id;
+      if (meta?.name) {
+        return meta.name.toString();
       } else {
         return providerNameGenerate(typeOrToken);
       }
@@ -256,4 +277,22 @@ export class CoreContext implements IJoyContext {
       return typeOrToken as string;
     }
   }
+
+  // private async triggerInstanceOnModuleLoad(providerIds: string[]): Promise<void> {
+  //   for (const providerId of providerIds) {
+  //     const wrapper = this.container.getProviderById(providerId)
+  //     if (!wrapper || wrapper.scope !== Scope.DEFAULT || !wrapper.useClass) {
+  //       continue;
+  //     }
+  //     const clazz = wrapper.useClass
+  //     const onDidLoadMethodKey = getOnDidLoadMethodKey(clazz)
+  //     if(onDidLoadMethodKey){
+  //       const instance = this.get(clazz)
+  //       if (typeof instance[onDidLoadMethodKey] !== "function"){
+  //         throw new RuntimeException(`OnDidLoad callback method is not a function. class name: ${clazz.name}`)
+  //       }
+  //      await instance[onDidLoadMethodKey].call(instance)
+  //     }
+  //   }
+  // }
 }

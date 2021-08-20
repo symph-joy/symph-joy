@@ -1,10 +1,5 @@
-import { Inject, Injectable } from "@symph/core";
-import {
-  IReactRoute,
-  JoyRouteInitState,
-  ReactAppInitManager,
-  ReactRouter,
-} from "@symph/react";
+import { Autowire, Component } from "@symph/core";
+import { IReactRoute, JoyRouteInitState, ReactAppInitManager, ReactRouter } from "@symph/react";
 import { parseRelativeUrl } from "../../joy-server/lib/router/utils/parse-relative-url";
 import getAssetPathFromRoute from "../../joy-server/lib/router/utils/get-asset-path-from-route";
 import { addBasePath } from "../../joy-server/lib/router/router";
@@ -28,12 +23,12 @@ function normalizeRoute(route: string) {
   return route.replace(/\/$/, "");
 }
 
-@Injectable()
+@Component()
 export class ReactRouterClient extends ReactRouter {
   private _cachedSSgManifest: Set<string> | undefined;
 
   constructor(
-    @Inject("joyReactAutoGenRoutes")
+    @Autowire("joyReactAutoGenRoutes")
     private joyReactAutoGenRoutes: IReactRoute[],
     private joyClientConfig: JoyClientConfig,
     private reactAppInitManager: ReactAppInitManager
@@ -57,10 +52,7 @@ export class ReactRouterClient extends ReactRouter {
       for (const ssgRoute of ssgManifest.values()) {
         if (ssgRoute === path) {
           return true;
-        } else if (
-          isDynamicRoute(ssgRoute) &&
-          matchPath(path, { path: ssgRoute })
-        ) {
+        } else if (isDynamicRoute(ssgRoute) && matchPath(path, { path: ssgRoute })) {
           return true;
         }
       }
@@ -132,11 +124,7 @@ export class ReactRouterClient extends ReactRouter {
 
   public addBasePath(path: string): string {
     // we only add the basepath on relative urls
-    return basePath && path.startsWith("/")
-      ? path === "/"
-        ? normalizePathTrailingSlash(basePath)
-        : basePath + path
-      : path;
+    return basePath && path.startsWith("/") ? (path === "/" ? normalizePathTrailingSlash(basePath) : basePath + path) : path;
   }
 
   public delBasePath(path: string): string {
@@ -147,16 +135,10 @@ export class ReactRouterClient extends ReactRouter {
    * @param {string} href the URL as shown in browser (virtual path)
    */
   private getDataHref(href: string, ssg: boolean) {
-    const { pathname: hrefPathname, searchParams, search } = parseRelativeUrl(
-      href
-    );
+    const { pathname: hrefPathname, searchParams, search } = parseRelativeUrl(href);
     const route = normalizeRoute(hrefPathname);
 
     const dataRoute = getAssetPathFromRoute(route, ".json");
-    return addBasePath(
-      `/_joy/data/${this.joyClientConfig.buildId}${dataRoute}${
-        ssg ? "" : search
-      }`
-    );
+    return addBasePath(`/_joy/data/${this.joyClientConfig.buildId}${dataRoute}${ssg ? "" : search}`);
   }
 }

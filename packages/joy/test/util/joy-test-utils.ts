@@ -1,43 +1,23 @@
 import { ParsedUrlQuery, ParsedUrlQueryInput, stringify } from "querystring";
 import { IncomingMessage, ServerResponse } from "http";
-import { JoyBoot, JoyReactServer, PresetJoyCore } from "@symph/joy";
+import { JoyBoot, JoyReactServer, JoyBootConfiguration, JoyBootFactory } from "@symph/joy";
 import path from "path";
 import spawn from "cross-spawn";
 import child_process from "child_process";
 import treeKill from "tree-kill";
 import { ServerFactory } from "@symph/server";
 
-export async function renderViaAPI(
-  app: JoyReactServer,
-  pathname: string,
-  query?: ParsedUrlQuery
-): Promise<string | null> {
+export async function renderViaAPI(app: JoyReactServer, pathname: string, query?: ParsedUrlQuery): Promise<string | null> {
   const url = `${pathname}${query ? `?${stringify(query)}` : ""}`;
-  return app.renderToHTML(
-    { url } as IncomingMessage,
-    {} as ServerResponse,
-    pathname,
-    query
-  );
+  return app.renderToHTML({ url } as IncomingMessage, {} as ServerResponse, pathname, query);
 }
 
-export async function renderViaHTTP(
-  appPort: number,
-  pathname: string,
-  query?: ParsedUrlQueryInput
-): Promise<string> {
+export async function renderViaHTTP(appPort: number, pathname: string, query?: ParsedUrlQueryInput): Promise<string> {
   return fetchViaHTTP(appPort, pathname, query).then((res) => res.text());
 }
 
-export async function fetchViaHTTP(
-  appPort: number,
-  pathname: string,
-  query?: ParsedUrlQueryInput,
-  opts?: RequestInit
-): Promise<Response> {
-  const url = `http://localhost:${appPort}${pathname}${
-    query ? `?${stringify(query)}` : ""
-  }`;
+export async function fetchViaHTTP(appPort: number, pathname: string, query?: ParsedUrlQueryInput, opts?: RequestInit): Promise<Response> {
+  const url = `http://localhost:${appPort}${pathname}${query ? `?${stringify(query)}` : ""}`;
   return fetch(url, opts);
 }
 
@@ -62,10 +42,7 @@ export interface RunOptions {
   ignoreFail?: boolean;
 }
 
-export function runJoyCommand(
-  argv: string[],
-  opts: RunOptions = { stdout: true, stderr: true }
-) {
+export function runJoyCommand(argv: string[], opts: RunOptions = { stdout: true, stderr: true }) {
   const nextDir = path.dirname(require.resolve("@symph/joy/package"));
   const nextBin = path.join(nextDir, "bin/joy");
   const cwd = opts.cwd || nextDir;
@@ -77,82 +54,80 @@ export function runJoyCommand(
     __NEXT_TEST_MODE: "true",
   };
 
-  return new Promise<{ code: number; stdout?: string; stderr?: string }>(
-    (resolve, reject) => {
-      console.log(`Running command "joy ${argv.join(" ")}"`);
-      const instance = spawn("node", [nextBin, ...argv, "--no-deprecation"], {
-        ...opts.spawnOptions,
-        cwd,
-        env,
-        stdio: ["ignore", "pipe", "pipe"],
-      });
+  return new Promise<{ code: number; stdout?: string; stderr?: string }>((resolve, reject) => {
+    console.log(`Running command "joy ${argv.join(" ")}"`);
+    const instance = spawn("node", [nextBin, ...argv, "--no-deprecation"], {
+      ...opts.spawnOptions,
+      cwd,
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
 
-      if (typeof opts.instance === "function") {
-        opts.instance(instance);
+    if (typeof opts.instance === "function") {
+      opts.instance(instance);
+    }
+
+    let stderrOutput = "";
+    // if (opts.stderr) {
+    //   instance.stderr!.on('data', function (chunk) {
+    //     stderrOutput += chunk
+    //   })
+    // }
+    instance.stderr!.on("data", function (chunk) {
+      const message = chunk.toString();
+      if (typeof opts.onStderr === "function") {
+        opts.onStderr(message);
       }
 
-      let stderrOutput = "";
-      // if (opts.stderr) {
-      //   instance.stderr!.on('data', function (chunk) {
-      //     stderrOutput += chunk
-      //   })
-      // }
-      instance.stderr!.on("data", function (chunk) {
-        const message = chunk.toString();
-        if (typeof opts.onStderr === "function") {
-          opts.onStderr(message);
-        }
+      if (opts.stderr) {
+        process.stderr.write(message);
+      } else {
+        stderrOutput += chunk;
+      }
+    });
 
-        if (opts.stderr) {
-          process.stderr.write(message);
-        } else {
-          stderrOutput += chunk;
-        }
+    let stdoutOutput = "";
+    instance.stdout!.on("data", function (chunk) {
+      const message: string = chunk.toString();
+      if (typeof opts.onStdout === "function") {
+        opts.onStdout(message);
+      }
+
+      if (opts.stdout) {
+        process.stdout.write(message);
+      } else {
+        stdoutOutput += chunk;
+      }
+    });
+
+    // if (opts.stdout) {
+    //   instance.stdout!.on('data', function (chunk) {
+    //     stdoutOutput += chunk
+    //   })
+    // }
+
+    instance.on("close", (code) => {
+      if (code === null) {
+        code = 1;
+      }
+
+      if (!opts.stderr && !opts.stdout && !opts.ignoreFail && code !== 0) {
+        return reject(new Error(`command failed with code ${code}`));
+      }
+
+      resolve({
+        code,
+        stdout: stdoutOutput,
+        stderr: stderrOutput,
       });
+    });
 
-      let stdoutOutput = "";
-      instance.stdout!.on("data", function (chunk) {
-        const message: string = chunk.toString();
-        if (typeof opts.onStdout === "function") {
-          opts.onStdout(message);
-        }
-
-        if (opts.stdout) {
-          process.stdout.write(message);
-        } else {
-          stdoutOutput += chunk;
-        }
-      });
-
-      // if (opts.stdout) {
-      //   instance.stdout!.on('data', function (chunk) {
-      //     stdoutOutput += chunk
-      //   })
-      // }
-
-      instance.on("close", (code) => {
-        if (code === null) {
-          code = 1;
-        }
-
-        if (!opts.stderr && !opts.stdout && !opts.ignoreFail && code !== 0) {
-          return reject(new Error(`command failed with code ${code}`));
-        }
-
-        resolve({
-          code,
-          stdout: stdoutOutput,
-          stderr: stderrOutput,
-        });
-      });
-
-      instance.on("error", (err: any) => {
-        err.stdout = stdoutOutput;
-        err.stderr = stderrOutput;
-        reject(err);
-      });
-    }
-  );
+    instance.on("error", (err: any) => {
+      err.stdout = stdoutOutput;
+      err.stderr = stderrOutput;
+      reject(err);
+    });
+  });
 }
 
 export function runJoyServer(dev: boolean, argv: any[], opts: RunOptions = {}) {
@@ -166,17 +141,13 @@ export function runJoyServer(dev: boolean, argv: any[], opts: RunOptions = {}) {
   };
 
   return new Promise<child_process.ChildProcess>((resolve, reject) => {
-    const instance = spawn(
-      "node",
-      ["--no-deprecation", "bin/joy", dev ? "dev" : "start", ...argv],
-      { ...opts.spawnOptions, cwd, env }
-    );
+    const instance = spawn("node", ["--no-deprecation", "bin/joy", dev ? "dev" : "start", ...argv], { ...opts.spawnOptions, cwd, env });
     let didResolve = false;
 
     function handleStdout(data: any) {
       const message: string = data.toString();
       const bootupMarkers = {
-        dev: /compiled successfully/i,
+        dev: /started server on/i,
         start: /started server/i,
       };
       if (bootupMarkers[dev ? "dev" : "start"].test(message)) {
@@ -231,14 +202,9 @@ export function runJoyServer(dev: boolean, argv: any[], opts: RunOptions = {}) {
 // Kill a launched app
 export async function killApp(instance: child_process.ChildProcess) {
   await new Promise<void>((resolve, reject) => {
-    treeKill(instance.pid, (err) => {
+    treeKill(instance.pid as number, (err) => {
       if (err) {
-        if (
-          process.platform === "win32" &&
-          typeof err.message === "string" &&
-          (err.message.includes(`no running instance of the task`) ||
-            err.message.includes(`not found`))
-        ) {
+        if (process.platform === "win32" && typeof err.message === "string" && (err.message.includes(`no running instance of the task`) || err.message.includes(`not found`))) {
           // Windows throws an error if the process is already dead
           //
           // Command failed: taskkill /pid 6924 /T /F
@@ -253,10 +219,7 @@ export async function killApp(instance: child_process.ChildProcess) {
   });
 }
 
-export async function startJoyServer(
-  dev: boolean,
-  args: any
-): Promise<JoyBoot> {
+export async function startJoyServer(dev: boolean, args: any): Promise<JoyBoot> {
   // todo 在jest启动的时候，设置通用的环境变量
   // const env = {
   //   ...process.env,
@@ -264,31 +227,24 @@ export async function startJoyServer(
   //   ...opts.env,
   // }
   // process.env = env
-  let app;
+  let app: JoyBoot;
   try {
     // app = new JoyBoot(PresetJoyCore);
-    app = await ServerFactory.createServer(JoyBoot, PresetJoyCore);
+    app = await JoyBootFactory.createServer(JoyBoot, JoyBootConfiguration);
     await app.init();
     await app.runCommand(dev ? "dev" : "start", args);
   } catch (e) {
     // 因为jest (v26.4.2) 的问题，
     console.error(e);
+    throw e;
   }
-  return app as JoyBoot;
+  return app;
 }
 
 // Launch the app in dev mode.
-export async function joyDev(
-  dir: any,
-  port: any,
-  options?: RunOptions
-): Promise<child_process.ChildProcess> {
+export async function joyDev(dir: any, port: any, options?: RunOptions): Promise<child_process.ChildProcess> {
   // return await runNextCommandDev({_: [dir], hostname: "localhost", port}) as any;
-  return runJoyServer(
-    true,
-    [dir, "--host=localhost", `--port=${port}`],
-    options
-  );
+  return runJoyServer(true, [dir, "--host=localhost", `--port=${port}`], options);
 }
 
 export function joyStart(dir: string, port: number, opts?: RunOptions) {

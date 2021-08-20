@@ -5,7 +5,7 @@
 // import { ApplicationConfig } from '../application-config';
 // import { STATIC_CONTEXT } from '../injector/constants';
 // import { NestContainer } from '../injector/container';
-// import { InstanceWrapper } from '../injector/instance-wrapper';
+// import { ComponentWrapper } from '../injector/instance-wrapper';
 import { RouterProxyCallback } from "../router/router-proxy";
 import { BaseExceptionFilterContext } from "./base-exception-filter-context";
 import { ExternalExceptionsHandler } from "./external-exceptions-handler";
@@ -14,16 +14,13 @@ import { ExceptionFilterMetadata } from "../interfaces/exceptions";
 import { STATIC_CONTEXT } from "@symph/core/dist/injector/constants";
 import { Controller } from "../interfaces/controllers";
 import { EXCEPTION_FILTERS_METADATA } from "../constants";
-import { InstanceWrapper } from "@symph/core";
+import { ComponentWrapper } from "@symph/core";
 import { ServerContainer } from "../server-container";
 import { ApplicationConfig } from "../application-config";
 import { isEmpty } from "@symph/core/dist/utils/shared.utils";
 
 export class ExternalExceptionFilterContext extends BaseExceptionFilterContext {
-  constructor(
-    container: ServerContainer,
-    private readonly config?: ApplicationConfig
-  ) {
+  constructor(container: ServerContainer, private readonly config?: ApplicationConfig) {
     super(container);
   }
 
@@ -51,10 +48,7 @@ export class ExternalExceptionFilterContext extends BaseExceptionFilterContext {
     return exceptionHandler;
   }
 
-  public getGlobalMetadata<T extends any[]>(
-    contextId = STATIC_CONTEXT,
-    inquirerId?: string
-  ): T {
+  public getGlobalMetadata<T extends any[]>(contextId = STATIC_CONTEXT, inquirerId?: string): T {
     if (!this.config) {
       return [] as any;
     }
@@ -62,7 +56,7 @@ export class ExternalExceptionFilterContext extends BaseExceptionFilterContext {
     if (contextId === STATIC_CONTEXT && !inquirerId) {
       return globalFilters;
     }
-    const scopedFilterWrappers = this.config.getGlobalRequestFilters() as InstanceWrapper[];
+    const scopedFilterWrappers = this.config.getGlobalRequestFilters() as ComponentWrapper[];
     const scopedFilters = iterate(scopedFilterWrappers)
       // .map(wrapper => wrapper.getInstanceByContextId(contextId, inquirerId))
       .map((wrapper) => wrapper.getInstanceByContextId(contextId))

@@ -3,7 +3,7 @@ import { IReactApplication, ReactRouter, RouteSwitch } from "@symph/react";
 
 export default function App(props: { appContext: IReactApplication }) {
   const { appContext } = props;
-  const reactRouter = appContext.syncTryGetProvider<ReactRouter>("reactRouter");
+  const reactRouter = appContext.syncTryGet<ReactRouter>("reactRouter");
   const routes = reactRouter?.getRoutes() || [];
 
   return (

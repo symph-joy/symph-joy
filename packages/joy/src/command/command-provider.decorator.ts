@@ -1,11 +1,9 @@
-import { ClassProvider, Injectable, Type } from "@symph/core";
+import { ClassProvider, Component, Type } from "@symph/core";
 
-export function CommandProvider(
-  options: Partial<ClassProvider> = {}
-): <TFunction extends Function>(target: TFunction) => TFunction | void {
+export function CommandProvider(options: Partial<ClassProvider> = {}): <TFunction extends Function>(target: TFunction) => TFunction | void {
   return (target) => {
     Reflect.defineMetadata("__joy_cmd", options, target);
-    Injectable(options)(target);
+    Component(options)(target);
   };
 }
 

@@ -1,26 +1,10 @@
 import glob from "glob";
 import path from "path";
-import {
-  CoreContext,
-  getConfigurationMeta,
-  getInjectableMeta,
-  Hook,
-  HookPipe,
-  HookType,
-  Injectable,
-  JoyContainer,
-  Provider,
-  ProviderScanner,
-  Type,
-} from "@symph/core";
+import { AutowireHook, Component, CoreContext, getConfigurationMeta, getInjectableMeta, HookType, IHook, CoreContainer, Provider, ProviderScanner, TProviderName } from "@symph/core";
 import { EmitSrcService } from "../../../build/webpack/plugins/emit-src-plugin/emit-src-service";
 import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
-import { INJECTABLE_METADATA } from "@symph/core/dist/constants";
 
-type TScanOutModuleProviders = Map<
-  string,
-  { type: "ClassProvider" | "Configuration"; providers: Provider[] }
->;
+type TScanOutModuleProviders = Map<string, { type: "ClassProvider" | "Configuration"; providers: Provider[] }>;
 
 export interface IScanOutModule {
   path: string; // build dist file path
@@ -37,26 +21,20 @@ export interface IScanOutModule {
  * todo 通过emit-manifest.json的hash值，判断是否需要扫描或者更新模块。
  * todo 如果判断是被删除了的模块。
  */
-@Injectable()
+@Component()
 export class FileScanner {
-  private container: JoyContainer;
+  private container: CoreContainer;
 
-  constructor(
-    private readonly tempoContext: CoreContext,
-    private providerScanner: ProviderScanner,
-    private emitSrcService: EmitSrcService
-  ) {
+  constructor(private readonly tempoContext: CoreContext, private providerScanner: ProviderScanner, private emitSrcService: EmitSrcService) {
     this.container = tempoContext.container;
   }
 
-  @Hook({ type: HookType.Bail, parallel: false, async: true })
-  private afterScanOutModuleHook: HookPipe;
+  @AutowireHook({ type: HookType.Bail, parallel: false, async: true })
+  private afterScanOutModuleHook: IHook;
 
   private cachedModules: Map<string, IScanOutModule> = new Map();
 
-  public getCacheModuleByProviderId(
-    providerId: string
-  ): IScanOutModule | undefined {
+  public getCacheModuleByProviderName(providerName: TProviderName | TProviderName[]): IScanOutModule | undefined {
     const moduleKeys = new Array(...this.cachedModules.keys());
     for (let i = 0; i < moduleKeys.length; i++) {
       const key = moduleKeys[i];
@@ -65,9 +43,7 @@ export class FileScanner {
         continue;
       }
       for (const providerDefine of cacheModule.providerDefines.values()) {
-        const findOutProvider = providerDefine.providers?.find(
-          (p) => p.id === providerId
-        );
+        const findOutProvider = providerDefine.providers?.find((p) => p.name === providerName);
         if (findOutProvider) {
           return cacheModule;
         }
@@ -77,7 +53,7 @@ export class FileScanner {
   }
 
   public getSourceFileByProviderId(providerId: string): string | undefined {
-    const cacheModule = this.getCacheModuleByProviderId(providerId);
+    const cacheModule = this.getCacheModuleByProviderName(providerId);
     if (cacheModule) {
       return cacheModule.resource;
     }
@@ -104,11 +80,7 @@ export class FileScanner {
           const emit = this.emitSrcService.getEmitInfo(fullPath);
           const emitHash = emit?.hash;
           const cached = this.cachedModules.get(fullPath);
-          if (
-            emitHash !== undefined &&
-            cached !== undefined &&
-            emitHash === cached.hash
-          ) {
+          if (emitHash !== undefined && cached !== undefined && emitHash === cached.hash) {
             // this file has not been changed, do nothing
             continue;
           }
@@ -155,9 +127,7 @@ export class FileScanner {
       });
     });
 
-    const deleteModules = existModuleKeys.filter(
-      (it) => !scanOutModuleKeys.includes(it)
-    );
+    const deleteModules = existModuleKeys.filter((it) => !scanOutModuleKeys.includes(it));
     for (const deleteModule of deleteModules) {
       const cache = this.cachedModules.get(deleteModule);
       if (cache) {
@@ -167,9 +137,7 @@ export class FileScanner {
     }
   }
 
-  public scanModule(
-    mod: Record<string, unknown>
-  ): undefined | TScanOutModuleProviders {
+  public scanModule(mod: Record<string, unknown>): undefined | TScanOutModuleProviders {
     if (mod === undefined || mod === null) {
       return undefined;
     }

@@ -1,20 +1,11 @@
-import Chalk from "chalk";
+import chalk from "chalk";
 import { SimpleWebpackError } from "./simpleWebpackError";
 
-const chalk = new Chalk.constructor({ enabled: true });
+// const chalk = new Chalk.constructor({ enabled: true });
 const regexCssError = /^(?:CssSyntaxError|SyntaxError)\n\n\((\d+):(\d*)\) (.*)$/s;
 
-export function getCssError(
-  fileName: string,
-  err: Error
-): SimpleWebpackError | false {
-  if (
-    !(
-      (err.name === "CssSyntaxError" || err.name === "SyntaxError") &&
-      (err as any).stack === false &&
-      !(err instanceof SyntaxError)
-    )
-  ) {
+export function getCssError(fileName: string, err: Error): SimpleWebpackError | false {
+  if (!((err.name === "CssSyntaxError" || err.name === "SyntaxError") && (err as any).stack === false && !(err instanceof SyntaxError))) {
     return false;
   }
 
@@ -26,12 +17,7 @@ export function getCssError(
     const lineNumber = Math.max(1, parseInt(_lineNumer, 10));
     const column = Math.max(1, parseInt(_column, 10));
 
-    return new SimpleWebpackError(
-      `${chalk.cyan(fileName)}:${chalk.yellow(
-        lineNumber.toString()
-      )}:${chalk.yellow(column.toString())}`,
-      chalk.red.bold("Syntax error").concat(`: ${reason}`)
-    );
+    return new SimpleWebpackError(`${chalk.cyan(fileName)}:${chalk.yellow(lineNumber.toString())}:${chalk.yellow(column.toString())}`, chalk.red.bold("Syntax error").concat(`: ${reason}`));
   }
 
   return false;

@@ -1,19 +1,13 @@
-import { Injectable, ProviderLifecycle, Tap } from "@symph/core";
+import { Component, RegisterTap } from "@symph/core";
 import { AbstractHttpAdapter } from "../../adapters";
 import { ServeStaticOptions } from "./interfaces/serve-static-options.interface";
 import { FastifyLoader } from "./loaders/fastify.loader";
 
-@Injectable()
+@Component()
 export class ServeStaticService {
-  constructor(
-    private httpAdapter: AbstractHttpAdapter,
-    private optionsArr: ServeStaticOptions[],
-    public loader: FastifyLoader
-  ) {}
+  constructor(private httpAdapter: AbstractHttpAdapter, private optionsArr: ServeStaticOptions[], public loader: FastifyLoader) {}
 
-  public registerServeStatic(
-    option: ServeStaticOptions | ServeStaticOptions[]
-  ) {
+  public registerServeStatic(option: ServeStaticOptions | ServeStaticOptions[]) {
     if (Array.isArray(option)) {
       this.optionsArr.push(...option);
     } else {
@@ -21,14 +15,12 @@ export class ServeStaticService {
     }
   }
 
-  @Tap()
+  @RegisterTap()
   onContextInitialized() {
     return this.start();
   }
 
-  protected register(
-    staticConfig: ServeStaticOptions | ServeStaticOptions[]
-  ): void {
+  protected register(staticConfig: ServeStaticOptions | ServeStaticOptions[]): void {
     const configs = Array.isArray(staticConfig) ? staticConfig : [staticConfig];
     return this.loader.register(this.httpAdapter, configs);
   }

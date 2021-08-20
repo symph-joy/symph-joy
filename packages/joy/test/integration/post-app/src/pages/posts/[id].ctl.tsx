@@ -1,28 +1,12 @@
 import React, { ReactNode } from "react";
-import {
-  Controller,
-  IReactRouteStaticPathGenerator,
-  ReactController,
-  Route,
-  ParsedUrlQuery,
-  RouteParam,
-} from "@symph/react";
-import { IJoyContext, Inject, Injectable } from "@symph/core";
-import {
-  JoyPrerenderInterface,
-  Prerender,
-} from "@symph/joy/dist/build/prerender";
+import { ReactBaseController, ReactController, Route, RouteParam } from "@symph/react";
+import { ICoreContext, Autowire } from "@symph/core";
+import { JoyPrerenderInterface, Prerender } from "@symph/joy/dist/build/prerender";
 import { PostsModel } from "../../model/posts.model";
 
 @Prerender()
 export class DynamicStaticPathGenerator implements JoyPrerenderInterface {
-  getRoute():
-    | string
-    | ReactController<
-        Record<string, unknown>,
-        Record<string, unknown>,
-        IJoyContext
-      > {
+  getRoute(): string | ReactBaseController<Record<string, unknown>, Record<string, unknown>, ICoreContext> {
     return "/dynamic/:id";
   }
 
@@ -36,10 +20,10 @@ export class DynamicStaticPathGenerator implements JoyPrerenderInterface {
   }
 }
 
-@Route<{ id: string }>({ path: "/posts/:id" })
-@Controller()
-export default class DynamicRouteCtl extends ReactController {
-  @Inject()
+@Route({ path: "/posts/:id" })
+@ReactController()
+export default class DynamicRouteCtl extends ReactBaseController {
+  @Autowire()
   private postsModel: PostsModel;
 
   async initialModelStaticState(): Promise<void> {

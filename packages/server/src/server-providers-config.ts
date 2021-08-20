@@ -1,7 +1,7 @@
-import { Configuration, Injectable } from "@symph/core";
+import { Configuration, Component } from "@symph/core";
 import { ConfigConfiguration } from "@symph/config";
 
-@Injectable()
+@Component()
 export class HelloProvider {
   private message = "hello world";
 

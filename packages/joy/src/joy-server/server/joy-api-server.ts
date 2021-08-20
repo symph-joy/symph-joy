@@ -1,26 +1,29 @@
 import React from "react";
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 import { ServerApplication } from "@symph/server";
-import { JoyAppConfig } from "./joy-config/joy-app-config";
+import { JoyAppConfig } from "./joy-app-config";
+import { IncomingMessage, ServerResponse } from "http";
+import { UrlWithParsedQuery } from "url";
 
 if (typeof React.Suspense === "undefined") {
-  throw new Error(
-    `The version of React you are using is lower than the minimum required version needed for Joy.js. Please upgrade "react" and "react-dom": "npm install react react-dom"`
-  );
+  throw new Error(`The version of React you are using is lower than the minimum required version needed for Joy.js. Please upgrade "react" and "react-dom": "npm install react react-dom"`);
 }
 
-@Injectable()
+@Component()
 export class JoyApiServer {
-  constructor(
-    protected serverContext: ServerApplication,
-    protected joyAppConfig: JoyAppConfig
-  ) {}
+  constructor(protected serverContext: ServerApplication, protected joyAppConfig: JoyAppConfig) {}
 
   public async prepare(): Promise<void> {
-    const joyApiModulesPath = this.joyAppConfig.resolveBuildOutDir(
-      "joy/joy-bundle.js"
-    );
+    const joyApiModulesPath = this.joyAppConfig.resolveBuildOutDir("joy/joy-bundle.js");
     const joyApiModules = require(joyApiModulesPath).default;
     await this.serverContext.loadModule(joyApiModules);
+  }
+
+  getRequestHandler() {
+    return this.handleRequest.bind(this);
+  }
+
+  private async handleRequest(req: IncomingMessage, res: ServerResponse, next: () => unknown): Promise<unknown> {
+    return next();
   }
 }

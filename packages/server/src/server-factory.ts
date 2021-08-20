@@ -1,50 +1,30 @@
-import {
-  CoreContext,
-  EntryType,
-  IJoyContext,
-  JoyContainer,
-  JoyContextOptions,
-  Logger,
-  LoggerService,
-  LogLevel,
-  Type,
-} from "@symph/core";
+import { EntryType, JoyContextOptions, Logger, Type } from "@symph/core";
 import { MESSAGES } from "@symph/core/dist/constants";
 import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
 import { ServerApplication } from "./server-application";
-import { ServerProvidersConfig } from "./server-providers-config";
-import { ApplicationConfig } from "./application-config";
 import { AbstractHttpAdapter } from "./adapters";
 import { NestApplicationOptions } from "./interfaces/nest-application-options.interface";
-import { loadAdapter } from "./helpers/load-adapter";
 import { NestApplicationContextOptions } from "./interfaces/nest-application-context-options.interface";
 import { ServerContainer } from "./server-container";
 import { HttpServer } from "./interfaces/http";
 import { rethrow } from "./helpers/rethrow";
 import { ExceptionsZone } from "./errors/exceptions-zone";
 import { FastifyAdapter } from "./platform/fastify";
-import { INestApplication } from "./interfaces/nest-application.interface";
-import { SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
-import * as http from "http";
+import { ServerConfiguration } from "./server.configuration";
 
-export class ServerFactoryImplement {
-  private readonly logger = new Logger("ServerFactory", true);
-  private abortOnError = true;
+export class ServerFactoryImplement<T extends ServerApplication> {
+  protected logger = new Logger(`${this.serverApplicationClass.name}-factory`, true);
+  protected abortOnError = true;
 
-  public async create(
-    entry: EntryType,
-    options?: NestApplicationOptions
-  ): Promise<ServerApplication> {
-    return this.createServer(ServerApplication, entry, options);
+  constructor(public serverApplicationClass: { new (...args: any[]): T }) {}
+
+  public async create(entry: EntryType, options?: NestApplicationOptions): Promise<T> {
+    return this.createServer(entry, undefined, options);
   }
 
-  public async createServer<T extends ServerApplication = ServerApplication>(
-    ApplicationContext: { new (...args: any[]): T },
-    entry: EntryType,
-    options: NestApplicationOptions = {}
-  ) {
+  public async createServer(entry: EntryType, configurationClass: typeof ServerConfiguration = ServerConfiguration, options: NestApplicationOptions = {}): Promise<T> {
     this.applyLogger(options);
-    const httpServer = options.httpServer || this.createHttpAdapter();
+    // const httpServer = options.httpServer || this.createHttpAdapter();
     const appOptions = options;
     // const [httpServer, appOptions] = this.isHttpServer(serverOrOptions)
     //   ? [serverOrOptions, options]
@@ -53,17 +33,18 @@ export class ServerFactoryImplement {
     this.setAbortOnError(appOptions);
     const container = new ServerContainer();
     // container.applicationConfig = applicationConfig;
-    const applicationContext = new ApplicationContext(
+    const applicationContext = new this.serverApplicationClass(
       entry,
-      httpServer,
+      configurationClass,
+      // httpServer,
       // applicationConfig,
-      appOptions,
-      container
+      appOptions
+      // container
     );
-    await this.init(applicationContext, httpServer);
+    await this.init(applicationContext);
 
     const target = this.createProxy(applicationContext);
-    return this.createAdapterProxy<T>(target, httpServer);
+    return this.createAdapterProxy(target, applicationContext.httpAdapter);
   }
 
   // public async createServer<T extends ServerApplication = ServerApplication>(
@@ -95,35 +76,32 @@ export class ServerFactoryImplement {
   //   return this.createAdapterProxy<T>(target, httpServer);
   // }
 
-  protected async init<T extends ServerApplication>(
-    context: T,
-    httpServer?: HttpServer
-  ): Promise<T> {
+  protected async init(
+    context: ServerApplication
+    // httpServer?: HttpServer
+  ): Promise<ServerApplication> {
     this.logger.log(MESSAGES.APPLICATION_START);
     try {
-      if (httpServer && httpServer.init) {
-        await httpServer.init();
-      }
+      // if (httpServer && httpServer.init) {
+      //   await httpServer.init();
+      // }
       await context.init();
     } catch (e) {
       this.logger.error("start error", e.stack);
-      process.abort();
+      if (this.abortOnError) {
+        process.abort();
+      }
+      throw e;
     }
     return context;
   }
 
-  private isHttpServer(
-    serverOrOptions?: AbstractHttpAdapter | NestApplicationOptions
-  ): serverOrOptions is AbstractHttpAdapter {
-    return !!(
-      serverOrOptions && (serverOrOptions as AbstractHttpAdapter).patch
-    );
+  protected isHttpServer(serverOrOptions?: AbstractHttpAdapter | NestApplicationOptions): serverOrOptions is AbstractHttpAdapter {
+    return !!(serverOrOptions && (serverOrOptions as AbstractHttpAdapter).patch);
   }
 
-  private setAbortOnError(
-    options?: NestApplicationContextOptions | NestApplicationOptions
-  ) {
-    this.abortOnError = !!(options && options.abortOnError === false);
+  protected setAbortOnError(options?: NestApplicationContextOptions | NestApplicationOptions) {
+    this.abortOnError = !(options && options.abortOnError === false);
   }
 
   private createProxy(target: any) {
@@ -146,10 +124,7 @@ export class ServerFactoryImplement {
     };
   }
 
-  private createExceptionZone(
-    receiver: Record<string, any>,
-    prop: string
-  ): Function {
+  private createExceptionZone(receiver: Record<string, any>, prop: string): Function {
     const teardown = this.abortOnError === false ? rethrow : undefined;
 
     return (...args: unknown[]) => {
@@ -162,18 +137,11 @@ export class ServerFactoryImplement {
     };
   }
 
-  private createAdapterProxy<T>(
-    app: ServerApplication,
-    adapter: HttpServer
-  ): T {
+  private createAdapterProxy<T>(app: ServerApplication, adapter: HttpServer): T {
     const proxy = new Proxy(app, {
       get: (receiver: Record<string, any>, prop: string) => {
         const mapToProxy = (result: unknown): any => {
-          return result instanceof Promise
-            ? result.then(mapToProxy)
-            : result instanceof ServerApplication
-            ? proxy
-            : result;
+          return result instanceof Promise ? result.then(mapToProxy) : result instanceof ServerApplication ? proxy : result;
         };
 
         if (!(prop in receiver) && prop in adapter) {
@@ -222,4 +190,4 @@ export class ServerFactoryImplement {
   }
 }
 
-export const ServerFactory = new ServerFactoryImplement();
+export const ServerFactory = new ServerFactoryImplement(ServerApplication);

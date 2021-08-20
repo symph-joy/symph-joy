@@ -4,6 +4,5 @@
     "noEmit": true,
     "jsx": "react"
   },
-  "include": ["./integration/**/*"],
-  "exclude": [".joy"]
+  "include": ["./integration/**/*"]
 }

@@ -3,10 +3,12 @@ import { Scope } from "./scope-options.interface";
 import { Type } from "../type.interface";
 import { InjectCustomOptionsInterface } from "../inject-custom-options.interface";
 
+export type TProviderName = string | symbol;
+
 /**
  * Injection token type
  */
-export type ProviderToken = string | Type<any> | Abstract<any>;
+export type ProviderToken = TProviderName | Type<any> | Abstract<any>;
 
 /**
  * todo rename to ProviderDefinition
@@ -22,12 +24,12 @@ export interface IProvider<T = any> {
   /**
    * provider name
    */
-  id: string;
+  name: TProviderName | TProviderName[];
 
   /**
    * provider class
    */
-  type: Type<T>;
+  type: Type<T> | Abstract<T>;
 }
 
 /**
@@ -119,16 +121,9 @@ export interface FactoryProvider<T = any> extends IProvider<T> {
   scope?: Scope;
 }
 
-export function isProvider(
-  provider: Provider
-): provider is ClassProvider | FactoryProvider | ValueProvider {
+export function isProvider(provider: Provider): provider is ClassProvider | FactoryProvider | ValueProvider {
   const { id, useClass, useValue, useFactory } = provider as any;
-  return (
-    typeof id != "undefined" &&
-    (typeof useClass !== "undefined" ||
-      typeof useValue !== "undefined" ||
-      typeof useFactory !== "undefined")
-  );
+  return typeof id != "undefined" && (typeof useClass !== "undefined" || typeof useValue !== "undefined" || typeof useFactory !== "undefined");
 }
 
 export function isClassProvider(provider: any): provider is ClassProvider {

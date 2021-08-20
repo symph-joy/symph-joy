@@ -1,12 +1,13 @@
-import { Configuration, Injectable } from "@symph/core";
+import { Configuration, Component } from "@symph/core";
 
 import { JoyBoot } from "./joy-boot";
 import { Command } from "./command/command.decorator";
 import { ServerFactory } from "@symph/server";
+import { JoyBootFactory } from "./joy-boot-factory";
 
 describe("joy", () => {
   test("JoyBoot is a container", async () => {
-    @Injectable()
+    @Component()
     class HelloProvider {
       @Command()
       sayHello({ message }: any) {
@@ -21,11 +22,9 @@ describe("joy", () => {
     }
 
     // const app = new JoyBoot(AppProvidersConfig);
-    const app = await ServerFactory.createServer(JoyBoot, AppProvidersConfig);
+    const app = await JoyBootFactory.createServer(AppProvidersConfig);
     await app.init();
 
-    expect(await app.runCommand("sayHello", { message: "joy" })).toBe(
-      "hello joy"
-    );
+    expect(await app.runCommand("sayHello", { message: "joy" })).toBe("hello joy");
   });
 });
