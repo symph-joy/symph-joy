@@ -1,4 +1,4 @@
-import { Controller } from "@symph/react";
+import { ReactController } from "@symph/react";
 
-@Controller()
+@ReactController()
 class SubController {}

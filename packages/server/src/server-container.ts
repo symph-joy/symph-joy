@@ -1,22 +1,16 @@
-import {
-  ContextId,
-  InstanceBy,
-  InstanceWrapper,
-  JoyContainer,
-} from "@symph/core";
+import { ContextId, CoreContainer, InstanceWrapper } from "@symph/core";
 import { REQUEST } from "./router";
 import { HttpServer } from "./interfaces/http";
 import { Controller } from "./interfaces/controllers";
 import { CONTROLLER_METADATA } from "./constants";
-import { AbstractHttpAdapter } from "./adapters";
 import { ApplicationConfig } from "./application-config";
 
-export class ServerContainer extends JoyContainer {
+export class ServerContainer extends CoreContainer {
   private _httpAdapter: HttpServer;
   public applicationConfig: ApplicationConfig;
 
-  get controllers(): Map<string, InstanceWrapper<Controller>> {
-    return this.filter((id, wrapper) => {
+  get controllers(): InstanceWrapper<Controller>[] {
+    return this.filter((wrapper) => {
       if (wrapper && wrapper.instanceBy === "class") {
         return Reflect.getMetadata(CONTROLLER_METADATA, wrapper.useClass!);
       }

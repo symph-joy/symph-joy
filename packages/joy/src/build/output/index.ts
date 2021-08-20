@@ -9,9 +9,10 @@ export function startedDevelopmentServer(appUrl: string) {
   consoleStore.setState({ appUrl });
 }
 
+let previousSrc: import("webpack").Compiler | null = null;
 let previousClient: import("webpack").Compiler | null = null;
 let previousServer: import("webpack").Compiler | null = null;
-let previousJoy: import("webpack").Compiler | null = null;
+let previousApi: import("webpack").Compiler | null = null;
 
 type CompilerDiagnosticsWithFile = {
   errors: { file: string | undefined; message: string }[] | null;
@@ -23,9 +24,7 @@ type CompilerDiagnostics = {
   warnings: string[] | null;
 };
 
-type WebpackStatus =
-  | { loading: true }
-  | ({ loading: false } & CompilerDiagnostics);
+type WebpackStatus = { loading: true } | ({ loading: false } & CompilerDiagnostics);
 
 type AmpStatus = {
   message: string;
@@ -43,6 +42,8 @@ type BuildStatusStore = {
   client: WebpackStatus;
   server: WebpackStatus;
   amp: AmpPageStatus;
+  api: WebpackStatus;
+  src: WebpackStatus;
 };
 
 enum WebpackStatusPhase {
@@ -123,37 +124,38 @@ export function formatAmpMessages(amp: AmpPageStatus) {
 const buildStore = createStore<BuildStatusStore>();
 
 buildStore.subscribe((state: any) => {
-  const { amp, client, server } = state;
+  const { amp, client, server, api, src } = state;
 
   const [{ status }] = [
     { status: client, phase: getWebpackStatusPhase(client) },
     { status: server, phase: getWebpackStatusPhase(server) },
+    { status: api, phase: getWebpackStatusPhase(api) },
+    { status: src, phase: getWebpackStatusPhase(src) },
   ].sort((a, b) => a.phase.valueOf() - b.phase.valueOf());
 
+  const loading = status.loading;
+
   const { bootstrap: bootstrapping, appUrl } = consoleStore.getState();
-  if (bootstrapping && status.loading) {
+  if (bootstrapping && loading) {
     return;
   }
 
   const partialState: Partial<OutputState> = {
     bootstrap: false,
-    appUrl: appUrl!,
+    appUrl: appUrl,
   };
 
-  if (status.loading) {
-    consoleStore.setState(
-      { ...partialState, loading: true } as OutputState,
-      true
-    );
+  if (loading) {
+    consoleStore.setState({ ...partialState, loading: true } as OutputState, true);
   } else {
     let { errors, warnings } = status;
 
-    if (errors == null) {
-      if (Object.keys(amp).length > 0) {
-        warnings = (warnings || []).concat(formatAmpMessages(amp) || []);
-        if (!warnings.length) warnings = null;
-      }
-    }
+    // if (errors == null) {
+    //   if (Object.keys(amp).length > 0) {
+    //     warnings = (warnings || []).concat(formatAmpMessages(amp) || []);
+    //     if (!warnings.length) warnings = null;
+    //   }
+    // }
 
     consoleStore.setState(
       {
@@ -168,11 +170,7 @@ buildStore.subscribe((state: any) => {
   }
 });
 
-export function ampValidation(
-  page: string,
-  errors: AmpStatus[],
-  warnings: AmpStatus[]
-) {
+export function ampValidation(page: string, errors: AmpStatus[], warnings: AmpStatus[]) {
   const { amp } = buildStore.getState();
   if (!(errors.length || warnings.length)) {
     buildStore.setState({
@@ -194,60 +192,46 @@ export function ampValidation(
   });
 }
 
-export function watchCompilers(
-  client: import("webpack").Compiler,
-  server: import("webpack").Compiler,
-  joy: import("webpack").Compiler
-) {
-  if (previousClient === client && previousServer === server) {
+export function watchCompilers(client: import("webpack").Compiler, server: import("webpack").Compiler, api: import("webpack").Compiler, src: import("webpack").Compiler) {
+  if (previousClient === client && previousServer === server && previousApi === api) {
     return;
   }
 
   buildStore.setState({
     client: { loading: true },
     server: { loading: true },
-    joy: { loading: true },
+    api: { loading: true },
+    src: { loading: true },
   });
 
-  function tapCompiler(
-    key: string,
-    compiler: any,
-    onEvent: (status: WebpackStatus) => void
-  ) {
+  function tapCompiler(key: string, compiler: any, onEvent: (status: WebpackStatus) => void) {
     compiler.hooks.invalid.tap(`JoyJsInvalid-${key}`, () => {
       onEvent({ loading: true });
     });
 
-    compiler.hooks.done.tap(
-      `JoyJsDone-${key}`,
-      (stats: import("webpack").Stats) => {
-        buildStore.setState({ amp: {} });
+    compiler.hooks.done.tap(`JoyJsDone-${key}`, (stats: import("webpack").Stats) => {
+      // buildStore.setState({ amp: {} });
 
-        const { errors, warnings } = formatWebpackMessages(
-          stats.toJson({ all: false, warnings: true, errors: true })
-        );
+      const { errors, warnings } = formatWebpackMessages(stats.toJson({ all: false, warnings: true, errors: true }));
 
-        const hasErrors = !!errors?.length;
-        const hasWarnings = !!warnings?.length;
+      const hasErrors = !!errors?.length;
+      const hasWarnings = !!warnings?.length;
 
-        onEvent({
-          loading: false,
-          errors: hasErrors ? errors : null,
-          warnings: hasWarnings ? warnings : null,
-        });
-      }
-    );
+      onEvent({
+        loading: false,
+        errors: hasErrors ? errors : null,
+        warnings: hasWarnings ? warnings : null,
+      });
+    });
   }
 
-  tapCompiler("client", client, (status) =>
-    buildStore.setState({ client: status })
-  );
-  tapCompiler("server", server, (status) =>
-    buildStore.setState({ server: status })
-  );
-  tapCompiler("joy", joy, (status) => buildStore.setState({ server: status }));
+  tapCompiler("client", client, (status) => buildStore.setState({ client: status }));
+  tapCompiler("server", server, (status) => buildStore.setState({ server: status }));
+  tapCompiler("api", api, (status) => buildStore.setState({ api: status }));
+  tapCompiler("src", api, (status) => buildStore.setState({ src: status }));
 
   previousClient = client;
   previousServer = server;
-  previousServer = joy;
+  previousApi = api;
+  previousSrc = src;
 }

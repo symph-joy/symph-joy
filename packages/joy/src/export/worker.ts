@@ -15,7 +15,7 @@ import { requireFontManifest } from "../joy-server/server/require";
 import { FontManifest } from "../joy-server/server/font-utils";
 import { Configuration, CoreContext } from "@symph/core";
 import { ReactContextFactory } from "../react/react-context-factory";
-import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 // import {ValidateError} from "schema-utils/declarations/validate";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 
@@ -93,9 +93,7 @@ export class JoyExportConfig {
   public reactContextFactory: ReactContextFactory;
 }
 
-export default async function start(
-  options: ExportPageInput
-): Promise<ExportPageResults> {
+export default async function start(options: ExportPageInput): Promise<ExportPageResults> {
   const joyContext = new CoreContext(JoyExportConfig);
   await joyContext.init();
   const config = await joyContext.get(JoyAppConfig);
@@ -104,24 +102,7 @@ export default async function start(
   return exportPage(joyContext, options);
 }
 
-export async function exportPage(
-  joyContext: CoreContext,
-  {
-    dir,
-    path,
-    pathMap,
-    distDir,
-    outDir,
-    pagesDataDir,
-    renderOpts,
-    buildExport,
-    serverRuntimeConfig,
-    subFolders,
-    serverless,
-    optimizeFonts,
-    optimizeImages,
-  }: ExportPageInput
-): Promise<ExportPageResults> {
+export async function exportPage(joyContext: CoreContext, { dir, path, pathMap, distDir, outDir, pagesDataDir, renderOpts, buildExport, serverRuntimeConfig, subFolders, serverless, optimizeFonts, optimizeImages }: ExportPageInput): Promise<ExportPageResults> {
   // eslint-disable-next-line prefer-rest-params
   let results: ExportPageResults = {
     ampValidations: [],
@@ -140,9 +121,7 @@ export async function exportPage(
     const hasOrigQueryValues = Object.keys(originalQuery).length > 0;
     const queryWithAutoExportWarn = () => {
       if (hasOrigQueryValues) {
-        throw new Error(
-          `\nError: you provided query values for ${path} which is an auto-exported page. These can not be applied since the page can no longer be re-rendered on the server. To disable auto-export for this page add \`getInitialProps\`\n`
-        );
+        throw new Error(`\nError: you provided query values for ${path} which is an auto-exported page. These can not be applied since the page can no longer be re-rendered on the server. To disable auto-export for this page add \`getInitialProps\`\n`);
       }
     };
 
@@ -158,9 +137,7 @@ export async function exportPage(
           };
         }
       } else {
-        throw new Error(
-          `The provided export path '${path}' doesn't match the '${page}' page.`
-        );
+        throw new Error(`The provided export path '${path}' doesn't match the '${page}' page.`);
       }
     }
 
@@ -308,12 +285,7 @@ export async function exportPage(
     }
 
     const reactContextFactory = await joyContext.get(ReactContextFactory);
-    const reactApplicationContext = await reactContextFactory.getReactAppContext(
-      req,
-      res,
-      path,
-      query
-    );
+    const reactApplicationContext = await reactContextFactory.getReactAppContext(req, res, path, query);
     const curRenderOpts = {
       initStage: EnumReactAppInitStage.STATIC,
       ...components,
@@ -322,18 +294,10 @@ export async function exportPage(
       params,
       optimizeFonts,
       optimizeImages,
-      fontManifest: optimizeFonts
-        ? requireFontManifest(distDir, serverless)
-        : null,
+      fontManifest: optimizeFonts ? requireFontManifest(distDir, serverless) : null,
       reactApplicationContext,
     };
-    const html = (await renderMethod(
-      req,
-      res,
-      page,
-      query,
-      curRenderOpts
-    )) as string;
+    const html = (await renderMethod(req, res, page, query, curRenderOpts)) as string;
     // }
     // }
 
@@ -398,33 +362,20 @@ export async function exportPage(
     // }
 
     if ((curRenderOpts as any).pageData) {
-      const dataFile = join(
-        pagesDataDir,
-        htmlFilename.replace(/\.html$/, ".json")
-      );
+      const dataFile = join(pagesDataDir, htmlFilename.replace(/\.html$/, ".json"));
 
       await promises.mkdir(dirname(dataFile), { recursive: true });
-      await promises.writeFile(
-        dataFile,
-        JSON.stringify((curRenderOpts as any).pageData),
-        "utf8"
-      );
+      await promises.writeFile(dataFile, JSON.stringify((curRenderOpts as any).pageData), "utf8");
 
       if (curRenderOpts.hybridAmp) {
-        await promises.writeFile(
-          dataFile.replace(/\.json$/, ".amp.json"),
-          JSON.stringify((curRenderOpts as any).pageData),
-          "utf8"
-        );
+        await promises.writeFile(dataFile.replace(/\.json$/, ".amp.json"), JSON.stringify((curRenderOpts as any).pageData), "utf8");
       }
     }
     results.fromBuildExportRevalidate = (curRenderOpts as any).revalidate;
     await promises.writeFile(htmlFilepath, html, "utf8");
     return results;
   } catch (error) {
-    console.error(
-      `\nError occurred prerendering page "${path}". \n` + error.stack
-    );
+    console.error(`\nError occurred prerendering page "${path}". \n` + error.stack);
     return { ...results, error: true };
   }
 }

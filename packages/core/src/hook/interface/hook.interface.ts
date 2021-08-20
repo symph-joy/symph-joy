@@ -1,4 +1,5 @@
-import * as tapable from "tapable";
+import { Hook, SyncHook } from "tapable";
+import { TProviderName, TypeOrTokenType } from "../../interfaces";
 
 export enum HookType {
   Traverse,
@@ -11,5 +12,6 @@ export interface IHook {
   type: HookType;
   async: boolean;
   parallel: boolean;
-  hook?: tapable.Hook;
+  hook: Hook<any, any>;
+  call: typeof SyncHook.prototype.call | typeof Hook.prototype.promise; // todo 添加入参类型申明
 }

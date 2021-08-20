@@ -1,21 +1,15 @@
 import { FSWatcher, watch } from "chokidar";
 import lodash from "lodash";
 import winPath from "../util/winPath/winPath";
-import {
-  Hook,
-  HookPipe,
-  HookType,
-  Injectable,
-  ProviderLifecycle,
-  Tap,
-} from "@symph/core";
+import { AutowireHook, Component, HookType, IHook, Inject, ProviderLifecycle } from "@symph/core";
 import { dirname } from "path";
 import { EOL } from "os";
 import { promises } from "fs";
-import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import mkdirp from "mkdirp";
 import { recursiveDelete } from "../lib/recursive-delete";
 import { fileExists } from "../lib/file-exists";
+import { Stream } from "stream";
 
 const GEN_CLIENT_CONTENT = `
 const modules = (typeof window !== 'undefined' && window.__JOY_AUTOGEN) || [];
@@ -53,9 +47,18 @@ type TWriteFileOptions = {
   skipTSCheck?: boolean;
 };
 
-@Injectable()
+interface IGenerateFile {
+  content: string | Stream;
+  skipTSCheck?: boolean;
+}
+
+export interface IGenerateFiles {
+  [filePath: string]: IGenerateFile | string | Stream;
+}
+
+@Component()
 export class FileGenerator implements ProviderLifecycle {
-  constructor(private joyAppConfig: JoyAppConfig) {}
+  constructor(@Inject() private joyAppConfig: JoyAppConfig) {}
 
   async afterPropertiesSet() {
     await this.cleanTempFiles();
@@ -63,17 +66,28 @@ export class FileGenerator implements ProviderLifecycle {
     // await this.generateEntryModuleFiles();
   }
 
-  @Hook({ type: HookType.Traverse, async: true })
-  public onGenerateFiles: HookPipe;
+  @AutowireHook({ type: HookType.Waterfall, async: true })
+  public onGenerateFiles: IHook;
 
-  @Hook({ type: HookType.Waterfall, async: true })
-  public addTmpGenerateWatcherPaths: HookPipe;
+  @AutowireHook({ type: HookType.Waterfall, async: true })
+  public addTmpGenerateWatcherPaths: IHook;
 
   public watchers: FSWatcher[] = [];
 
   private async generateFiles() {
     console.debug("generate files");
-    await this.onGenerateFiles.call();
+    const genFiles = (await this.onGenerateFiles.call({} as IGenerateFiles)) as IGenerateFiles;
+    const writePromises = [];
+    for (const filePath of Object.keys(genFiles)) {
+      const genFile = genFiles[filePath];
+      if ((genFile as IGenerateFile).content) {
+        const { content, ...options } = genFile as IGenerateFile;
+        writePromises.push(this.writeFile(filePath, content, options));
+      } else {
+        writePromises.push(this.writeFile(filePath, genFile as string | Stream));
+      }
+    }
+    await Promise.all(writePromises);
   }
 
   // @Tap({ hookId: "onGenerateFiles" })
@@ -89,10 +103,7 @@ export class FileGenerator implements ProviderLifecycle {
   // }
 
   public async cleanTempFiles(): Promise<void> {
-    const absPath = this.joyAppConfig.resolveAppDir(
-      this.joyAppConfig.distDir,
-      this.joyAppConfig.autoGenOutputDir
-    );
+    const absPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir);
     if (!(await fileExists(absPath, "directory"))) {
       return;
     }
@@ -100,21 +111,9 @@ export class FileGenerator implements ProviderLifecycle {
   }
 
   public async mkTempDirs() {
-    const joy = this.joyAppConfig.resolveAppDir(
-      this.joyAppConfig.distDir,
-      this.joyAppConfig.autoGenOutputDir,
-      "./joy"
-    );
-    const serverPath = this.joyAppConfig.resolveAppDir(
-      this.joyAppConfig.distDir,
-      this.joyAppConfig.autoGenOutputDir,
-      "./react/server"
-    );
-    const clientPath = this.joyAppConfig.resolveAppDir(
-      this.joyAppConfig.distDir,
-      this.joyAppConfig.autoGenOutputDir,
-      "./react/client"
-    );
+    const joy = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, "./joy");
+    const serverPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, "./react/server");
+    const clientPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, "./react/client");
     if (!(await fileExists(joy, "directory"))) {
       await mkdirp(joy);
     }
@@ -130,11 +129,9 @@ export class FileGenerator implements ProviderLifecycle {
     await this.generateFiles();
     if (watch) {
       const watchPaths = await this.addTmpGenerateWatcherPaths.call([]);
-      lodash
-        .uniq<string>(watchPaths.map((p: string) => winPath(p)))
-        .forEach((p) => {
-          this.watcherPath(p);
-        });
+      lodash.uniq<string>(watchPaths.map((p: string) => winPath(p))).forEach((p) => {
+        this.watcherPath(p);
+      });
     }
   }
 
@@ -167,20 +164,11 @@ export class FileGenerator implements ProviderLifecycle {
   }
 
   public getGenPath(outputPath: string): string {
-    return this.joyAppConfig.resolveAppDir(
-      this.joyAppConfig.distDir,
-      this.joyAppConfig.autoGenOutputDir,
-      outputPath
-    );
+    return this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, outputPath);
   }
 
   public getJoyGenFilePath(outputPath: string): string {
-    return this.joyAppConfig.resolveAppDir(
-      this.joyAppConfig.distDir,
-      this.joyAppConfig.autoGenOutputDir,
-      "./joy",
-      outputPath
-    );
+    return this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, "./joy", outputPath);
   }
 
   // public getServerFilePath(outputPath: string): string {
@@ -210,11 +198,7 @@ export class FileGenerator implements ProviderLifecycle {
   //   );
   // }
 
-  private async writeTmpFile(
-    absPath: string,
-    content: string,
-    { skipTSCheck }: TWriteFileOptions
-  ): Promise<void> {
+  private async writeTmpFile(absPath: string, content: string | Stream, { skipTSCheck }: TWriteFileOptions): Promise<void> {
     // const absPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.outDir, this.joyAppConfig.autoGenOutputDir, path)
     if (await fileExists(dirname(absPath))) {
       await mkdirp(dirname(absPath));
@@ -233,20 +217,13 @@ export class FileGenerator implements ProviderLifecycle {
     await promises.writeFile(absPath, content, "utf-8");
   }
 
-  public async writeFile(
-    outPath: string,
-    content: string,
-    options: TWriteFileOptions = { skipTSCheck: false }
-  ) {
-    const commonPath = this.getGenPath(outPath);
+  public async writeFile(outPath: string, content: string | Stream, options: TWriteFileOptions = { skipTSCheck: false }) {
+    const isLocal: boolean = outPath.startsWith(".");
+    const commonPath = isLocal ? this.getGenPath(outPath) : outPath;
     return this.writeTmpFile(commonPath, content, options);
   }
 
-  public async writeJoyFile(
-    outPath: string,
-    content: string,
-    options: TWriteFileOptions = { skipTSCheck: false }
-  ) {
+  public async writeJoyFile(outPath: string, content: string, options: TWriteFileOptions = { skipTSCheck: false }) {
     const commonPath = this.getJoyGenFilePath(outPath);
     return this.writeTmpFile(commonPath, content, options);
   }

@@ -1,4 +1,4 @@
-import { ClassProvider, Tap } from "@symph/core";
+import { ClassProvider, Component, Tap } from "@symph/core";
 import { getJsonSchema, JsonSchema } from "@tsed/schema";
 import { getConfigMetadata } from "./config-value.decorator";
 import Ajv from "ajv";
@@ -8,19 +8,16 @@ import { ConfigService } from "./config.service";
 
 class EmptySchemaClass {}
 
-export function Configurable(
-  options: Partial<ClassProvider> = {}
-): ClassDecorator {
+export function Configurable(options: Partial<ClassProvider> = {}): ClassDecorator {
   return (target) => {
-    const configMetas = getConfigMetadata(target);
-    const propKeys: string[] = new Array(configMetas.length);
+    const configMetas = getConfigMetadata(target) || [];
+    // const propKeys: string[] = new Array(configMetas.length);
     const configKeys: string[] = new Array(configMetas.length);
-    const configJsonSchema: JsonSchema = new JsonSchema(
-      getJsonSchema(EmptySchemaClass)
-    );
+    const configJsonSchema: JsonSchema = new JsonSchema(getJsonSchema(EmptySchemaClass));
+
     for (let i = 0; i < configMetas.length; i++) {
       const { configKey, propKey, schema } = configMetas[i];
-      propKeys[i] = propKey;
+      // propKeys[i] = propKey;
       configKeys[i] = configKey;
       configJsonSchema.addProperty(configKey, new JsonSchema(schema));
     }
@@ -46,13 +43,15 @@ export function Configurable(
         throw new Error(errMsg);
       }
 
-      if (instance.setConfigValue) {
-        instance.setConfigValue(configInstance, configKeys);
+      // custom implement setConfigValue
+      if (instance.setConfigValue && instance.setConfigValue(configInstance)) {
         return;
       }
 
-      for (let i = 0; i < propKeys.length; i++) {
-        instance[propKeys[i]] = configInstance[configKeys[i]];
+      for (let i = 0; i < configMetas.length; i++) {
+        const configMeta = configMetas[i];
+        const value = configInstance[configMeta.configKey];
+        instance[configMeta.propKey] = typeof value === "undefined" ? configMeta.default : value;
       }
     }
 
@@ -72,5 +71,7 @@ export function Configurable(
 
     // 声明一个隐藏的私有依赖属性，确保在ConfigService实例化后，才实例化被装饰的类。
     Inject(ConfigService)(target.prototype, "__joy_config_service");
+
+    Component(options)(target);
   };
 }

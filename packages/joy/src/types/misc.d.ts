@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 declare module "@babel/plugin-transform-modules-commonjs";
 declare module "browserslist";
 declare module "cssnano-simple" {
@@ -22,10 +21,7 @@ declare module "async-retry";
 //   export = m
 // }
 declare module "arg/index.js" {
-  function arg<T extends arg.Spec>(
-    spec: T,
-    options?: { argv?: string[]; permissive?: boolean }
-  ): arg.Result<T>;
+  function arg<T extends arg.Spec>(spec: T, options?: { argv?: string[]; permissive?: boolean }): arg.Result<T>;
 
   namespace arg {
     export type Handler = (value: string) => any;
@@ -35,23 +31,17 @@ declare module "arg/index.js" {
     }
 
     export type Result<T extends Spec> = { _: string[] } & {
-      [K in keyof T]: T[K] extends string
-        ? never
-        : T[K] extends Handler
-        ? ReturnType<T[K]>
-        : T[K] extends [Handler]
-        ? Array<ReturnType<T[K][0]>>
-        : never;
+      [K in keyof T]: T[K] extends string ? never : T[K] extends Handler ? ReturnType<T[K]> : T[K] extends [Handler] ? Array<ReturnType<T[K][0]>> : never;
     };
   }
 
   export = arg;
 }
 
-declare module "chalk" {
-  import m from "chalk";
-  export = m;
-}
+// declare module "chalk" {
+//   import m from "chalk";
+//   export = m;
+// }
 declare module "ci-info" {
   import m from "ci-info";
   export = m;
@@ -201,10 +191,10 @@ declare module "text-table" {
 
   export = textTable;
 }
-declare module "unistore" {
-  import m from "unistore";
-  export = m;
-}
+// declare module "unistore" {
+//   import m from "unistore";
+//   export = m;
+// }
 
 declare module "terser-webpack-plugin";
 declare module "comment-json" {
@@ -237,10 +227,7 @@ declare module "watchpack" {
     watch(files: string[], directories: string[], startTime?: number): void;
     close(): void;
 
-    getTimeInfoEntries(): Map<
-      string,
-      { safeTime: number; timestamp: number; accuracy?: number }
-    >;
+    getTimeInfoEntries(): Map<string, { safeTime: number; timestamp: number; accuracy?: number }>;
   }
 
   export default Watchpack;

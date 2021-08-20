@@ -1,20 +1,10 @@
 import PropTypes from "prop-types";
 import React, { Component, ReactNode, useContext } from "react";
 import flush from "styled-jsx/server";
-import {
-  AMP_RENDER_TARGET,
-  OPTIMIZED_FONT_PROVIDERS,
-} from "../joy-server/lib/constants";
+import { AMP_RENDER_TARGET, OPTIMIZED_FONT_PROVIDERS } from "../joy-server/lib/constants";
 import { DocumentContext as DocumentComponentContext } from "../joy-server/lib/document-context";
-import {
-  DocumentContext as _DocumentContext,
-  DocumentInitialProps as _DocumentInitialProps,
-  DocumentProps as _DocumentProps,
-} from "../joy-server/lib/utils";
-import {
-  BuildManifest,
-  getPageFiles,
-} from "../joy-server/server/get-page-files";
+import { DocumentContext as _DocumentContext, DocumentInitialProps as _DocumentInitialProps, DocumentProps as _DocumentProps } from "../joy-server/lib/utils";
+import { BuildManifest, getPageFiles } from "../joy-server/server/get-page-files";
 import { cleanAmpPath } from "../joy-server/server/utils";
 import { htmlEscapeJsonString } from "../server/htmlescape";
 
@@ -53,13 +43,9 @@ type DocumentFiles = {
   allFiles: readonly string[];
 };
 
-function getDocumentFiles(
-  buildManifest: BuildManifest,
-  pathname: string
-): DocumentFiles {
+function getDocumentFiles(buildManifest: BuildManifest, pathname: string): DocumentFiles {
   const sharedFiles: readonly string[] = getPageFiles(buildManifest, "/_app");
-  const pageFiles: readonly string[] =
-    pathname !== "/_error" ? getPageFiles(buildManifest, pathname) : [];
+  const pageFiles: readonly string[] = pathname !== "/_error" ? getPageFiles(buildManifest, pathname) : [];
 
   return {
     sharedFiles,
@@ -84,9 +70,7 @@ export default class Document<P = {}> extends Component<DocumentProps & P> {
    * `getInitialProps` hook returns the context object with the addition of `renderPage`.
    * `renderPage` callback executes `React` rendering logic synchronously to support server-rendering wrappers
    */
-  static async getInitialProps(
-    ctx: DocumentContext
-  ): Promise<DocumentInitialProps> {
+  static async getInitialProps(ctx: DocumentContext): Promise<DocumentInitialProps> {
     const enhanceApp = (App: any) => {
       return (props: any) => <App {...props} />;
     };
@@ -96,10 +80,7 @@ export default class Document<P = {}> extends Component<DocumentProps & P> {
     return { html, head, styles };
   }
 
-  static renderDocument<P>(
-    DocumentComponent: new () => Document<P>,
-    props: DocumentProps & P
-  ): React.ReactElement {
+  static renderDocument<P>(DocumentComponent: new () => Document<P>, props: DocumentProps & P): React.ReactElement {
     return (
       <DocumentComponentContext.Provider value={props}>
         <DocumentComponent {...props} />
@@ -120,36 +101,15 @@ export default class Document<P = {}> extends Component<DocumentProps & P> {
   }
 }
 
-export function Html(
-  props: React.DetailedHTMLProps<
-    React.HtmlHTMLAttributes<HTMLHtmlElement>,
-    HTMLHtmlElement
-  >
-) {
-  const { inAmpMode, docComponentsRendered } = useContext(
-    DocumentComponentContext
-  );
+export function Html(props: React.DetailedHTMLProps<React.HtmlHTMLAttributes<HTMLHtmlElement>, HTMLHtmlElement>) {
+  const { inAmpMode, docComponentsRendered } = useContext(DocumentComponentContext);
 
   docComponentsRendered.Html = true;
 
-  return (
-    <html
-      {...props}
-      amp={inAmpMode ? "" : undefined}
-      data-ampdevmode={
-        inAmpMode && process.env.NODE_ENV !== "production" ? "" : undefined
-      }
-    />
-  );
+  return <html {...props} amp={inAmpMode ? "" : undefined} data-ampdevmode={inAmpMode && process.env.NODE_ENV !== "production" ? "" : undefined} />;
 }
 
-export class Head extends Component<
-  OriginProps &
-    React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLHeadElement>,
-      HTMLHeadElement
-    >
-> {
+export class Head extends Component<OriginProps & React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadElement>, HTMLHeadElement>> {
   static contextType = DocumentComponentContext;
 
   static propTypes = {
@@ -160,22 +120,14 @@ export class Head extends Component<
   context!: React.ContextType<typeof DocumentComponentContext>;
 
   getCssLinks(files: DocumentFiles): JSX.Element[] | null {
-    const {
-      assetPrefix,
-      devOnlyCacheBusterQueryString,
-      dynamicImports,
-    } = this.context;
+    const { assetPrefix, devOnlyCacheBusterQueryString, dynamicImports } = this.context;
     const cssFiles = files.allFiles.filter((f) => f.endsWith(".css"));
     const sharedFiles = new Set(files.sharedFiles);
 
-    let dynamicCssFiles = dedupe(
-      dynamicImports.filter((f) => f.file.endsWith(".css"))
-    ).map((f) => f.file);
+    let dynamicCssFiles = dedupe(dynamicImports.filter((f) => f.file.endsWith(".css"))).map((f) => f.file);
     if (dynamicCssFiles.length) {
       const existing = new Set(cssFiles);
-      dynamicCssFiles = dynamicCssFiles.filter(
-        (f) => !(existing.has(f) || sharedFiles.has(f))
-      );
+      dynamicCssFiles = dynamicCssFiles.filter((f) => !(existing.has(f) || sharedFiles.has(f)));
       cssFiles.push(...dynamicCssFiles);
     }
 
@@ -184,23 +136,12 @@ export class Head extends Component<
       const isSharedFile = sharedFiles.has(file);
 
       cssLinkElements.push(
-        <link
-          key={`${file}-preload`}
-          nonce={this.props.nonce}
-          rel="preload"
-          href={`${assetPrefix}/_joy/${encodeURI(
-            file
-          )}${devOnlyCacheBusterQueryString}`}
-          as="style"
-          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
-        />,
+        <link key={`${file}-preload`} nonce={this.props.nonce} rel="preload" href={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`} as="style" crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} />,
         <link
           key={file}
           nonce={this.props.nonce}
           rel="stylesheet"
-          href={`${assetPrefix}/_joy/${encodeURI(
-            file
-          )}${devOnlyCacheBusterQueryString}`}
+          href={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`}
           crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
           data-n-g={isSharedFile ? "" : undefined}
           data-n-p={isSharedFile ? undefined : ""}
@@ -211,11 +152,7 @@ export class Head extends Component<
   }
 
   getPreloadDynamicChunks() {
-    const {
-      dynamicImports,
-      assetPrefix,
-      devOnlyCacheBusterQueryString,
-    } = this.context;
+    const { dynamicImports, assetPrefix, devOnlyCacheBusterQueryString } = this.context;
 
     return (
       dedupe(dynamicImports)
@@ -227,20 +164,7 @@ export class Head extends Component<
             return null;
           }
 
-          return (
-            <link
-              rel="preload"
-              key={bundle.file}
-              href={`${assetPrefix}/_joy/${encodeURI(
-                bundle.file
-              )}${devOnlyCacheBusterQueryString}`}
-              as="script"
-              nonce={this.props.nonce}
-              crossOrigin={
-                this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
-              }
-            />
-          );
+          return <link rel="preload" key={bundle.file} href={`${assetPrefix}/_joy/${encodeURI(bundle.file)}${devOnlyCacheBusterQueryString}`} as="script" nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} />;
         })
         // Filter out nulled scripts
         .filter(Boolean)
@@ -256,31 +180,12 @@ export class Head extends Component<
       return file.endsWith(getOptionalModernScriptVariant(".js"));
     });
 
-    return !preloadFiles.length
-      ? null
-      : preloadFiles.map((file: string) => (
-          <link
-            key={file}
-            nonce={this.props.nonce}
-            rel="preload"
-            href={`${assetPrefix}/_joy/${encodeURI(
-              file
-            )}${devOnlyCacheBusterQueryString}`}
-            as="script"
-            crossOrigin={
-              this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
-            }
-          />
-        ));
+    return !preloadFiles.length ? null : preloadFiles.map((file: string) => <link key={file} nonce={this.props.nonce} rel="preload" href={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`} as="script" crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} />);
   }
 
   makeStylesheetInert(node: ReactNode): ReactNode {
     return React.Children.map(node, (c: any) => {
-      if (
-        c.type === "link" &&
-        c.props["href"] &&
-        OPTIMIZED_FONT_PROVIDERS.some((url) => c.props["href"].startsWith(url))
-      ) {
+      if (c.type === "link" && c.props["href"] && OPTIMIZED_FONT_PROVIDERS.some((url) => c.props["href"].startsWith(url))) {
         const newProps = { ...(c.props || {}) };
         newProps["data-href"] = newProps["href"];
         newProps["href"] = undefined;
@@ -293,17 +198,7 @@ export class Head extends Component<
   }
 
   render() {
-    const {
-      styles,
-      ampPath,
-      inAmpMode,
-      hybridAmp,
-      canonicalBase,
-      __JOY_DATA__,
-      dangerousAsPath,
-      headTags,
-      unstable_runtimeJS,
-    } = this.context;
+    const { styles, ampPath, inAmpMode, hybridAmp, canonicalBase, __JOY_DATA__, dangerousAsPath, headTags, unstable_runtimeJS } = this.context;
     const disableRuntimeJS = unstable_runtimeJS === false;
 
     this.context.docComponentsRendered.Head = true;
@@ -316,22 +211,14 @@ export class Head extends Component<
         const isReactHelmet = child?.props?.["data-react-helmet"];
         if (!isReactHelmet) {
           if (child?.type === "title") {
-            console.warn(
-              "Warning: <title> should not be used in _document.js's <Head>."
-            );
-          } else if (
-            child?.type === "meta" &&
-            child?.props?.name === "viewport"
-          ) {
-            console.warn(
-              "Warning: viewport meta tags should not be used in _document.js's <Head>. "
-            );
+            console.warn("Warning: <title> should not be used in _document.js's <Head>.");
+          } else if (child?.type === "meta" && child?.props?.name === "viewport") {
+            console.warn("Warning: viewport meta tags should not be used in _document.js's <Head>. ");
           }
         }
         return child;
       });
-      if (this.props.crossOrigin)
-        console.warn("Warning: `Head` attribute `crossOrigin` is deprecated.");
+      if (this.props.crossOrigin) console.warn("Warning: `Head` attribute `crossOrigin` is deprecated.");
     }
 
     if (process.env.__JOY_OPTIMIZE_FONTS && !inAmpMode) {
@@ -357,11 +244,7 @@ export class Head extends Component<
           // 1. it has a src and isn't pointing to ampproject's CDN
           // 2. it is using dangerouslySetInnerHTML without a type or
           // a type of text/javascript
-          if (
-            (props.src && props.src.indexOf("ampproject") < -1) ||
-            (props.dangerouslySetInnerHTML &&
-              (!props.type || props.type === "text/javascript"))
-          ) {
+          if ((props.src && props.src.indexOf("ampproject") < -1) || (props.dangerouslySetInnerHTML && (!props.type || props.type === "text/javascript"))) {
             badProp = "<script";
             Object.keys(props).forEach((prop) => {
               badProp += ` ${prop}="${props[prop]}"`;
@@ -371,9 +254,7 @@ export class Head extends Component<
         }
 
         if (badProp) {
-          console.warn(
-            `Found conflicting amp tag "${child.type}" with conflicting prop ${badProp} in ${__JOY_DATA__.page}.`
-          );
+          console.warn(`Found conflicting amp tag "${child.type}" with conflicting prop ${badProp} in ${__JOY_DATA__.page}.`);
           return null;
         }
       } else {
@@ -383,12 +264,10 @@ export class Head extends Component<
         }
       }
       return child;
-    });
+    }) as any;
 
     // try to parse styles from fragment for backwards compat
-    const curStyles: React.ReactElement[] = Array.isArray(styles)
-      ? (styles as React.ReactElement[])
-      : [];
+    const curStyles: React.ReactElement[] = Array.isArray(styles) ? (styles as React.ReactElement[]) : [];
     if (
       inAmpMode &&
       styles &&
@@ -397,8 +276,7 @@ export class Head extends Component<
       // @ts-ignore Property 'props' does not exist on type ReactElement
       Array.isArray(styles.props.children)
     ) {
-      const hasStyles = (el: React.ReactElement) =>
-        el?.props?.dangerouslySetInnerHTML?.__html;
+      const hasStyles = (el: React.ReactElement) => el?.props?.dangerouslySetInnerHTML?.__html;
       // @ts-ignore Property 'props' does not exist on type ReactElement
       styles.props.children.forEach((child: React.ReactElement) => {
         if (Array.isArray(child)) {
@@ -409,10 +287,7 @@ export class Head extends Component<
       });
     }
 
-    const files: DocumentFiles = getDocumentFiles(
-      this.context.buildManifest,
-      this.context.__JOY_DATA__.page
-    );
+    const files: DocumentFiles = getDocumentFiles(this.context.buildManifest, this.context.__JOY_DATA__.page);
     return (
       <head {...this.props}>
         {this.context.isDevelopment && (
@@ -424,10 +299,7 @@ export class Head extends Component<
                 __html: `body{display:none}`,
               }}
             />
-            <noscript
-              data-joy-hide-fouc
-              data-ampdevmode={inAmpMode ? "true" : undefined}
-            >
+            <noscript data-joy-hide-fouc data-ampdevmode={inAmpMode ? "true" : undefined}>
               <style
                 dangerouslySetInnerHTML={{
                   __html: `body{display:block}`,
@@ -438,29 +310,14 @@ export class Head extends Component<
         )}
         {children}
         {head}
-        <meta
-          name="joy-head-count"
-          content={React.Children.count(head || []).toString()}
-        />
+        <meta name="joy-head-count" content={React.Children.count(head || []).toString()} />
         <link rel="icon" href="data:image/ico;base64,aWNv" />
         {inAmpMode && (
           <>
-            <meta
-              name="viewport"
-              content="width=device-width,minimum-scale=1,initial-scale=1"
-            />
-            {!hasCanonicalRel && (
-              <link
-                rel="canonical"
-                href={canonicalBase + cleanAmpPath(dangerousAsPath)}
-              />
-            )}
+            <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1" />
+            {!hasCanonicalRel && <link rel="canonical" href={canonicalBase + cleanAmpPath(dangerousAsPath)} />}
             {/* https://www.ampproject.org/docs/fundamentals/optimize_amp#optimize-the-amp-runtime-loading */}
-            <link
-              rel="preload"
-              as="script"
-              href="https://cdn.ampproject.org/v0.js"
-            />
+            <link rel="preload" as="script" href="https://cdn.ampproject.org/v0.js" />
             {/* Add custom styles before AMP styles to prevent accidental overrides */}
             {styles && (
               <style
@@ -493,15 +350,8 @@ export class Head extends Component<
         )}
         {!inAmpMode && (
           <>
-            {!hasAmphtmlRel && hybridAmp && (
-              <link
-                rel="amphtml"
-                href={canonicalBase + getAmpPath(ampPath, dangerousAsPath)}
-              />
-            )}
-            {process.env.__JOY_OPTIMIZE_FONTS
-              ? this.makeStylesheetInert(this.getCssLinks(files))
-              : this.getCssLinks(files)}
+            {!hasAmphtmlRel && hybridAmp && <link rel="amphtml" href={canonicalBase + getAmpPath(ampPath, dangerousAsPath)} />}
+            {process.env.__JOY_OPTIMIZE_FONTS ? this.makeStylesheetInert(this.getCssLinks(files)) : this.getCssLinks(files)}
             <noscript data-n-css />
             {!disableRuntimeJS && this.getPreloadDynamicChunks()}
             {!disableRuntimeJS && this.getPreloadMainLinks(files)}
@@ -521,9 +371,7 @@ export class Head extends Component<
 }
 
 export function Main() {
-  const { inAmpMode, html, docComponentsRendered } = useContext(
-    DocumentComponentContext
-  );
+  const { inAmpMode, html, docComponentsRendered } = useContext(DocumentComponentContext);
 
   docComponentsRendered.Main = true;
 
@@ -546,98 +394,44 @@ export class JoyScript extends Component<OriginProps> {
     '!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()},!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();';
 
   getDynamicChunks(files: DocumentFiles) {
-    const {
-      dynamicImports,
-      assetPrefix,
-      isDevelopment,
-      devOnlyCacheBusterQueryString,
-    } = this.context;
+    const { dynamicImports, assetPrefix, isDevelopment, devOnlyCacheBusterQueryString } = this.context;
 
     return dedupe(dynamicImports).map((bundle) => {
       let modernProps = {};
       if (process.env.__JOY_MODERN_BUILD) {
-        modernProps = bundle.file.endsWith(".module.js")
-          ? { type: "module" }
-          : { noModule: true };
+        modernProps = bundle.file.endsWith(".module.js") ? { type: "module" } : { noModule: true };
       }
 
-      if (!bundle.file.endsWith(".js") || files.allFiles.includes(bundle.file))
-        return null;
+      if (!bundle.file.endsWith(".js") || files.allFiles.includes(bundle.file)) return null;
 
-      return (
-        <script
-          async={!isDevelopment}
-          key={bundle.file}
-          src={`${assetPrefix}/_joy/${encodeURI(
-            bundle.file
-          )}${devOnlyCacheBusterQueryString}`}
-          nonce={this.props.nonce}
-          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
-          {...modernProps}
-        />
-      );
+      return <script async={!isDevelopment} key={bundle.file} src={`${assetPrefix}/_joy/${encodeURI(bundle.file)}${devOnlyCacheBusterQueryString}`} nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} {...modernProps} />;
     });
   }
 
   getScripts(files: DocumentFiles) {
-    const {
-      assetPrefix,
-      buildManifest,
-      isDevelopment,
-      devOnlyCacheBusterQueryString,
-    } = this.context;
+    const { assetPrefix, buildManifest, isDevelopment, devOnlyCacheBusterQueryString } = this.context;
 
     const normalScripts = files.allFiles.filter((file) => file.endsWith(".js"));
-    const lowPriorityScripts = buildManifest.lowPriorityFiles?.filter((file) =>
-      file.endsWith(".js")
-    );
+    const lowPriorityScripts = buildManifest.lowPriorityFiles?.filter((file) => file.endsWith(".js"));
 
     return [...normalScripts, ...lowPriorityScripts].map((file) => {
       let modernProps = {};
       if (process.env.__JOY_MODERN_BUILD) {
-        modernProps = file.endsWith(".module.js")
-          ? { type: "module" }
-          : { noModule: true };
+        modernProps = file.endsWith(".module.js") ? { type: "module" } : { noModule: true };
       }
 
-      return (
-        <script
-          key={file}
-          src={`${assetPrefix}/_joy/${encodeURI(
-            file
-          )}${devOnlyCacheBusterQueryString}`}
-          nonce={this.props.nonce}
-          async={!isDevelopment}
-          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
-          {...modernProps}
-        />
-      );
+      return <script key={file} src={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`} nonce={this.props.nonce} async={!isDevelopment} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} {...modernProps} />;
     });
   }
 
   getPolyfillScripts() {
     // polyfills.js has to be rendered as nomodule without async
     // It also has to be the first script to load
-    const {
-      assetPrefix,
-      buildManifest,
-      devOnlyCacheBusterQueryString,
-    } = this.context;
+    const { assetPrefix, buildManifest, devOnlyCacheBusterQueryString } = this.context;
 
     return buildManifest.polyfillFiles
-      .filter(
-        (polyfill) =>
-          polyfill.endsWith(".js") && !polyfill.endsWith(".module.js")
-      )
-      .map((polyfill) => (
-        <script
-          key={polyfill}
-          nonce={this.props.nonce}
-          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
-          noModule={true}
-          src={`${assetPrefix}/_joy/${polyfill}${devOnlyCacheBusterQueryString}`}
-        />
-      ));
+      .filter((polyfill) => polyfill.endsWith(".js") && !polyfill.endsWith(".module.js"))
+      .map((polyfill) => <script key={polyfill} nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} noModule={true} src={`${assetPrefix}/_joy/${polyfill}${devOnlyCacheBusterQueryString}`} />);
   }
 
   static getInlineScriptSource(documentProps: DocumentProps): string {
@@ -647,23 +441,14 @@ export class JoyScript extends Component<OriginProps> {
       return htmlEscapeJsonString(data);
     } catch (err) {
       if (err.message.indexOf("circular structure")) {
-        throw new Error(
-          `Circular structure in "getInitialProps" result of page "${__JOY_DATA__.page}".`
-        );
+        throw new Error(`Circular structure in "getInitialProps" result of page "${__JOY_DATA__.page}".`);
       }
       throw err;
     }
   }
 
   render() {
-    const {
-      assetPrefix,
-      inAmpMode,
-      buildManifest,
-      unstable_runtimeJS,
-      docComponentsRendered,
-      devOnlyCacheBusterQueryString,
-    } = this.context;
+    const { assetPrefix, inAmpMode, buildManifest, unstable_runtimeJS, docComponentsRendered, devOnlyCacheBusterQueryString } = this.context;
     const disableRuntimeJS = unstable_runtimeJS === false;
 
     docComponentsRendered.JoyScript = true;
@@ -673,10 +458,7 @@ export class JoyScript extends Component<OriginProps> {
         return null;
       }
 
-      const ampDevFiles = [
-        ...buildManifest.devFiles,
-        ...buildManifest.ampDevFiles,
-      ];
+      const ampDevFiles = [...buildManifest.devFiles, ...buildManifest.ampDevFiles];
 
       return (
         <>
@@ -685,9 +467,7 @@ export class JoyScript extends Component<OriginProps> {
               id="__JOY_DATA__"
               type="application/json"
               nonce={this.props.nonce}
-              crossOrigin={
-                this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
-              }
+              crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
               dangerouslySetInnerHTML={{
                 __html: JoyScript.getInlineScriptSource(this.context),
               }}
@@ -695,55 +475,28 @@ export class JoyScript extends Component<OriginProps> {
             />
           )}
           {ampDevFiles.map((file) => (
-            <script
-              key={file}
-              src={`${assetPrefix}/_joy/${file}${devOnlyCacheBusterQueryString}`}
-              nonce={this.props.nonce}
-              crossOrigin={
-                this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
-              }
-              data-ampdevmode
-            />
+            <script key={file} src={`${assetPrefix}/_joy/${file}${devOnlyCacheBusterQueryString}`} nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} data-ampdevmode />
           ))}
         </>
       );
     }
 
     if (process.env.NODE_ENV !== "production") {
-      if (this.props.crossOrigin)
-        console.warn(
-          "Warning: `JoyScript` attribute `crossOrigin` is deprecated."
-        );
+      if (this.props.crossOrigin) console.warn("Warning: `JoyScript` attribute `crossOrigin` is deprecated.");
     }
 
-    const files: DocumentFiles = getDocumentFiles(
-      this.context.buildManifest,
-      this.context.__JOY_DATA__.page
-    );
+    const files: DocumentFiles = getDocumentFiles(this.context.buildManifest, this.context.__JOY_DATA__.page);
     return (
       <>
         {!disableRuntimeJS && buildManifest.devFiles
-          ? buildManifest.devFiles.map((file: string) => (
-              <script
-                key={file}
-                src={`${assetPrefix}/_joy/${encodeURI(
-                  file
-                )}${devOnlyCacheBusterQueryString}`}
-                nonce={this.props.nonce}
-                crossOrigin={
-                  this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
-                }
-              />
-            ))
+          ? buildManifest.devFiles.map((file: string) => <script key={file} src={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`} nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} />)
           : null}
         {disableRuntimeJS ? null : (
           <script
             id="__JOY_DATA__"
             type="application/json"
             nonce={this.props.nonce}
-            crossOrigin={
-              this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
-            }
+            crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
             dangerouslySetInnerHTML={{
               __html: JoyScript.getInlineScriptSource(this.context),
             }}
@@ -752,9 +505,7 @@ export class JoyScript extends Component<OriginProps> {
         {process.env.__JOY_MODERN_BUILD && !disableRuntimeJS ? (
           <script
             nonce={this.props.nonce}
-            crossOrigin={
-              this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN
-            }
+            crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
             noModule={true}
             dangerouslySetInnerHTML={{
               __html: JoyScript.safariNomoduleFix,

@@ -1,6 +1,6 @@
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 
-@Injectable()
+@Component()
 export class PluginCenter {
   // todo config scheme
 }

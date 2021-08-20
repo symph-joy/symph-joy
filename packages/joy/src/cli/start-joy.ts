@@ -1,11 +1,12 @@
 import "@babel/runtime/regenerator";
 import chalk from "chalk";
 import { JoyBoot } from "../joy-boot";
-import { PresetJoyCore } from "../preset-joy-core";
+import { JoyBootConfiguration } from "../joy-boot.configuration";
 import yargs from "yargs";
 import { existsSync } from "fs";
 import { join } from "path";
 import { ServerFactory } from "@symph/server";
+import { JoyBootFactory } from "../joy-boot-factory";
 
 export const startJoy = (async () => {
   let closed = false;
@@ -21,14 +22,12 @@ export const startJoy = (async () => {
     })
     .parse(process.argv.slice(2));
 
-  let command = args._[0];
+  let command = String(args._[0]);
   if (!command) {
     if (args.version) {
       command = "version";
       process.argv.splice(2, 0, "version");
-      const local = existsSync(join(__dirname, "../.local"))
-        ? chalk.cyan("@local")
-        : "";
+      const local = existsSync(join(__dirname, "../.local")) ? chalk.cyan("@local") : "";
       console.log(`joy@${require("../../package.json").version}${local}`);
     } else {
       command = "help";
@@ -37,7 +36,7 @@ export const startJoy = (async () => {
   }
 
   // const joyBoot = new JoyBoot(PresetJoyCore);
-  const joyBoot = await ServerFactory.createServer(JoyBoot, PresetJoyCore);
+  const joyBoot = await JoyBootFactory.createServer({});
   await joyBoot.init();
 
   function onSignal(signal: string) {

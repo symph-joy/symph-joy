@@ -28,7 +28,7 @@ describe("react-router", () => {
     expect(getByText("main")).not.toBeNull();
   });
 
-  test("should render the main route, by special providerId", async () => {
+  test("should render the main route, by special providerName", async () => {
     const app = await ReactApplicationFactory.create({
       ReactApplicationConfig,
       reactRouterProps: { type: Object, useValue: { initialEntries: ["/"] } },
@@ -38,7 +38,7 @@ describe("react-router", () => {
     reactRouter!.setRoutes([
       {
         path: "/",
-        providerId: "main",
+        providerName: "main",
       },
     ]);
     const appContent = app.start();
@@ -59,11 +59,11 @@ describe("react-router", () => {
     const reactRouter = await app.get(ReactRouter);
     reactRouter!.setRoutes([
       {
-        providerId: "main",
+        providerName: "main",
         path: "/",
         routes: [
           {
-            providerId: "hello1",
+            providerName: "hello1",
             path: "/hello1",
           },
         ],

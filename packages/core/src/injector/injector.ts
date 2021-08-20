@@ -8,13 +8,13 @@ import { STATIC_CONTEXT } from "./constants";
 import { ContextId, IInstanceWrapper, InstancePerContext, InstanceWrapper, PropertyMetadata } from "./instance-wrapper";
 import { TaskThenable, ThenableResult } from "../utils/task-thenable";
 import { EnuInjectBy, IInjectableDependency } from "../interfaces/injectable-dependency.interface";
-import { JoyContainer } from "./joy-container";
+import { CoreContainer } from "./core-container";
 import { providerNameGenerate } from "./provider-name-generate";
 import { getInjectableMeta } from "../decorators/core";
 import { isProviderInfoWareProvider } from "../interfaces/context/provider-info-ware.interface";
 import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dependency-type.exception";
-import { HookCenter, HookPipe } from "../hook/hook-center";
-import { HookType } from "../hook/interface/hook.interface";
+import { HookCenter } from "../hook/hook-center";
+import { HookType, IHook } from "../hook/interface/hook.interface";
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
 import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
 // const SyncThenable = Promise
@@ -61,7 +61,7 @@ export interface InjectorHookTaps {
 }
 
 export class Injector {
-  private afterPropertiesSetHook: HookPipe;
+  private afterPropertiesSetHook: IHook;
 
   constructor(private pluginCenter: HookCenter) {
     this.afterPropertiesSetHook = this.pluginCenter.registerHook({
@@ -72,13 +72,13 @@ export class Injector {
     });
   }
 
-  public loadProvider<T>(wrapper: InstanceWrapper<T>, container: JoyContainer, contextId = STATIC_CONTEXT): ThenableResult<T> {
+  public loadProvider<T>(wrapper: InstanceWrapper<T>, container: CoreContainer, contextId = STATIC_CONTEXT): ThenableResult<T> {
     const instance = this.loadInstance<T>(wrapper, container, contextId);
     // await this.loadEnhancersPerContext(wrapper, contextId, wrapper
     return instance.getResult();
   }
 
-  public loadInstance<T>(wrapper: InstanceWrapper<T>, container: JoyContainer, contextId = STATIC_CONTEXT): TaskThenable<T> {
+  public loadInstance<T>(wrapper: InstanceWrapper<T>, container: CoreContainer, contextId = STATIC_CONTEXT): TaskThenable<T> {
     const instanceHost = wrapper.getInstanceByContextId(contextId);
     if (instanceHost.isResolved) {
       return TaskThenable.resolve(instanceHost.instance);
@@ -129,6 +129,12 @@ export class Injector {
         return instance;
       })
       .then((instance: any) => {
+        instance = this.afterPropertiesSetHook.call(instance, {
+          instanceWrapper: wrapper,
+        });
+        return instance;
+      })
+      .then((instance: any) => {
         if (isNil(inject) && isFunction(instance.initialize)) {
           const rst = instance.initialize();
           if (isPromise(rst)) {
@@ -139,14 +145,8 @@ export class Injector {
             });
           }
         }
-        return instance;
-      })
-      .then((instance: any) => {
-        instanceHost.isResolved = true;
 
-        instance = this.afterPropertiesSetHook.call(instance, {
-          instanceWrapper: wrapper,
-        });
+        instanceHost.isResolved = true;
         return instance;
       });
 
@@ -155,7 +155,7 @@ export class Injector {
     return loadTask;
   }
 
-  public loadInstanceProperties<T>(instance: unknown, wrapper: InstanceWrapper<T>, container: JoyContainer, contextId = STATIC_CONTEXT): TaskThenable<IInjectableDependency[]> {
+  public loadInstanceProperties<T>(instance: unknown, wrapper: InstanceWrapper<T>, container: CoreContainer, contextId = STATIC_CONTEXT): TaskThenable<IInjectableDependency[]> {
     const properties = this.resolveProperties(wrapper, container, contextId, wrapper);
     if (properties.length === 0) {
       return TaskThenable.resolve([]);
@@ -170,7 +170,7 @@ export class Injector {
     });
   }
 
-  public resolveConstructorParams<T>(wrapper: InstanceWrapper<T>, container: JoyContainer, inject: InjectorDependency[] | undefined, contextId = STATIC_CONTEXT): (TaskThenable | undefined)[] {
+  public resolveConstructorParams<T>(wrapper: InstanceWrapper<T>, container: CoreContainer, inject: InjectorDependency[] | undefined, contextId = STATIC_CONTEXT): (TaskThenable | undefined)[] {
     const metadata = wrapper.getCtorMetadata();
     if (metadata) {
       return this.loadCtorMetadata(container, metadata, contextId);
@@ -270,14 +270,14 @@ export class Injector {
     return Reflect.getMetadata(SELF_DECLARED_DEPS_METADATA, type) || [];
   }
 
-  public resolveSingleParam<T>(wrapper: InstanceWrapper<T>, dependency: IInjectableDependency, container: JoyContainer, contextId = STATIC_CONTEXT, inquirer?: InstanceWrapper): TaskThenable<unknown> {
+  public resolveSingleParam<T>(wrapper: InstanceWrapper<T>, dependency: IInjectableDependency, container: CoreContainer, contextId = STATIC_CONTEXT, inquirer?: InstanceWrapper): TaskThenable<unknown> {
     if (isUndefined(dependency)) {
-      throw new UndefinedDependencyException(wrapper.name, dependency);
+      throw new UndefinedDependencyException(String(wrapper.name), dependency);
     }
     const { key, index, designType, name, type, injectBy } = dependency;
 
     if (injectBy === EnuInjectBy.TYPE && type === Object) {
-      throw new InvalidDependencyTypeException(wrapper.name, index, undefined, `should not set Object type to ${wrapper.name} argument at index [${index}]`);
+      throw new InvalidDependencyTypeException(String(wrapper.name), index, undefined, `should not set Object type to ${String(wrapper.name)} argument at index [${index}]`);
     }
 
     let instanceWrapper = this.getInstanceWrapper(container, injectBy, type, name);
@@ -287,10 +287,10 @@ export class Injector {
     }
 
     if (isNil(instanceWrapper)) {
-      throw new UnknownDependenciesException(wrapper.name, dependency);
+      throw new UnknownDependenciesException(String(wrapper.name), dependency);
     }
     if (designType && designType !== Object && instanceWrapper.type !== Object && designType !== instanceWrapper.type && !isSubClass(instanceWrapper.type, designType)) {
-      throw new InvalidDependencyTypeException(wrapper.name, index, key, `${instanceWrapper.type.name} class provider can not set to ${type?.name} class`);
+      throw new InvalidDependencyTypeException(String(wrapper.name), index, key, `${instanceWrapper.type.name} class provider can not set to ${type?.name} class`);
     }
 
     !isNil(key) ? wrapper.addPropertiesMetadata(key, instanceWrapper) : wrapper.addCtorMetadata(index!, instanceWrapper);
@@ -298,13 +298,13 @@ export class Injector {
     return this.resolveInstance(container, instanceWrapper, contextId, inquirer);
   }
 
-  public getInstanceWrapper(container: JoyContainer, injectBy: EnuInjectBy.TYPE, type: Type, name: string | undefined): InstanceWrapper | undefined;
+  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy.TYPE, type: Type, name: string | undefined): InstanceWrapper | undefined;
 
-  public getInstanceWrapper(container: JoyContainer, injectBy: EnuInjectBy.NAME, type: Type | undefined, name: string): InstanceWrapper | undefined;
+  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy.NAME, type: Type | undefined, name: string): InstanceWrapper | undefined;
 
-  public getInstanceWrapper(container: JoyContainer, injectBy: EnuInjectBy | undefined, type: Type | undefined, name: string | undefined): InstanceWrapper | undefined;
+  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy | undefined, type: Type | undefined, name: string | undefined): InstanceWrapper | undefined;
 
-  public getInstanceWrapper(container: JoyContainer, injectBy: EnuInjectBy | undefined, type: Type | undefined, name: string | undefined): InstanceWrapper | undefined {
+  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy | undefined, type: Type | undefined, name: string | undefined): InstanceWrapper | undefined {
     let instanceWrapper;
     if (type === undefined && name === undefined) {
       throw new Error("Can not find provider by type and name, the both are undefined.");
@@ -349,13 +349,13 @@ export class Injector {
     return instanceWrapper;
   }
 
-  private dynamicAddWrapper(container: JoyContainer, type: Type, name?: string): InstanceWrapper | undefined {
+  private dynamicAddWrapper(container: CoreContainer, type: Type, name?: string): InstanceWrapper | undefined {
     const meta = getInjectableMeta(type);
     if (!meta || meta.autoLoad !== "lazy") {
       return undefined;
     }
     if (name) {
-      meta.id = name;
+      meta.name = name;
     }
     return container.addProvider(meta);
   }
@@ -368,11 +368,11 @@ export class Injector {
     return param.forwardRef();
   }
 
-  public resolveInstance<T>(container: JoyContainer, instanceWrapper: InstanceWrapper<T>, contextId = STATIC_CONTEXT, inquirer?: InstanceWrapper): TaskThenable<T> {
+  public resolveInstance<T>(container: CoreContainer, instanceWrapper: InstanceWrapper<T>, contextId = STATIC_CONTEXT, inquirer?: InstanceWrapper): TaskThenable<T> {
     return this.loadInstance(instanceWrapper, container, contextId);
   }
 
-  public resolveProperties<T>(wrapper: InstanceWrapper<T>, container: JoyContainer, contextId = STATIC_CONTEXT, inquirer?: InstanceWrapper): PropertyDependencyLoadTask[] {
+  public resolveProperties<T>(wrapper: InstanceWrapper<T>, container: CoreContainer, contextId = STATIC_CONTEXT, inquirer?: InstanceWrapper): PropertyDependencyLoadTask[] {
     const metadata = wrapper.getPropertiesMetadata();
     if (metadata) {
       return this.loadPropertiesMetadata(container, metadata, contextId);
@@ -415,7 +415,7 @@ export class Injector {
     }
   }
 
-  public instantiateClass<T = any>(container: JoyContainer, instances: any[], instanceHost: InstancePerContext<T>, wrapper: InstanceWrapper, targetMetatype: InstanceWrapper, contextId = STATIC_CONTEXT): TaskThenable<T> | T {
+  public instantiateClass<T = any>(container: CoreContainer, instances: any[], instanceHost: InstancePerContext<T>, wrapper: InstanceWrapper, targetMetatype: InstanceWrapper, contextId = STATIC_CONTEXT): TaskThenable<T> | T {
     const { type, inject } = wrapper;
 
     if (isNil(inject)) {
@@ -433,19 +433,25 @@ export class Injector {
         }
         return this.resolveInstance(container, factoryWrapper!, contextId).then((factoryInstance) => {
           const returnValue = factoryInstance[property](...instances);
+          if (returnValue === null || returnValue === undefined) {
+            throw new RuntimeException(`Instantiate factory provider(name: ${String(wrapper.name)}) failed, factory method return a null or undefined value.`);
+          }
           instanceHost.instance = returnValue;
           return returnValue;
         });
       } else {
         // instance by factory function
         const returnValue = factory(...instances);
+        if (returnValue === null || returnValue === undefined) {
+          throw new RuntimeException(`Instantiate factory provider(name: ${String(wrapper.name)}) failed, factory method return a null or undefined value.`);
+        }
         instanceHost.instance = returnValue;
         return returnValue;
       }
     }
   }
 
-  public async loadEnhancersPerContext(wrapper: InstanceWrapper, container: JoyContainer, ctx: ContextId) {
+  public async loadEnhancersPerContext(wrapper: InstanceWrapper, container: CoreContainer, ctx: ContextId) {
     const enhancers = wrapper.getEnhancersMetadata() || [];
     const loadEnhancer = (item: InstanceWrapper) => {
       return this.loadInstance(
@@ -458,11 +464,11 @@ export class Injector {
     await Promise.all(enhancers.map(loadEnhancer));
   }
 
-  public loadCtorMetadata(container: JoyContainer, metadata: InstanceWrapper<any>[], contextId: ContextId): TaskThenable<any>[] {
+  public loadCtorMetadata(container: CoreContainer, metadata: InstanceWrapper<any>[], contextId: ContextId): TaskThenable<any>[] {
     return metadata.map((item) => this.resolveInstance(container, item, contextId));
   }
 
-  public loadPropertiesMetadata(container: JoyContainer, metadata: PropertyMetadata[], contextId: ContextId): PropertyDependencyLoadTask[] {
+  public loadPropertiesMetadata(container: CoreContainer, metadata: PropertyMetadata[], contextId: ContextId): PropertyDependencyLoadTask[] {
     return metadata.map(({ wrapper: item, key }) => {
       const instanceRst = this.resolveInstance(container, item, contextId);
 

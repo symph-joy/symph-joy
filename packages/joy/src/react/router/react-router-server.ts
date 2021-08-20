@@ -1,7 +1,7 @@
-import { Inject, Injectable } from "@symph/core";
+import { Inject, Component } from "@symph/core";
 import { IReactRoute, ReactRouter } from "@symph/react";
 
-@Injectable()
+@Component()
 export class ReactRouterServer extends ReactRouter {
   constructor(
     @Inject("joyReactAutoGenRoutes")

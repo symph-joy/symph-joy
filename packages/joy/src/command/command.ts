@@ -1,13 +1,10 @@
-import yargs, {
-  Arguments,
-  Argv,
-  InferredOptionTypes,
-  Omit,
-  Options,
-} from "yargs";
+import yargs, { Arguments, Argv, InferredOptionTypes, Omit, Options } from "yargs";
 import { Type } from "ast-types";
 import { instanceOf } from "prop-types";
 import { merge } from "lodash";
+import { ConfigService } from "@symph/config";
+import { CoreContext, Inject } from "@symph/core";
+import { ServerApplication } from "@symph/server";
 
 export interface ICommand<T extends { [key: string]: Options }> {
   command: string;
@@ -22,12 +19,15 @@ export interface ICommand<T extends { [key: string]: Options }> {
 //   aaa: { type: 'string' },
 // });
 
-export type JoyCommandOptionType<T extends JoyCommand> = Arguments<
-  InferredOptionTypes<ReturnType<T["options"]>>
->;
+export type JoyCommandOptionType<T extends JoyCommand> = Arguments<InferredOptionTypes<ReturnType<T["options"]>>>;
 
 export abstract class JoyCommand {
   // protected argv: Arguments<InferredOptionTypes<ReturnType<this['options']>>>
+
+  constructor(
+    // @Inject() protected configService: ConfigService,
+    @Inject() protected appContext: CoreContext
+  ) {}
 
   abstract getName(): string;
 
@@ -41,6 +41,8 @@ export abstract class JoyCommand {
     if (args) {
       args = merge(argv, args);
     }
+    // const {_, $0, ...opt} = args
+    // this.configService.mergeConfig(opt)
     return this.run(args as any);
   }
 

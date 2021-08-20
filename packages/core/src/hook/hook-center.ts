@@ -1,25 +1,32 @@
-import * as tapable from "tapable";
+import { Hook, AsyncParallelHook, AsyncParallelBailHook, AsyncSeriesHook, AsyncSeriesWaterfallHook, AsyncSeriesBailHook, SyncHook, SyncBailHook, SyncWaterfallHook } from "tapable";
 import { HookType, IHook } from "./interface/hook.interface";
 import { RuntimeException } from "../errors/exceptions/runtime.exception";
 import { ITap } from "./interface/tap.interface";
-import { Type } from "../interfaces";
-import { getHooksMetadata } from "./hook.decorator";
+import { Abstract, Provider, TProviderName, Type } from "../interfaces";
+import { getHooksMetadata, IHookMeta } from "./autowire-hook.decorator";
 import { getTapsMetadata } from "./tap.decorator";
+import { InstanceWrapper } from "../injector";
 
-export interface HookPipe extends IHook {
-  hook: tapable.Hook;
-  call:
-    | typeof tapable.Hook.prototype.call
-    | typeof tapable.Hook.prototype.promise; // todo 添加入参类型申明
-}
+// export interface HookWrapper extends IHook {
+//   hook?: Hook<any, any>;
+//   hostName: TProviderName;  // host provider id
+//   hostInstance?: object;  // host instance
+//   call:  typeof SyncHook.prototype.call | typeof Hook.prototype.promise; // todo 添加入参类型申明
+// }
+
+type THookAny = Hook<unknown, unknown>;
+
+type RegisterHookOptions = {
+  id: string;
+  type: HookType;
+  async: boolean;
+  parallel: boolean;
+};
 
 export class HookCenter {
-  private hooks: Map<string, HookPipe> = new Map<string, HookPipe>();
+  private hooks: Map<string, IHook> = new Map<string, IHook>();
   // 这会导致transient类型的provider内存泄露，永远无法自动释放，所以在transient类型的provider中注册的tap，需要手动调用`unregisterTag()`手动释放
-  private _tapCache: Map<Object, Array<string>> = new Map<
-    Object,
-    Array<string>
-  >();
+  private _tapCache: Map<Object, Array<string>> = new Map<Object, Array<string>>();
 
   constructor() {
     // this.registerTap('afterPropertiesSet', {
@@ -50,36 +57,54 @@ export class HookCenter {
   //   }
   // }
 
-  private getHookClazz(
-    type: HookType,
-    async: boolean,
-    parallel: boolean
-  ): { new (...args: any[]): tapable.Hook } {
-    let hookClazz: { new (...args: any[]): tapable.Hook } | undefined;
+  public registerHooksFromWrappers(wrappers: InstanceWrapper[]) {
+    const hooks = new Array<IHook>();
+    for (const wrapper of wrappers) {
+      const type = wrapper.type;
+      if (type === Object) {
+        continue;
+      }
+      const hookMetas = getHooksMetadata(type);
+      if (hookMetas === undefined || hookMetas.length === 0) {
+        continue;
+      }
+      for (let i = 0; i < hookMetas.length; i++) {
+        const hookMeta = hookMetas[i];
+        const hookInfo = {
+          ...hookMeta,
+          host: wrapper.name[0],
+        };
+        const pipe = this.registerHook(hookInfo);
+        hooks.push(pipe);
+      }
+    }
+    return hooks;
+  }
+
+  private getTapableHookClazz(type: HookType, async: boolean, parallel: boolean): { new (...args: any[]): THookAny } {
+    let hookClazz: { new (...args: any[]): THookAny } | undefined;
     if (async) {
       if (parallel) {
         switch (type) {
           case HookType.Traverse:
-            hookClazz = tapable.AsyncParallelHook;
+            hookClazz = AsyncParallelHook;
             break;
           case HookType.Bail:
-            hookClazz = tapable.AsyncParallelBailHook;
+            hookClazz = AsyncParallelBailHook;
             break;
           case HookType.Waterfall:
-            throw new RuntimeException(
-              `can not set waterfall hook run parallel`
-            );
+            throw new RuntimeException(`can not set waterfall hook run parallel`);
         }
       } else {
         switch (type) {
           case HookType.Traverse:
-            hookClazz = tapable.AsyncSeriesHook;
+            hookClazz = AsyncSeriesHook;
             break;
           case HookType.Bail:
-            hookClazz = tapable.AsyncSeriesWaterfallHook;
+            hookClazz = AsyncSeriesBailHook;
             break;
           case HookType.Waterfall:
-            hookClazz = tapable.AsyncSeriesBailHook;
+            hookClazz = AsyncSeriesWaterfallHook;
         }
       }
     } else {
@@ -91,13 +116,13 @@ export class HookCenter {
       } else {
         switch (type) {
           case HookType.Traverse:
-            hookClazz = tapable.SyncHook;
+            hookClazz = SyncHook;
             break;
           case HookType.Bail:
-            hookClazz = tapable.SyncBailHook;
+            hookClazz = SyncBailHook;
             break;
           case HookType.Waterfall:
-            hookClazz = tapable.SyncWaterfallHook;
+            hookClazz = SyncWaterfallHook;
         }
       }
     }
@@ -107,27 +132,25 @@ export class HookCenter {
     return hookClazz;
   }
 
-  public registerHook(hookMeta: IHook): HookPipe {
-    const _hook = this.hooks.get(hookMeta.id);
+  public registerHook(hookInfo: RegisterHookOptions): IHook {
+    const _hook = this.hooks.get(hookInfo.id);
     if (_hook) {
-      throw new RuntimeException(`duplicate register hook(${hookMeta.id})`);
+      throw new RuntimeException(`duplicate register hook(${hookInfo.id})`);
     }
 
-    const { id, type, async, parallel, hook } = hookMeta;
-    let hookPoint = hook;
-    if (hookPoint === undefined) {
-      try {
-        const hookClazz = this.getHookClazz(type, async, parallel);
-        hookPoint = new hookClazz(["memo", "args"]);
-      } catch (e) {
-        throw new RuntimeException(
-          `can not init hook(${id}) instance, because of: ${e.message}`
-        );
-      }
+    const { id, type, async, parallel } = hookInfo;
+    let hookPoint: THookAny;
+    try {
+      const hookClazz = this.getTapableHookClazz(type, async, parallel);
+      hookPoint = new hookClazz(["memo", "args"]);
+    } catch (e) {
+      throw new RuntimeException(`Can not init hook(${id}) instance, because of: ${e.message}`);
     }
+
+    // @ts-ignore
     const callMethod = async ? hookPoint.promise : hookPoint.call;
-    const pipe: HookPipe = {
-      ...hookMeta,
+    const pipe: IHook = {
+      ...hookInfo,
       hook: hookPoint,
       call: callMethod.bind(hookPoint),
     };
@@ -135,32 +158,29 @@ export class HookCenter {
     return pipe;
   }
 
-  public registerProviderHooks<T extends Object>(
-    provider: T,
-    providerType?: Type<T>
-  ): HookPipe[] {
-    const hookPipes = new Array<HookPipe>();
+  public registerProviderHooks<T extends Object>(provider: T, providerType?: Type<T> | Abstract<T>): IHook[] | undefined {
     const type = providerType || provider.constructor;
     const hookMetas = getHooksMetadata(type);
     if (hookMetas === undefined || hookMetas.length === 0) {
-      return hookPipes;
+      return undefined;
     }
+    const registeredHooks = new Array<IHook>();
     for (let i = 0; i < hookMetas.length; i++) {
-      const hook = hookMetas[i];
-      const pipe = this.registerHook(hook);
-      hookPipes.push(pipe);
-      // @ts-ignore
-      provider[hook.propKey] = pipe;
+      const hookMeta = hookMetas[i];
+      let hook = this.hooks.get(hookMeta.id);
+      if (!hook) {
+        hook = this.registerHook(hookMeta);
+        // throw new RuntimeException(`Can not register hook host instance, make sure the hook(id:${hookMeta.id}) has been registered.`)
+      }
+      registeredHooks.push(hook);
+      (provider as any)[hookMeta.propKey] = hook;
     }
-    return hookPipes;
+    return registeredHooks;
   }
 
   //todo implement unregisterProviderHooks()
 
-  public registerProviderTaps<T extends Object>(
-    provider: T,
-    providerType?: Type<T>
-  ): ITap[] {
+  public registerProviderTaps<T extends Object>(provider: T, providerType?: Type<T> | Abstract<T>): ITap[] {
     const taps = new Array<ITap>();
     const type = providerType || provider.constructor;
     const tapMetas = getTapsMetadata(type);
@@ -182,13 +202,11 @@ export class HookCenter {
   public registerTap(hookId: string, tap: ITap): void {
     const hook = this.hooks.get(hookId);
     if (hook === undefined) {
-      throw new RuntimeException(
-        `register tap failed, hook(${hookId}) is not found`
-      );
+      throw new RuntimeException(`Register provider's tap failed, the hook(${hookId}) is not found, the provider is : ${tap.provider?.constructor?.name}`);
     }
     const { provider, propKey } = tap;
     const tapMethod = hook.async ? "tapPromise" : "tap";
-    hook.hook[tapMethod](
+    (hook.hook as any)[tapMethod](
       {
         name: tap.id,
         stage: tap.stage,
@@ -223,14 +241,12 @@ export class HookCenter {
     return removedTaps;
   }
 
-  public unregisterProviderTap<T>(
-    provider: T,
-    hookId: string
-  ): ITap | undefined {
+  public unregisterProviderTap<T>(provider: T, hookId: string): ITap | undefined {
     const hook = this.hooks.get(hookId);
     if (!hook) {
       return undefined;
     }
+    // @ts-ignore
     const taps = hook.hook.taps;
     for (let i = 0; i < taps.length; i++) {
       // @ts-ignore
@@ -253,9 +269,11 @@ export class HookCenter {
   public applyHook(hookId: string, args?: any, initialValue?: any): any {
     const hook = this.hooks.get(hookId);
     if (hook === undefined) {
-      throw new RuntimeException(
-        `can not apply hook(${hookId}), it is undefined`
-      );
+      throw new RuntimeException(`Can not apply hook(${hookId}), the hook is not registered.`);
+    }
+
+    if (!hook.hook) {
+      throw new RuntimeException(`Can not apply hook(${hookId}), the host is not instanced.`);
     }
 
     return hook.hook.promise(initialValue);

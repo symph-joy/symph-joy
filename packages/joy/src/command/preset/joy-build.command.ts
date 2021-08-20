@@ -1,31 +1,37 @@
 import { CommandProvider } from "../command-provider.decorator";
 import { JoyCommand, JoyCommandOptionType } from "../command";
 import { printAndExit } from "../../server/lib/utils";
-import { Configuration, CoreContext, Inject } from "@symph/core";
-import { JoyAppConfig } from "../../joy-server/server/joy-config/joy-app-config";
-import { JoyBuildConfig } from "../../build/joy-build.config";
+import { Configuration, Inject } from "@symph/core";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { JoyBuildConfiguration } from "../../build/joy-build.configuration";
 import { JoyBuildService } from "../../build/joy-build.service";
-import { JoyReactModuleConfig } from "../../react/joy-react-module.config";
-import { JoyReactRouterPlugin } from "../../react/router/joy-react-router-plugin";
+import { ConfigService } from "@symph/config";
+import { ServerApplication } from "@symph/server";
+import { JoyReactBuildConfiguration } from "../../react/joy-react-build.configuration";
 
-@Configuration()
-export class JoyReactModuleConfigBuild extends JoyReactModuleConfig {
-  @Configuration.Provider()
-  public joyReactRouter: JoyReactRouterPlugin;
-}
+// @Configuration()
+// export class JoyReactModuleConfigBuild extends JoyReactConfiguration {
+//   @Configuration.Provider()
+//   public joyReactRouter: JoyReactRouterPlugin;
+// }
 
-@Configuration({
-  imports: {
-    joyReactConfig: JoyReactModuleConfigBuild,
-    joyBuildConfig: JoyBuildConfig,
-  },
-})
-class JoyBuildCommandConfig {}
+// @Configuration()
+// class JoyBuildCommandConfig {
+//
+//   @Configuration.Provider()
+//   public joyBuildConfiguration: JoyBuildConfiguration
+//
+//   @Configuration.Provider()
+//   public joyReactBuildConfiguration: JoyReactBuildConfiguration
+//
+//   @Configuration.Provider()
+//   public joyAppConfig: JoyAppConfig
+// }
 
 @CommandProvider()
 export class JoyBuildCommand extends JoyCommand {
-  constructor(private joyAppConfig: JoyAppConfig, @Inject() private appContext: CoreContext) {
-    super();
+  constructor(@Inject() protected configService: ConfigService, @Inject() protected appContext: ServerApplication) {
+    super(appContext);
   }
 
   getName(): string {
@@ -67,9 +73,10 @@ export class JoyBuildCommand extends JoyCommand {
     // @ts-ignore
     // process.env.NODE_ENV = "production";
     const dir = args._[0] || ".";
-    this.joyAppConfig.mergeCustomConfig({ dir, dev: true });
+    const { _, $0, ...argOpts } = args;
+    this.configService.mergeConfig({ dir, dev: true, ...argOpts });
     try {
-      await this.appContext.loadModule(JoyBuildCommandConfig);
+      await this.appContext.loadModule(JoyBuildConfiguration);
       const buildService = await this.appContext.get(JoyBuildService);
       await buildService.build(args.profile, args.debug);
       printAndExit(undefined, 0);

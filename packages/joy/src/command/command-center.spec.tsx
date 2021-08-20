@@ -1,4 +1,4 @@
-import { CoreContext, JoyContainer } from "@symph/core";
+import { CoreContext, CoreContainer } from "@symph/core";
 import yargs from "yargs";
 import { CommandProvider } from "./command-provider.decorator";
 import { CommandCenter } from "./command-center";
@@ -24,14 +24,12 @@ describe("command-center", () => {
       }
     }
 
-    const container = new JoyContainer();
+    const container = new CoreContainer();
     const app = new CoreContext({ CommandCenter, HelloCommand }, container);
     await app.init();
     const commandCenter = await app.get(CommandCenter);
     // const helloCommand = await app.get(HelloCommand)
-    expect(await commandCenter.runCommand("hello", { message: "joy" })).toBe(
-      "hello joy"
-    );
+    expect(await commandCenter.runCommand("hello", { message: "joy" })).toBe("hello joy");
   });
 
   test("parse args", async () => {

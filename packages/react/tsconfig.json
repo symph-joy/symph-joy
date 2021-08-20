@@ -1,18 +1,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "rootDir": "src"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": [
-    "../../node_modules",
-    "node_modules",
-    "dist",
-    "examples",
-    "test",
-    "**/fixtures/**",
-    "./*.d.ts",
-    "**/*.spec.ts",
-    "**/*.spec.tsx"
-  ]
+  "exclude": ["../../node_modules", "node_modules", "dist", "examples", "test", "**/fixtures/**", "./*.d.ts", "**/*.spec.ts", "**/*.spec.tsx"]
 }

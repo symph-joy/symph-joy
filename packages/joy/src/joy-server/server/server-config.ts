@@ -1,11 +1,15 @@
 import { __ApiPreviewProps } from "./api-utils";
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 import { PrerenderManifest } from "../../build/joy-build.service";
 import { join } from "path";
 import { PRERENDER_MANIFEST } from "../lib/constants";
-import { JoyAppConfig } from "./joy-config/joy-app-config";
+import { JoyAppConfig } from "./joy-app-config";
 
-@Injectable()
+/**
+ * @Deprecate 可以删除
+ * TODO 删除掉该文件
+ */
+@Component()
 export class ServerConfig {
   constructor(private joyAppConfig: JoyAppConfig) {}
 
@@ -14,10 +18,7 @@ export class ServerConfig {
     if (this._cachedPreviewManifest) {
       return this._cachedPreviewManifest;
     }
-    const manifest = require(join(
-      this.joyAppConfig.distDir,
-      PRERENDER_MANIFEST
-    ));
+    const manifest = require(join(this.joyAppConfig.distDir, PRERENDER_MANIFEST));
     return (this._cachedPreviewManifest = manifest);
   }
 

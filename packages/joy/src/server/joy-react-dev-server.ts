@@ -4,13 +4,7 @@ import crypto from "crypto";
 import fs from "fs";
 import { IncomingMessage, ServerResponse } from "http";
 import AmpHtmlValidator from "amphtml-validator";
-import {
-  join,
-  join as pathJoin,
-  relative,
-  resolve as pathResolve,
-  sep,
-} from "path";
+import { join, join as pathJoin, relative, resolve as pathResolve, sep } from "path";
 import { UrlWithParsedQuery } from "url";
 import Watchpack from "watchpack";
 import { ampValidation } from "../build/output/index";
@@ -19,17 +13,8 @@ import { PUBLIC_DIR_MIDDLEWARE_CONFLICT } from "../lib/constants";
 import { fileExists } from "../lib/file-exists";
 import loadCustomRoutes, { CustomRoutes } from "../lib/load-custom-routes";
 import { verifyTypeScriptSetup } from "../lib/verifyTypeScriptSetup";
-import {
-  CLIENT_STATIC_FILES_PATH,
-  DEV_CLIENT_PAGES_MANIFEST,
-  PHASE_DEVELOPMENT_SERVER,
-} from "../joy-server/lib/constants";
-import {
-  getRouteMatcher,
-  getRouteRegex,
-  getSortedRoutes,
-  isDynamicRoute,
-} from "../joy-server/lib/router/utils";
+import { CLIENT_STATIC_FILES_PATH, DEV_CLIENT_PAGES_MANIFEST, PHASE_DEVELOPMENT_SERVER } from "../joy-server/lib/constants";
+import { getRouteMatcher, getRouteRegex, getSortedRoutes, isDynamicRoute } from "../joy-server/lib/router/utils";
 import { __ApiPreviewProps } from "../joy-server/server/api-utils";
 import { JoyReactServer } from "../joy-server/server/joy-react-server";
 import { normalizePagePath } from "../joy-server/server/normalize-page-path";
@@ -37,24 +22,22 @@ import Router, { Params, route } from "../joy-server/server/router";
 import HotReloader from "./hot-reloader";
 import { findPageFile } from "./lib/find-page-file";
 import { withCoalescedInvoke } from "../lib/coalesced-function";
-import { EntryType, Inject, Injectable } from "@symph/core";
-import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
+import { EntryType, Inject, Component } from "@symph/core";
+import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { FileScanner } from "../joy-server/server/scanner/file-scanner";
 import { BuildDevConfig } from "./build-dev-config";
-import { ServerConfigDev } from "./server-config-dev";
 import { FileGenerator } from "../plugin/file-generator";
 import { JoyReactAppServerDevConfig } from "../react/joy-react-app-server-dev-config";
 import { ReactContextFactoryDev } from "./react-context-factory-dev";
 import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
 import { ReactRouter } from "@symph/react";
+import { Worker } from "jest-worker";
 
 if (typeof React.Suspense === "undefined") {
-  throw new Error(
-    `The version of React you are using is lower than the minimum required version needed for Joy.js. Please upgrade "react" and "react-dom": "npm install react react-dom"`
-  );
+  throw new Error(`The version of React you are using is lower than the minimum required version needed for Joy.js. Please upgrade "react" and "react-dom": "npm install react react-dom"`);
 }
 
-@Injectable()
+@Component()
 export class JoyReactDevServer extends JoyReactServer {
   private devReady: Promise<void>;
   private setDevReady?: Function;
@@ -70,52 +53,32 @@ export class JoyReactDevServer extends JoyReactServer {
   // private isCustomServer: boolean
   protected sortedRoutes?: string[];
 
-  protected staticPathsWorker: import("jest-worker").default & {
+  protected staticPathsWorker: import("jest-worker").Worker & {
     loadStaticPaths: typeof import("./static-paths-worker").loadStaticPaths;
   };
 
   // constructor(options: ServerConstructor & { isJoyDevCommand?: boolean }) {
-  constructor(
-    protected joyAppConfig: JoyAppConfig,
-    protected serverConfig: ServerConfigDev,
-    protected buildConfig: BuildDevConfig,
-    protected hotReloader: HotReloader,
-    @Inject(ReactRouter) protected reactRouter: JoyReactRouterPluginDev,
-    protected reactContextFactory: ReactContextFactoryDev
-  ) {
+  constructor(protected joyAppConfig: JoyAppConfig, protected buildConfig: BuildDevConfig, protected hotReloader: HotReloader, protected reactRouter: JoyReactRouterPluginDev, protected reactContextFactory: ReactContextFactoryDev) {
     super(joyAppConfig, reactRouter, reactContextFactory);
     this.renderOpts.dev = true;
     (this.renderOpts as any).ErrorComponent = ReactDevOverlay;
     this.devReady = new Promise((resolve) => {
       this.setDevReady = resolve;
     });
-    (this.renderOpts as any).ampSkipValidation =
-      this.joyConfig.experimental?.amp?.skipValidation ?? false;
-    (this.renderOpts as any).ampValidator = (
-      html: string,
-      pathname: string
-    ) => {
-      const validatorPath =
-        this.joyConfig.experimental &&
-        this.joyConfig.experimental.amp &&
-        this.joyConfig.experimental.amp.validator;
-      return AmpHtmlValidator.getInstance(validatorPath).then(
-        (validator: any) => {
-          const result = validator.validateString(html);
-          ampValidation(
-            pathname,
-            result.errors
-              .filter((e: any) => e.severity === "ERROR")
-              .filter((e: any) => this._filterAmpDevelopmentScript(html, e)),
-            result.errors.filter((e: any) => e.severity !== "ERROR")
-          );
-        }
-      );
+    (this.renderOpts as any).ampSkipValidation = this.joyConfig.experimental?.amp?.skipValidation ?? false;
+    (this.renderOpts as any).ampValidator = (html: string, pathname: string) => {
+      const validatorPath = this.joyConfig.experimental && this.joyConfig.experimental.amp && this.joyConfig.experimental.amp.validator;
+      return AmpHtmlValidator.getInstance(validatorPath).then((validator: any) => {
+        const result = validator.validateString(html);
+        ampValidation(
+          pathname,
+          result.errors.filter((e: any) => e.severity === "ERROR").filter((e: any) => this._filterAmpDevelopmentScript(html, e)),
+          result.errors.filter((e: any) => e.severity !== "ERROR")
+        );
+      });
     };
     if (fs.existsSync(pathJoin(this.dir, "static"))) {
-      console.warn(
-        `The static directory has been deprecated in favor of the public directory.`
-      );
+      console.warn(`The static directory has been deprecated in favor of the public directory.`);
     }
     // this.isCustomServer = !appConfig.isJoyDevCommand
     // this.pagesDir = findPagesDir(this.dir)
@@ -184,11 +147,7 @@ export class JoyReactDevServer extends JoyReactServer {
 
             Object.keys(urlQuery)
               .filter((key) => query[key] === undefined)
-              .forEach((key) =>
-                console.warn(
-                  `Url '${path}' defines a query parameter '${key}' that is missing in exportPathMap`
-                )
-              );
+              .forEach((key) => console.warn(`Url '${path}' defines a query parameter '${key}' that is missing in exportPathMap`));
 
             const mergedQuery = { ...urlQuery, ...query };
 
@@ -207,9 +166,7 @@ export class JoyReactDevServer extends JoyReactServer {
       return;
     }
 
-    const regexPageExtension = new RegExp(
-      `\\.+(?:${this.joyConfig.pageExtensions.join("|")})$`
-    );
+    const regexPageExtension = new RegExp(`\\.+(?:${this.joyConfig.pageExtensions.join("|")})$`);
 
     let resolved = false;
     return new Promise((resolve, reject) => {
@@ -239,8 +196,7 @@ export class JoyReactDevServer extends JoyReactServer {
             continue;
           }
 
-          let pageName =
-            "/" + relative(pagesDir!, fileName).replace(/\\+/g, "/");
+          let pageName = "/" + relative(pagesDir!, fileName).replace(/\\+/g, "/");
           pageName = pageName.replace(regexPageExtension, "");
           pageName = pageName.replace(/\/index$/, "") || "/";
 
@@ -253,20 +209,16 @@ export class JoyReactDevServer extends JoyReactServer {
           // before it has been built and is populated in the _buildManifest
           const sortedRoutes = getSortedRoutes(routedPages);
 
-          if (
-            !this.sortedRoutes?.every((val, idx) => val === sortedRoutes[idx])
-          ) {
+          if (!this.sortedRoutes?.every((val, idx) => val === sortedRoutes[idx])) {
             // emit the change so clients fetch the update
             this.hotReloader!.send(undefined, { devPagesManifest: true });
           }
           this.sortedRoutes = sortedRoutes;
 
-          this.dynamicRoutes = this.sortedRoutes
-            .filter(isDynamicRoute)
-            .map((page) => ({
-              page,
-              match: getRouteMatcher(getRouteRegex(page)),
-            }));
+          this.dynamicRoutes = this.sortedRoutes.filter(isDynamicRoute).map((page) => ({
+            page,
+            match: getRouteMatcher(getRouteRegex(page)),
+          }));
 
           this.router.setDynamicRoutes(this.dynamicRoutes);
 
@@ -353,20 +305,11 @@ export class JoyReactDevServer extends JoyReactServer {
       return false;
     }
 
-    const pageFile = await findPageFile(
-      this.pagesDir!,
-      normalizedPath,
-      this.joyConfig.pageExtensions
-    );
+    const pageFile = await findPageFile(this.pagesDir!, normalizedPath, this.joyConfig.pageExtensions);
     return !!pageFile;
   }
 
-  protected async _beforeCatchAllRender(
-    req: IncomingMessage,
-    res: ServerResponse,
-    params: Params,
-    parsedUrl: UrlWithParsedQuery
-  ): Promise<boolean> {
+  protected async _beforeCatchAllRender(req: IncomingMessage, res: ServerResponse, params: Params, parsedUrl: UrlWithParsedQuery): Promise<boolean> {
     const { pathname } = parsedUrl;
     const pathParts = params.path || [];
     const path = `/${pathParts.join("/")}`;
@@ -374,9 +317,7 @@ export class JoyReactDevServer extends JoyReactServer {
     // conflicting page
     if (await this.hasPublicFile(path)) {
       if (await this.hasPage(pathname!)) {
-        const err = new Error(
-          `A conflicting public file and page file was found for path ${pathname}`
-        );
+        const err = new Error(`A conflicting public file and page file was found for path ${pathname}`);
         res.statusCode = 500;
         await this.renderError(err, req, res, pathname!, {});
         return true;
@@ -388,11 +329,7 @@ export class JoyReactDevServer extends JoyReactServer {
     return false;
   }
 
-  async run(
-    req: IncomingMessage,
-    res: ServerResponse,
-    parsedUrl: UrlWithParsedQuery
-  ): Promise<void> {
+  async run(req: IncomingMessage, res: ServerResponse, parsedUrl: UrlWithParsedQuery): Promise<void> {
     await this.devReady;
 
     const { basePath } = this.joyConfig;
@@ -413,11 +350,7 @@ export class JoyReactDevServer extends JoyReactServer {
       }
     }
 
-    const { finished = false } = await this.hotReloader!.run(
-      req,
-      res,
-      parsedUrl
-    );
+    const { finished = false } = await this.hotReloader!.run(req, res, parsedUrl);
 
     if (finished) {
       return;
@@ -471,9 +404,7 @@ export class JoyReactDevServer extends JoyReactServer {
     });
 
     fsRoutes.unshift({
-      match: route(
-        `/_joy/${CLIENT_STATIC_FILES_PATH}/${this.buildId}/${DEV_CLIENT_PAGES_MANIFEST}`
-      ),
+      match: route(`/_joy/${CLIENT_STATIC_FILES_PATH}/${this.buildId}/${DEV_CLIENT_PAGES_MANIFEST}`),
       type: "route",
       name: `_joy/${CLIENT_STATIC_FILES_PATH}/${this.buildId}/${DEV_CLIENT_PAGES_MANIFEST}`,
       fn: async (_req, res) => {
@@ -527,10 +458,7 @@ export class JoyReactDevServer extends JoyReactServer {
     return [];
   }
 
-  _filterAmpDevelopmentScript(
-    html: string,
-    event: { line: number; col: number; code: string }
-  ): boolean {
+  _filterAmpDevelopmentScript(html: string, event: { line: number; col: number; code: string }): boolean {
     if (event.code !== "DISALLOWED_SCRIPT_TAG") {
       return true;
     }
@@ -538,10 +466,7 @@ export class JoyReactDevServer extends JoyReactServer {
     const snippetChunks = html.split("\n");
 
     let snippet;
-    if (
-      !(snippet = html.split("\n")[event.line - 1]) ||
-      !(snippet = snippet.substring(event.col))
-    ) {
+    if (!(snippet = html.split("\n")[event.line - 1]) || !(snippet = snippet.substring(event.col))) {
       return true;
     }
 
@@ -563,29 +488,17 @@ export class JoyReactDevServer extends JoyReactServer {
     const __getStaticPaths = async () => {
       const { publicRuntimeConfig, serverRuntimeConfig } = this.joyConfig;
 
-      const paths = await this.staticPathsWorker.loadStaticPaths(
-        this.outDir,
-        pathname,
-        !this.renderOpts.dev && this._isLikeServerless,
-        {
-          publicRuntimeConfig,
-          serverRuntimeConfig,
-        }
-      );
+      const paths = await this.staticPathsWorker.loadStaticPaths(this.outDir, pathname, !this.renderOpts.dev && this._isLikeServerless, {
+        publicRuntimeConfig,
+        serverRuntimeConfig,
+      });
       return paths;
     };
-    const { paths: staticPaths, fallback } = (
-      await withCoalescedInvoke(__getStaticPaths)(`staticPaths-${pathname}`, [])
-    ).value as any;
+    const { paths: staticPaths, fallback } = (await withCoalescedInvoke(__getStaticPaths)(`staticPaths-${pathname}`, [])).value as any;
 
     return {
       staticPaths,
-      fallbackMode:
-        fallback === "unstable_blocking"
-          ? "blocking"
-          : fallback === true
-          ? "static"
-          : false,
+      fallbackMode: fallback === "unstable_blocking" ? "blocking" : fallback === true ? "static" : false,
     };
   }
 
@@ -616,12 +529,7 @@ export class JoyReactDevServer extends JoyReactServer {
   //   return context;
   // }
 
-  async renderToHTML(
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathname: string,
-    query: { [key: string]: string }
-  ): Promise<string | null> {
+  async renderToHTML(req: IncomingMessage, res: ServerResponse, pathname: string, query: { [key: string]: string }): Promise<string | null> {
     await this.devReady;
 
     await this.hotReloader.ensurePath(pathname);
@@ -668,13 +576,7 @@ export class JoyReactDevServer extends JoyReactServer {
     return html;
   }
 
-  async renderErrorToHTML(
-    err: Error | null,
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathname: string,
-    query: { [key: string]: string }
-  ): Promise<string | null> {
+  async renderErrorToHTML(err: Error | null, req: IncomingMessage, res: ServerResponse, pathname: string, query: { [key: string]: string }): Promise<string | null> {
     await this.devReady;
     if (res.statusCode === 404 && (await this.hasPage("/404"))) {
       await this.hotReloader!.ensurePath("/404");
@@ -689,9 +591,7 @@ export class JoyReactDevServer extends JoyReactServer {
     }
 
     if (!err && res.statusCode === 500) {
-      err = new Error(
-        "An undefined error was thrown sometime during render... "
-      );
+      err = new Error("An undefined error was thrown sometime during render... ");
     }
 
     try {
@@ -704,11 +604,7 @@ export class JoyReactDevServer extends JoyReactServer {
     }
   }
 
-  sendHTML(
-    req: IncomingMessage,
-    res: ServerResponse,
-    html: string
-  ): Promise<void> {
+  sendHTML(req: IncomingMessage, res: ServerResponse, html: string): Promise<void> {
     // In dev, we should not cache pages for any reason.
     res.setHeader("Cache-Control", "no-store, must-revalidate");
     return super.sendHTML(req, res, html);
@@ -718,11 +614,7 @@ export class JoyReactDevServer extends JoyReactServer {
     res.setHeader("Cache-Control", "no-store, must-revalidate");
   }
 
-  private servePublic(
-    req: IncomingMessage,
-    res: ServerResponse,
-    pathParts: string[]
-  ): Promise<void> {
+  private servePublic(req: IncomingMessage, res: ServerResponse, pathParts: string[]): Promise<void> {
     const p = pathJoin(this.publicDir, ...pathParts.map(encodeURIComponent));
     return this.serveStatic(req, res, p);
   }
@@ -772,12 +664,7 @@ export class JoyReactDevServer extends JoyReactServer {
     // Checks for .joy/out/static, .joy/out/server, static and public.
     // Note that in development .joy/server is available for error reporting purposes.
     // see `packages/joy/joy-server/server/joy-react-server.ts` for more details.
-    if (
-      untrustedFilePath.startsWith(pathJoin(this.outDir, "static") + sep) ||
-      untrustedFilePath.startsWith(pathJoin(this.outDir, "server") + sep) ||
-      untrustedFilePath.startsWith(pathJoin(this.dir, "static") + sep) ||
-      untrustedFilePath.startsWith(pathJoin(this.dir, "public") + sep)
-    ) {
+    if (untrustedFilePath.startsWith(pathJoin(this.outDir, "static") + sep) || untrustedFilePath.startsWith(pathJoin(this.outDir, "server") + sep) || untrustedFilePath.startsWith(pathJoin(this.dir, "static") + sep) || untrustedFilePath.startsWith(pathJoin(this.dir, "public") + sep)) {
       return true;
     }
 

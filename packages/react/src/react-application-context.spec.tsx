@@ -2,20 +2,21 @@ import React from "react";
 import { ApplicationConfig } from "./application-config";
 import { ReactApplicationContext } from "./react-application-context";
 import { ReactModel } from "./react-model";
-import { ReactController } from "./react-controller";
+import { ReactBaseController } from "./react-base-controller";
 import { render } from "@testing-library/react";
 import { Model } from "./react-model.decorator";
-import { Controller } from "./react-controller.decorator";
+import { ReactController } from "./react-controller.decorator";
 import { matchPath, MemoryRouter, useLocation } from "react-router-dom";
 import "reflect-metadata";
 import { ReactApplicationConfig } from "./react-application-config";
-import { Configuration, Inject, Injectable, JoyContainer } from "@symph/core";
+import { Configuration, Inject, JoyContainer } from "@symph/core";
 import { ReactApplicationFactory } from "./react-application-factory";
+import { ReactComponent } from "./react-component.decorator";
 
 describe("react-application", () => {
   describe("react-application", () => {
     test("create", async () => {
-      @Injectable()
+      @ReactComponent()
       class HelloProvider {
         private message = "hello world";
 
@@ -32,11 +33,7 @@ describe("react-application", () => {
 
       const applicationConfig = new ApplicationConfig();
       const container = new JoyContainer();
-      const app = new ReactApplicationContext(
-        AppConfig,
-        applicationConfig,
-        container
-      );
+      const app = new ReactApplicationContext(AppConfig, applicationConfig, container);
       await app.init();
 
       const helloProvider = await app.get(HelloProvider);
@@ -46,11 +43,8 @@ describe("react-application", () => {
 
   describe("react-mvc", () => {
     test("define a react controller", async () => {
-      @Controller()
-      class HelloController extends ReactController<
-        { propMsg: string },
-        { stateMsg: string }
-      > {
+      @ReactController()
+      class HelloController extends ReactBaseController<{ propMsg: string }, { stateMsg: string }> {
         constructor(props: any, context: any) {
           super(props, context);
           this.state = {
@@ -71,9 +65,7 @@ describe("react-application", () => {
       }
 
       const app = await ReactApplicationFactory.create();
-      const App = app.start(() => (
-        <HelloController propMsg={"hello propMsg"} />
-      ));
+      const App = app.start(() => <HelloController propMsg={"hello propMsg"} />);
       const { getByTestId, container, rerender } = render(App);
       expect(getByTestId("propMsg").innerHTML).toEqual("hello propMsg");
       expect(getByTestId("stateMsg").innerHTML).toEqual("hello stateMsg");
@@ -87,8 +79,8 @@ describe("react-application", () => {
         }
       }
 
-      @Controller()
-      class HelloController extends ReactController {
+      @ReactController()
+      class HelloController extends ReactBaseController {
         @Inject()
         private helloModel: HelloModel;
 
@@ -123,8 +115,8 @@ describe("react-application", () => {
         }
       }
 
-      @Controller()
-      class HelloController extends ReactController<{
+      @ReactController()
+      class HelloController extends ReactBaseController<{
         message: string;
       }> {
         @Inject()
@@ -137,15 +129,7 @@ describe("react-application", () => {
           }, 50);
         }
 
-        renderView():
-          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-          | string
-          | number
-          | React.ReactNodeArray
-          | React.ReactPortal
-          | boolean
-          | null
-          | undefined {
+        renderView(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | string | number | React.ReactNodeArray | React.ReactPortal | boolean | null | undefined {
           const { message } = this.props;
           const { status } = this.helloModel.state;
           return (
@@ -167,17 +151,12 @@ describe("react-application", () => {
       }
 
       // const app = await SymphReactFactory.create(AppConfig)
-      const app = new ReactApplicationContext(
-        ReactApplicationConfig,
-        new ApplicationConfig()
-      );
+      const app = new ReactApplicationContext(ReactApplicationConfig, new ApplicationConfig());
       await app.init();
       // const helloModel = await app.get(HelloModel,)
       // expect(helloModel).not.toBeNull()
 
-      const App = app.start(() => (
-        <HelloController message={"hello from props"} />
-      ));
+      const App = app.start(() => <HelloController message={"hello from props"} />);
       const { getByTestId, container, rerender } = render(App);
       const messageDom = getByTestId("message");
       const statusDom = getByTestId("status");
@@ -201,8 +180,8 @@ describe("react-application", () => {
         }
       }
 
-      @Controller()
-      class HelloController extends ReactController<{
+      @ReactController()
+      class HelloController extends ReactBaseController<{
         message: string;
       }> {
         @Inject()
@@ -215,15 +194,7 @@ describe("react-application", () => {
           }, 500);
         }
 
-        renderView():
-          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-          | string
-          | number
-          | React.ReactNodeArray
-          | React.ReactPortal
-          | boolean
-          | null
-          | undefined {
+        renderView(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | string | number | React.ReactNodeArray | React.ReactPortal | boolean | null | undefined {
           const { message } = this.props;
           const { status } = this.helloModel.state;
 
@@ -239,9 +210,7 @@ describe("react-application", () => {
       }
 
       const app = await ReactApplicationFactory.create();
-      const App = app.start(() => (
-        <HelloController message={"hello from props"} />
-      ));
+      const App = app.start(() => <HelloController message={"hello from props"} />);
       const { getByTestId, container, rerender } = render(App);
       const messageDom = getByTestId("message");
       const statusDom = getByTestId("status");
@@ -264,8 +233,8 @@ describe("react-application", () => {
         }
       }
 
-      @Controller()
-      class HelloController extends ReactController {
+      @ReactController()
+      class HelloController extends ReactBaseController {
         @Inject()
         private helloModel: HelloModel;
 
@@ -277,15 +246,7 @@ describe("react-application", () => {
           this.helloModel1.say();
         }
 
-        renderView():
-          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-          | string
-          | number
-          | React.ReactNodeArray
-          | React.ReactPortal
-          | boolean
-          | null
-          | undefined {
+        renderView(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | string | number | React.ReactNodeArray | React.ReactPortal | boolean | null | undefined {
           const { status } = this.helloModel.state;
           const { status: status1 } = this.helloModel1.state;
           return (
@@ -298,9 +259,7 @@ describe("react-application", () => {
       }
 
       const app = await ReactApplicationFactory.create();
-      const App = app.start(() => (
-        <HelloController message={"hello from props"} />
-      ));
+      const App = app.start(() => <HelloController message={"hello from props"} />);
       const { getByTestId, container, rerender } = render(App);
       const statusDom = getByTestId("status");
       const statusDom1 = getByTestId("status1");
@@ -339,16 +298,12 @@ describe("react-application", () => {
         // if (root) {
         //   parentPath = root.path
         // }
-        const basepath =
-          typeof baseroute === "string" ? baseroute : baseroute.path;
+        const basepath = typeof baseroute === "string" ? baseroute : baseroute.path;
 
         let childRoute: any;
         let matched: any;
         for (const curRoute of routes) {
-          if (
-            !curRoute.path.startsWith(basepath) ||
-            curRoute.path === baseroute
-          ) {
+          if (!curRoute.path.startsWith(basepath) || curRoute.path === baseroute) {
             continue;
           }
           matched = matchPath(pathname, curRoute);
@@ -375,9 +330,9 @@ describe("react-application", () => {
         return <div>post detail, id={id}</div>;
       }
 
-      @Controller({ path: "/post" })
+      @ReactController({ path: "/post" })
       // @Controller()
-      class PostController extends ReactController {
+      class PostController extends ReactBaseController {
         // @Controller.BindPathVariable({key: 'postId'})
         // private postId: string
 

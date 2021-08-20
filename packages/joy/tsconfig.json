@@ -1,6 +1,18 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "strict": true,
+    "target": "ES2015",
+    "module": "CommonJS",
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "removeComments": false,
+    "noLib": false,
+    "resolveJsonModule": true,
+    "strictPropertyInitialization": false,
+
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -8,20 +20,10 @@
     "isolatedModules": true,
     "declaration": true,
     "jsx": "react",
-    "outDir": "dist"
+    "outDir": "dist/",
+    "rootDir": "src"
   },
-  "files": [
-    "../../node_modules/jest-playwright-preset/types/global.d.ts",
-    "../../node_modules/expect-playwright/global.d.ts"
-  ],
+  "files": ["../../node_modules/jest-playwright-preset/types/global.d.ts", "../../node_modules/expect-playwright/global.d.ts"],
   "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "examples",
-    "test",
-    "./*.d.ts",
-    "**/*.spec.ts",
-    "**/*.spec.tsx"
-  ]
+  "exclude": ["node_modules", "dist", "examples", "test", "./*.d.ts", "**/*.spec.ts", "**/*.spec.tsx"]
 }

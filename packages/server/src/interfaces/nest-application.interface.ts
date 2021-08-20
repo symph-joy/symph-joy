@@ -1,7 +1,4 @@
-import {
-  CorsOptions,
-  CorsOptionsDelegate,
-} from "./external/cors-options.interface";
+import { CorsOptions, CorsOptionsDelegate } from "./external/cors-options.interface";
 import { CanActivate } from "./features/can-activate.interface";
 import { NestInterceptor } from "./features/nest-interceptor.interface";
 import { HttpServer } from "./http/http-server.interface";
@@ -18,22 +15,19 @@ import { NestHybridApplicationOptions } from "./microservices/nest-hybrid-applic
 import { ExceptionFilter } from "./exceptions";
 import { PipeTransform } from "./features/pipe-transform.interface";
 import { ShutdownSignal } from "../enums";
-import { IJoyContext } from "@symph/core";
+import { ICoreContext } from "@symph/core";
 
 /**
  * Interface defining the core NestApplication object.
  *
  * @publicApi
  */
-export interface INestApplication extends IJoyContext {
+export interface INestApplication extends ICoreContext {
   /**
    * Registers the request/context object for a given context ID (DI container sub-tree).
    * @returns {void}
    */
-  registerRequestByContextId<T = any>(
-    request: T,
-    contextId: { id: number }
-  ): void;
+  registerRequestByContextId<T = any>(request: T, contextId: { id: number }): void;
 
   /**
    * Enables the usage of shutdown hooks. Will call the
@@ -68,11 +62,7 @@ export interface INestApplication extends IJoyContext {
    * @returns {Promise} A Promise that, when resolved, is a reference to the underlying HttpServer.
    */
   listen(port: number | string, callback?: () => void): Promise<any>;
-  listen(
-    port: number | string,
-    hostname: string,
-    callback?: () => void
-  ): Promise<any>;
+  listen(port: number | string, hostname: string, callback?: () => void): Promise<any>;
 
   /**
    * Returns the url the application is listening at, based on OS and IP version. Returns as an IP value either in IPv6 or IPv4
@@ -116,10 +106,7 @@ export interface INestApplication extends IJoyContext {
    * @param {NestHybridApplicationOptions} hybridOptions Hybrid options object
    * @returns {INestMicroservice}
    */
-  connectMicroservice<T extends object = any>(
-    options: T,
-    hybridOptions?: NestHybridApplicationOptions
-  ): INestMicroservice;
+  connectMicroservice<T extends object = any>(options: T, hybridOptions?: NestHybridApplicationOptions): INestMicroservice;
 
   /**
    * Returns array of the microservices connected to the NestApplication.

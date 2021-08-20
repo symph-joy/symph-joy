@@ -25,14 +25,14 @@ import { getPagePath } from "../joy-server/server/require";
 import { normalizePagePath } from "../joy-server/server/normalize-page-path";
 import escapeStringRegexp from "escape-string-regexp";
 import { writeBuildId } from "./write-build-id";
-import { JoyAppConfig } from "../joy-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
-import { CoreContext, Injectable } from "@symph/core";
+import { CoreContext, Component } from "@symph/core";
 import { getWebpackConfigForSrc } from "./webpack-config-for-src";
 import { FileGenerator } from "../plugin/file-generator";
 import { FileScanner } from "../joy-server/server/scanner/file-scanner";
-import Worker from "jest-worker";
+import { Worker } from "jest-worker";
 import { ReactRouter } from "@symph/react";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
@@ -60,7 +60,7 @@ export type PrerenderManifest = {
   preview?: __ApiPreviewProps; // todo remove
 };
 
-@Injectable()
+@Component()
 export class JoyBuildService {
   private dir: string;
   private distDir: string;
@@ -140,9 +140,9 @@ export class JoyBuildService {
 
     await Promise.all(
       reactRoutes.map(async (reactRoute) => {
-        const { path: _pathname, providerId, hasState, hasStaticState } = reactRoute;
+        const { path: _pathname, providerName: providerName, hasState, hasStaticState } = reactRoute;
         const path: string = _pathname as string;
-        if (!providerId) {
+        if (!providerName) {
           throw new Error(`The route${path} is not a provider.`);
         }
 
@@ -164,7 +164,7 @@ export class JoyBuildService {
         // const routeModule = this.coreContext.getProviderDefinition<
         //   ClassProvider
         // >(providerId);
-        // const routeClass = (routeModule?.useClass as any) as typeof ReactController;
+        // const routeClass = (routeModule?.useClass as any) as typeof ReactBaseController;
         const pathIsDynamic = isDynamicRoute(path);
         const parentRoutes = this.joyReactRoute.getParentRoutes(reactRoute.path);
 

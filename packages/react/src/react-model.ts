@@ -1,14 +1,8 @@
 import { ReactReduxService } from "./redux/react-redux.service";
-import {
-  Inject,
-  IProviderInfoWare,
-  ProviderInfo,
-  ProviderLifecycle,
-} from "@symph/core";
+import { Inject, IProviderInfoWare, ProviderInfo, ProviderLifecycle, RuntimeException, TProviderName } from "@symph/core";
 import { Action } from "redux";
 
-export abstract class ReactModel<TState>
-  implements ProviderLifecycle, IProviderInfoWare {
+export abstract class ReactModel<TState> implements ProviderLifecycle, IProviderInfoWare {
   public getNamespace(): string {
     return this._namespace;
   }
@@ -30,7 +24,15 @@ export abstract class ReactModel<TState>
   }
 
   setProviderInfo({ name }: ProviderInfo): void {
-    this._namespace = name;
+    if (this._namespace) {
+      return;
+    }
+    const providerName = name.find((it) => typeof it === "string");
+    if (!providerName || typeof providerName !== "string") {
+      throw new RuntimeException(`If model namespace is not defined, the provider name must be a string,
+       and will be used as it's namespace. the current get provider name is ${String(name)}).`);
+    }
+    this._namespace = providerName;
   }
 
   public get state(): TState {

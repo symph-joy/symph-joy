@@ -1,52 +1,50 @@
-import { Injectable, Tap } from "@symph/core";
-import { IReactRoute } from "@symph/react";
+import { Component, Tap, TProviderName, Type } from "@symph/core";
+import { IReactRoute, IRouteMeta } from "@symph/react";
 import { FileScanner } from "../../joy-server/server/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join } from "path";
 
 import { FileGenerator } from "../../plugin/file-generator";
 import { handlebars } from "../../lib/handlebars";
-import {
-  IJoyReactRouteBuild,
-  JoyReactRouterPlugin,
-} from "./joy-react-router-plugin";
+import { IJoyReactRouteBuild, JoyReactRouterPlugin } from "./joy-react-router-plugin";
 
 interface IReactRouteBuildDev extends IJoyReactRouteBuild {
-  srcPath?: string;
+  // srcPath?: string;
   isAdd?: boolean;
 }
 
 /**
  * used in dev build phase.
  */
-@Injectable()
-export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<
-  IReactRouteBuildDev
-> {
-  constructor(
-    protected fileGenerator: FileGenerator,
-    protected fileScanner: FileScanner
-  ) {
-    super(fileGenerator, fileScanner);
-  }
+@Component()
+export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBuildDev> {
+  // constructor(
+  //   protected fileGenerator: FileGenerator,
+  //   // protected fileScanner: FileScanner
+  // ) {
+  //   super(fileGenerator);
+  // }
 
-  protected extendBuildRoute(route: IJoyReactRouteBuild): IReactRouteBuildDev {
+  protected fromRouteMeta(path: string, providerName: TProviderName, meta: IRouteMeta, useClass: Type): IReactRouteBuildDev {
+    const route = super.fromRouteMeta(path, providerName, meta, useClass);
     return {
       ...route,
       isAdd: false,
     };
   }
 
-  protected mergeRouteExtendState(
-    to: IReactRouteBuildDev,
-    from: IReactRouteBuildDev
-  ) {
+  // protected extendBuildRoute(route: IJoyReactRouteBuild): IReactRouteBuildDev {
+  //   return {
+  //     ...route,
+  //     isAdd: false,
+  //   };
+  // }
+
+  protected mergeRouteExtendState(to: IReactRouteBuildDev, from: IReactRouteBuildDev) {
     to.isAdd = from.isAdd;
   }
 
-  private plainRoutesTree(
-    routes: IReactRouteBuildDev[]
-  ): IReactRouteBuildDev[] {
+  private plainRoutesTree(routes: IReactRouteBuildDev[]): IReactRouteBuildDev[] {
     const plainRoutes: any[] = [];
     const getFromRoutes = (rootRoutes: IReactRoute[]) => {
       if (!rootRoutes?.length) {
@@ -80,9 +78,7 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<
     if (waitingRoutes.length == 0) {
       return;
     }
-    const routeFiles = waitingRoutes
-      .map((r) => r.srcPath)
-      .filter(Boolean) as string[];
+    const routeFiles = waitingRoutes.map((r) => r.srcPath).filter(Boolean) as string[];
 
     return routeFiles;
   }

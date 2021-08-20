@@ -5,10 +5,8 @@ import { waitForMoment } from "../../../util/joy-test-utils";
 import got from "got";
 
 describe("hello joy dev", () => {
-  let start: number;
   let testContext: JoyTestContext;
   beforeAll(async () => {
-    start = Date.now();
     const curPath = path.resolve(__dirname, "../");
     testContext = await JoyTestContext.createDevServerContext(curPath);
   }, 999999);
@@ -18,17 +16,18 @@ describe("hello joy dev", () => {
   });
 
   test("api: should return hello message", async () => {
+    // await waitForMoment()
     const response = await got.get(testContext.getUrl("/api/hello"), {
       throwHttpErrors: false,
       responseType: "text",
     });
     expect(response.body.trim()).toBe("Hello world!");
-  }, 99999999);
+  }, 999999);
 
   test("react: should render hello message", async () => {
     // await waitForMoment()
     await page.goto(testContext.getUrl("/"));
     const browser = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(browser).toContain("Hello world!");
-  }, 99999999);
+  }, 999999);
 });

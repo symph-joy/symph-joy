@@ -25,11 +25,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWAR
 
 import { NodePath, PluginObj, types as BabelTypes } from "@babel/core";
 
-export default function ({
-  types: t,
-}: {
-  types: typeof BabelTypes;
-}): PluginObj {
+export default function ({ types: t }: { types: typeof BabelTypes }): PluginObj {
   return {
     visitor: {
       ImportDeclaration(path: NodePath<BabelTypes.ImportDeclaration>) {
@@ -52,26 +48,18 @@ export default function ({
         binding.referencePaths.forEach((refPath) => {
           let callExpression = refPath.parentPath;
 
-          if (
-            callExpression.isMemberExpression() &&
-            callExpression.node.computed === false
-          ) {
+          if (callExpression && callExpression.isMemberExpression() && callExpression.node.computed === false) {
             const property = callExpression.get("property");
-            if (
-              !Array.isArray(property) &&
-              property.isIdentifier({ name: "Map" })
-            ) {
+            if (!Array.isArray(property) && property.isIdentifier({ name: "Map" })) {
               callExpression = callExpression.parentPath;
             }
           }
 
-          if (!callExpression.isCallExpression()) return;
+          if (!callExpression || !callExpression.isCallExpression()) return;
 
           let args = callExpression.get("arguments") as any;
           if (args.length > 2) {
-            throw callExpression.buildCodeFrameError(
-              "@symph/joy/dynamic only accepts 2 arguments"
-            );
+            throw callExpression.buildCodeFrameError("@symph/joy/dynamic only accepts 2 arguments");
           }
 
           if (!args[0]) {
@@ -97,11 +85,7 @@ export default function ({
 
           const properties = options.get("properties");
           const propertiesMap: {
-            [key: string]: NodePath<
-              | BabelTypes.ObjectProperty
-              | BabelTypes.ObjectMethod
-              | BabelTypes.SpreadProperty
-            >;
+            [key: string]: NodePath<BabelTypes.ObjectProperty | BabelTypes.ObjectMethod | BabelTypes.SpreadProperty>;
           } = {};
 
           properties.forEach((property: any) => {
@@ -147,21 +131,12 @@ export default function ({
                     [],
                     t.arrayExpression(
                       dynamicImports.map((dynamicImport) => {
-                        return t.callExpression(
-                          t.memberExpression(
-                            t.identifier("require"),
-                            t.identifier("resolveWeak")
-                          ),
-                          [dynamicImport]
-                        );
+                        return t.callExpression(t.memberExpression(t.identifier("require"), t.identifier("resolveWeak")), [dynamicImport]);
                       })
                     )
                   )
                 ),
-                t.objectProperty(
-                  t.identifier("modules"),
-                  t.arrayExpression(dynamicImports)
-                ),
+                t.objectProperty(t.identifier("modules"), t.arrayExpression(dynamicImports)),
               ])
             )
           );

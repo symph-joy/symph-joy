@@ -4,30 +4,24 @@ import React, { DOMElement, ReactElement } from "react";
 import reactDom from "react-dom";
 import { ReactReduxService } from "./redux/react-redux.service";
 import { IReactRoute } from "./interfaces/react-route.interface";
-import { EntryType, JoyContainer, Logger, CoreContext } from "@symph/core";
+import { EntryType, JoyContainer, Logger, CoreContext, TProviderName } from "@symph/core";
 import { IReactApplication } from "./interfaces";
 import { TReactAppComponent } from "./react-app-component";
 
 /**
  * @publicApi
  */
-export class ReactApplicationContext extends CoreContext
-  implements IReactApplication {
+export class ReactApplicationContext extends CoreContext implements IReactApplication {
   private readonly logger = new Logger(ReactApplicationContext.name, true);
   protected readonly reduxStore: ReactReduxService;
   protected routes: IReactRoute[];
 
-  constructor(
-    protected readonly entry: EntryType,
-    protected readonly appConfig: ApplicationConfig,
-    container?: JoyContainer,
-    initState: Record<string, any> = {}
-  ) {
+  constructor(protected readonly entry: EntryType, protected readonly appConfig: ApplicationConfig, container?: JoyContainer, initState: Record<string, any> = {}) {
     super(entry, container);
     this.reduxStore = new ReactReduxService(this.appConfig, initState);
   }
 
-  protected async initContext(): Promise<string[]> {
+  protected async initContext(): Promise<TProviderName[]> {
     const superIds = await super.initContext();
     const myIds = await this.loadModule({
       applicationConfig: {
@@ -75,10 +69,7 @@ export class ReactApplicationContext extends CoreContext
   }
 
   start(rootComponent?: TReactAppComponent): ReactElement;
-  start(
-    rootComponent: TReactAppComponent,
-    domContainer?: DOMElement<any, any> | string
-  ): ReactElement {
+  start(rootComponent: TReactAppComponent, domContainer?: DOMElement<any, any> | string): ReactElement {
     // return createApplicationComponent(this);
     const appContent = renderComponent({
       appContext: this,

@@ -1,16 +1,12 @@
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 import { ServerApplication } from "@symph/server";
 import { JoyReactDevServer } from "./joy-react-dev-server";
 import { JoyApiDevServer } from "./joy-api-dev-server";
 import { JoyServer } from "../joy-server/server/joy-server";
 
-@Injectable()
+@Component()
 export class JoyDevServer extends JoyServer {
-  constructor(
-    protected appContext: ServerApplication,
-    public reactServer: JoyReactDevServer,
-    public apiServer: JoyApiDevServer
-  ) {
+  constructor(protected appContext: ServerApplication, public reactServer: JoyReactDevServer, public apiServer: JoyApiDevServer) {
     super(appContext, reactServer, apiServer);
   }
 }

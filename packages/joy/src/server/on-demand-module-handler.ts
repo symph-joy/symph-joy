@@ -2,22 +2,22 @@ import { EventEmitter } from "events";
 import { IncomingMessage, ServerResponse } from "http";
 import { join, posix } from "path";
 import { parse } from "url";
-import webpack, { Compilation, Module, NormalModule } from "webpack";
+import webpack, { Compilation, Module, MultiCompiler, NormalModule } from "webpack";
 import * as Log from "../build/output/log";
-import {
-  normalizePagePath,
-  normalizePathSep,
-} from "../joy-server/server/normalize-page-path";
+import { normalizePagePath, normalizePathSep } from "../joy-server/server/normalize-page-path";
 import { pageNotFoundError } from "../joy-server/server/require";
 import { findPageFile } from "./lib/find-page-file";
 import getRouteFromEntrypoint from "../joy-server/server/get-route-from-entrypoint";
 import { date } from "@tsed/schema";
+import Watcher from "watchpack/Watcher";
 
 export const ADDED = Symbol("added");
 export const BUILDING = Symbol("building");
 export const BUILT = Symbol("built");
 
 export const COMPILER_DONE_EVENT = Symbol("compile_done");
+
+type MultiWatching = ReturnType<MultiCompiler["watch"]>;
 
 export enum CompileStatusEnum {
   ADDED,
@@ -49,32 +49,36 @@ export default class OnDemandModuleHandler {
   private compileModules = new Map<string, CompileStatusEnum>();
   private invalidator: Invalidator;
 
-  constructor(watcher: any, multiCompiler: webpack.MultiCompiler) {
+  constructor(private multiCompiler: webpack.MultiCompiler) {
     const { compilers } = multiCompiler;
-    this.invalidator = new Invalidator(watcher, multiCompiler);
+    this.invalidator = new Invalidator(multiCompiler);
 
     for (const compiler of compilers) {
-      compiler.hooks.make.tap(
-        "JoyJsOnDemandEntries",
-        (_compilation: Compilation) => {
-          this.invalidator.startBuilding();
-        }
-      );
+      compiler.hooks.make.tap("JoyJsOnDemandEntries", (_compilation: Compilation) => {
+        this.invalidator.startBuilding();
+      });
     }
-
     multiCompiler.hooks.done.tap("JoyJsOnDemandModules", (multiStats) => {
       const [clientStats, serverStats, apiState] = multiStats.stats;
       const { compilation } = clientStats;
       const { modules } = compilation;
       for (const mod of modules) {
-        const { resource } = mod as any;
+        const { resource } = mod as never;
         if (resource) {
           const mod = this.compileModules.get(resource);
-          if (
-            mod !== undefined &&
-            (mod === CompileStatusEnum.ADDED ||
-              mod === CompileStatusEnum.BUILDING)
-          ) {
+          if (mod !== undefined && (mod === CompileStatusEnum.ADDED || mod === CompileStatusEnum.BUILDING)) {
+            this.doneCallbacks.emit(resource);
+          }
+        }
+      }
+
+      const { compilation: apiCompilation } = apiState;
+      const { modules: apiModules } = apiCompilation;
+      for (const mod of apiModules) {
+        const { resource } = mod as never;
+        if (resource) {
+          const mod = this.compileModules.get(resource);
+          if (mod !== undefined && (mod === CompileStatusEnum.ADDED || mod === CompileStatusEnum.BUILDING)) {
             this.doneCallbacks.emit(resource);
           }
         }
@@ -89,6 +93,14 @@ export default class OnDemandModuleHandler {
     //   disposeInactiveEntries(watcher, lastAccessPages, maxInactiveAge)
     // }, 5000)
     // disposeHandler.unref && disposeHandler.unref()
+  }
+
+  public watch(watcher: MultiWatching) {
+    this.invalidator.watch(watcher);
+    this.multiCompiler.hooks.invalid.tap("JoyOnDemandModuleInvalid", () => {
+      this.invalidator.startBuilding();
+    });
+    // this.invalidator = new Invalidator(watcher, this.multiCompiler);
   }
 
   public async ensureModules(moduleFilePaths: string[]): Promise<void> {
@@ -127,7 +139,6 @@ export default class OnDemandModuleHandler {
         });
       }
     });
-
     this.invalidator.invalidate();
     return rst;
   }
@@ -141,6 +152,7 @@ export default class OnDemandModuleHandler {
         if (err) return reject(err);
         if (this.invalidator.building || this.invalidator.rebuildAgain) {
           this.doneCallbacks.once(COMPILER_DONE_EVENT, listener);
+          return;
         }
         resolve();
       };
@@ -188,16 +200,20 @@ export default class OnDemandModuleHandler {
 // Otherwise, webpack hash gets changed and it'll force the client to reload.
 class Invalidator {
   private multiCompiler: webpack.MultiCompiler;
-  private watcher: any;
+  private watcher: MultiWatching;
   public building: boolean;
   public rebuildAgain: boolean;
 
-  constructor(watcher: any, multiCompiler: webpack.MultiCompiler) {
+  constructor(multiCompiler: webpack.MultiCompiler) {
     this.multiCompiler = multiCompiler;
-    this.watcher = watcher;
+    // this.watcher = watcher;
     // contains an array of types of compilers currently building
     this.building = false;
     this.rebuildAgain = false;
+  }
+
+  public watch(watcher: MultiWatching) {
+    this.watcher = watcher;
   }
 
   invalidate() {

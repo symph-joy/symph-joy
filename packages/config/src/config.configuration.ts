@@ -1,41 +1,46 @@
-import {
-  Configuration,
-  CoreContext,
-  Inject,
-  Injectable,
-  Optional,
-  ProviderLifecycle,
-} from "@symph/core";
-import { ConfigService } from "./config.service";
-import { SYMPH_CONFIG_INIT_VALUE, SYMPH_CONFIG_LOADERS } from "./constants";
-import { ConfigModuleOptions } from "./types/config-options.interface";
-import { ConfigLoader } from "./loaders/config-loader";
-
-const defaultOptions: ConfigModuleOptions = {
-  // cache: true
-};
+import { Configuration, CoreContext } from "@symph/core";
+import { ConfigService, ConfigServiceOptions } from "./config.service";
+import { SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_OPTIONS } from "./constants";
+import { ConfigLoaderFactory } from "./loader/factories/config-loader-factory";
 
 @Configuration()
 export class ConfigConfiguration {
   constructor(protected context: CoreContext) {}
 
+  protected isAutoLoadConfig(): boolean {
+    return true;
+  }
+
   @Configuration.Provider()
   public configService: ConfigService;
 
-  getDefaultConfig(): ConfigModuleOptions {
-    return defaultOptions;
+  @Configuration.Provider()
+  public getConfigLoaderFactory(): ConfigLoaderFactory {
+    return new ConfigLoaderFactory();
   }
 
-  @Configuration.Provider({ id: SYMPH_CONFIG_LOADERS, type: Object })
-  private async _getConfigLoaders(
-    @Optional() @Inject(SYMPH_CONFIG_INIT_VALUE) initValue: Record<string, any>
-  ): Promise<ConfigLoader[]> {
-    return this.getConfigLoaders(initValue);
+  @Configuration.Provider({ name: SYMPH_CONFIG_DEFAULT_VALUE, type: Object })
+  getDefaultConfig(): Record<string, unknown> {
+    return {};
   }
 
-  protected async getConfigLoaders(
-    initConfig: Record<string, unknown>
-  ): Promise<ConfigLoader[]> {
-    return [];
+  @Configuration.Provider({ name: SYMPH_CONFIG_OPTIONS, type: Object })
+  getConfigServiceOptions(): ConfigServiceOptions {
+    return {
+      isAutoLoadConfig: this.isAutoLoadConfig(),
+    };
   }
+
+  // @Configuration.Provider({ name: SYMPH_CONFIG_LOADERS, type: Object })
+  // private async _getConfigLoaders(
+  //   @Optional() @Inject(SYMPH_CONFIG_INIT_VALUE) initValue: Record<string, any>
+  // ): Promise<ConfigLoader[]> {
+  //   return this.getConfigLoaders(initValue);
+  // }
+  //
+  // protected async getConfigLoaders(
+  //   initConfig: Record<string, unknown>
+  // ): Promise<ConfigLoader[]> {
+  //   return [];
+  // }
 }

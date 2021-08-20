@@ -1,4 +1,4 @@
-import { JoyAppConfig } from "../../joy-server/server/joy-config/joy-app-config";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { CollectionOf, MinLength } from "@tsed/schema";
 import { ConfigValue } from "@symph/config";
 import { IJoyPlugin } from "../../plugin/joy-plugin.interface";

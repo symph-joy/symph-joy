@@ -1,13 +1,4 @@
-import {
-  ClassProvider,
-  CoreContext,
-  Hook,
-  HookPipe,
-  HookType,
-  Injectable,
-  JoyContainer,
-  Tap,
-} from "@symph/core";
+import { AutowireHook, ClassProvider, Component, CoreContainer, CoreContext, HookType, IHook, Tap, TProviderName } from "@symph/core";
 import { getPrerenderMeta, PrerenderMeta } from "./prerender.decorator";
 import { ApplicationConfig, ReactApplicationContext } from "@symph/react";
 import { JoyPrerenderInterface } from "./prerender.interface";
@@ -22,18 +13,18 @@ export interface JoyPrerenderInfo {
 
 interface PrerenderModule {
   module: IScanOutModule;
-  ids: string[];
+  ids: TProviderName[];
 }
 
-@Injectable()
+@Component()
 export class JoyPrerenderService {
   constructor(private readonly coreContext: CoreContext) {}
 
   /**
    * 在服务端渲染html之前调用的hook
    */
-  @Hook({ parallel: false, type: HookType.Waterfall })
-  private genPrerenderPath: HookPipe;
+  @AutowireHook({ parallel: false, type: HookType.Waterfall })
+  private genPrerenderPath: IHook;
 
   private prerenderProviderIds: PrerenderModule[] = [];
 
@@ -45,20 +36,24 @@ export class JoyPrerenderService {
     }
 
     let hasPrerender = false;
-    const ids = [] as string[];
+    const ids = [] as TProviderName[];
     module.providerDefines.forEach((providerDefine, exportKey) => {
       providerDefine.providers.forEach((provider) => {
         if (!(provider as ClassProvider).useClass) {
           return;
         }
-        const { useClass, id } = provider as ClassProvider;
+        const { useClass, name } = provider as ClassProvider;
         const prerenderMeta = getPrerenderMeta(useClass);
         if (!prerenderMeta) {
           return;
         }
 
         if ((prerenderMeta as any).byProvider) {
-          ids.push(id);
+          if (Array.isArray(name)) {
+            ids.push(...name);
+          } else {
+            ids.push(name);
+          }
         } else {
           this.prerenderList.push(prerenderMeta as PrerenderMeta);
         }
@@ -106,25 +101,19 @@ export class JoyPrerenderService {
     }
 
     const modules = [] as Record<string, any>;
-    let ids = [] as string[];
+    let ids = [] as TProviderName[];
     this.prerenderProviderIds.forEach((it) => {
       modules.push(it.module.module);
       ids = ids.concat(it.ids);
     });
 
     const applicationConfig = new ApplicationConfig();
-    const joyContainer = new JoyContainer();
-    const reactApplicationContext = new ReactApplicationContext(
-      modules,
-      applicationConfig,
-      joyContainer
-    );
+    const joyContainer = new CoreContainer();
+    const reactApplicationContext = new ReactApplicationContext(modules, applicationConfig, joyContainer);
     await reactApplicationContext.init();
 
     const tasks = ids.map(async (prerenderId) => {
-      const provider: JoyPrerenderInterface = await reactApplicationContext.get(
-        prerenderId
-      );
+      const provider: JoyPrerenderInterface = await reactApplicationContext.get(prerenderId);
       const route = provider.getRoute() as string;
       // todo when route is a  controller class
       const isFallback = await provider.isFallback();

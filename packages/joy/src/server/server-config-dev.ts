@@ -1,5 +1,5 @@
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 import { ServerConfig } from "../joy-server/server/server-config";
 
-@Injectable()
+@Component()
 export class ServerConfigDev extends ServerConfig {}

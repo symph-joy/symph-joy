@@ -58,17 +58,12 @@ function supportsStaticESM(caller: any): boolean {
   return !!caller?.supportsStaticESM;
 }
 
-export function joyBabelPreset(
-  api: any,
-  options: JoyBabelPresetOptions = {}
-): BabelPreset {
+export function joyBabelPreset(api: any, options: JoyBabelPresetOptions = {}): BabelPreset {
   const supportsESM = api.caller(supportsStaticESM);
   const isServer = api.caller((caller: any) => !!caller && caller.isServer);
   const isModern = api.caller((caller: any) => !!caller && caller.isModern);
 
-  const isLaxModern =
-    isModern ||
-    (options["preset-env"]?.targets && options["preset-env"].targets.esmodules);
+  const isLaxModern = isModern || (options["preset-env"]?.targets && options["preset-env"].targets.esmodules);
 
   const presetEnvConfig = {
     // In the test environment `modules` is often needed to be set to true, babel figures that out by itself using the `'auto'` option
@@ -76,18 +71,12 @@ export function joyBabelPreset(
     modules: "auto",
     exclude: ["transform-typeof-symbol"],
     ...options["preset-env"],
+    loose: true,
   };
 
   // When transpiling for the server or tests, target the current Node version
   // if not explicitly specified:
-  if (
-    (isServer || isTest) &&
-    (!presetEnvConfig.targets ||
-      !(
-        typeof presetEnvConfig.targets === "object" &&
-        "node" in presetEnvConfig.targets
-      ))
-  ) {
+  if ((isServer || isTest) && (!presetEnvConfig.targets || !(typeof presetEnvConfig.targets === "object" && "node" in presetEnvConfig.targets))) {
     presetEnvConfig.targets = {
       // Targets the current process' version of Node. This requires apps be
       // built and deployed on the same version of Node.
@@ -96,16 +85,12 @@ export function joyBabelPreset(
   }
 
   // specify a preset to use instead of @babel/preset-env
-  const customModernPreset =
-    isLaxModern && options["experimental-modern-preset"];
+  const customModernPreset = isLaxModern && options["experimental-modern-preset"];
 
   return {
     sourceType: "unambiguous",
     presets: [
-      customModernPreset || [
-        require("@babel/preset-env").default,
-        presetEnvConfig,
-      ],
+      customModernPreset || [require("@babel/preset-env").default, presetEnvConfig],
       [
         require("@babel/preset-react"),
         {
@@ -116,10 +101,7 @@ export function joyBabelPreset(
           ...options["preset-react"],
         },
       ],
-      [
-        require("@babel/preset-typescript"),
-        { allowNamespaces: true, ...options["preset-typescript"] },
-      ],
+      [require("@babel/preset-typescript"), { allowNamespaces: true, ...options["preset-typescript"] }],
     ],
     plugins: [
       [require("./plugins/joy-import-babel-plugin"), { isServer: isServer }],
@@ -147,10 +129,7 @@ export function joyBabelPreset(
       require("./plugins/react-loadable-plugin"),
       "babel-plugin-transform-typescript-metadata",
       ["@babel/plugin-proposal-decorators", { legacy: true }],
-      [
-        require("@babel/plugin-proposal-class-properties"),
-        options["class-properties"] || { loose: true },
-      ],
+      [require("@babel/plugin-proposal-class-properties"), options["class-properties"] || { loose: true }],
       [
         require("@babel/plugin-proposal-object-rest-spread"),
         {
@@ -170,12 +149,7 @@ export function joyBabelPreset(
           ...options["transform-runtime"],
         },
       ],
-      [
-        isTest && options["styled-jsx"] && options["styled-jsx"]["babel-test"]
-          ? require("styled-jsx/babel-test")
-          : require("styled-jsx/babel"),
-        styledJsxOptions(options["styled-jsx"]),
-      ],
+      [isTest && options["styled-jsx"] && options["styled-jsx"]["babel-test"] ? require("styled-jsx/babel-test") : require("styled-jsx/babel"), styledJsxOptions(options["styled-jsx"])],
       require("./plugins/amp-attributes"),
       isProduction && [
         require("babel-plugin-transform-react-remove-prop-types"),
@@ -188,6 +162,7 @@ export function joyBabelPreset(
       isServer && require("@babel/plugin-syntax-bigint"),
       [require("@babel/plugin-proposal-numeric-separator").default, false],
       require("@babel/plugin-proposal-export-namespace-from"),
+      ["@babel/plugin-proposal-private-methods", { loose: true }],
     ].filter(Boolean),
     overrides: [
       {

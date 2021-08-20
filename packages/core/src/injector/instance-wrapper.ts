@@ -1,11 +1,4 @@
-import {
-  ClassProvider,
-  FactoryProvider,
-  Provider,
-  Scope,
-  Type,
-  ValueProvider,
-} from "../interfaces";
+import { Abstract, ClassProvider, FactoryProvider, Provider, Scope, TProviderName, Type, ValueProvider } from "../interfaces";
 import { randomStringGenerator } from "../utils/random-string-generator.util";
 import { isNil } from "../utils/shared.utils";
 import { STATIC_CONTEXT } from "./constants";
@@ -41,23 +34,21 @@ interface InstanceMetadataStore {
 
 export interface IInstanceWrapper<T = any> {
   readonly id: string;
-  readonly name: string;
+  readonly name: TProviderName | TProviderName[];
   readonly async?: boolean;
   readonly scope?: Scope;
-  type: Type<T>;
+  type: Type<T> | Abstract<T>;
 }
 
 export type InstanceBy = "class" | "factory" | "value";
 
 export class InstanceWrapper<T = any> implements IInstanceWrapper {
-  public readonly name: string;
+  public readonly name: TProviderName[];
   public readonly async?: boolean;
-  public readonly module?: any;
+  // public readonly module?: any;
   public readonly scope?: Scope = Scope.DEFAULT;
-  public type: Type<T>;
-  public factory?:
-    | ((...args: any[]) => T)
-    | { factory: Type; property: string }; // useFactory
+  public type: Type<T> | Abstract<T>;
+  public factory?: ((...args: any[]) => T) | { factory: Type; property: string }; // useFactory
   public inject?: (string | Type<any> | InjectCustomOptionsInterface)[];
   public forwardRef?: boolean;
 
@@ -68,15 +59,13 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
   private readonly values = new WeakMap<ContextId, InstancePerContext<T>>();
   private readonly [INSTANCE_METADATA_SYMBOL]: InstanceMetadataStore = {};
   private readonly [INSTANCE_ID_SYMBOL]: string;
-  private transientMap?:
-    | Map<string, WeakMap<ContextId, InstancePerContext<T>>>
-    | undefined;
+  private transientMap?: Map<string, WeakMap<ContextId, InstancePerContext<T>>> | undefined;
   // private isTreeStatic: boolean | undefined;
+  public hasInstanced: boolean; // where has been loaded by other component
 
-  constructor(
-    metadata: Partial<InstanceWrapper<T>> & Partial<InstancePerContext<T>> = {}
-  ) {
-    this[INSTANCE_ID_SYMBOL] = randomStringGenerator();
+  constructor(metadata: Partial<InstanceWrapper<T>> & Partial<InstancePerContext<T>> = {}) {
+    const name = String((metadata.name || [""])[0]) + "-";
+    this[INSTANCE_ID_SYMBOL] = name + randomStringGenerator();
     this.initialize(metadata);
   }
 
@@ -110,19 +99,19 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
   }
 
   public getInstanceByContextId(contextId: ContextId): InstancePerContext<T> {
+    if (!this.hasInstanced) {
+      this.hasInstanced = true;
+    }
+
     if (this.scope === Scope.TRANSIENT) {
       return this.cloneTransientInstance(contextId);
     }
     const instancePerContext = this.values.get(contextId);
-    return instancePerContext
-      ? instancePerContext
-      : this.cloneStaticInstance(contextId);
+    return instancePerContext ? instancePerContext : this.cloneStaticInstance(contextId);
   }
 
-  public getInstanceByInquirerId(
-    contextId: ContextId,
-    inquirerId: string
-  ): InstancePerContext<T> {
+  // todo remove
+  public getInstanceByInquirerId(contextId: ContextId, inquirerId: string): InstancePerContext<T> {
     // let collectionPerContext = this.transientMap.get(inquirerId);
     // if (!collectionPerContext) {
     //   collectionPerContext = new WeakMap();
@@ -135,22 +124,14 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
     return this.cloneTransientInstance(contextId);
   }
 
-  public setInstanceByContextId(
-    contextId: ContextId,
-    value: InstancePerContext<T>,
-    inquirerId?: string
-  ) {
+  public setInstanceByContextId(contextId: ContextId, value: InstancePerContext<T>, inquirerId?: string) {
     if (this.scope === Scope.TRANSIENT && inquirerId) {
       return this.setInstanceByInquirerId(contextId, inquirerId, value);
     }
     this.values.set(contextId, value);
   }
 
-  public setInstanceByInquirerId(
-    contextId: ContextId,
-    inquirerId: string,
-    value: InstancePerContext<T>
-  ) {
+  public setInstanceByInquirerId(contextId: ContextId, inquirerId: string, value: InstancePerContext<T>) {
     let collection = this.transientMap?.get(inquirerId);
     if (!collection) {
       collection = new WeakMap();
@@ -244,45 +225,23 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
     return Object.create(this.type.prototype);
   }
 
-  public isInRequestScope(
-    contextId: ContextId,
-    inquirer?: InstanceWrapper | undefined
-  ): boolean {
+  public isInRequestScope(contextId: ContextId, inquirer?: InstanceWrapper | undefined): boolean {
     const isDependencyTreeStatic = this.isDependencyTreeStatic();
 
-    return ((!isDependencyTreeStatic &&
-      contextId !== STATIC_CONTEXT &&
-      (!this.isTransient || (this.isTransient && inquirer))) as any) as boolean;
+    return ((!isDependencyTreeStatic && contextId !== STATIC_CONTEXT && (!this.isTransient || (this.isTransient && inquirer))) as any) as boolean;
   }
 
-  public isLazyTransient(
-    contextId: ContextId,
-    inquirer: InstanceWrapper | undefined
-  ): boolean {
-    const isInquirerRequestScoped =
-      inquirer && !inquirer.isDependencyTreeStatic();
+  public isLazyTransient(contextId: ContextId, inquirer: InstanceWrapper | undefined): boolean {
+    const isInquirerRequestScoped = inquirer && !inquirer.isDependencyTreeStatic();
 
-    return !!(
-      this.isDependencyTreeStatic() &&
-      contextId !== STATIC_CONTEXT &&
-      this.isTransient &&
-      isInquirerRequestScoped
-    );
+    return !!(this.isDependencyTreeStatic() && contextId !== STATIC_CONTEXT && this.isTransient && isInquirerRequestScoped);
   }
 
-  public isStatic(
-    contextId: ContextId,
-    inquirer: InstanceWrapper | undefined
-  ): boolean {
-    const isInquirerRequestScoped =
-      inquirer && !inquirer.isDependencyTreeStatic();
+  public isStatic(contextId: ContextId, inquirer: InstanceWrapper | undefined): boolean {
+    const isInquirerRequestScoped = inquirer && !inquirer.isDependencyTreeStatic();
     const isStaticTransient = this.isTransient && !isInquirerRequestScoped;
 
-    return (
-      this.isDependencyTreeStatic() &&
-      contextId === STATIC_CONTEXT &&
-      (!this.isTransient || (isStaticTransient && !!inquirer))
-    );
+    return this.isDependencyTreeStatic() && contextId === STATIC_CONTEXT && (!this.isTransient || (isStaticTransient && !!inquirer));
   }
 
   public getStaticTransientInstances() {
@@ -290,9 +249,7 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
       return [];
     }
     const instances = [...this.transientMap.values()];
-    return instances
-      .map((item) => item.get(STATIC_CONTEXT))
-      .filter((item) => !!item);
+    return instances.map((item) => item.get(STATIC_CONTEXT)).filter((item) => !!item);
   }
 
   /**
@@ -306,10 +263,7 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
     }
 
     if ((provider as any).useValue) {
-      this.setInstanceByContextId(
-        STATIC_CONTEXT,
-        (provider as ValueProvider).useValue
-      );
+      this.setInstanceByContextId(STATIC_CONTEXT, (provider as ValueProvider).useValue);
     } else if ((provider as any).useClass) {
       const { type, scope, autoLoad, useClass } = provider as ClassProvider;
       Object.assign(this, {
@@ -325,11 +279,7 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
       Object.assign(this, { useFactory, inject: inject || [], scope });
       this.values.delete(STATIC_CONTEXT);
     } else {
-      throw new RuntimeException(
-        `unknown provider type, provider ${
-          this.name
-        } merge provider ${JSON.stringify(provider)} failed.`
-      );
+      throw new RuntimeException(`Unknown provider type, provider ${this.name.toString()} merge provider ${JSON.stringify(provider)} failed.`);
     }
   }
 
@@ -346,9 +296,7 @@ export class InstanceWrapper<T = any> implements IInstanceWrapper {
   //   );
   // }
 
-  private initialize(
-    metadata: Partial<InstanceWrapper<T>> & Partial<InstancePerContext<T>>
-  ) {
+  private initialize(metadata: Partial<InstanceWrapper<T>> & Partial<InstancePerContext<T>>) {
     const { instance, isResolved, ...wrapperPartial } = metadata;
     Object.assign(this, wrapperPartial);
 

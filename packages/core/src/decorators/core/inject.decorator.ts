@@ -1,13 +1,7 @@
-import {
-  PROPERTY_DEPS_METADATA,
-  SELF_DECLARED_DEPS_METADATA,
-} from "../../constants";
+import { PROPERTY_DEPS_METADATA, SELF_DECLARED_DEPS_METADATA } from "../../constants";
 import { isFunction, isUndefined } from "../../utils/shared.utils";
 import { providerNameGenerate } from "../../injector/provider-name-generate";
-import {
-  IInjectableDependency,
-  EnuInjectBy,
-} from "../../interfaces/injectable-dependency.interface";
+import { IInjectableDependency, EnuInjectBy } from "../../interfaces/injectable-dependency.interface";
 import { Type } from "../../interfaces";
 import { InjectCustomOptionsInterface } from "../../interfaces/inject-custom-options.interface";
 
@@ -43,7 +37,7 @@ export function Inject<T = any>(typeOrId?: string | Type<T>) {
       return;
     } else {
       if (typeof index === "number") {
-        injectPropertyParam(target, key, index, providerName, providerType);
+        injectPropertyFuncParam(target, key, index, providerName, providerType);
       } else {
         injectProperty(target, key, providerName, providerType);
       }
@@ -53,16 +47,8 @@ export function Inject<T = any>(typeOrId?: string | Type<T>) {
 
 export const CUSTOM_INJECT_FUNC_PARAM_META = "__CUSTOM_INJECT_FUNC_PARAM";
 
-function injectPropertyParam(
-  target: Object,
-  key: string,
-  index: number,
-  providerName: string,
-  providerType: Type
-) {
-  const params: Map<number, InjectCustomOptionsInterface> =
-    Reflect.getMetadata(CUSTOM_INJECT_FUNC_PARAM_META, target, key) ||
-    new Map();
+function injectPropertyFuncParam(target: Object, key: string, index: number, providerName: string, providerType: Type) {
+  const params: Map<number, InjectCustomOptionsInterface> = Reflect.getMetadata(CUSTOM_INJECT_FUNC_PARAM_META, target, key) || new Map();
   const param = providerName
     ? {
         name: providerName,
@@ -74,16 +60,11 @@ function injectPropertyParam(
   Reflect.defineMetadata(CUSTOM_INJECT_FUNC_PARAM_META, params, target, key);
 }
 
-function injectProperty(
-  target: Object,
-  key: string,
-  providerName: string,
-  providerType: Type
-) {
+function injectProperty(target: Object, key: string, providerName: string, providerType: Type) {
   let injectBy = EnuInjectBy.TYPE_NAME;
   const designType = Reflect.getMetadata("design:type", target, key);
   if (!providerType) {
-    providerType = Reflect.getMetadata("design:type", target, key);
+    providerType = designType;
   } else {
     injectBy = EnuInjectBy.TYPE;
   }
@@ -93,25 +74,12 @@ function injectProperty(
     injectBy = EnuInjectBy.NAME;
   }
 
-  let properties: IInjectableDependency[] =
-    Reflect.getMetadata(PROPERTY_DEPS_METADATA, target.constructor) || [];
-  properties = [
-    ...properties,
-    { key, designType, name: providerName, type: providerType, injectBy },
-  ];
-  Reflect.defineMetadata(
-    PROPERTY_DEPS_METADATA,
-    properties,
-    target.constructor
-  );
+  let properties: IInjectableDependency[] = Reflect.getMetadata(PROPERTY_DEPS_METADATA, target.constructor) || [];
+  properties = [...properties, { key, designType, name: providerName, type: providerType, injectBy }];
+  Reflect.defineMetadata(PROPERTY_DEPS_METADATA, properties, target.constructor);
 }
 
-function injectConstructor(
-  target: Object,
-  index: number,
-  providerName: string,
-  providerType: Type
-): void {
+function injectConstructor(target: Object, index: number, providerName: string, providerType: Type): void {
   let injectBy = EnuInjectBy.TYPE;
   const paramTypes = Reflect.getMetadata("design:paramtypes", target);
   const designType = paramTypes[index];
@@ -125,11 +93,7 @@ function injectConstructor(
   } else {
     providerName = providerNameGenerate(providerType);
   }
-  let dependencies: IInjectableDependency[] =
-    Reflect.getMetadata(SELF_DECLARED_DEPS_METADATA, target) || [];
-  dependencies = [
-    ...dependencies,
-    { index, designType, name: providerName, type: providerType, injectBy },
-  ];
+  let dependencies: IInjectableDependency[] = Reflect.getMetadata(SELF_DECLARED_DEPS_METADATA, target) || [];
+  dependencies = [...dependencies, { index, designType, name: providerName, type: providerType, injectBy }];
   Reflect.defineMetadata(SELF_DECLARED_DEPS_METADATA, dependencies, target);
 }

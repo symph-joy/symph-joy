@@ -7,32 +7,16 @@ import TerserPlugin from "terser-webpack-plugin";
 import path from "path";
 import webpack, { Chunk, RuleSetRule } from "webpack";
 import type { Configuration } from "webpack";
-import {
-  DOT_JOY_ALIAS,
-  JOY_PROJECT_ROOT,
-  JOY_PROJECT_ROOT_DIST_CLIENT,
-  PAGES_DIR_ALIAS,
-} from "../lib/constants";
+import { DOT_JOY_ALIAS, JOY_PROJECT_ROOT, JOY_PROJECT_ROOT_DIST_CLIENT, PAGES_DIR_ALIAS } from "../lib/constants";
 import { fileExists } from "../lib/file-exists";
 import { resolveRequest } from "../lib/resolve-request";
 import { getTypeScriptConfiguration } from "../lib/typescript/getTypeScriptConfiguration";
-import {
-  CLIENT_STATIC_FILES_RUNTIME_MAIN,
-  CLIENT_STATIC_FILES_RUNTIME_POLYFILLS,
-  CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
-  REACT_LOADABLE_MANIFEST,
-  SERVERLESS_DIRECTORY,
-  SERVER_DIRECTORY,
-} from "../joy-server/lib/constants";
+import { CLIENT_STATIC_FILES_RUNTIME_MAIN, CLIENT_STATIC_FILES_RUNTIME_POLYFILLS, CLIENT_STATIC_FILES_RUNTIME_WEBPACK, REACT_LOADABLE_MANIFEST, SERVERLESS_DIRECTORY, SERVER_DIRECTORY } from "../joy-server/lib/constants";
 import { execOnce } from "../joy-server/lib/utils";
 import { findPageFile } from "../server/lib/find-page-file";
 import { WebpackEntrypoints } from "./entries";
 import * as Log from "./output/log";
-import {
-  collectPlugins,
-  PluginMetaData,
-  VALID_MIDDLEWARE,
-} from "./plugins/collect-plugins";
+import { collectPlugins, PluginMetaData, VALID_MIDDLEWARE } from "./plugins/collect-plugins";
 import { build as buildConfiguration } from "./webpack/config";
 import { __overrideCssConfiguration } from "./webpack/config/blocks/css/overrideCssConfiguration";
 import { pluginLoaderOptions } from "./webpack/loaders/joy-plugin-loader";
@@ -47,12 +31,7 @@ import PagesManifestPlugin from "./webpack/plugins/pages-manifest-plugin";
 import { ProfilingPlugin } from "./webpack/plugins/profiling-plugin";
 import { ReactLoadablePlugin } from "./webpack/plugins/react-loadable-plugin";
 import { ServerlessPlugin } from "./webpack/plugins/serverless-plugin";
-import WebpackConformancePlugin, {
-  DuplicatePolyfillsConformanceCheck,
-  GranularChunksConformanceCheck,
-  MinificationConformanceCheck,
-  ReactSyncScriptsConformanceCheck,
-} from "./webpack/plugins/webpack-conformance-plugin";
+import WebpackConformancePlugin, { DuplicatePolyfillsConformanceCheck, GranularChunksConformanceCheck, MinificationConformanceCheck, ReactSyncScriptsConformanceCheck } from "./webpack/plugins/webpack-conformance-plugin";
 import { WellKnownErrorsPlugin } from "./webpack/plugins/wellknown-errors-plugin";
 import { Rewrite } from "../lib/load-custom-routes";
 import { webpack5 } from "../types/webpack5";
@@ -65,17 +44,11 @@ type ExcludesFalse = <T>(x: T | false) => x is T;
 const isWebpack5 = parseInt(webpack.version!) === 5;
 
 const escapePathVariables = (value: any) => {
-  return typeof value === "string"
-    ? value.replace(/\[(\\*[\w:]+\\*)\]/gi, "[\\$1\\]")
-    : value;
+  return typeof value === "string" ? value.replace(/\[(\\*[\w:]+\\*)\]/gi, "[\\$1\\]") : value;
 };
 
 const devtoolRevertWarning = execOnce((devtool: Configuration["devtool"]) => {
-  console.warn(
-    chalk.yellow.bold("Warning: ") +
-      chalk.bold(`Reverting webpack devtool to '${devtool}'.\n`) +
-      "Changing the webpack devtool in development mode will cause severe performance regressions."
-  );
+  console.warn(chalk.yellow.bold("Warning: ") + chalk.bold(`Reverting webpack devtool to '${devtool}'.\n`) + "Changing the webpack devtool in development mode will cause severe performance regressions.");
 });
 
 function parseJsonFile(filePath: string) {
@@ -90,11 +63,7 @@ function parseJsonFile(filePath: string) {
   try {
     return JSON5.parse(contents);
   } catch (err) {
-    const codeFrame = codeFrameColumns(
-      String(contents),
-      { start: { line: err.lineNumber, column: err.columnNumber } },
-      { message: err.message, highlightCode: true }
-    );
+    const codeFrame = codeFrameColumns(String(contents), { start: { line: err.lineNumber, column: err.columnNumber } }, { message: err.message, highlightCode: true });
     throw new Error(`Failed to parse "${filePath}":\n${codeFrame}`);
   }
 }
@@ -104,17 +73,8 @@ function getOptimizedAliases(isServer: boolean): { [pkg: string]: string } {
     return {};
   }
 
-  const stubWindowFetch = path.join(
-    __dirname,
-    "polyfills",
-    "fetch",
-    "index.js"
-  );
-  const stubObjectAssign = path.join(
-    __dirname,
-    "polyfills",
-    "object-assign.js"
-  );
+  const stubWindowFetch = path.join(__dirname, "polyfills", "fetch", "index.js");
+  const stubObjectAssign = path.join(__dirname, "polyfills", "object-assign.js");
 
   const shimAssign = path.join(__dirname, "polyfills", "object.assign");
   return Object.assign(
@@ -122,22 +82,14 @@ function getOptimizedAliases(isServer: boolean): { [pkg: string]: string } {
     {
       unfetch$: stubWindowFetch,
       "isomorphic-unfetch$": stubWindowFetch,
-      "whatwg-fetch$": path.join(
-        __dirname,
-        "polyfills",
-        "fetch",
-        "whatwg-fetch.js"
-      ),
+      "whatwg-fetch$": path.join(__dirname, "polyfills", "fetch", "whatwg-fetch.js"),
     },
     {
       "object-assign$": stubObjectAssign,
 
       // Stub Package: object.assign
       "object.assign/auto": path.join(shimAssign, "auto.js"),
-      "object.assign/implementation": path.join(
-        shimAssign,
-        "implementation.js"
-      ),
+      "object.assign/implementation": path.join(shimAssign, "implementation.js"),
       "object.assign$": path.join(shimAssign, "index.js"),
       "object.assign/polyfill": path.join(shimAssign, "polyfill.js"),
       "object.assign/shim": path.join(shimAssign, "shim.js"),
@@ -152,10 +104,7 @@ type ClientEntries = {
   [key: string]: string | string[];
 };
 
-export function attachReactRefresh(
-  webpackConfig: webpack.Configuration,
-  targetLoader: webpack.RuleSetUseItem
-) {
+export function attachReactRefresh(webpackConfig: webpack.Configuration, targetLoader: webpack.RuleSetUseItem) {
   let injections = 0;
   const reactRefreshLoaderName = "@next/react-refresh-utils/loader";
   const reactRefreshLoader = require.resolve(reactRefreshLoaderName);
@@ -169,9 +118,7 @@ export function attachReactRefresh(
       Array.isArray(curr) &&
       curr.some((r) => r === targetLoader) &&
       // Check if loader already exists:
-      !curr.some(
-        (r) => r === reactRefreshLoader || r === reactRefreshLoaderName
-      )
+      !curr.some((r) => r === reactRefreshLoader || r === reactRefreshLoaderName)
     ) {
       ++injections;
       const idx = curr.findIndex((r) => r === targetLoader);
@@ -184,11 +131,7 @@ export function attachReactRefresh(
   });
 
   if (injections) {
-    Log.info(
-      `automatically enabled Fast Refresh for ${injections} custom loader${
-        injections > 1 ? "s" : ""
-      }`
-    );
+    Log.info(`automatically enabled Fast Refresh for ${injections} custom loader${injections > 1 ? "s" : ""}`);
   }
 }
 
@@ -220,8 +163,7 @@ export default async function getBaseWebpackConfig(
     routes?: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]);
   }
 ): Promise<webpack.Configuration> {
-  const productionBrowserSourceMaps =
-    config.experimental.productionBrowserSourceMaps && !isServer;
+  const productionBrowserSourceMaps = config.experimental.productionBrowserSourceMaps && !isServer;
   let plugins: PluginMetaData[] = [];
   const babelPresetPlugins: { dir: string; config: any }[] = [];
 
@@ -275,15 +217,11 @@ export default async function getBaseWebpackConfig(
     /joy[\\/]dist[\\/]client/,
     /joy[\\/]dist[\\/]pages/,
     /[\\/](strip-ansi|ansi-regex)[\\/]/,
-    ...(config.experimental.plugins
-      ? VALID_MIDDLEWARE.map((name) => new RegExp(`src(\\\\|/)${name}`))
-      : []),
+    ...(config.experimental.plugins ? VALID_MIDDLEWARE.map((name) => new RegExp(`src(\\\\|/)${name}`)) : []),
   ];
 
   // Support for NODE_PATH
-  const nodePathList = (process.env.NODE_PATH || "")
-    .split(process.platform === "win32" ? ";" : ":")
-    .filter((p) => !!p);
+  const nodePathList = (process.env.NODE_PATH || "").split(process.platform === "win32" ? ";" : ":").filter((p) => !!p);
 
   const isServerless = target === "serverless";
   const isServerlessTrace = target === "experimental-serverless-trace";
@@ -291,11 +229,7 @@ export default async function getBaseWebpackConfig(
   const isLikeServerless = isServerless || isServerlessTrace;
 
   const outputDir = isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY;
-  const outputPath = path.join(
-    distDir,
-    REACT_OUT_DIR,
-    isServer ? outputDir : ""
-  );
+  const outputPath = path.join(distDir, REACT_OUT_DIR, isServer ? outputDir : "");
   const totalPages = Object.keys(entrypoints).length;
   // const autoGenServerModulesFile = path.join(
   //   distDir,
@@ -307,16 +241,8 @@ export default async function getBaseWebpackConfig(
   //   config.autoGenOutputDir,
   //   "./gen-client-modules.js"
   // );
-  const autoGenClientOutputAbsDir = path.join(
-    distDir,
-    config.autoGenOutputDir,
-    "react/client"
-  );
-  const autoGenServerOutputAbsDir = path.join(
-    distDir,
-    config.autoGenOutputDir,
-    "react/server"
-  );
+  const autoGenClientOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/client");
+  const autoGenServerOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/server");
   const clientEntries = !isServer
     ? () =>
         ({
@@ -339,14 +265,9 @@ export default async function getBaseWebpackConfig(
                   useFileScan: true,
                 })}!`
               : undefined,
-            require
-              .resolve(dev ? `../client/joy-dev` : "../client/joy")
-              .replace(/\\/g, "/"),
+            require.resolve(dev ? `../client/joy-dev` : "../client/joy").replace(/\\/g, "/"),
           ].filter(Boolean),
-          [CLIENT_STATIC_FILES_RUNTIME_POLYFILLS]: path.join(
-            JOY_PROJECT_ROOT_DIST_CLIENT,
-            "polyfills.js"
-          ),
+          [CLIENT_STATIC_FILES_RUNTIME_POLYFILLS]: path.join(JOY_PROJECT_ROOT_DIST_CLIENT, "polyfills.js"),
         } as ClientEntries)
     : undefined;
   const serverEntries = isServer
@@ -371,9 +292,7 @@ export default async function getBaseWebpackConfig(
     typeScriptPath = resolveRequest("typescript", `${dir}/`);
   } catch (_) {}
   const tsConfigPath = path.join(dir, "tsconfig.json");
-  const useTypeScript = Boolean(
-    typeScriptPath && (await fileExists(tsConfigPath))
-  );
+  const useTypeScript = Boolean(typeScriptPath && (await fileExists(tsConfigPath)));
 
   let jsConfig;
   // jsconfig is a subset of tsconfig
@@ -402,29 +321,11 @@ export default async function getBaseWebpackConfig(
     }
   }
 
-  const clientResolveRewrites = require.resolve(
-    "../joy-server/lib/router/utils/resolve-rewrites"
-  );
+  const clientResolveRewrites = require.resolve("../joy-server/lib/router/utils/resolve-rewrites");
 
   const resolveConfig = {
     // Disable .mjs for node_modules bundling
-    extensions: isServer
-      ? [
-          ".js",
-          ".mjs",
-          ...(useTypeScript ? [".tsx", ".ts"] : []),
-          ".jsx",
-          ".json",
-          ".wasm",
-        ]
-      : [
-          ".mjs",
-          ".js",
-          ...(useTypeScript ? [".tsx", ".ts"] : []),
-          ".jsx",
-          ".json",
-          ".wasm",
-        ],
+    extensions: isServer ? [".js", ".mjs", ...(useTypeScript ? [".tsx", ".ts"] : []), ".jsx", ".json", ".wasm"] : [".mjs", ".js", ...(useTypeScript ? [".tsx", ".ts"] : []), ".jsx", ".json", ".wasm"],
     modules: [
       "node_modules",
       ...nodePathList, // Support for NODE_PATH environment variable
@@ -450,9 +351,7 @@ export default async function getBaseWebpackConfig(
       [DOT_JOY_ALIAS]: distDir,
       ...getOptimizedAliases(isServer),
       ...getReactProfilingInProduction(),
-      [clientResolveRewrites]: hasRewrites
-        ? clientResolveRewrites
-        : require.resolve("../client/dev/noop.js"),
+      [clientResolveRewrites]: hasRewrites ? clientResolveRewrites : require.resolve("../client/dev/noop.js"),
     },
     mainFields: isServer ? ["main", "module"] : ["browser", "module", "main"],
     plugins: isWebpack5
@@ -530,24 +429,15 @@ export default async function getBaseWebpackConfig(
         },
         lib: {
           test(module: { size: Function; identifier: Function }): boolean {
-            return (
-              module.size() > 160000 &&
-              /node_modules[/\\]/.test(module.identifier())
-            );
+            return module.size() > 160000 && /node_modules[/\\]/.test(module.identifier());
           },
-          name(module: {
-            type: string;
-            libIdent?: Function;
-            updateHash: (hash: crypto.Hash) => void;
-          }): string {
+          name(module: { type: string; libIdent?: Function; updateHash: (hash: crypto.Hash) => void }): string {
             const hash = crypto.createHash("sha1");
             if (isModuleCSS(module)) {
               module.updateHash(hash);
             } else {
               if (!module.libIdent) {
-                throw new Error(
-                  `Encountered unknown module type: ${module.type}. Please open an issue.`
-                );
+                throw new Error(`Encountered unknown module type: ${module.type}. Please open an issue.`);
               }
 
               hash.update(module.libIdent({ context: dir }));
@@ -595,16 +485,9 @@ export default async function getBaseWebpackConfig(
     splitChunksConfig = splitChunksConfigs.prodGranular;
   }
 
-  const crossOrigin =
-    !config.crossOrigin && config.experimental.modern
-      ? "anonymous"
-      : config.crossOrigin;
+  const crossOrigin = !config.crossOrigin && config.experimental.modern ? "anonymous" : config.crossOrigin;
 
-  let customAppFile: string | null = await findPageFile(
-    pagesDir,
-    "/_app",
-    config.pageExtensions
-  );
+  let customAppFile: string | null = await findPageFile(pagesDir, "/_app", config.pageExtensions);
   if (customAppFile) {
     customAppFile = path.resolve(path.join(pagesDir, customAppFile));
   }
@@ -619,12 +502,7 @@ export default async function getBaseWebpackConfig(
       },
       DuplicatePolyfillsConformanceCheck: {
         enabled: true,
-        BlockedAPIToBePolyfilled: Object.assign(
-          [],
-          ["fetch"],
-          config.conformance?.DuplicatePolyfillsConformanceCheck
-            ?.BlockedAPIToBePolyfilled || []
-        ),
+        BlockedAPIToBePolyfilled: Object.assign([], ["fetch"], config.conformance?.DuplicatePolyfillsConformanceCheck?.BlockedAPIToBePolyfilled || []),
       },
       GranularChunksConformanceCheck: {
         enabled: true,
@@ -633,9 +511,53 @@ export default async function getBaseWebpackConfig(
     config.conformance
   );
 
+  function handleServerExternals(context: any, request: any, callback: any) {
+    // Resolve the import with the webpack provided context, this
+    // ensures we're resolving the correct version when multiple
+    // exist.
+    let res: string;
+    try {
+      res = resolveRequest(request, `${context}/`);
+    } catch (err) {
+      // If the request cannot be resolved, we need to tell webpack to
+      // "bundle" it so that webpack shows an error (that it cannot be
+      // resolved).
+      return callback();
+    }
+
+    // Same as above, if the request cannot be resolved we need to have
+    // webpack "bundle" it so it surfaces the not found error.
+    if (!res) {
+      return callback();
+    }
+
+    // Anything else that is standard JavaScript within `node_modules`
+    // can be externalized.
+    if (res.match(/node_modules[/\\].*\.js$/)) {
+      return callback(undefined, `commonjs ${request}`);
+    }
+
+    // Anything else that is standard JavaScript within `node_modules`
+    // can be externalized.
+    if (res.match(/@symph[/\\].*\.js$/)) {
+      return callback(undefined, `commonjs ${request}`);
+    }
+
+    return callback();
+  }
+
+  /**
+   * 将废弃掉，逐步采用handleServerExternals方法替换。
+   * @param context
+   * @param request
+   * @param callback
+   */
   function handleExternals(context: any, request: any, callback: any) {
     // return     callback()
-    // return  callback(undefined, `commonjs ${request}`);
+    return callback(undefined, `commonjs ${request}`);
+    if (request.includes("joy-fetch.service")) {
+      console.log(request);
+    }
     if (request === "@symph/joy") {
       return callback(undefined, `commonjs ${request}`);
     }
@@ -659,14 +581,7 @@ export default async function getBaseWebpackConfig(
     }
 
     // todo 适配es module的导出方式
-    const notExternalModules = [
-      "joy/app",
-      "joy/document",
-      "joy/link",
-      "joy/error",
-      "string-hash",
-      "joy/constants",
-    ];
+    const notExternalModules = ["joy/app", "joy/document", "joy/link", "joy/error", "string-hash", "joy/constants"];
 
     if (notExternalModules.indexOf(request) !== -1) {
       return callback();
@@ -717,9 +632,7 @@ export default async function getBaseWebpackConfig(
       // we need to process joy-server/lib/router/router so that
       // the DefinePlugin can inject process.env values
       // isJoyExternal = /joy([/\\]dist)?[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(
-      isJoyExternal = /joy[/\\]dist[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(
-        res
-      );
+      isJoyExternal = /joy[/\\]dist[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(res);
 
       if (!isJoyExternal) {
         return callback();
@@ -761,10 +674,7 @@ export default async function getBaseWebpackConfig(
     }
 
     // Webpack itself has to be compiled because it doesn't always use module relative paths
-    if (
-      res.match(/node_modules[/\\]webpack/) ||
-      res.match(/node_modules[/\\]css-loader/)
-    ) {
+    if (res.match(/node_modules[/\\]webpack/) || res.match(/node_modules[/\\]css-loader/)) {
       return callback();
     }
 
@@ -798,12 +708,10 @@ export default async function getBaseWebpackConfig(
       ? // make sure importing "@symph/joy" is handled gracefully for client
         // bundles in case a user imported types and it wasn't removed
         // TODO: should we warn/error for this instead?
-        ["@symph/joy"]
+        // ["@symph/joy"]
+        []
       : !isServerless
-      ? [
-          ({ context, request }, callback) =>
-            handleExternals(context, request, callback),
-        ]
+      ? [({ context, request }, callback) => handleServerExternals(context, request, callback)]
       : [
           // When the 'serverless' target is used all node_modules will be compiled into the output bundles
           // So that the 'serverless' bundles have 0 runtime dependencies
@@ -815,11 +723,7 @@ export default async function getBaseWebpackConfig(
       // checkWasmTypes: false,
       nodeEnv: false,
       splitChunks: isServer ? false : splitChunksConfig,
-      runtimeChunk: isServer
-        ? isWebpack5 && !isLikeServerless
-          ? { name: "webpack-runtime" }
-          : undefined
-        : { name: CLIENT_STATIC_FILES_RUNTIME_WEBPACK },
+      runtimeChunk: isServer ? (isWebpack5 && !isLikeServerless ? { name: "webpack-runtime" } : undefined) : { name: CLIENT_STATIC_FILES_RUNTIME_WEBPACK },
       minimize: !(dev || isServer),
       minimizer: [
         // Minify JavaScript
@@ -857,40 +761,26 @@ export default async function getBaseWebpackConfig(
         ...(isServer
           ? {
               "init-server.js": "joy-plugin-loader?middleware=on-init-server!",
-              "on-error-server.js":
-                "joy-plugin-loader?middleware=on-error-server!",
+              "on-error-server.js": "joy-plugin-loader?middleware=on-error-server!",
             }
           : {}),
       };
     },
     watchOptions: {
-      ignored: [
-        "**/.git/**",
-        "**/node_modules/**",
-        "**/.joy/out/**",
-        "**/.joy/dist/**",
-      ],
+      ignored: ["**/.git/**", "**/node_modules/**", "**/.joy/out/**", "**/.joy/dist/**"],
     },
     output: {
       // fixme
       // ...(isWebpack5 ? { ecmaVersion: 5 } : {}),
       path: outputPath,
       // On the server we don't use the chunkhash
-      filename: isServer
-        ? "[name].js"
-        : `static/chunks/[name]${dev ? "" : "-[chunkhash]"}.js`,
+      filename: isServer ? "[name].js" : `static/chunks/[name]${dev ? "" : "-[chunkhash]"}.js`,
       library: isServer ? undefined : "_N_E",
       libraryTarget: isServer ? "commonjs2" : "assign",
-      hotUpdateChunkFilename: isWebpack5
-        ? "static/webpack/[id].[fullhash].hot-update.js"
-        : "static/webpack/[id].[hash].hot-update.js",
-      hotUpdateMainFilename: isWebpack5
-        ? "static/webpack/[fullhash].hot-update.json"
-        : "static/webpack/[hash].hot-update.json",
+      hotUpdateChunkFilename: isWebpack5 ? "static/webpack/[id].[fullhash].hot-update.js" : "static/webpack/[id].[hash].hot-update.js",
+      hotUpdateMainFilename: isWebpack5 ? "static/webpack/[fullhash].hot-update.json" : "static/webpack/[hash].hot-update.json",
       // This saves chunks with the name given via `import()`
-      chunkFilename: isServer
-        ? `${dev ? "[name]" : "[name].[contenthash]"}.js`
-        : `static/chunks/${dev ? "[name]" : "[name].[contenthash]"}.js`,
+      chunkFilename: isServer ? `${dev ? "[name]" : "[name].[contenthash]"}.js` : `static/chunks/${dev ? "[name]" : "[name].[contenthash]"}.js`,
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       strictModuleExceptionHandling: true,
@@ -902,35 +792,12 @@ export default async function getBaseWebpackConfig(
     resolve: resolveConfig,
     resolveLoader: {
       // The loaders Joy provides
-      alias: [
-        "joy-client-generate-file-loader",
-        "emit-file-loader",
-        "error-loader",
-        "joy-babel-loader",
-        "joy-client-pages-loader",
-        "joy-data-loader",
-        "joy-serverless-loader",
-        "noop-loader",
-        "joy-plugin-loader",
-        "joy-require-context-loader",
-      ].reduce((alias, loader) => {
+      alias: ["joy-client-generate-file-loader", "emit-file-loader", "error-loader", "joy-babel-loader", "joy-client-pages-loader", "joy-data-loader", "joy-serverless-loader", "noop-loader", "joy-plugin-loader", "joy-require-context-loader"].reduce((alias, loader) => {
         // using multiple aliases to replace `resolveLoader.modules`
         if (process.env.NODE_ENV === "test") {
-          alias[loader] = path.join(
-            __dirname,
-            "webpack",
-            "loaders",
-            ["joy-babel-loader", "emit-file-loader"].includes(loader)
-              ? loader + ".js"
-              : loader + ".ts"
-          );
+          alias[loader] = path.join(__dirname, "webpack", "loaders", ["joy-babel-loader", "emit-file-loader"].includes(loader) ? loader + ".js" : loader + ".ts");
         } else {
-          alias[loader] = path.join(
-            __dirname,
-            "webpack",
-            "loaders",
-            loader + ".js"
-          );
+          alias[loader] = path.join(__dirname, "webpack", "loaders", loader + ".js");
         }
         // alias[loader] = path.join(__dirname, 'webpack', 'loaders', ['joy-babel-loader', 'emit-file-loader' ].includes(loader) ? loader+'.js': loader+'.ts')
         // alias[loader] = path.join(__dirname, 'webpack', 'loaders',  loader + '.js')
@@ -963,9 +830,7 @@ export default async function getBaseWebpackConfig(
                   options: {
                     cacheContext: dir,
                     cacheDirectory: path.join(distDir, "cache", "webpack"),
-                    cacheIdentifier: `webpack${isServer ? "-server" : ""}${
-                      config.experimental.modern ? "-hasmodern" : ""
-                    }`,
+                    cacheIdentifier: `webpack${isServer ? "-server" : ""}${config.experimental.modern ? "-hasmodern" : ""}`,
                   },
                 },
                 {
@@ -975,16 +840,11 @@ export default async function getBaseWebpackConfig(
                     workerParallelJobs: Infinity,
                   },
                 },
-                hasReactRefresh
-                  ? require.resolve("@next/react-refresh-utils/loader")
-                  : "",
+                hasReactRefresh ? require.resolve("@next/react-refresh-utils/loader") : "",
                 defaultLoaders.babel,
               ].filter(Boolean)
             : hasReactRefresh
-            ? [
-                require.resolve("@next/react-refresh-utils/loader"),
-                defaultLoaders.babel,
-              ]
+            ? [require.resolve("@next/react-refresh-utils/loader"), defaultLoaders.babel]
             : defaultLoaders.babel,
         },
       ].filter(Boolean),
@@ -992,30 +852,21 @@ export default async function getBaseWebpackConfig(
     plugins: [
       hasReactRefresh && new ReactRefreshWebpackPlugin(),
       // Makes sure `Buffer` is polyfilled in client-side bundles (same behavior as webpack 4)
-      isWebpack5 &&
-        !isServer &&
-        new webpack.ProvidePlugin({ Buffer: ["buffer", "Buffer"] }),
+      isWebpack5 && !isServer && new webpack.ProvidePlugin({ Buffer: ["buffer", "Buffer"] }),
       // Makes sure `process` is polyfilled in client-side bundles (same behavior as webpack 4)
-      isWebpack5 &&
-        !isServer &&
-        new webpack.ProvidePlugin({ process: ["process"] }),
+      isWebpack5 && !isServer && new webpack.ProvidePlugin({ process: ["process"] }),
       // This plugin makes sure `output.filename` is used for entry chunks
       !isWebpack5 && new ChunkNamesPlugin(),
       new webpack.DefinePlugin({
-        ...Object.keys(process.env).reduce(
-          (prev: { [key: string]: string }, key: string) => {
-            if (key.startsWith("JOY_PUBLIC_")) {
-              prev[`process.env.${key}`] = JSON.stringify(process.env[key]!);
-            }
-            return prev;
-          },
-          {}
-        ),
+        ...Object.keys(process.env).reduce((prev: { [key: string]: string }, key: string) => {
+          if (key.startsWith("JOY_PUBLIC_")) {
+            prev[`process.env.${key}`] = JSON.stringify(process.env[key]!);
+          }
+          return prev;
+        }, {}),
         ...Object.keys(config.env).reduce((acc, key) => {
           if (/^(?:NODE_.+)|^(?:__.+)$/i.test(key)) {
-            throw new Error(
-              `The key "${key}" under "env" in joy.config.js is not allowed.`
-            );
+            throw new Error(`The key "${key}" under "env" in joy.config.js is not allowed.`);
           }
 
           return {
@@ -1026,43 +877,23 @@ export default async function getBaseWebpackConfig(
         "process.env.NODE_ENV": JSON.stringify(webpackMode),
         "process.env.__JOY_CROSS_ORIGIN": JSON.stringify(crossOrigin),
         "process.browser": JSON.stringify(!isServer),
-        "process.env.__JOY_TEST_MODE": JSON.stringify(
-          process.env.__JOY_TEST_MODE
-        ),
+        "process.env.__JOY_TEST_MODE": JSON.stringify(process.env.__JOY_TEST_MODE),
         // This is used in client/dev-error-overlay/hot-dev-client.js to replace the dist directory
         ...(dev && !isServer
           ? {
               "process.env.__JOY_DIST_DIR": JSON.stringify(distDir),
             }
           : {}),
-        "process.env.__JOY_TRAILING_SLASH": JSON.stringify(
-          config.trailingSlash
-        ),
-        "process.env.__JOY_MODERN_BUILD": JSON.stringify(
-          config.experimental.modern && !dev
-        ),
-        "process.env.__JOY_BUILD_INDICATOR": JSON.stringify(
-          config.devIndicators.buildActivity
-        ),
-        "process.env.__JOY_PRERENDER_INDICATOR": JSON.stringify(
-          config.devIndicators.autoPrerender
-        ),
-        "process.env.__JOY_PLUGINS": JSON.stringify(
-          config.experimental.plugins
-        ),
+        "process.env.__JOY_TRAILING_SLASH": JSON.stringify(config.trailingSlash),
+        "process.env.__JOY_MODERN_BUILD": JSON.stringify(config.experimental.modern && !dev),
+        "process.env.__JOY_BUILD_INDICATOR": JSON.stringify(config.devIndicators.buildActivity),
+        "process.env.__JOY_PRERENDER_INDICATOR": JSON.stringify(config.devIndicators.autoPrerender),
+        "process.env.__JOY_PLUGINS": JSON.stringify(config.experimental.plugins),
         "process.env.__JOY_STRICT_MODE": JSON.stringify(config.reactStrictMode),
-        "process.env.__JOY_REACT_MODE": JSON.stringify(
-          config.experimental.reactMode
-        ),
-        "process.env.__JOY_OPTIMIZE_FONTS": JSON.stringify(
-          config.experimental.optimizeFonts && !dev
-        ),
-        "process.env.__JOY_OPTIMIZE_IMAGES": JSON.stringify(
-          config.experimental.optimizeImages
-        ),
-        "process.env.__JOY_SCROLL_RESTORATION": JSON.stringify(
-          config.experimental.scrollRestoration
-        ),
+        "process.env.__JOY_REACT_MODE": JSON.stringify(config.experimental.reactMode),
+        "process.env.__JOY_OPTIMIZE_FONTS": JSON.stringify(config.experimental.optimizeFonts && !dev),
+        "process.env.__JOY_OPTIMIZE_IMAGES": JSON.stringify(config.experimental.optimizeImages),
+        "process.env.__JOY_SCROLL_RESTORATION": JSON.stringify(config.experimental.scrollRestoration),
         "process.env.__JOY_ROUTER_BASEPATH": JSON.stringify(config.basePath),
         "process.env.__JOY_HAS_REWRITES": JSON.stringify(hasRewrites),
         ...(isServer
@@ -1108,9 +939,7 @@ export default async function getBaseWebpackConfig(
         ? (() => {
             // Even though require.cache is server only we have to clear assets from both compilations
             // This is because the client compilation generates the build manifest that's used on the server side
-            const {
-              JoyjsRequireCacheHotReloader,
-            } = require("./webpack/plugins/joyjs-require-cache-hot-reloader");
+            const { JoyjsRequireCacheHotReloader } = require("./webpack/plugins/joyjs-require-cache-hot-reloader");
             const devPlugins = [new JoyjsRequireCacheHotReloader()];
 
             if (!isServer) {
@@ -1129,10 +958,7 @@ export default async function getBaseWebpackConfig(
         }),
       isServerless && isServer && new ServerlessPlugin(),
       isServer && new PagesManifestPlugin(isLikeServerless),
-      !isWebpack5 &&
-        target === "server" &&
-        isServer &&
-        new JoyJsSSRModuleCachePlugin({ outputPath }),
+      !isWebpack5 && target === "server" && isServer && new JoyJsSSRModuleCachePlugin({ outputPath }),
       isServer && new JoyJsSsrImportPlugin(),
       !isServer &&
         new BuildManifestPlugin({
@@ -1150,33 +976,21 @@ export default async function getBaseWebpackConfig(
         !isServer &&
         !dev &&
         (() => {
-          const {
-            JoyEsmPlugin: JoyEsmPlugin,
-          } = require("./webpack/plugins/joy-esm-plugin");
+          const { JoyEsmPlugin: JoyEsmPlugin } = require("./webpack/plugins/joy-esm-plugin");
           return new JoyEsmPlugin({
             filename: (getFileName: Function | string) => (...args: any[]) => {
-              const name =
-                typeof getFileName === "function"
-                  ? getFileName(...args)
-                  : getFileName;
+              const name = typeof getFileName === "function" ? getFileName(...args) : getFileName;
 
-              return name.includes(".js")
-                ? name.replace(/\.js$/, ".module.js")
-                : escapePathVariables(
-                    args[0].chunk.name.replace(/\.js$/, ".module.js")
-                  );
+              return name.includes(".js") ? name.replace(/\.js$/, ".module.js") : escapePathVariables(args[0].chunk.name.replace(/\.js$/, ".module.js"));
             },
-            chunkFilename: (inputChunkName: string) =>
-              inputChunkName.replace(/\.js$/, ".module.js"),
+            chunkFilename: (inputChunkName: string) => inputChunkName.replace(/\.js$/, ".module.js"),
           });
         })(),
       config.experimental.optimizeFonts &&
         !dev &&
         isServer &&
         (function () {
-          const {
-            FontStylesheetGatheringPlugin,
-          } = require("./webpack/plugins/font-stylesheet-gathering-plugin");
+          const { FontStylesheetGatheringPlugin } = require("./webpack/plugins/font-stylesheet-gathering-plugin");
           return new FontStylesheetGatheringPlugin();
         })(),
       config.experimental.conformance &&
@@ -1184,27 +998,17 @@ export default async function getBaseWebpackConfig(
         !dev &&
         new WebpackConformancePlugin({
           tests: [
-            !isServer &&
-              conformanceConfig.MinificationConformanceCheck.enabled &&
-              new MinificationConformanceCheck(),
+            !isServer && conformanceConfig.MinificationConformanceCheck.enabled && new MinificationConformanceCheck(),
             conformanceConfig.ReactSyncScriptsConformanceCheck.enabled &&
               new ReactSyncScriptsConformanceCheck({
-                AllowedSources:
-                  conformanceConfig.ReactSyncScriptsConformanceCheck
-                    .allowedSources || [],
+                AllowedSources: conformanceConfig.ReactSyncScriptsConformanceCheck.allowedSources || [],
               }),
             !isServer &&
               conformanceConfig.DuplicatePolyfillsConformanceCheck.enabled &&
               new DuplicatePolyfillsConformanceCheck({
-                BlockedAPIToBePolyfilled:
-                  conformanceConfig.DuplicatePolyfillsConformanceCheck
-                    .BlockedAPIToBePolyfilled,
+                BlockedAPIToBePolyfilled: conformanceConfig.DuplicatePolyfillsConformanceCheck.BlockedAPIToBePolyfilled,
               }),
-            !isServer &&
-              conformanceConfig.GranularChunksConformanceCheck.enabled &&
-              new GranularChunksConformanceCheck(
-                splitChunksConfigs.prodGranular
-              ),
+            !isServer && conformanceConfig.GranularChunksConformanceCheck.enabled && new GranularChunksConformanceCheck(splitChunksConfigs.prodGranular),
           ].filter(Boolean),
         }),
       new WellKnownErrorsPlugin(),
@@ -1218,9 +1022,7 @@ export default async function getBaseWebpackConfig(
   }
 
   if (jsConfig?.compilerOptions?.paths && resolvedBaseUrl) {
-    webpackConfig.resolve?.plugins?.unshift(
-      new JsConfigPathsPlugin(jsConfig.compilerOptions.paths, resolvedBaseUrl)
-    );
+    webpackConfig.resolve?.plugins?.unshift(new JsConfigPathsPlugin(jsConfig.compilerOptions.paths, resolvedBaseUrl));
   }
 
   if (isWebpack5) {
@@ -1239,21 +1041,15 @@ export default async function getBaseWebpackConfig(
       webpackConfig.optimization.usedExports = false;
     }
 
-    const joyPublicVariables = Object.keys(process.env).reduce(
-      (prev: string, key: string) => {
-        if (key.startsWith("JOY_PUBLIC_")) {
-          return `${prev}|${key}=${process.env[key]}`;
-        }
-        return prev;
-      },
-      ""
-    );
-    const joyEnvVariables = Object.keys(config.env).reduce(
-      (prev: string, key: string) => {
-        return `${prev}|${key}=${config.env[key]}`;
-      },
-      ""
-    );
+    const joyPublicVariables = Object.keys(process.env).reduce((prev: string, key: string) => {
+      if (key.startsWith("JOY_PUBLIC_")) {
+        return `${prev}|${key}=${process.env[key]}`;
+      }
+      return prev;
+    }, "");
+    const joyEnvVariables = Object.keys(config.env).reduce((prev: string, key: string) => {
+      return `${prev}|${key}=${config.env[key]}`;
+    }, "");
 
     const configVars = JSON.stringify({
       crossOrigin: config.crossOrigin,
@@ -1349,13 +1145,7 @@ export default async function getBaseWebpackConfig(
       return false;
     }
 
-    const fileNames = [
-      "/tmp/test.css",
-      "/tmp/test.scss",
-      "/tmp/test.sass",
-      "/tmp/test.less",
-      "/tmp/test.styl",
-    ];
+    const fileNames = ["/tmp/test.css", "/tmp/test.scss", "/tmp/test.sass", "/tmp/test.less", "/tmp/test.styl"];
 
     if (rule instanceof RegExp && fileNames.some((input) => rule.test(input))) {
       return true;
@@ -1383,44 +1173,25 @@ export default async function getBaseWebpackConfig(
     return false;
   }
 
-  const hasUserCssConfig =
-    (webpackConfig.module?.rules as RuleSetRule[]).some(
-      (rule) => canMatchCss(rule.test) || canMatchCss(rule.include)
-    ) ?? false;
+  const hasUserCssConfig = (webpackConfig.module?.rules as RuleSetRule[]).some((rule) => canMatchCss(rule.test) || canMatchCss(rule.include)) ?? false;
 
   if (hasUserCssConfig) {
     // only show warning for one build
     if (isServer) {
-      console.warn(
-        chalk.yellow.bold("Warning: ") +
-          chalk.bold(
-            "Built-in CSS support is being disabled due to custom CSS configuration being detected."
-          )
-      );
+      console.warn(chalk.yellow.bold("Warning: ") + chalk.bold("Built-in CSS support is being disabled due to custom CSS configuration being detected."));
     }
 
     if ((webpackConfig.module?.rules as RuleSetRule[]).length) {
       // Remove default CSS Loader
-      webpackConfig.module!.rules = (webpackConfig.module
-        ?.rules as RuleSetRule[]).filter(
-        (r) =>
-          !(
-            typeof r.oneOf?.[0]?.options === "object" &&
-            r.oneOf[0].options.__joy_css_remove === true
-          )
-      );
+      webpackConfig.module!.rules = (webpackConfig.module?.rules as RuleSetRule[]).filter((r) => !(typeof r.oneOf?.[0]?.options === "object" && r.oneOf[0].options.__joy_css_remove === true));
     }
     if (webpackConfig.plugins?.length) {
       // Disable CSS Extraction Plugin
-      webpackConfig.plugins = webpackConfig.plugins.filter(
-        (p) => (p as any).__joy_css_remove !== true
-      );
+      webpackConfig.plugins = webpackConfig.plugins.filter((p) => (p as any).__joy_css_remove !== true);
     }
     if (webpackConfig.optimization?.minimizer?.length) {
       // Disable CSS Minifier
-      webpackConfig.optimization.minimizer = webpackConfig.optimization.minimizer.filter(
-        (e) => (e as any).__joy_css_remove !== true
-      );
+      webpackConfig.optimization.minimizer = webpackConfig.optimization.minimizer.filter((e) => (e as any).__joy_css_remove !== true);
     }
   } else {
     await __overrideCssConfiguration(dir, !dev, webpackConfig);
@@ -1431,15 +1202,10 @@ export default async function getBaseWebpackConfig(
     // attachReactRefresh(webpackConfig, defaultLoaders.babel)
   }
 
-  if (
-    isServer &&
-    webpackConfig.module &&
-    Array.isArray(webpackConfig.module.rules)
-  ) {
+  if (isServer && webpackConfig.module && Array.isArray(webpackConfig.module.rules)) {
     let foundTsRule = false;
 
-    webpackConfig.module.rules = (webpackConfig.module
-      ?.rules as RuleSetRule[]).filter((rule): boolean => {
+    webpackConfig.module.rules = (webpackConfig.module?.rules as RuleSetRule[]).filter((rule): boolean => {
       if (!(rule.test instanceof RegExp)) return true;
       if ("noop.ts".match(rule.test) && !"noop.js".match(rule.test)) {
         foundTsRule = rule.use === defaultLoaders.babel;
@@ -1449,9 +1215,7 @@ export default async function getBaseWebpackConfig(
     });
 
     if (foundTsRule) {
-      console.warn(
-        "\n@zeit/joy-typescript is no longer needed since Joy.js has built-in support for TypeScript now. Please remove it from your joy.config.js and your .babelrc\n"
-      );
+      console.warn("\n@zeit/joy-typescript is no longer needed since Joy.js has built-in support for TypeScript now. Please remove it from your joy.config.js and your .babelrc\n");
     }
   }
 

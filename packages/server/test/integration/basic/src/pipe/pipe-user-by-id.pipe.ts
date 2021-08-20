@@ -1,8 +1,8 @@
 import { PipeUsersService } from "./pipe-users.service";
-import { Injectable } from "@symph/core";
+import { Component } from "@symph/core";
 import { ArgumentMetadata, PipeTransform } from "@symph/server";
 
-@Injectable()
+@Component()
 export class PipeUserByIdPipe implements PipeTransform<string> {
   constructor(private readonly usersService: PipeUsersService) {}
 

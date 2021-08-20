@@ -1,14 +1,15 @@
-import { Injectable } from "../src/decorators/core";
 import React from "react";
 import { Configuration } from "./decorators/core/configuration/configuration.decorator";
 import { Provider } from "./decorators/core/configuration/provider.decorator";
 import { CoreContext } from "./core-context";
-import { JoyContainer } from "./injector";
+import { InstanceWrapper, CoreContainer } from "./injector";
 import { Tap } from "./hook";
+import { TProviderName } from "./interfaces";
+import { Component } from "./decorators";
 
-describe("temp-context", () => {
+describe("core-context", () => {
   test("inject context self", async () => {
-    @Injectable()
+    @Component()
     class HelloProvider {
       private message = "hello world";
 
@@ -25,7 +26,7 @@ describe("temp-context", () => {
       public helloProvider: HelloProvider;
     }
 
-    const container = new JoyContainer();
+    const container = new CoreContainer();
     const app = new CoreContext(AppConfig, container);
     await app.init();
 
@@ -33,38 +34,8 @@ describe("temp-context", () => {
     expect(helloProvider!.hello()).toBe("hello world");
   });
 
-  test("hook: onContextInitialized", async () => {
-    @Injectable()
-    class HelloProvider {
-      public msg: string;
-
-      @Tap()
-      async onContextInitialized() {
-        return new Promise<void>((resolve) => {
-          setTimeout(() => {
-            this.msg = "inited";
-            resolve();
-          }, 50);
-        });
-      }
-    }
-
-    @Configuration()
-    class AppConfig {
-      @Provider()
-      public helloProvider: HelloProvider;
-    }
-
-    const container = new JoyContainer();
-    const app = new CoreContext(AppConfig, container);
-    await app.init();
-
-    const helloProvider = await app.get(HelloProvider);
-    expect(helloProvider.msg).toBe("inited");
-  });
-
   test("loadModule", async () => {
-    @Injectable()
+    @Component()
     class HelloProvider {
       private message = "hello world";
 
@@ -87,5 +58,71 @@ describe("temp-context", () => {
 
     const helloProvider = await app.get(HelloProvider);
     expect(helloProvider!.hello()).toBe("hello world");
+  });
+
+  describe("context hooks", () => {
+    test("onDidProvidersRegister", async () => {
+      @Component()
+      class HelloProvider {
+        public allProviderNames: TProviderName[] = [];
+
+        @Tap()
+        async onDidProvidersRegister(instanceWrappers: InstanceWrapper[]) {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              instanceWrappers.forEach((it) => {
+                this.allProviderNames.push(...it.name);
+              });
+
+              resolve();
+            }, 50);
+          });
+        }
+      }
+
+      @Configuration()
+      class AppConfig {
+        @Provider()
+        public helloProvider: HelloProvider;
+      }
+
+      const container = new CoreContainer();
+      const app = new CoreContext(AppConfig, container);
+      await app.init();
+
+      const helloProvider = await app.get(HelloProvider);
+      expect(helloProvider.allProviderNames).toContain("helloProvider");
+      expect(helloProvider.allProviderNames).toContain("appConfig");
+    });
+
+    test("onContextInitialized", async () => {
+      @Component()
+      class HelloProvider {
+        public msg: string;
+
+        @Tap()
+        async onContextInitialized() {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              this.msg = "inited";
+              resolve();
+            }, 50);
+          });
+        }
+      }
+
+      @Configuration()
+      class AppConfig {
+        @Provider()
+        public helloProvider: HelloProvider;
+      }
+
+      const container = new CoreContainer();
+      const app = new CoreContext(AppConfig, container);
+      await app.init();
+
+      const helloProvider = await app.get(HelloProvider);
+      expect(helloProvider.msg).toBe("inited");
+    });
   });
 });
