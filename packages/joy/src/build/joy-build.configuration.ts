@@ -42,11 +42,8 @@ export class JoyBuildConfiguration {
   // @Configuration.Provider()
   // public routerPlugin: RouterPlugin;
 
-  // @Configuration.Provider()
-  // public joyReactRouter: JoyReactRouterPlugin;
-
   @Configuration.Provider()
-  public buildService: JoyBuildService;
+  public joyReactRouterPlugin: JoyReactRouterPlugin;
 
   @Configuration.Provider()
   public joyExportAppService: JoyExportAppService;
@@ -56,4 +53,7 @@ export class JoyBuildConfiguration {
 
   @Configuration.Provider()
   public joyImportService: JoyImportService;
+
+  @Configuration.Provider()
+  public buildService: JoyBuildService;
 }

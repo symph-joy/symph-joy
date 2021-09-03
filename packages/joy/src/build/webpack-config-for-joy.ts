@@ -9,7 +9,7 @@ export async function getWebpackConfigForJoy(serverConfig: webpack.Configuration
 
   const srcDir = joyConfig.resolveAutoGenOutDir("joy");
   srcConfig.entry = {
-    "joy-bundle": [
+    "server-bundle": [
       `joy-require-context-loader?${stringify({
         absolutePath: srcDir,
         useFileScan: true,

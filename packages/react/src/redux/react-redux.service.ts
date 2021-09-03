@@ -29,7 +29,7 @@ export interface RegisteredModel {
 }
 
 interface ActionSetState extends Action<any> {
-  nextState: Record<string, unknown>;
+  state: Record<string, unknown>;
 }
 
 const noopReduxMiddleware = (store: any) => (next: any) => (action: any) => next();
@@ -168,7 +168,7 @@ export class ReactReduxService {
         return model;
       } else {
         // namespace 需要保持全局唯一
-        throw new RuntimeException(`${namespace} model is not existed`);
+        throw new RuntimeException(`Register model failed, model namespace ${namespace} is existed`);
       }
     } else {
       registered = {
@@ -184,7 +184,7 @@ export class ReactReduxService {
         if (this.isStateRecording) {
           this.setStateHistories.push(action as ActionSetState);
         }
-        const { nextState } = action as ActionSetState;
+        const { state: nextState } = action as ActionSetState;
         return { ...state, ...nextState };
       } else {
         return state;

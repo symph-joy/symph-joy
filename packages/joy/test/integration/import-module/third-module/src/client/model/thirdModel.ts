@@ -3,7 +3,7 @@ import { JoyFetchService } from "@symph/joy/dist/index-client";
 import { Autowire } from "@symph/core";
 
 @ReactModel()
-export class IndexModel extends ReactBaseModel<{
+export class ThirdModel extends ReactBaseModel<{
   message: string;
 }> {
   constructor(@Autowire("joyFetchService") private joyFetchService: JoyFetchService) {

@@ -16,6 +16,8 @@ export class JoyBoot extends ServerApplication {
     // this.registerInternalProviders();
   }
 
+  public async startBoot() {}
+
   public async runCommand(name: string, args: any = {}): Promise<any> {
     const commandCenter = await this.get<CommandCenter>(CommandCenter);
     if (!commandCenter) {

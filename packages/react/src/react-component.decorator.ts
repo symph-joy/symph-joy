@@ -1,22 +1,17 @@
-import { ClassProvider, Component, Scope } from "@symph/core";
+import { ClassProvider, Component, ComponentOptions, Scope, Type } from "@symph/core";
 
-export interface ControllerMeta {
-  path: string;
-}
+export const META_KEY_REACT_COMPONENT = Symbol("react-component");
 
-export interface PathVariable {
-  key: string;
-  type: string | number | boolean;
-}
-
-export function ReactComponent<T>(options: Partial<ClassProvider & ControllerMeta> = {}): <TFunction extends Function>(target: TFunction) => TFunction | void {
+export function ReactComponent(options?: ComponentOptions): ClassDecorator {
   return (constructor) => {
-    const _options = Object.assign(
-      // { type: ExtReactControllerDeco, useClass: ExtReactControllerDeco },
-      {},
-      options,
-      { scope: Scope.TRANSIENT, autoLoad: "lazy" }
-    );
+    const _options = Object.assign({ autoRegister: true }, options);
+
+    Reflect.defineMetadata(META_KEY_REACT_COMPONENT, true, constructor);
+
     return Component(_options)(constructor);
   };
+}
+
+export function isReactComponent(clazz: Object): clazz is Type {
+  return Reflect.getMetadata(META_KEY_REACT_COMPONENT, clazz as any);
 }

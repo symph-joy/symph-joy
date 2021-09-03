@@ -749,7 +749,7 @@ describe("injector", () => {
     });
 
     it("should dynamic loading the model instance, at run time", async () => {
-      @Component({ autoLoad: "lazy" })
+      @Component({ autoRegister: true })
       class Dep {}
 
       @Component()

@@ -4,6 +4,7 @@ import { handlebars } from "../../lib/handlebars";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { FileGenerator, IGenerateFiles } from "../../plugin/file-generator";
+import { isReactComponent } from "@symph/react/dist/react-component.decorator";
 
 @Component()
 export class JoyAppProvidersExplorerService {
@@ -12,6 +13,8 @@ export class JoyAppProvidersExplorerService {
   protected providerModules: IScanOutModule[] = [];
 
   constructor(protected fileGenerator: FileGenerator) {}
+
+  initialize(): Promise<void> | void {}
 
   public getModules(): IScanOutModule[] {
     return this.providerModules;
@@ -46,22 +49,31 @@ export class JoyAppProvidersExplorerService {
     if (!module.providerDefines || module.providerDefines.size === 0) {
       return false;
     }
-    let hasAutoLoadProvider = false;
-    let hasNotAutoLoadProvider = false;
+    let hasServerProvider = false;
+    let hasReactProvider = false;
     module.providerDefines.forEach((providerDefine, exportKey) => {
-      /**
-       * the item in position 0:
-       * 1. when type is ClassProvider,it is the ClassProvider definition .
-       * 2. when type is Configuration, it is the Configuration class's Component definition.
-       */
-      const provider = providerDefine.providers[0];
-      (provider as ClassProvider).autoLoad === true ? (hasAutoLoadProvider = true) : (hasNotAutoLoadProvider = true);
+      // /**
+      //  * the item in position 0:
+      //  * 1. when type is ClassProvider,it is the ClassProvider definition .
+      //  * 2. when type is Configuration, it is the Configuration class's Component definition.
+      //  */
+      // const provider = providerDefine.providers[0];
+      // (provider as ClassProvider).autoLoad === true ? (hasAutoLoadProvider = true) : (hasNotAutoLoadProvider = true);
+
+      providerDefine.providers.forEach((provider, index) => {
+        if (isReactComponent(provider.type)) {
+          hasReactProvider = true;
+        } else {
+          hasServerProvider = true;
+        }
+        // (provider as ClassProvider).autoLoad === true ? (hasServerProvider = true) : (hasReactProvider = true);
+      });
     });
-    if (!hasAutoLoadProvider) {
+    if (!hasServerProvider) {
       return false;
     }
-    if (hasNotAutoLoadProvider) {
-      throw new Error(`Can not export auto load class and not auto load class in single js/ts file. module: ${module.resource}`);
+    if (hasReactProvider) {
+      throw new Error(`Module can not include server and react component. module path: ${module.resource || module.path}`);
     }
 
     this.providerModules.push(module);
@@ -107,7 +119,7 @@ export class JoyAppProvidersExplorerService {
     //   "./app-providers.config.js",
     //   moduleFileContent
     // );
-    genFiles["./joy/app-providers.config.js"] = moduleFileContent;
+    genFiles["./joy/server-providers.config.js"] = moduleFileContent;
     return genFiles;
   }
 }

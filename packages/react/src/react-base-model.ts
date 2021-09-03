@@ -42,7 +42,7 @@ export abstract class ReactBaseModel<TState> implements ProviderLifecycle, IProv
   protected setState(nextState: Partial<TState>): void {
     const action = {
       type: this.getNamespace() + "/__SET_STATE",
-      nextState,
+      state: nextState,
     };
     this.reduxStore.store.dispatch(action);
   }

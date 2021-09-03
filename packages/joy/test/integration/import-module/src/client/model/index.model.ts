@@ -9,6 +9,7 @@ export class IndexModel extends ReactBaseModel<{
   constructor(@Autowire("joyFetchService") private joyFetchService: JoyFetchService) {
     super();
   }
+  aaaaa = __filename;
 
   getInitState(): { message: string } {
     return { message: "" };

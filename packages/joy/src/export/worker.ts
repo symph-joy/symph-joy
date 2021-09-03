@@ -16,10 +16,9 @@ import { FontManifest } from "../joy-server/server/font-utils";
 import { Configuration, CoreContext, ValueProvider } from "@symph/core";
 import { ReactContextFactory } from "../react/react-context-factory";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-// import {ValidateError} from "schema-utils/declarations/validate";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 import { JoyConfigConfiguration } from "../joy-config.configuration";
-import { ConfigConfiguration, ConfigService, SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
+import { ConfigService, SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
 
 const envConfig = require("../joy-server/lib/runtime-config");
 
@@ -41,6 +40,8 @@ interface PathMap {
 }
 
 interface ExportPageInput {
+  port: number;
+
   dir: string;
   path: string;
   pathMap: PathMap;
@@ -49,6 +50,7 @@ interface ExportPageInput {
   pagesDataDir: string;
   renderOpts: ExportRenderOpts;
   buildExport?: boolean;
+  prerenderOut?: { html: string; data: string };
   serverRuntimeConfig: string;
   subFolders: string;
   serverless: boolean;
@@ -91,21 +93,19 @@ export class JoyExportConfig {
   @Configuration.Provider()
   public joyAppConfig: JoyAppConfig;
 
-  // @Configuration.Provider()
-  // public joyGenModuleServerProvider: JoyGenModuleServerProvider;
-
   @Configuration.Provider()
   public reactContextFactory: ReactContextFactory;
 }
 
 export default async function start(options: ExportPageInput): Promise<ExportPageResults> {
-  const { dir } = options;
+  const { dir, port } = options;
   const joyContext = new CoreContext([
     JoyExportConfig,
     {
       initValue: {
         name: SYMPH_CONFIG_INIT_VALUE,
         useValue: {
+          port,
           dir,
           dev: false,
         },
@@ -113,11 +113,11 @@ export default async function start(options: ExportPageInput): Promise<ExportPag
     },
   ]);
   await joyContext.init();
-  const configServier = await joyContext.get(ConfigService);
+  const configService = await joyContext.get(ConfigService);
   return exportPage(joyContext, options);
 }
 
-export async function exportPage(joyContext: CoreContext, { dir, path, pathMap, distDir, outDir, pagesDataDir, renderOpts, buildExport, serverRuntimeConfig, subFolders, serverless, optimizeFonts, optimizeImages }: ExportPageInput): Promise<ExportPageResults> {
+export async function exportPage(joyContext: CoreContext, { dir, path, pathMap, distDir, outDir, pagesDataDir, renderOpts, buildExport, prerenderOut, serverRuntimeConfig, subFolders, serverless, optimizeFonts, optimizeImages }: ExportPageInput): Promise<ExportPageResults> {
   // eslint-disable-next-line prefer-rest-params
   let results: ExportPageResults = {
     ampValidations: [],
@@ -199,8 +199,9 @@ export async function exportPage(joyContext: CoreContext, { dir, path, pathMap, 
 
     let renderMethod = renderToHTML;
 
-    const renderedDuringBuild = () => {
-      return !buildExport && !isDynamicRoute(path);
+    const hasRenderedDuringBuild = () => {
+      // return !buildExport && !isDynamicRoute(path);
+      return !buildExport && prerenderOut?.html;
     };
 
     // if (serverless) {
@@ -229,7 +230,7 @@ export async function exportPage(joyContext: CoreContext, { dir, path, pathMap, 
     //   // } else {
     //   //   // for non-dynamic SSG pages we should have already
     //   //   // prerendered the file
-    //   //   if (renderedDuringBuild((mod as ComponentModule).getStaticProps))
+    //   //   if (hasRenderedDuringBuild((mod as ComponentModule).getStaticProps))
     //   //     return results
     //   //
     //   //   if (
@@ -271,7 +272,7 @@ export async function exportPage(joyContext: CoreContext, { dir, path, pathMap, 
 
     // for non-dynamic SSG pages we should have already
     // prerendered the file
-    if (renderedDuringBuild()) {
+    if (hasRenderedDuringBuild()) {
       return results;
     }
 

@@ -27,13 +27,14 @@ import { FileGenerator } from "../plugin/file-generator";
 import { EventEmitter } from "events";
 import OnDemandModuleHandler from "./on-demand-module-handler";
 import { getWebpackConfigForSrc } from "../build/webpack-config-for-src";
-import { Autowire, Component } from "@symph/core";
+import { Autowire, AutowireHook, Component, HookType, IHook } from "@symph/core";
 import { BuildDevConfig } from "./build-dev-config";
 import crypto from "crypto";
 import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
 import { ReactRouter } from "@symph/react";
 import { getWebpackConfigForJoy } from "../build/webpack-config-for-joy";
 import chalk from "chalk";
+import { JoyBuildService } from "../build/joy-build.service";
 
 export async function renderScriptError(res: ServerResponse, error: Error, { verbose = true } = {}) {
   // Asks CDNs and others to not to cache the errored page
@@ -127,6 +128,9 @@ function erroredPages(compilation: Compilation) {
 
 @Component()
 export default class HotReloader {
+  // @AutowireHook({type: HookType.Traverse, async: true})
+  // public onWillJoyBuild: IHook<{ dev: boolean }, void>;
+
   private dir: string;
   private middlewares: any[];
   private pagesDir: string;
@@ -148,7 +152,7 @@ export default class HotReloader {
   // private fileGenerator: FileGenerator;
   private doneCallbacks: EventEmitter = new EventEmitter();
 
-  constructor(private joyAppConfig: JoyAppConfig, private fileGenerator: FileGenerator, private fileScanner: FileScanner, protected buildConfig: BuildDevConfig, private joyReactRouter: JoyReactRouterPluginDev) {
+  constructor(private joyAppConfig: JoyAppConfig, private fileGenerator: FileGenerator, private fileScanner: FileScanner, protected buildConfig: BuildDevConfig, private joyReactRouter: JoyReactRouterPluginDev, private buildService: JoyBuildService) {
     this.dir = this.joyAppConfig.resolveAppDir();
     this.middlewares = [];
     this.pagesDir = this.joyAppConfig.resolvePagesDir();
@@ -290,6 +294,10 @@ export default class HotReloader {
 
   private async _start(): Promise<void> {
     await this.clean();
+
+    // this.onWillJoyBuild.call({dev: true})
+    await this.buildService.triggerOnWillJoyBuild();
+
     await this.fileGenerator.mkTempDirs();
 
     const _configs = await this.getWebpackConfig();

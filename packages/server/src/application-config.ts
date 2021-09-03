@@ -14,8 +14,6 @@ import { ComponentWrapper } from "@symph/core";
 import { WebSocketAdapter } from "./interfaces/websockets/web-socket-adapter.interface";
 
 export class ApplicationConfig {
-  private dir: string;
-
   private globalPrefix = "";
   private globalPipes: PipeTransform[] = [];
   private globalFilters: ExceptionFilter[] = [];

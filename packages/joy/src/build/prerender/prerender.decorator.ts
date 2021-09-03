@@ -1,5 +1,5 @@
 import { Component, Type } from "@symph/core";
-import { getRouteMeta } from "@symph/react";
+import { getRouteMeta, ReactComponent } from "@symph/react";
 import { isPrerenderClazz } from "./prerender.interface";
 import { isDynamicRoute } from "../../joy-server/lib/router/utils";
 
@@ -25,14 +25,14 @@ export function Prerender(options?: PrerenderMeta): <TFunction extends Function>
         byProvider: true,
       } as PrerenderMetaByProvider;
       Reflect.defineMetadata(JOY_PRERENDER_META, meta, constructor);
-      Component(Object.assign({}, options, { autoLoad: "lazy" }))(constructor);
+      ReactComponent(Object.assign({}, options, { autoRegister: true }))(constructor);
     } else {
       const routeMeta = getRouteMeta(constructor);
       if (!routeMeta) {
         throw new Error(`The component(${constructor.name}) is not a route component, so can't decorate by @Prerender(). `);
       }
       if (Array.isArray(routeMeta.path) && !options?.route) {
-        throw new Error(`route.path should not be an array, When @Prerender() decorate a route component(${constructor.name}).`);
+        throw new Error(`The controller's route.path should not be an array, When @Prerender() decorate a route component(${constructor.name}).`);
       }
       const routePath = routeMeta.path as string;
       if (isDynamicRoute(routePath)) {

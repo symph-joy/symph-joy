@@ -11,13 +11,15 @@ import { JoyImportService } from "../server/joy-import.service";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { JoyReactDevConfiguration } from "../react/joy-react-dev.configuration";
 import { JoyBuildConfiguration } from "./joy-build.configuration";
+import { JoyReactRouterPlugin } from "../react/router/joy-react-router-plugin";
+import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
 
 @Configuration()
 export class JoyBuildDevConfiguration extends JoyBuildConfiguration {
   // ====== imports
 
   // @Configuration.Provider()
-  // public joyReactBuildConfiguration: JoyReactDevConfiguration;
+  // public joyReactBuildConfiguration: JoyReactBuildDevConfiguration;
 
   // ====== providers
   // @Configuration.Provider()
@@ -25,4 +27,7 @@ export class JoyBuildDevConfiguration extends JoyBuildConfiguration {
 
   @Configuration.Provider()
   public buildConfig: BuildDevConfig;
+
+  @Configuration.Provider()
+  public joyReactRouterPlugin: JoyReactRouterPluginDev;
 }

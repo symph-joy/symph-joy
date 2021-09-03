@@ -1,6 +1,6 @@
 import { ClassProvider, Component, Type } from "@symph/core";
 
-export function CommandProvider(options: Partial<ClassProvider> = {}): <TFunction extends Function>(target: TFunction) => TFunction | void {
+export function CommandProvider(options: Partial<ClassProvider> = {}): ClassDecorator {
   return (target) => {
     Reflect.defineMetadata("__joy_cmd", options, target);
     Component(options)(target);

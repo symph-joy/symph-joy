@@ -1,5 +1,4 @@
-import { Hook, SyncHook } from "tapable";
-import { TProviderName, TypeOrTokenType } from "../../interfaces";
+import { ITap } from "./tap.interface";
 
 export enum HookType {
   Traverse,
@@ -7,11 +6,18 @@ export enum HookType {
   Bail,
 }
 
-export interface IHook {
+type AsArray<T> = T extends any[] ? T : [T];
+
+export interface IHook<TCallArgs = any, TCallReturn = any> {
   id: string;
   type: HookType;
   async: boolean;
   parallel: boolean;
-  hook: Hook<any, any>;
-  call: typeof SyncHook.prototype.call | typeof Hook.prototype.promise; // todo 添加入参类型申明
+  call: (...args: AsArray<TCallArgs>) => TCallReturn | Promise<TCallReturn>; // todo 添加入参类型申明
+
+  registerTap(tap: ITap): void;
+  unregisterProviderTap<T>(provider: T): ITap | undefined;
+
+  isDisposed: boolean;
+  dispose: () => void;
 }

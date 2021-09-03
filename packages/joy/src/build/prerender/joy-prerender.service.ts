@@ -96,7 +96,7 @@ export class JoyPrerenderService {
   // }
 
   public async getPrerenderList(): Promise<JoyPrerenderInfo[]> {
-    if (this.prerenderProviderIds.length === 0) {
+    if (this.prerenderProviderIds.length === 0 && this.prerenderList.length === 0) {
       return [];
     }
 

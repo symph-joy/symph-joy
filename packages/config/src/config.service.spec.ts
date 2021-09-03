@@ -4,10 +4,9 @@ import { ConfigService } from "./config.service";
 import { Configurable } from "./configurable.decorator";
 import { Max, MaxLength, MinLength, Schema } from "@tsed/schema";
 import { SYMPH_CONFIG_INIT_VALUE } from "./constants";
-import { ConfigLoaderFactory } from "./loader/factories/config-loader-factory";
 
 describe("config.service", () => {
-  test(`Should inject config value to prop of a configurable provider`, async () => {
+  test(`Should inject config value to the prop of the configurable provider`, async () => {
     @Configurable()
     class BasicConfig {
       @ConfigValue()
@@ -25,12 +24,36 @@ describe("config.service", () => {
       }
     }
 
-    const context = await CoreContextFactory.createApplicationContext([ConfigLoaderFactory, CustomConfigService, BasicConfig]);
+    const context = await CoreContextFactory.createApplicationContext([CustomConfigService, BasicConfig]);
     const configService = await context.get(ConfigService);
     const basicConfig = await context.get(BasicConfig);
     expect(configService).toBeInstanceOf(CustomConfigService);
     expect(basicConfig.msg).toBe("From afterPropertiesSet");
     expect(basicConfig.isOk).toBe(true);
+  });
+
+  test(`Should inject a function config value to the prop of the configurable provider`, async () => {
+    @Configurable()
+    class BasicConfig {
+      @ConfigValue()
+      public funProp: () => any;
+    }
+
+    const funValue = () => {};
+
+    @Component()
+    class CustomConfigService extends ConfigService {
+      async afterPropertiesSet(): Promise<void> {
+        await super.afterPropertiesSet();
+        this.mergeConfig({ funProp: funValue });
+      }
+    }
+
+    const context = await CoreContextFactory.createApplicationContext([CustomConfigService, BasicConfig]);
+    const configService = await context.get(ConfigService);
+    const basicConfig = await context.get(BasicConfig);
+    expect(configService).toBeInstanceOf(CustomConfigService);
+    expect(basicConfig.funProp).toBe(funValue);
   });
 
   test(`Should inject multi config value to prop of a configurable provider.`, async () => {
@@ -53,7 +76,6 @@ describe("config.service", () => {
           },
         },
       },
-      ConfigLoaderFactory,
       ConfigService,
       BasicConfig,
     ]);
@@ -70,7 +92,7 @@ describe("config.service", () => {
       public msg: string;
     }
 
-    const context = await CoreContextFactory.createApplicationContext([ConfigLoaderFactory, ConfigService, BasicConfig]);
+    const context = await CoreContextFactory.createApplicationContext([ConfigService, BasicConfig]);
     const basicConfig = await context.get(BasicConfig);
     expect(basicConfig.msg).toContain("hello");
   });
@@ -100,7 +122,6 @@ describe("config.service", () => {
               },
             },
           },
-          ConfigLoaderFactory,
           ConfigService,
           BasicConfig,
         ]);
@@ -137,7 +158,6 @@ describe("config.service", () => {
               },
             },
           },
-          ConfigLoaderFactory,
           ConfigService,
           BasicConfig,
         ]);

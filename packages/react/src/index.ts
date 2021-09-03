@@ -1,4 +1,5 @@
 export * from "./interfaces";
+export * from "./react-component.decorator";
 export * from "./react-application-context";
 export * from "./react-base-controller";
 export * from "./react-app-init-manager";

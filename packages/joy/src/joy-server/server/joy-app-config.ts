@@ -10,6 +10,7 @@ import { basename, extname, resolve } from "path";
 import fs from "fs";
 import { Configurable, ConfigValue } from "@symph/config";
 import { Integer } from "@tsed/schema";
+import { str } from "ajv";
 
 const targets = ["server", "serverless", "experimental-serverless-trace"];
 const reactModes = ["legacy", "blocking", "concurrent"];
@@ -166,15 +167,22 @@ export class JoyAppConfig implements IJoyConfig {
   webpack: any = null;
   webpackDevMiddleware = null;
 
-  distDir = ".joy";
+  @ConfigValue({ default: ".joy" })
+  distDir: string;
+
   autoGenOutputDir = "gen-files";
 
-  assetPrefix = "";
+  @ConfigValue({ default: "" })
+  assetPrefix: string;
+
   configOrigin = "default";
   useFileSystemPublicRoutes = true;
   generateBuildId = () => null;
   generateEtags = true;
-  pageExtensions = ["tsx", "ts", "jsx", "js"];
+
+  @ConfigValue({ default: ["tsx", "ts", "jsx", "js"] })
+  pageExtensions: string[];
+
   target = "server";
   poweredByHeader = true;
   compress = true;
@@ -189,11 +197,14 @@ export class JoyAppConfig implements IJoyConfig {
   amp = {
     canonicalBase: "",
   };
+
+  @ConfigValue({ default: "" })
   basePath = "";
   sassOptions = {};
   trailingSlash = false;
   experimental = {
-    cpus: Math.max(1, (Number(process.env.CIRCLE_NODE_TOTAL) || (os.cpus() || { length: 1 }).length) - 1),
+    cpus: 1, // todo remove
+    // cpus: Math.max(1, (Number(process.env.CIRCLE_NODE_TOTAL) || (os.cpus() || { length: 1 }).length) - 1),
     modern: false,
     plugins: false,
     profiling: false,
@@ -206,6 +217,9 @@ export class JoyAppConfig implements IJoyConfig {
     optimizeImages: false,
     scrollRestoration: false,
   };
+
+  @ConfigValue()
+  exportPathMap: any;
 
   future = {
     excludeDefaultMomentLocales: false,
@@ -251,7 +265,7 @@ export class JoyAppConfig implements IJoyConfig {
   }
 
   public resolveSSGOutDir(...subPaths: string[]) {
-    return this.resolveAppDir(this.distDir, OUT_DIRECTORY, "react/export", ...subPaths);
+    return this.resolveAppDir(this.distDir, OUT_DIRECTORY, "react/prerender", ...subPaths);
   }
 
   public mergeCustomConfig(customConfig: { [key in keyof Partial<this>]: any }): void {
@@ -269,7 +283,7 @@ export class JoyAppConfig implements IJoyConfig {
         this[key] = value;
       }
     });
-    this.validateConfig();
+    // this.validateConfig();
   }
 
   private deepMergeObj(objA: any = {}, objB: any) {

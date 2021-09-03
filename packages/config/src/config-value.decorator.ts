@@ -7,7 +7,7 @@ interface IJoyPluginConfigMeta {
   propKey: string;
   configKey: string;
   // schema?: T extends any ? any : JSONSchemaType<T, true>, // 为空表示不需要校验
-  schema: JsonSchema; // 为空表示不需要校验
+  schema: JsonSchema | undefined; // 为空表示不需要校验
   onChange: "reload" | "regenerateTmpFiles";
   default: unknown; //default value
 }
@@ -31,14 +31,15 @@ export function ConfigValue<T extends any>(options: Partial<Omit<IJoyPluginConfi
     const configKey = options?.configKey || propKey;
     const existConfigs: IJoyPluginConfigMeta[] = getConfigMetadata(target) || [];
 
-    const configValueMeta: IJoyPluginConfigMeta = Object.assign(
+    const configValueMeta = Object.assign(
       {
         propKey,
         configKey,
         onChange: "reload",
-        schema: curConfigSchema,
+        // 如果是空的object，则在赋值的时候不校验。
+        schema: curConfigSchema?.type === "object" && !curConfigSchema.properties ? undefined : curConfigSchema,
         default: undefined,
-      },
+      } as IJoyPluginConfigMeta,
       options
     );
     existConfigs.push(configValueMeta);

@@ -1,12 +1,5 @@
 import child_process from "child_process";
-import {
-  findPort,
-  joyBuild,
-  joyDev,
-  joyStart,
-  killApp,
-  RunOptions,
-} from "./joy-test-utils";
+import { findPort, joyBuild, joyDev, joyStart, killApp, RunOptions } from "./joy-test-utils";
 import { stringify } from "querystring";
 import { EntryType } from "@symph/core";
 import { JoyAppConfig } from "@symph/joy";
@@ -25,26 +18,16 @@ export class JoyTestContext {
 
   private cachedBuildId: string;
 
-  constructor(public workDir: string, entry: EntryType = {}) {
-    // super({
-    //   joyAppConfig: JoyAppConfig,
-    //   ...entry,
-    // });
-  }
+  constructor(public workDir: string) {}
 
   async init(): Promise<this> {
     this.isInit = true;
     this.joyAppConfig = new JoyAppConfig();
-    this.joyAppConfig.mergeCustomConfig({ dir: this.workDir });
+    this.joyAppConfig.mergeCustomConfig({ dir: this.workDir, distDir: ".joy" });
     return this;
   }
 
-  async start(
-    port?: number,
-    buildArgs?: any[],
-    buildOpts?: RunOptions,
-    startOpts?: RunOptions
-  ) {
+  async start(port?: number, buildArgs?: any[], buildOpts?: RunOptions, startOpts?: RunOptions) {
     const workDir = this.workDir;
     await this.init();
     this.dev = true;
@@ -82,12 +65,7 @@ export class JoyTestContext {
     if (this.cachedBuildId) {
       return this.cachedBuildId;
     }
-    this.cachedBuildId = fs
-      .readFileSync(
-        this.joyAppConfig.resolveBuildOutDir("react/BUILD_ID"),
-        "utf8"
-      )
-      .trim();
+    this.cachedBuildId = fs.readFileSync(this.joyAppConfig.resolveBuildOutDir("react/BUILD_ID"), "utf8").trim();
     return this.cachedBuildId;
   }
 
@@ -103,21 +81,13 @@ export class JoyTestContext {
     return testContext;
   }
 
-  static async createServerContext(
-    workDir: string,
-    port?: number,
-    buildArgs?: any[],
-    buildOpts?: RunOptions,
-    startOpts?: RunOptions
-  ) {
+  static async createServerContext(workDir: string, port?: number, buildArgs?: any[], buildOpts?: RunOptions, startOpts?: RunOptions) {
     const testContext = new JoyTestContext(workDir);
     await testContext.start(port, buildArgs, buildOpts, startOpts);
     return testContext;
   }
 
   getUrl(pathname: string, query?: any) {
-    return `http:${this.host}:${this.port}${pathname}${
-      query ? stringify(query) : ""
-    }`;
+    return `http:${this.host}:${this.port}${pathname}${query ? stringify(query) : ""}`;
   }
 }

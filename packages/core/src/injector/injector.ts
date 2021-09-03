@@ -351,7 +351,7 @@ export class Injector {
 
   private dynamicAddWrapper(container: CoreContainer, type: Type, name?: string): ComponentWrapper | undefined {
     const meta = getInjectableMeta(type);
-    if (!meta || meta.autoLoad !== "lazy") {
+    if (!meta || !meta.autoRegister) {
       return undefined;
     }
     if (name) {
@@ -431,7 +431,7 @@ export class Injector {
         if (isNil(factoryWrapper)) {
           throw new RuntimeException(`Instantiate factory provider failed, can not find factory instance(class: ${factoryClass.name}) in container.`);
         }
-        return this.resolveInstance(container, factoryWrapper!, contextId).then((factoryInstance) => {
+        return this.resolveInstance(container, factoryWrapper!, contextId).then((factoryInstance: any) => {
           const returnValue = factoryInstance[property](...instances);
           if (returnValue === null || returnValue === undefined) {
             throw new RuntimeException(`Instantiate factory provider(name: ${String(wrapper.name)}) failed, factory method return a null or undefined value.`);

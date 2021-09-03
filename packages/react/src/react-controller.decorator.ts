@@ -1,4 +1,5 @@
-import { ClassProvider, Component, Scope } from "@symph/core";
+import { ClassProvider, Scope } from "@symph/core";
+import { ReactComponent } from "./react-component.decorator";
 
 export interface ControllerMeta {
   path: string;
@@ -38,9 +39,9 @@ export function ReactController<T>(options: Partial<ClassProvider & ControllerMe
       // { type: ExtReactControllerDeco, useClass: ExtReactControllerDeco },
       { name },
       options,
-      { scope: Scope.TRANSIENT, autoLoad: false }
+      { scope: Scope.TRANSIENT, autoRegister: false }
     );
-    Component(options)(ExtReactControllerDeco);
+    ReactComponent(options)(ExtReactControllerDeco);
 
     return (ExtReactControllerDeco as unknown) as typeof constructor;
   };

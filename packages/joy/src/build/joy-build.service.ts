@@ -28,7 +28,7 @@ import { writeBuildId } from "./write-build-id";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
-import { CoreContext, Component } from "@symph/core";
+import { CoreContext, Component, AutowireHook, HookType, IHook } from "@symph/core";
 import { getWebpackConfigForSrc } from "./webpack-config-for-src";
 import { FileGenerator } from "../plugin/file-generator";
 import { FileScanner } from "../joy-server/server/scanner/file-scanner";
@@ -62,6 +62,9 @@ export type PrerenderManifest = {
 
 @Component()
 export class JoyBuildService {
+  @AutowireHook({ type: HookType.Traverse, async: true })
+  private onWillJoyBuild: IHook<{ dev: boolean }, void>;
+
   private dir: string;
   private distDir: string;
   private outDir: string;
@@ -297,7 +300,7 @@ export class JoyBuildService {
       buildExport: true,
       threads: this.joyConfig.experimental.cpus,
       pages: combinedPages,
-      outdir: path.join(outDir, "export"),
+      outdir: path.join(outDir, "prerender"),
       statusMessage: "Generating static pages",
       ...exportConfig,
     };
@@ -355,7 +358,13 @@ export class JoyBuildService {
     return prerenderManifest;
   }
 
+  public async triggerOnWillJoyBuild(): Promise<void> {
+    await this.onWillJoyBuild.call({ dev: this.joyConfig.dev });
+  }
+
   public async build(reactProductionProfiling = false, debugOutput = false): Promise<void> {
+    // await this.onWillJoyBuild.call({dev: false})
+    await this.triggerOnWillJoyBuild();
     const config = this.joyConfig;
     const dir = this.dir;
     if (!(await isWriteable(dir))) {

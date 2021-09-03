@@ -23,7 +23,13 @@ import type exportPage from "./worker";
 import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
 import { getPagePath } from "../joy-server/server/require";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import { Component } from "@symph/core";
+import { Component, Configuration, CoreContext } from "@symph/core";
+import { JoyServer } from "../joy-server/server/joy-server";
+import { ServerApplication } from "@symph/server";
+import getPort from "get-port";
+import { JoyReactServer } from "../joy-server/server/joy-react-server";
+import { JoyApiServer } from "../joy-server/server/joy-api-server";
+import { ExportServerConfiguration } from "./export-server.configuration";
 
 const exists = promisify(existsOrig);
 
@@ -74,15 +80,29 @@ interface ExportOptions {
 export class JoyExportAppService {
   private distDir: string;
 
-  constructor(private joyAppConfig: JoyAppConfig) {
+  constructor(private joyAppConfig: JoyAppConfig, private serverApplication: ServerApplication) {
     this.distDir = joyAppConfig.resolveAppDir(joyAppConfig.distDir);
   }
 
   async exportApp(dir: string, options: ExportOptions): Promise<void> {
     dir = resolve(dir);
+    await this.serverApplication.loadModule(ExportServerConfiguration);
+    const port = await getPort();
+    const joyServer = await this.serverApplication.get(JoyServer);
+    await joyServer.prepare();
+    try {
+      await this.serverApplication.listenAsync(port, "127.0.0.1");
+    } catch (err) {
+      if (err.code === "EADDRINUSE") {
+        let errorMessage = `Start export server failed, Port ${port} is already in use.`;
+        throw new Error(errorMessage);
+      } else {
+        throw err;
+      }
+    }
 
     // attempt to load global env values so they are available in next.config.js
-    loadEnvConfig(dir);
+    // loadEnvConfig(dir);
     const joyConfig = this.joyAppConfig;
     const { buildExport, trailingSlash } = options;
     const initialPageRevalidationMap = options.initialPageRevalidationMap || {};
@@ -107,7 +127,7 @@ export class JoyExportAppService {
     }
 
     // const threads = options.threads || Math.max(Math.min(cpus().length - 1, 4), 1)
-    const threads = 2; // todo remove
+    const threads = options.threads || 1; // todo remove
     // const distDir = join(dir, joyConfig.distDir)
     const distDir = this.joyAppConfig.resolveAppDir(this.distDir, OUT_DIRECTORY, "react");
 
@@ -145,7 +165,11 @@ export class JoyExportAppService {
 
     const excludedPrerenderRoutes = new Set<string>();
     const pages = options.pages || Object.keys(pagesManifest);
-    const defaultPathMap: ExportPathMap = {};
+    const defaultPathMap: ExportPathMap = buildExport
+      ? {}
+      : {
+          "/": { page: "/" },
+        };
     let hasApiRoutes = false;
 
     for (const page of pages) {
@@ -178,7 +202,7 @@ export class JoyExportAppService {
     const outDir = options.outdir;
 
     if (outDir === join(dir, "public")) {
-      throw new Error(`The 'public' directory is reserved in Joy.js and can not be used as the export out directory.`);
+      throw new Error(`The 'public' directory is reserved in joy and can not be used as the export out directory.`);
     }
 
     await recursiveDelete(join(outDir));
@@ -202,12 +226,20 @@ export class JoyExportAppService {
       await recursiveCopy(join(dir, "static"), join(outDir, "static"));
     }
 
-    // Copy .joy/out/static directory
-    if (!options.buildExport && existsSync(join(distDir, CLIENT_STATIC_FILES_PATH))) {
+    // Copy .joy/out/react/static and export directory
+    if (!options.buildExport) {
       if (!options.silent) {
         Log.info('Copying "static build" directory');
       }
-      await recursiveCopy(join(distDir, CLIENT_STATIC_FILES_PATH), join(outDir, "_joy", CLIENT_STATIC_FILES_PATH));
+
+      // // Copy .joy/out/react/export/* to outDir/*
+      // if (existsSync(join(distDir, 'export'))){
+      //   await recursiveCopy(join(distDir, 'export'), join(outDir));
+      // }
+      // Copy .joy/out/react/static
+      if (existsSync(join(distDir, CLIENT_STATIC_FILES_PATH))) {
+        await recursiveCopy(join(distDir, CLIENT_STATIC_FILES_PATH), join(outDir, "_joy", CLIENT_STATIC_FILES_PATH));
+      }
     }
 
     // // Get the exportPathMap from the config file
@@ -319,7 +351,7 @@ export class JoyExportAppService {
       }
     }
 
-    const progress = !options.silent && createProgress(filteredPaths.length, `${Log.prefixes.info} ${options.statusMessage}`);
+    const progress = !options.silent && createProgress(filteredPaths.length, `${Log.prefixes.info} ${options.statusMessage || "Generating pages"}`);
     const pagesDataDir = options.buildExport ? outDir : join(outDir, "_joy/data", buildId);
 
     const ampValidations: AmpPageStatus = {};
@@ -355,6 +387,7 @@ export class JoyExportAppService {
       filteredPaths.map(async (path) => {
         // ['/dynamic/1'].map(async (path) => {
         const result = await worker.default({
+          port,
           dir,
           path,
           pathMap: exportPathMap[path],
@@ -365,6 +398,7 @@ export class JoyExportAppService {
           serverRuntimeConfig: serverRuntimeConfig as any,
           subFolders: subFolders as any,
           buildExport: options.buildExport,
+          prerenderOut: !options.buildExport && prerenderManifest && prerenderManifest.routes?.[path] ? this.getRouteSsgOutFiles(path) : undefined,
           serverless: isTargetLikeServerless(joyConfig.target),
           optimizeFonts: joyConfig.experimental.optimizeFonts,
           optimizeImages: joyConfig.experimental.optimizeImages,
@@ -385,42 +419,43 @@ export class JoyExportAppService {
       })
     );
 
-    worker.end();
+    await worker.end();
+
+    await this.serverApplication.httpAdapter.close();
 
     // copy prerendered routes to outDir
     if (!options.buildExport && prerenderManifest) {
       await Promise.all(
         Object.keys(prerenderManifest.routes).map(async (route) => {
-          const { srcRoute } = prerenderManifest!.routes[route];
-          const pageName = srcRoute || route;
-          // const pagePath = getPagePath(pageName, distDir, isLikeServerless)
-          const pagePath = getPagePath(pageName, distDir);
-          const distPagesDir = join(
-            pagePath,
-            // strip leading / and then recurse number of nested dirs
-            // to place from base folder
-            pageName
-              .substr(1)
-              .split("/")
-              .map(() => "..")
-              .join("/")
-          );
-          route = normalizePagePath(route);
+          // const { srcRoute } = prerenderManifest!.routes[route];
+          // const pageName = srcRoute || route;
+          // // // const pagePath = getPagePath(pageName, distDir, isLikeServerless)
+          // // // const pagePath = getPagePath(pageName, distDir);
+          // const pagePath = pageName;
+          // const distPagesDir = join(
+          //   pagePath,
+          //   // strip leading / and then recurse number of nested dirs
+          //   // to place from base folder
+          //   pageName
+          //     .substr(1)
+          //     .split("/")
+          //     .map(() => "..")
+          //     .join("/")
+          // );
 
-          const orig = join(distPagesDir, route);
+          // const orig = join(distPagesDir, route);
+          // const relatePath = route[0] === '/' ? route.substr(1) : route
+          // const orig = this.joyAppConfig.resolveSSGOutDir(relatePath)
+          const { html: origHtml, data: origData } = this.getRouteSsgOutFiles(route);
+          route = normalizePagePath(route);
           const htmlDest = join(outDir, `${route}${subFolders && route !== "/index" ? `${sep}index` : ""}.html`);
-          const ampHtmlDest = join(outDir, `${route}.amp${subFolders ? `${sep}index` : ""}.html`);
+          // const ampHtmlDest = join(outDir, `${route}.amp${subFolders ? `${sep}index` : ""}.html`);
           const jsonDest = join(pagesDataDir, `${route}.json`);
 
           await promises.mkdir(dirname(htmlDest), { recursive: true });
           await promises.mkdir(dirname(jsonDest), { recursive: true });
-          await promises.copyFile(`${orig}.html`, htmlDest);
-          await promises.copyFile(`${orig}.json`, jsonDest);
-
-          if (await exists(`${orig}.amp.html`)) {
-            await promises.mkdir(dirname(ampHtmlDest), { recursive: true });
-            await promises.copyFile(`${orig}.amp.html`, ampHtmlDest);
-          }
+          await promises.copyFile(origHtml, htmlDest);
+          await promises.copyFile(origData, jsonDest);
         })
       );
     }
@@ -449,5 +484,15 @@ export class JoyExportAppService {
     // if (telemetry) {
     //   await telemetry.flush()
     // }
+  }
+
+  public getRouteSsgOutFiles(routePath: string): { html: string; data: string } {
+    routePath = normalizePagePath(routePath);
+    routePath = routePath[0] === "/" ? routePath.substr(1) : routePath;
+    const orig = this.joyAppConfig.resolveSSGOutDir(routePath);
+    return {
+      html: `${orig}.html`,
+      data: `${orig}.json`,
+    };
   }
 }

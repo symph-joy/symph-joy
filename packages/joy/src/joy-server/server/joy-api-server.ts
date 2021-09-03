@@ -14,7 +14,7 @@ export class JoyApiServer {
   constructor(protected serverContext: ServerApplication, protected joyAppConfig: JoyAppConfig) {}
 
   public async prepare(): Promise<void> {
-    const joyApiModulesPath = this.joyAppConfig.resolveBuildOutDir("joy/joy-bundle.js");
+    const joyApiModulesPath = this.joyAppConfig.resolveBuildOutDir("joy/server-bundle.js");
     const joyApiModules = require(joyApiModulesPath).default;
     await this.serverContext.loadModule(joyApiModules);
   }
@@ -24,6 +24,9 @@ export class JoyApiServer {
   }
 
   private async handleRequest(req: IncomingMessage, res: ServerResponse, next: () => unknown): Promise<unknown> {
+    // 由ServerContext处理请求。
     return next();
   }
+
+  public async close() {}
 }

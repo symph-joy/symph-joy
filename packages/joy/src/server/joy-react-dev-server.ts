@@ -4,7 +4,7 @@ import crypto from "crypto";
 import fs from "fs";
 import { IncomingMessage, ServerResponse } from "http";
 import AmpHtmlValidator from "amphtml-validator";
-import { join, join as pathJoin, relative, resolve as pathResolve, sep } from "path";
+import { join as pathJoin, relative, resolve as pathResolve, sep } from "path";
 import { UrlWithParsedQuery } from "url";
 import Watchpack from "watchpack";
 import { ampValidation } from "../build/output/index";
@@ -22,16 +22,14 @@ import Router, { Params, route } from "../joy-server/server/router";
 import HotReloader from "./hot-reloader";
 import { findPageFile } from "./lib/find-page-file";
 import { withCoalescedInvoke } from "../lib/coalesced-function";
-import { EntryType, Autowire, Component } from "@symph/core";
+import { Autowire, Component, EntryType } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { FileScanner } from "../joy-server/server/scanner/file-scanner";
 import { BuildDevConfig } from "./build-dev-config";
 import { FileGenerator } from "../plugin/file-generator";
 import { JoyReactAppServerDevConfig } from "../react/joy-react-app-server-dev-config";
 import { ReactContextFactoryDev } from "./react-context-factory-dev";
-import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
-import { ReactRouter } from "@symph/react";
-import { Worker } from "jest-worker";
+import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
 
 if (typeof React.Suspense === "undefined") {
   throw new Error(`The version of React you are using is lower than the minimum required version needed for Joy.js. Please upgrade "react" and "react-dom": "npm install react react-dom"`);
@@ -58,8 +56,8 @@ export class JoyReactDevServer extends JoyReactServer {
   };
 
   // constructor(options: ServerConstructor & { isJoyDevCommand?: boolean }) {
-  constructor(protected joyAppConfig: JoyAppConfig, protected buildConfig: BuildDevConfig, protected hotReloader: HotReloader, protected reactRouter: JoyReactRouterPluginDev, protected reactContextFactory: ReactContextFactoryDev) {
-    super(joyAppConfig, reactRouter, reactContextFactory);
+  constructor(protected joyAppConfig: JoyAppConfig, protected buildConfig: BuildDevConfig, protected hotReloader: HotReloader, protected reactContextFactory: ReactContextFactoryDev) {
+    super(joyAppConfig, reactContextFactory);
     this.renderOpts.dev = true;
     (this.renderOpts as any).ErrorComponent = ReactDevOverlay;
     this.devReady = new Promise((resolve) => {
@@ -365,6 +363,10 @@ export class JoyReactDevServer extends JoyReactServer {
     return super.run(req, res, parsedUrl);
   }
 
+  protected getPagesManifest(): PagesManifest {
+    return {};
+  }
+
   // override production loading of routes-manifest
   protected getCustomRoutes(): CustomRoutes {
     // actual routes will be loaded asynchronously during .prepare()
@@ -372,6 +374,7 @@ export class JoyReactDevServer extends JoyReactServer {
   }
 
   private _devCachedPreviewProps: __ApiPreviewProps | undefined;
+
   protected getPreviewProps() {
     if (this._devCachedPreviewProps) {
       return this._devCachedPreviewProps;

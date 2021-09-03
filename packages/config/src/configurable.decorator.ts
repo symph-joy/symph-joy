@@ -17,6 +17,9 @@ export function Configurable(options: Partial<ClassProvider> = {}): ClassDecorat
 
     for (let i = 0; i < configMetas.length; i++) {
       const { configKey, propKey, schema } = configMetas[i];
+      if (schema === undefined) {
+        continue;
+      }
       // propKeys[i] = propKey;
       configKeys[i] = configKey;
       configJsonSchema.addProperty(configKey, new JsonSchema(schema));

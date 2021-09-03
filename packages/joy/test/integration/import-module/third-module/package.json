@@ -1,4 +1,6 @@
 {
   "name": "third-module",
-  "main": "index.ts"
+  "version": "v1.0.0",
+  "serverConfig": "dist/server/server-application.configuration.js",
+  "clientConfig": "dist/server/react-application.configuration.js"
 }

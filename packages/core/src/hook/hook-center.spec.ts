@@ -50,7 +50,7 @@ describe("hook", () => {
     expect(await helloProvider.content()).toBe("a-b");
   });
 
-  test("Should override the onDidLoad method by child class.", async () => {
+  test("Should override the tap method by child class.", async () => {
     @Component()
     class APlugin {
       key: string;

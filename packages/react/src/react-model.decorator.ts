@@ -1,7 +1,8 @@
-import { ClassProvider, Component } from "@symph/core";
+import { ClassProvider } from "@symph/core";
+import { ReactComponent } from "./react-component.decorator";
 
 export function ReactModel(options: Partial<ClassProvider> = {}): ClassDecorator {
   return (target) => {
-    return Component(Object.assign({ autoLoad: "lazy" }, options))(target);
+    return ReactComponent(Object.assign({ autoRegister: true }, options))(target);
   };
 }

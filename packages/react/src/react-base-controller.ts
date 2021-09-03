@@ -119,44 +119,56 @@ export abstract class ReactBaseController<TProps = Record<string, unknown>, TSta
     const { initStatic, init } = this.initManager.getState(pathname);
 
     if (renderStage >= EnumReactAppInitStage.STATIC) {
-      if (this.initialModelStaticState && (initStatic === JoyRouteInitState.NONE || initStatic === JoyRouteInitState.ERROR)) {
-        const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
-          .then((rst) => {
-            this.initManager.setInitState(pathname, {
-              initStatic: JoyRouteInitState.SUCCESS,
+      if (initStatic === JoyRouteInitState.NONE || initStatic === JoyRouteInitState.ERROR) {
+        if (this.initialModelStaticState) {
+          const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
+            .then((rst) => {
+              this.initManager.setInitState(pathname, {
+                initStatic: JoyRouteInitState.SUCCESS,
+              });
+              return rst;
+            })
+            .catch((e) => {
+              console.error(e);
+              this.initManager.setInitState(pathname, {
+                initStatic: JoyRouteInitState.ERROR,
+              });
             });
-            return rst;
-          })
-          .catch((e) => {
-            console.error(e);
-            this.initManager.setInitState(pathname, {
-              initStatic: JoyRouteInitState.ERROR,
-            });
+          if (typeof window === "undefined" && initStaticTask) {
+            // only on server side
+            this.initManager.addTask(pathname, initStaticTask);
+          }
+        } else {
+          this.initManager.setInitState(pathname, {
+            initStatic: JoyRouteInitState.SUCCESS,
           });
-        if (typeof window == "undefined" && initStaticTask) {
-          // only on server side
-          this.initManager.addTask(pathname, initStaticTask);
         }
       }
     }
 
     if (renderStage >= EnumReactAppInitStage.DYNAMIC) {
-      if (this.initialModelState && (init === JoyRouteInitState.NONE || init === JoyRouteInitState.ERROR)) {
-        const initTask = Promise.resolve(this.initialModelState({}))
-          .then((rst) => {
-            this.initManager.setInitState(pathname, {
-              init: JoyRouteInitState.SUCCESS,
+      if (init === JoyRouteInitState.NONE || init === JoyRouteInitState.ERROR) {
+        if (this.initialModelState) {
+          const initTask = Promise.resolve(this.initialModelState({}))
+            .then((rst) => {
+              this.initManager.setInitState(pathname, {
+                init: JoyRouteInitState.SUCCESS,
+              });
+              return rst;
+            })
+            .catch((e) => {
+              this.initManager.setInitState(pathname, {
+                init: JoyRouteInitState.ERROR,
+              });
             });
-            return rst;
-          })
-          .catch((e) => {
-            this.initManager.setInitState(pathname, {
-              init: JoyRouteInitState.ERROR,
-            });
+          if (typeof window == "undefined" && initTask) {
+            // only on server side
+            this.initManager.addTask(pathname, initTask);
+          }
+        } else {
+          this.initManager.setInitState(pathname, {
+            init: JoyRouteInitState.SUCCESS,
           });
-        if (typeof window == "undefined" && initTask) {
-          // only on server side
-          this.initManager.addTask(pathname, initTask);
         }
       }
     }

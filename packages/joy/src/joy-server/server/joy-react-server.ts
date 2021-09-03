@@ -37,7 +37,7 @@ import { HookType, Component, ProviderLifecycle, AutowireHook, IHook } from "@sy
 import { JoyAppConfig } from "./joy-app-config";
 // import { ServerConfig } from "./server-config";
 // import { JoyReactAppServerConfig } from "../lib/joy-react-app-server-config";
-import { ReactApplicationContext, ReactRouter } from "@symph/react";
+import { ReactApplicationContext } from "@symph/react";
 import React from "react";
 import { ReactContextFactory } from "../../react/react-context-factory";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
@@ -121,7 +121,7 @@ export class JoyReactServer implements ProviderLifecycle {
   //   dev = false,
   //   customServer = true,
   // }: ServerConstructor = {}) {
-  public constructor(protected joyAppConfig: JoyAppConfig, protected reactRouter: ReactRouter, protected reactContextFactory: ReactContextFactory) {
+  public constructor(protected joyAppConfig: JoyAppConfig, protected reactContextFactory: ReactContextFactory) {
     const { dir, quiet, dev, customServer, distDir } = joyAppConfig;
     this.dir = joyAppConfig.resolveAppDir(dir);
     this.quiet = quiet;
@@ -171,12 +171,8 @@ export class JoyReactServer implements ProviderLifecycle {
     });
 
     this.serverBuildDir = join(this.outDir, this._isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY);
-    const pagesManifestPath = join(this.serverBuildDir, PAGES_MANIFEST);
 
-    if (!dev) {
-      this.pagesManifest = require(pagesManifestPath);
-    }
-
+    this.pagesManifest = this.getPagesManifest();
     this.customRoutes = this.getCustomRoutes();
     this.router = new Router(this.generateRoutes());
     this.setAssetPrefix(assetPrefix);
@@ -197,7 +193,7 @@ export class JoyReactServer implements ProviderLifecycle {
       //   this._isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY,
       //   "pages"
       // ),
-      pagesDir: join(this.outDir, "export"),
+      pagesDir: join(this.outDir, "prerender"),
       flushToDisk: this.joyConfig.experimental.sprFlushToDisk,
     });
 
@@ -279,6 +275,11 @@ export class JoyReactServer implements ProviderLifecycle {
 
   protected setImmutableAssetCacheControl(res: ServerResponse): void {
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  }
+
+  protected getPagesManifest(): PagesManifest {
+    const pagesManifestPath = join(this.serverBuildDir, PAGES_MANIFEST);
+    return require(pagesManifestPath);
   }
 
   protected getCustomRoutes(): CustomRoutes {

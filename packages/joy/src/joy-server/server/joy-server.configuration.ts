@@ -20,8 +20,8 @@ export class JoyServerConfiguration {
   // @Configuration.Provider()
   // public serverConfig: ServerConfig;
 
-  @Configuration.Provider()
-  public joyReactServer: JoyReactServer;
+  // @Configuration.Provider()
+  // public joyReactServer: JoyReactServer;
 
   @Configuration.Provider()
   public joyApiServer: JoyApiServer;

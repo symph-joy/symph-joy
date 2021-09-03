@@ -36,7 +36,7 @@ export function Component(options: ComponentOptions = {}): ClassDecorator {
         type: target,
         useClass: target,
         scope: Scope.DEFAULT,
-        autoLoad: true,
+        autoRegister: false,
       },
       options
     );

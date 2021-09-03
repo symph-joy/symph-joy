@@ -12,9 +12,8 @@ import { JoyBuildConfiguration } from "../build/joy-build.configuration";
  */
 @Configuration()
 export class JoyReactBuildConfiguration extends JoyReactConfiguration {
-  @Configuration.Provider()
-  public joyBuildConfiguration: JoyBuildConfiguration;
-
-  @Configuration.Provider()
-  public joyReactRouter: JoyReactRouterPlugin;
+  // @Configuration.Provider()
+  // public joyBuildConfiguration: JoyBuildConfiguration;
+  // @Configuration.Provider()
+  // public joyReactRouter: JoyReactRouterPlugin;
 }

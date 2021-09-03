@@ -1,11 +1,13 @@
 import { CONFIGURATION_METADATA } from "../../../constants";
 import { Provider } from "./provider.decorator";
-import { EntryType } from "../../../interfaces";
+import { EntryType, Type } from "../../../interfaces";
 import { Component } from "../component.decorator";
 
 export interface IConfigurationOptions {
   imports?: Record<string, EntryType>;
 }
+
+export type ConfigurationClassType = Type;
 
 export function Configuration(options: IConfigurationOptions = {}): ClassDecorator {
   return (target) => {

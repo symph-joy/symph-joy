@@ -19,8 +19,9 @@ export interface ConfigServiceOptions {
 
 @Component()
 export class ConfigService<K = Record<string, any>> implements InjectorHookTaps, ProviderLifecycle {
+  @Optional()
   @Autowire()
-  public configLoaderFactory: ConfigLoaderFactory;
+  public configLoaderFactory?: ConfigLoaderFactory;
 
   @AutowireHook({
     id: "addJoyConfigSchema",
@@ -81,6 +82,10 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
   }
 
   public async loadConfig(): Promise<void> {
+    if (!this.configLoaderFactory) {
+      console.warn("There is no config loader factory.");
+      return;
+    }
     const configLoaders = this.configLoaderFactory.getLoaders(this.internalConfig);
     if (!configLoaders || configLoaders.length === 0) {
       console.warn("There is no config loader.");

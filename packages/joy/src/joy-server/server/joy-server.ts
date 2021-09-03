@@ -1,4 +1,4 @@
-import { Component } from "@symph/core";
+import { Autowire, AutowireHook, Component, HookType, IHook, Optional, RuntimeException } from "@symph/core";
 import { ServerApplication } from "@symph/server";
 import { pathToRegexp } from "path-to-regexp";
 import { IncomingMessage } from "http";
@@ -7,24 +7,34 @@ import { JoyApiServer } from "./joy-api-server";
 
 @Component()
 export class JoyServer {
-  constructor(protected appContext: ServerApplication, public reactServer: JoyReactServer, public apiServer: JoyApiServer) {}
+  @AutowireHook({ type: HookType.Traverse, async: true })
+  public onDidServerInitialize: IHook;
+
+  constructor(protected appContext: ServerApplication, @Optional() @Autowire() public reactServer: JoyReactServer, public apiServer: JoyApiServer) {}
 
   public async prepare(): Promise<void> {
     const apiUrlPath = pathToRegexp("/api/:path+");
     const apiHandler = this.apiServer.getRequestHandler();
-    const reactHandler = this.reactServer.getRequestHandler();
+    const reactHandler = this.reactServer ? this.reactServer.getRequestHandler() : undefined;
     this.appContext.use((req: IncomingMessage, res: any, next: any) => {
       const url = req.url;
       if (url && apiUrlPath.exec(url)) {
         return apiHandler(req, res, next);
       }
-      return reactHandler(req, res);
+      if (reactHandler) {
+        return reactHandler(req, res);
+      }
+      throw new RuntimeException(`Can not handle request ${url}`);
     });
 
-    await Promise.all([this.apiServer.prepare(), this.reactServer.prepare()]);
+    await this.onDidServerInitialize.call();
+    this.onDidServerInitialize.dispose();
+
+    await Promise.all([this.apiServer.prepare(), this.reactServer ? this.reactServer.prepare() : undefined]);
   }
 
   public async close(): Promise<void> {
     await this.reactServer.close();
+    await this.apiServer.close();
   }
 }

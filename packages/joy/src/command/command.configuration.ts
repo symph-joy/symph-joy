@@ -4,6 +4,7 @@ import { JoyVersionCommand } from "./preset/joy-version.command";
 import { JoyStartCommand } from "./preset/joy-start.command";
 import { JoyBuildCommand } from "./preset/joy-build.command";
 import { CommandCenter } from "./command-center";
+import { JoyExportCommand } from "./preset/joy-export.command";
 
 @Configuration()
 export class CommandConfiguration {
@@ -22,4 +23,7 @@ export class CommandConfiguration {
 
   @Configuration.Provider()
   public joyStartCommand: JoyStartCommand;
+
+  @Configuration.Provider()
+  public joyExportCommand: JoyExportCommand;
 }

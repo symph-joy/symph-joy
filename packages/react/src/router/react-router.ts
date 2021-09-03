@@ -34,13 +34,14 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     return this.routes;
   }
 
-  public hasExist(path: string): boolean {
-    return !!this.routes.find((v) => v.path === path);
+  public hasRouteByPath(path: string): T | undefined {
+    return this.routes.find((v) => v.path === path);
   }
 
   public addRoute(route: T) {
-    if (this.hasExist(route.path as string)) {
-      throw new Error(`route (${route.path}) has existed`);
+    const existRoute = this.hasRouteByPath(route.path as string);
+    if (existRoute) {
+      throw new Error(`Add route ERROR, route path "${route.path}" has existed. exists provider name: ${String(existRoute.providerName)}, try to add route provider name: ${String(route.providerName)}.`);
     }
     this.routes.push(route);
   }

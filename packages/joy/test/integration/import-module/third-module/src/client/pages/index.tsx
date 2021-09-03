@@ -1,16 +1,16 @@
 import React, { ReactNode } from "react";
 import { ReactBaseController, ReactController, Route } from "@symph/react";
-import { IndexModel } from "../model/index.model";
+import { ThirdModel } from "../model/thirdModel";
 import { Autowire } from "@symph/core";
 
 @Route({ path: "/third" })
 @ReactController()
 export default class HelloReactController extends ReactBaseController {
   @Autowire()
-  indexModel: IndexModel;
+  thirdModel: ThirdModel;
 
   async initialModelStaticState(urlParams: any): Promise<void | number> {
-    await this.indexModel.fetchMessage();
+    await this.thirdModel.fetchMessage();
   }
 
   renderView(): ReactNode {
@@ -18,7 +18,7 @@ export default class HelloReactController extends ReactBaseController {
       <>
         <div>Third Module</div>
         <div>
-          Message:<span id="message">{this.indexModel.state.message}</span>
+          Message:<span id="message">{this.thirdModel.state.message}</span>
         </div>
       </>
     );

@@ -54,10 +54,7 @@ export class JoyStartCommand extends JoyCommand {
   }
 
   async startServer(appContext: ServerApplication): Promise<JoyServer> {
-    await appContext.loadModule([
-      // ...getServerAutoGenerateModules(distDir),
-      JoyServerConfiguration,
-    ]);
+    await appContext.loadModule([JoyServerConfiguration]);
 
     const config = await appContext.get(JoyAppConfig);
     const { dir, hostname, port } = config;

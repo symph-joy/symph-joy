@@ -1,13 +1,14 @@
 import { CommandProvider } from "../command-provider.decorator";
 import { JoyCommand, JoyCommandOptionType } from "../command";
 import { printAndExit } from "../../server/lib/utils";
-import { Configuration, Autowire } from "@symph/core";
-import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
-import { JoyBuildConfiguration } from "../../build/joy-build.configuration";
+import { Autowire, Configuration } from "@symph/core";
 import { JoyBuildService } from "../../build/joy-build.service";
 import { ConfigService } from "@symph/config";
 import { ServerApplication } from "@symph/server";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { JoyBuildConfiguration } from "../../build/joy-build.configuration";
 import { JoyReactBuildConfiguration } from "../../react/joy-react-build.configuration";
+import { Options } from "yargs";
 
 // @Configuration()
 // export class JoyReactModuleConfigBuild extends JoyReactConfiguration {
@@ -15,18 +16,14 @@ import { JoyReactBuildConfiguration } from "../../react/joy-react-build.configur
 //   public joyReactRouter: JoyReactRouterPlugin;
 // }
 
-// @Configuration()
-// class JoyBuildCommandConfig {
-//
-//   @Configuration.Provider()
-//   public joyBuildConfiguration: JoyBuildConfiguration
-//
-//   @Configuration.Provider()
-//   public joyReactBuildConfiguration: JoyReactBuildConfiguration
-//
-//   @Configuration.Provider()
-//   public joyAppConfig: JoyAppConfig
-// }
+@Configuration()
+class JoyBuildCommandConfig {
+  @Configuration.Provider()
+  public joyAppConfig: JoyAppConfig;
+
+  @Configuration.Provider()
+  public joyBuildConfiguration: JoyBuildConfiguration;
+}
 
 @CommandProvider()
 export class JoyBuildCommand extends JoyCommand {
@@ -74,9 +71,11 @@ export class JoyBuildCommand extends JoyCommand {
     // process.env.NODE_ENV = "production";
     const dir = args._[0] || ".";
     const { _, $0, ...argOpts } = args;
-    this.configService.mergeConfig({ dir, dev: true, ...argOpts });
+    this.configService.mergeConfig({ dir, dev: false, ...argOpts });
+    await this.configService.loadConfig();
     try {
-      await this.appContext.loadModule([JoyAppConfig, JoyBuildConfiguration, JoyReactBuildConfiguration]);
+      await this.appContext.loadModule(JoyBuildCommandConfig);
+      // await this.appContext.loadModule(JoyServerBuildConfiguration);
       const buildService = await this.appContext.get(JoyBuildService);
       await buildService.build(args.profile, args.debug);
       printAndExit(undefined, 0);

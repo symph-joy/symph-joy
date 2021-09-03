@@ -258,7 +258,7 @@ describe("provider-scanner", () => {
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.TRANSIENT,
-        autoLoad: true,
+        autoRegister: false,
       });
     });
 
@@ -283,7 +283,7 @@ describe("provider-scanner", () => {
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.TRANSIENT,
-        autoLoad: true,
+        autoRegister: false,
       });
       expect(testProvider1).toEqual({
         name: "testProvider1",
@@ -453,6 +453,135 @@ describe("provider-scanner", () => {
       const testProviderInstance = await injector.loadProvider(testProviderWrapper!, container);
       expect(testProviderWrapper).not.toBeNull();
       expect(testProviderInstance.msg).not.toBeNull();
+    });
+  });
+
+  describe("scan out order.", () => {
+    const providerScanner = new ProviderScanner();
+
+    test("Should is the same order as defined in configuration class.", async () => {
+      @Component()
+      class TestProvider {}
+
+      @Configuration()
+      class Config {
+        @Provider()
+        public provider1: TestProvider;
+
+        @Provider()
+        public provider2: TestProvider;
+
+        @Provider()
+        public provider3: TestProvider;
+      }
+
+      const providers = await providerScanner.scan(Config);
+      expect(providers[0].type).toBe(Config);
+      expect(providers[1].name).toBe("provider1");
+      expect(providers[2].name).toBe("provider2");
+      expect(providers[3].name).toBe("provider3");
+    });
+
+    test("Should is the same order as defined in super configuration class.", async () => {
+      @Component()
+      class TestProvider {}
+
+      @Configuration()
+      class Config {
+        @Provider()
+        public provider1: TestProvider;
+
+        @Provider()
+        public provider2: TestProvider;
+
+        @Provider()
+        public provider3: TestProvider;
+      }
+
+      @Configuration()
+      class Config1 extends Config {
+        @Provider()
+        public provider2: TestProvider;
+
+        @Provider()
+        public provider4: TestProvider;
+      }
+
+      const providers = await providerScanner.scan(Config1);
+      expect(providers[0].type).toBe(Config1);
+      expect(providers[1].name).toBe("provider1");
+      expect(providers[2].name).toBe("provider2");
+      expect(providers[3].name).toBe("provider3");
+      expect(providers[4].name).toBe("provider4");
+    });
+
+    test("Should is the same order as defined in module.", async () => {
+      @Component()
+      class TestProvider {}
+
+      const module = {
+        provider1: {
+          name: "provider1",
+          useClass: TestProvider,
+          type: TestProvider,
+        },
+        provider2: {
+          name: "provider2",
+          useClass: TestProvider,
+          type: TestProvider,
+        },
+        provider3: {
+          name: "provider3",
+          useClass: TestProvider,
+          type: TestProvider,
+        },
+      };
+
+      const providers = await providerScanner.scan(module);
+      expect(providers[0].name).toBe("provider1");
+      expect(providers[1].name).toBe("provider2");
+      expect(providers[2].name).toBe("provider3");
+    });
+
+    test("Should is the same order as defined in module, and then modify module.", async () => {
+      @Component()
+      class TestProvider {}
+
+      const module = {
+        provider1: {
+          name: "provider1",
+          useClass: TestProvider,
+          type: TestProvider,
+        },
+        provider2: {
+          name: "provider2",
+          useClass: TestProvider,
+          type: TestProvider,
+        },
+        provider3: {
+          name: "provider3",
+          useClass: TestProvider,
+          type: TestProvider,
+        },
+      } as any;
+
+      module.provider2 = {
+        name: "provider22",
+        useClass: TestProvider,
+        type: TestProvider,
+      };
+
+      module.provider4 = {
+        name: "provider4",
+        useClass: TestProvider,
+        type: TestProvider,
+      };
+
+      const providers = await providerScanner.scan(module);
+      expect(providers[0].name).toBe("provider1");
+      expect(providers[1].name).toBe("provider22");
+      expect(providers[2].name).toBe("provider3");
+      expect(providers[3].name).toBe("provider4");
     });
   });
 });

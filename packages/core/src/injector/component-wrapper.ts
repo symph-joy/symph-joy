@@ -265,11 +265,11 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
     if ((provider as any).useValue) {
       this.setInstanceByContextId(STATIC_CONTEXT, (provider as ValueProvider).useValue);
     } else if ((provider as any).useClass) {
-      const { type, scope, autoLoad, useClass } = provider as ClassProvider;
+      const { type, scope, autoRegister, useClass } = provider as ClassProvider;
       Object.assign(this, {
         type,
         scope,
-        autoLoad: autoLoad,
+        autoLoad: autoRegister,
         useClass,
         inject: null,
       });

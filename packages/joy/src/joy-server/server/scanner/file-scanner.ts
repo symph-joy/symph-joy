@@ -9,12 +9,18 @@ type TScanOutModuleProviders = Map<string, { type: "ClassProvider" | "Configurat
 export interface IScanOutModule {
   path: string; // build dist file path
   resource: string | undefined; // source file path
+  mount: string | undefined;
   module: Record<string, unknown>;
   providerDefines?: TScanOutModuleProviders;
   isAdd?: boolean;
   isModify?: boolean;
   isRemove?: boolean;
   hash?: string;
+}
+
+interface ScanOptions {
+  mount?: string;
+  onScanOutModule?(scanOutModule: IScanOutModule): void | boolean;
 }
 
 /**
@@ -29,7 +35,7 @@ export class FileScanner {
     this.container = tempoContext.container;
   }
 
-  @AutowireHook({ type: HookType.Bail, parallel: false, async: true })
+  @AutowireHook({ type: HookType.Waterfall, parallel: false, async: true })
   private afterScanOutModuleHook: IHook;
 
   private cachedModules: Map<string, IScanOutModule> = new Map();
@@ -60,7 +66,7 @@ export class FileScanner {
     return undefined;
   }
 
-  public async scan(dir: string): Promise<void> {
+  public async scan(dir: string, options: ScanOptions = {}): Promise<void> {
     this.emitSrcService.updateEmitManifest(); // todo 移动到hot-reload中，统一在emit-all完成后，刷新数据。
     const existModuleKeys = Array.from(this.cachedModules.keys());
     const scanOutModuleKeys: string[] = [];
@@ -77,64 +83,78 @@ export class FileScanner {
           const filePath = files[i];
           const fullPath = path.resolve(dir, filePath);
           scanOutModuleKeys.push(fullPath);
-          const emit = this.emitSrcService.getEmitInfo(fullPath);
-          const emitHash = emit?.hash;
-          const cached = this.cachedModules.get(fullPath);
-          if (emitHash !== undefined && cached !== undefined && emitHash === cached.hash) {
-            // this file has not been changed, do nothing
-            continue;
-          }
-
-          const requiredModule = require(fullPath);
-          if (!requiredModule) {
-            continue;
-          }
-
-          const isAdd = !cached;
-          const isModify = !!cached;
-          const isRemove = false; // todo 实现remove逻辑
-
-          let moduleLoaded: IScanOutModule = {
-            path: fullPath,
-            resource: emit?.resource,
-            module: requiredModule,
-            isAdd,
-            isModify,
-            isRemove,
-            hash: emitHash,
-          };
-          // const providers = await this.providerScanner.scan(moduleLoaded.module);
-          moduleLoaded.providerDefines = this.scanModule(moduleLoaded.module);
-          this.cachedModules.set(fullPath, moduleLoaded);
-
-          moduleLoaded = await this.afterScanOutModuleHook.call(moduleLoaded);
-
-          // if (providers && providers.length > 0) {
-          //   if (isAdd) {
-          //     this.container.addProviders(providers);
-          //   } else if (isModify) {
-          //     providers.forEach((provider) => {
-          //       this.container.replace(provider.id, provider);
-          //     });
-          //   } else if (isRemove) {
-          //     providers.forEach((provider) => {
-          //       this.container.delete(provider.id);
-          //     });
-          //   }
-          // }
+          await this.scanFile(fullPath, options);
         }
         resolve();
       });
     });
 
-    const deleteModules = existModuleKeys.filter((it) => !scanOutModuleKeys.includes(it));
-    for (const deleteModule of deleteModules) {
-      const cache = this.cachedModules.get(deleteModule);
-      if (cache) {
-        await this.afterScanOutModuleHook.call(cache);
-        this.cachedModules.delete(deleteModule);
-      }
+    // const deleteModules = existModuleKeys.filter((it) => !scanOutModuleKeys.includes(it));
+    // for (const deleteModule of deleteModules) {
+    //   const cache = this.cachedModules.get(deleteModule);
+    //   if (cache) {
+    //     cache.isRemove = true;
+    //     cache.isAdd = cache.isModify = false;
+    //     await this.afterScanOutModuleHook.call(cache);
+    //     this.cachedModules.delete(deleteModule);
+    //   }
+    // }
+  }
+
+  public async scanFile(fullFilePath: string, options: ScanOptions = {}): Promise<IScanOutModule | undefined> {
+    const { mount } = options;
+    const emit = this.emitSrcService.getEmitInfo(fullFilePath);
+    const emitHash = emit?.hash;
+    const cached = this.cachedModules.get(fullFilePath);
+    if (emitHash !== undefined && cached !== undefined && emitHash === cached.hash) {
+      // this file has not been changed, do nothing
+      return cached;
     }
+
+    const requiredModule = require(fullFilePath);
+    if (!requiredModule) {
+      return undefined;
+    }
+
+    const isAdd = !cached;
+    const isModify = !!cached;
+    const isRemove = false; // todo 实现remove逻辑
+
+    let scanOutModule: IScanOutModule = {
+      path: fullFilePath,
+      resource: emit?.resource,
+      module: requiredModule,
+      mount,
+      isAdd,
+      isModify,
+      isRemove,
+      hash: emitHash,
+    };
+    // const providers = await this.providerScanner.scan(moduleLoaded.module);
+    scanOutModule.providerDefines = this.scanModule(scanOutModule.module);
+
+    if (options?.onScanOutModule && options.onScanOutModule(scanOutModule)) {
+      return undefined;
+    }
+
+    this.cachedModules.set(fullFilePath, scanOutModule);
+
+    scanOutModule = await this.afterScanOutModuleHook.call(scanOutModule);
+
+    // if (providers && providers.length > 0) {
+    //   if (isAdd) {
+    //     this.container.addProviders(providers);
+    //   } else if (isModify) {
+    //     providers.forEach((provider) => {
+    //       this.container.replace(provider.id, provider);
+    //     });
+    //   } else if (isRemove) {
+    //     providers.forEach((provider) => {
+    //       this.container.delete(provider.id);
+    //     });
+    //   }
+    // }
+    return scanOutModule;
   }
 
   public scanModule(mod: Record<string, unknown>): undefined | TScanOutModuleProviders {

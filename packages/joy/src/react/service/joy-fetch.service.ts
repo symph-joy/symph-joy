@@ -7,5 +7,4 @@ export class JoyFetchService {
     }
     return window.fetch(input, init);
   }
-  static aaaa = __dirname;
 }
