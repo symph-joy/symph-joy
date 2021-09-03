@@ -15,13 +15,7 @@ export type JoyRequireContextLoaderOptions = {
 };
 
 const JoyClientGenerateLoader: loader.Loader = function () {
-  const {
-    absolutePath,
-    regExp,
-    globalVar,
-    globalKey,
-    useFileScan = false,
-  } = loaderUtils.getOptions(this) as JoyRequireContextLoaderOptions;
+  const { absolutePath, regExp, globalVar, globalKey, useFileScan = false } = loaderUtils.getOptions(this) as JoyRequireContextLoaderOptions;
   const strAbsolutePath = JSON.stringify(absolutePath);
   const reg = regExp || "/.(jsx?|tsx?|json)$/i";
 
@@ -51,32 +45,30 @@ const JoyClientGenerateLoader: loader.Loader = function () {
      * 1. 采用两段编译，第一段编译完成后，立即启动第二段编译，且使用第一段编译输出的结果，使用require.context可能检测不到文件的变化。
      */
     const callback = this.async();
-    glob(
-      "**/*.{js,jsx,ts,tsx,json}",
-      { cwd: absolutePath },
-      async (err, files) => {
-        if (err && callback) {
-          callback(err);
-        }
-        const sourceFiles: string[] = [];
-        for (let i = 0; i < files.length; i++) {
-          const filePath = files[i];
-          const fullPath = path.resolve(absolutePath, filePath);
-          sourceFiles.push(fullPath);
-        }
+    glob("**/*.{js,jsx,ts,tsx,json}", { cwd: absolutePath }, async (err, files) => {
+      if (err && callback) {
+        callback(err);
+      }
+      const sourceFiles: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const filePath = files[i];
+        let fullPath = path.resolve(absolutePath, filePath);
+        fullPath = path.normalize(fullPath);
+        fullPath = fullPath.replace(/\\/g, "/");
+        sourceFiles.push(fullPath);
+      }
 
-        const modules = sourceFiles.map((f) => {
-          return `modules.push(require("${f}"))`;
-        });
-        const code = `
+      const modules = sourceFiles.map((f) => {
+        return `modules.push(require("${f}"))`;
+      });
+      const code = `
       const modules = [];
       ${modules.join("")}
       ${globalCode}
       export default modules;
       `;
-        callback && callback(undefined, code);
-      }
-    );
+      callback && callback(undefined, code);
+    });
   }
 };
 
