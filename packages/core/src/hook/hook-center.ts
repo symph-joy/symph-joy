@@ -20,28 +20,36 @@ export class HookCenter {
   // 这会导致transient类型的provider内存泄露，永远无法自动释放，所以在transient类型的provider中注册的tap，需要手动调用`unregisterTag()`手动释放
   private _tapCache: Map<Object, Array<string>> = new Map<Object, Array<string>>();
 
-  constructor() {}
-
   public registerHooksFromWrappers(wrappers: ComponentWrapper[]) {
     const hooks = new Array<IHook>();
     for (const wrapper of wrappers) {
-      const type = wrapper.type;
-      if (type === Object) {
-        continue;
+      const wrapperHooks = this.registerHooksFromWrapper(wrapper);
+      if (wrapperHooks && wrapperHooks.length) {
+        hooks.push(...wrapperHooks);
       }
-      const hookMetas = getHooksMetadata(type);
-      if (hookMetas === undefined || hookMetas.length === 0) {
-        continue;
-      }
-      for (let i = 0; i < hookMetas.length; i++) {
-        const hookMeta = hookMetas[i];
-        const hookInfo = {
-          ...hookMeta,
-          // host: wrapper.name[0],
-        };
-        const pipe = this.registerHook(hookInfo);
-        hooks.push(pipe);
-      }
+    }
+    return hooks;
+  }
+
+  public registerHooksFromWrapper(wrapper: ComponentWrapper) {
+    const type = wrapper.type;
+    if (type === Object) {
+      return;
+    }
+    const hookMetas = getHooksMetadata(type);
+    if (hookMetas === undefined || hookMetas.length === 0) {
+      return;
+    }
+    const hooks = new Array<IHook>();
+
+    for (let i = 0; i < hookMetas.length; i++) {
+      const hookMeta = hookMetas[i];
+      const hookInfo = {
+        ...hookMeta,
+        // host: wrapper.name[0],
+      };
+      const pipe = this.registerHook(hookInfo);
+      hooks.push(pipe);
     }
     return hooks;
   }
@@ -51,7 +59,7 @@ export class HookCenter {
     if (_hook) {
       // todo 只有两者相同才能兼容。
       // return _hook
-      throw new RuntimeException(`duplicate register hook(${hookInfo.id})`);
+      throw new RuntimeException(`Error: Duplicate register hook(${hookInfo.id})`);
     }
 
     const { id, type, async, parallel } = hookInfo;

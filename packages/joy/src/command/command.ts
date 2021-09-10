@@ -1,10 +1,5 @@
-import yargs, { Arguments, Argv, InferredOptionTypes, Omit, Options } from "yargs";
-import { Type } from "ast-types";
-import { instanceOf } from "prop-types";
+import yargs, { Arguments, InferredOptionTypes, Options } from "yargs";
 import { merge } from "lodash";
-import { ConfigService } from "@symph/config";
-import { CoreContext, Autowire } from "@symph/core";
-import { ServerApplication } from "@symph/server";
 
 export interface ICommand<T extends { [key: string]: Options }> {
   command: string;
@@ -22,13 +17,6 @@ export interface ICommand<T extends { [key: string]: Options }> {
 export type JoyCommandOptionType<T extends JoyCommand> = Arguments<InferredOptionTypes<ReturnType<T["options"]>>>;
 
 export abstract class JoyCommand {
-  // protected argv: Arguments<InferredOptionTypes<ReturnType<this['options']>>>
-
-  constructor(
-    // @Inject() protected configService: ConfigService,
-    @Autowire() protected appContext: CoreContext
-  ) {}
-
   abstract getName(): string;
 
   public alias(): string | undefined {
@@ -50,7 +38,7 @@ export abstract class JoyCommand {
 
   abstract run(args: JoyCommandOptionType<this>): any;
 
-  static isJoyCommand(provider: Object): provider is JoyCommand {
-    return provider && provider instanceof JoyCommand;
+  static isJoyCommand(provider: unknown): provider is JoyCommand {
+    return provider !== undefined && provider !== null && provider instanceof JoyCommand;
   }
 }

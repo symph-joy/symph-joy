@@ -6,11 +6,21 @@ import { Scope } from "../interfaces";
 
 export class HookResolver implements InjectorHookTaps {
   constructor(private pluginCenter: HookCenter) {
+    pluginCenter.registerTap("onComponentRegisterAfter", {
+      id: "plugin-center-resolve-hooks-register-hook",
+      propKey: "onComponentRegisterAfter",
+      provider: this,
+    });
     pluginCenter.registerTap("componentAfterPropertiesSet", {
-      id: "plugin-center-resolve-hooks",
+      id: "plugin-center-resolve-hooks-register-component",
       propKey: "componentAfterPropertiesSet",
       provider: this,
     });
+  }
+
+  onComponentRegisterAfter(componentWrapper: ComponentWrapper): ComponentWrapper {
+    this.pluginCenter.registerHooksFromWrapper(componentWrapper);
+    return componentWrapper;
   }
 
   componentAfterPropertiesSet<T>(instance: T, args: { instanceWrapper: ComponentWrapper }): T {

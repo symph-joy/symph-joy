@@ -3,44 +3,20 @@ import { CommandProvider } from "../command-provider.decorator";
 // import yargs from "yargs";
 import { JoyCommand, JoyCommandOptionType } from "../command";
 import { printAndExit } from "../../server/lib/utils";
-import { Configuration, CoreContext, Autowire } from "@symph/core";
-import http from "http";
+import { Autowire } from "@symph/core";
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
-import { JoyReactServer } from "../../joy-server/server/joy-react-server";
-import { ServerConfig } from "../../joy-server/server/server-config";
-import { JoyReactConfiguration } from "../../react/joy-react.configuration";
-import { JoyApiDevServer } from "../../server/joy-api-dev-server";
-import { JoyApiServer } from "../../joy-server/server/joy-api-server";
-import { JoyDevServer } from "../../server/joy-dev-server";
 import { JoyServer } from "../../joy-server/server/joy-server";
 import { ServerApplication } from "@symph/server";
 import { ConfigService } from "@symph/config";
-import { JoyServerConfiguration } from "../../joy-server/server/joy-server.configuration";
-
-// @Configuration({imports: {joyReactConfig: JoyReactConfiguration}})
-// export class JoyServerConfig {
-//   @Configuration.Provider()
-//   public joyAppConfig: JoyAppConfig
-//
-//   @Configuration.Provider()
-//   public serverConfig: ServerConfig;
-//
-//   @Configuration.Provider()
-//   public joyReactServer: JoyReactServer;
-//
-//   @Configuration.Provider()
-//   public joyApiServer: JoyApiServer;
-//
-//   @Configuration.Provider()
-//   public joyServer: JoyServer;
-// }
+import { JoyBoot } from "../../joy-boot";
+import { JoyServerAppConfiguration } from "../../joy-server/server/joy-server-app.configuration";
 
 @CommandProvider()
 export class JoyStartCommand extends JoyCommand {
   private dir: string;
 
   constructor(@Autowire() protected configService: ConfigService, @Autowire() protected appContext: ServerApplication) {
-    super(appContext);
+    super();
   }
   getName(): string {
     return "start";
@@ -54,7 +30,7 @@ export class JoyStartCommand extends JoyCommand {
   }
 
   async startServer(appContext: ServerApplication): Promise<JoyServer> {
-    await appContext.loadModule([JoyServerConfiguration]);
+    await (appContext as JoyBoot).initServer(JoyServerAppConfiguration);
 
     const config = await appContext.get(JoyAppConfig);
     const { dir, hostname, port } = config;

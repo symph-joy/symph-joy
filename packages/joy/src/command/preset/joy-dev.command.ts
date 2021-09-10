@@ -9,7 +9,7 @@ import { Configuration, Autowire } from "@symph/core";
 import { JoyReactDevServer } from "../../server/joy-react-dev-server";
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { ServerConfigDev } from "../../server/server-config-dev";
-import { JoyBuildConfiguration } from "../../build/joy-build.configuration";
+import { BuildConfiguration } from "../../build/build.configuration";
 import { ReactContextFactoryDev } from "../../server/react-context-factory-dev";
 import HotReloader from "../../server/hot-reloader";
 import { JoyReactRouterPluginDev } from "../../react/router/joy-react-router-plugin-dev";
@@ -20,7 +20,8 @@ import { JoyApiDevServer } from "../../server/joy-api-dev-server";
 import { JoyDevServer } from "../../server/joy-dev-server";
 import { ConfigService } from "@symph/config";
 import { JoyServerConfiguration } from "../../joy-server/server/joy-server.configuration";
-import { JoyServerDevConfiguration } from "../../server/joy-server-dev.configuration";
+import { JoyDevConfiguration } from "../../server/joy-dev.configuration";
+import { JoyBoot } from "../../joy-boot";
 
 // @Configuration()
 // export class JoyReactModuleConfigDev extends JoyReactConfiguration {
@@ -59,7 +60,7 @@ export class JoyDevCommand extends JoyCommand {
   private dir: string;
 
   constructor(@Autowire() protected configService: ConfigService, @Autowire() protected appContext: ServerApplication) {
-    super(appContext);
+    super();
   }
 
   getName(): string {
@@ -103,7 +104,9 @@ export class JoyDevCommand extends JoyCommand {
   // async startDevServer( appContext: CoreContext, {dir, hostname, port, dev, isJoyDevCommand}: {dir: string, hostname: string, port: number, dev: boolean, isJoyDevCommand: boolean}): Promise<JoyReactDevServer> {
 
   async startDevServer(appContext: ServerApplication): Promise<JoyDevServer> {
-    await appContext.loadModule([JoyServerDevConfiguration]);
+    // await appContext.loadModule([JoyServerDevConfiguration]);
+    // await appContext.init(JoyServerDevConfiguration);
+    await (appContext as JoyBoot).initServer(JoyDevConfiguration);
     const config = await appContext.get(JoyAppConfig);
     if (config === undefined) {
       throw new Error("Start server error, can not find joy config provider");

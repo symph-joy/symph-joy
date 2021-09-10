@@ -1,0 +1,13 @@
+import { Configuration } from "@symph/core";
+import { CommandConfiguration } from "./command/command.configuration";
+import { ServerConfiguration } from "@symph/server/dist/server.configuration";
+import { JoyConfigConfiguration } from "./joy-config.configuration";
+
+@Configuration()
+export class JoyBootRuntimeConfiguration {
+  @Configuration.Provider()
+  public configConfiguration: JoyConfigConfiguration;
+
+  @Configuration.Provider()
+  public commandConfiguration: CommandConfiguration;
+}

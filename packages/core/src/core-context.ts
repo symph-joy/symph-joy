@@ -243,9 +243,13 @@ export class CoreContext implements ICoreContext {
   }
 
   protected async initProviders(instanceWrappers: ComponentWrapper[]): Promise<void> {
-    this.hookCenter.registerHooksFromWrappers(instanceWrappers);
-    await this.instanceLoader.createInstancesOfDependencies(instanceWrappers);
+    // this.hookCenter.registerHooksFromWrappers(instanceWrappers);
+    await this.createInstancesOfDependencies(instanceWrappers);
     await this.onDidProvidersRegister.call(instanceWrappers);
+  }
+
+  protected createInstancesOfDependencies(instanceWrappers: ComponentWrapper[]): Promise<unknown[]> {
+    return this.instanceLoader.createInstancesOfDependencies(instanceWrappers);
   }
 
   protected async dispose(): Promise<void> {

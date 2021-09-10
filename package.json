@@ -13,7 +13,7 @@
     "lerna": "lerna",
     "_dev": "lerna build:dev",
     "_copy": "gulp copy-package:joy-boot --dist node_modules/@symph",
-    "watch": "lerna run watch",
+    "watch": "lerna run --parallel watch",
     "build": "lerna run build",
     "clean:dist": "lerna run clean",
     "clean": "lerna clean && lerna run clean",

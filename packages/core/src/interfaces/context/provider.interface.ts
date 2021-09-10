@@ -24,7 +24,12 @@ export interface IProvider<T = any> {
   /**
    * provider name
    */
-  name: TProviderName | TProviderName[];
+  name: TProviderName;
+
+  /**
+   * alias array
+   */
+  alias?: TProviderName[];
 
   /**
    * provider class

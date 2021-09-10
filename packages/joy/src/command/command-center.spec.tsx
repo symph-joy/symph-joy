@@ -5,6 +5,29 @@ import { CommandCenter } from "./command-center";
 import { JoyCommand, JoyCommandOptionType } from "./command";
 
 describe("command-center", () => {
+  test("register command manual", async () => {
+    @CommandProvider()
+    class HelloCommand extends JoyCommand {
+      getName(): string {
+        return "hello";
+      }
+
+      options() {
+        return {
+          message: { type: "string" as const, default: "joy" },
+        };
+      }
+
+      run(args: JoyCommandOptionType<this>): any {
+        const { message } = args;
+        return `hello ${message}`;
+      }
+    }
+    const commandCenter1 = new CommandCenter();
+    commandCenter1.registerCommand(new HelloCommand());
+    expect(await commandCenter1.runCommand("hello", { message: "joy" })).toBe("hello joy");
+  });
+
   test("register command", async () => {
     @CommandProvider()
     class HelloCommand extends JoyCommand {

@@ -50,21 +50,21 @@ describe("injector", () => {
       beforeAll(async () => {
         container = instanceContainer();
         transProviderWrapper = new ComponentWrapper({
-          name: ["transProvider"],
+          name: "transProvider",
           type: TransProvider,
           instance: Object.create(TransProvider.prototype),
           scope: Scope.TRANSIENT,
           isResolved: false,
         });
         singProviderWrapper = new ComponentWrapper({
-          name: ["singProvider"],
+          name: "singProvider",
           type: SingProvider,
           instance: Object.create(SingProvider.prototype),
           scope: Scope.DEFAULT,
           isResolved: false,
         });
         mainTestWrapper = new ComponentWrapper({
-          name: ["mainTest"],
+          name: "mainTest",
           type: MainTest,
           instance: Object.create(MainTest.prototype),
           isResolved: false,
@@ -117,7 +117,7 @@ describe("injector", () => {
         }
 
         const transDepsMainWrapper = new ComponentWrapper<TransDepsMain>({
-          name: ["TransDepsMain"],
+          name: "TransDepsMain",
           type: TransDepsMain,
           instance: Object.create(TransDepsMain.prototype),
           isResolved: false,
@@ -248,7 +248,7 @@ describe("injector", () => {
     });
 
     test("name's type is an array", async () => {
-      @Component({ name: ["a", "b"] })
+      @Component({ name: "a", alias: ["b"] })
       class MyProvider {}
 
       const container = instanceContainer();
@@ -590,7 +590,7 @@ describe("injector", () => {
 
       const container = instanceContainer();
       const dep1ProviderWrapper = new ComponentWrapper({
-        name: ["dep1"],
+        name: "dep1",
         type: Dep1,
         factory: async function () {
           return new Dep1();
@@ -621,7 +621,7 @@ describe("injector", () => {
       const container = instanceContainer();
       const [mainWrapper] = createProviderWrappers(container, Main);
       const dep1ProviderWrapper = new ComponentWrapper({
-        name: ["dep1"],
+        name: "dep1",
         type: Dep1,
         factory: async function () {
           return new Dep1();

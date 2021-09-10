@@ -7,6 +7,7 @@ import { existsSync } from "fs";
 import { join } from "path";
 import { ServerFactory } from "@symph/server";
 import { JoyBootFactory } from "../joy-boot-factory";
+import { CommandCenter } from "../command/command-center";
 
 export const startJoy = (async () => {
   let closed = false;
@@ -35,9 +36,8 @@ export const startJoy = (async () => {
     }
   }
 
-  // const joyBoot = new JoyBoot(PresetJoyCore);
   const joyBoot = await JoyBootFactory.createServer({});
-  await joyBoot.init();
+  // await joyBoot.init();
 
   function onSignal(signal: string) {
     if (closed) return;

@@ -119,6 +119,9 @@ export class JoyAppConfig implements IJoyConfig {
   //   async: true,
   // })
   // private onJoyConfigChanged: HookPipe;
+  // public getConfigSchema() {
+  //   return this.addJoyConfigSchema.call({});
+  // }
 
   // @RegisterTap()
   // componentAfterPropertiesSet<T>(
@@ -139,7 +142,7 @@ export class JoyAppConfig implements IJoyConfig {
   //   return instance;
   // }
 
-  [configKey: string]: any;
+  // [configKey: string]: any;
 
   @ConfigValue()
   pagesDir?: string;
@@ -199,7 +202,11 @@ export class JoyAppConfig implements IJoyConfig {
   };
 
   @ConfigValue({ default: "" })
-  basePath = "";
+  basePath: string;
+
+  @ConfigValue({ default: "/api" })
+  apiRoutePrefix: string;
+
   sassOptions = {};
   trailingSlash = false;
   experimental = {
@@ -437,9 +444,5 @@ export class JoyAppConfig implements IJoyConfig {
     }
 
     return this;
-  }
-
-  public getConfigSchema() {
-    return this.addJoyConfigSchema.call({});
   }
 }

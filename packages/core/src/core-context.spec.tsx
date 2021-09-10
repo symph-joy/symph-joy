@@ -71,7 +71,7 @@ describe("core-context", () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               instanceWrappers.forEach((it) => {
-                this.allProviderNames.push(...it.name);
+                this.allProviderNames.push(it.name);
               });
 
               resolve();

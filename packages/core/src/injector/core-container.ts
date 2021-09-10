@@ -1,6 +1,6 @@
 import { Abstract, ClassProvider, FactoryProvider, IInjectable, Provider, TProviderName, Type, ValueProvider } from "../interfaces";
-import { isEmpty, isNil, isUndefined } from "../utils/shared.utils";
-import { ComponentWrapper } from "./component-wrapper";
+import { isEmpty, isNil, isSubClass, isUndefined } from "../utils/shared.utils";
+import { ComponentWrapper, ComponentWrapperOptions } from "./component-wrapper";
 import { RuntimeException } from "../errors/exceptions/runtime.exception";
 import { AutowireHook, HookType, IHook } from "../hook";
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
@@ -25,32 +25,86 @@ export class CoreContainer {
   // private readonly _providers = new Map<string, ComponentWrapper<Injectable>>()
 
   @AutowireHook({ type: HookType.Traverse, async: false })
-  public onRegisterProviderAfter: IHook;
+  public onComponentRegisterAfter: IHook;
 
   @AutowireHook({ type: HookType.Traverse, async: false })
-  public onReplaceProviderAfter: IHook;
+  public onComponentReplaceAfter: IHook;
 
   private readonly _providerStore = new Map<string, ComponentWrapper>();
 
-  private readonly _typeCache = new Map<Type | Abstract, Map<Type | Abstract, string[]>>();
-  private readonly _nameCache = new Map<TProviderName | Abstract, string>();
+  private readonly _typeMap = new Map<Type | Abstract, Map<Type | Abstract, string[]>>();
+  private readonly _nameMap = new Map<TProviderName, string>(); // key: component.name, value: component.id
+  private readonly _aliasMap = new Map<TProviderName, TProviderName>(); // key: aliasName, value: component.name
 
-  private checkWrapperReplaceable(instanceWrapper: ComponentWrapper): void {
-    let exist;
-    for (const n of instanceWrapper.name) {
-      exist = this.getProviderByName(n);
-      if (exist && exist.hasInstanced) {
-        throw new RuntimeException(`Can not register duplicate provider, the previous register name(${String(n)}) one has instanced. provider type:${instanceWrapper.type.name}`);
+  /**
+   * 可使用已存在Component的情况：已存在的同名的，且类型兼容，scope相等。
+   * 所欲其它情况，直接使用新的Component定义，替换旧的Component。
+   *
+   * @param wrapperMetaOptions
+   * @private
+   */
+  private checkWrapperReplaceable(wrapperMetaOptions: ComponentWrapperOptions): ComponentWrapper | undefined {
+    const { type, name, scope } = wrapperMetaOptions;
+    if (!name) {
+      return;
+    }
+    const exist = this.getProviderByName(name);
+    if (exist) {
+      if (exist.hasInstanced) {
+        if (!(exist.type === type || isSubClass(exist.type, type)) || exist.scope !== scope) {
+          throw new RuntimeException(`Register provider failed, can not register duplicate name(${String(name)}), the previous register one has instanced, and the type and scope is not compatible。`);
+        }
       }
     }
+
+    return exist;
   }
 
-  public addWrapper(instanceWrapper: ComponentWrapper<IInjectable>): ComponentWrapper {
-    this.checkWrapperReplaceable(instanceWrapper);
+  public addWrapper(wrapperMetaOptions: ComponentWrapperOptions): ComponentWrapper {
+    const { type, name, alias, scope } = wrapperMetaOptions;
+    if (!name) {
+      throw new RuntimeException(`Register provider failed, the name is undefined.`);
+    }
+    let mergedAlias = alias;
+    const existOne = this.getProviderByName(name);
+    if (existOne) {
+      if (existOne.hasInstanced) {
+        if (!(existOne.type === type || isSubClass(existOne.type, type)) || existOne.scope !== scope) {
+          throw new RuntimeException(`Register provider failed, can not register duplicate name(${String(name)}), the previous register one has instanced, and the type and scope is not compatible。`);
+        } else {
+          return existOne;
+        }
+      }
+      if (existOne.alias && existOne.alias.length >= 0) {
+        mergedAlias = mergedAlias?.concat(existOne.alias);
+      }
+    }
 
-    this._providerStore.set(instanceWrapper.id, instanceWrapper);
-    this.addCache(instanceWrapper);
-    return instanceWrapper;
+    let componentWrapper = new ComponentWrapper({ ...wrapperMetaOptions, alias: mergedAlias });
+    if (existOne) {
+      console.debug("Overriding component definition for component '" + String(wrapperMetaOptions.name) + "' with a different definition: replacing [" + componentWrapper + "] with [" + componentWrapper + "]");
+    }
+    this._providerStore.set(componentWrapper.id, componentWrapper);
+    this.addNameCache(componentWrapper);
+    this.addTypeCache(componentWrapper);
+    if (alias && alias.length) {
+      for (const it of alias) {
+        const existAlias = this._aliasMap.get(it);
+        if (existAlias) {
+          if (existAlias !== name) {
+            console.debug(`Overriding alias '${String(it)}' definition for registered name ${String(existAlias)} with new target name '${String(name)}'`);
+          } else {
+            // has not changed
+            continue;
+          }
+        }
+        this._aliasMap.set(it, name);
+      }
+    }
+
+    this.onComponentRegisterAfter.call(componentWrapper);
+
+    return componentWrapper;
   }
 
   public deleteWrapper(instanceWrapper: ComponentWrapper<IInjectable>) {
@@ -58,20 +112,9 @@ export class CoreContainer {
     this._providerStore.delete(instanceWrapper.id);
   }
 
-  private addCache(instanceWrapper: ComponentWrapper<IInjectable>): void {
-    this.addNameCache(instanceWrapper);
-    this.addTypeCache(instanceWrapper);
-  }
-
   private addNameCache(instanceWrapper: ComponentWrapper<IInjectable>): void {
     const { id, name } = instanceWrapper;
-    if (Array.isArray(name)) {
-      for (const n of name) {
-        this._nameCache.set(n, id);
-      }
-    } else {
-      this._nameCache.set(name, id);
-    }
+    this._nameMap.set(name, id);
   }
 
   private addTypeCache(instanceWrapper: ComponentWrapper<IInjectable>): void {
@@ -80,17 +123,17 @@ export class CoreContainer {
       throw new RuntimeException(`Provider's type must not be null. provider name:${name.toString()}`);
     }
     let proto = type;
-    let ids: string[] = this._typeCache.get(type)?.get(type) || [];
+    let ids: string[] = this._typeMap.get(type)?.get(type) || [];
     if (!ids) {
       ids = [id];
     } else {
       ids.push(id);
     }
     do {
-      let typeCache = this._typeCache.get(proto);
+      let typeCache = this._typeMap.get(proto);
       if (!typeCache) {
         typeCache = new Map<Type | Abstract, string[]>([[type, ids]]);
-        this._typeCache.set(proto, typeCache);
+        this._typeMap.set(proto, typeCache);
       } else {
         typeCache.set(type, ids);
       }
@@ -103,18 +146,18 @@ export class CoreContainer {
     const { type, name } = instanceWrapper;
     const names = Array.isArray(name) ? name : [name];
     for (const n of names) {
-      hasDel = this._nameCache.delete(n) || hasDel;
+      hasDel = this._nameMap.delete(n) || hasDel;
     }
 
     if (!type) {
       return hasDel;
     }
-    const typeCache = this._typeCache.get(type);
+    const typeCache = this._typeMap.get(type);
     if (!typeCache) {
       return hasDel;
     }
     if (typeCache.size >= 0) {
-      this._typeCache.delete(type);
+      this._typeMap.delete(type);
       hasDel = true;
     }
     return hasDel;
@@ -177,7 +220,6 @@ export class CoreContainer {
     } else {
       throw new RuntimeException(`unknown provider type${provider}`);
     }
-    this.onRegisterProviderAfter.call(provider, instanceWrapper);
     return instanceWrapper;
   }
 
@@ -198,51 +240,45 @@ export class CoreContainer {
   }
 
   public addCustomClass(provider: ClassProvider): ComponentWrapper {
-    const { name, type, useClass, scope } = provider;
-    const names = Array.isArray(name) ? name : [name];
-    return this.addWrapper(
-      new ComponentWrapper({
-        instanceBy: "class",
-        name: names,
-        type: useClass,
-        useClass: useClass || type,
-        instance: null,
-        isResolved: false,
-        scope,
-      })
-    );
+    const { name, alias, type, useClass, scope } = provider;
+    return this.addWrapper({
+      instanceBy: "class",
+      name,
+      alias,
+      type: useClass,
+      useClass: useClass || type,
+      instance: null,
+      isResolved: false,
+      scope,
+    });
   }
 
   public addCustomValue(provider: ValueProvider): ComponentWrapper {
-    const { name, useValue: value, type = Object } = provider;
-    const names = Array.isArray(name) ? name : [name];
-    return this.addWrapper(
-      new ComponentWrapper({
-        instanceBy: "value",
-        name: names,
-        type,
-        instance: value,
-        isResolved: true,
-        async: value instanceof Promise,
-      })
-    );
+    const { name, alias, useValue: value, type = Object } = provider;
+    return this.addWrapper({
+      instanceBy: "value",
+      name,
+      alias,
+      type,
+      instance: value,
+      isResolved: true,
+      async: value instanceof Promise,
+    });
   }
 
   public addCustomFactory(provider: FactoryProvider): ComponentWrapper {
-    const { name, useFactory: factory, inject, scope, type } = provider;
-    const names = Array.isArray(name) ? name : [name];
-    return this.addWrapper(
-      new ComponentWrapper({
-        instanceBy: "factory",
-        name: names,
-        type: type,
-        factory,
-        inject: inject || [],
-        instance: null,
-        isResolved: false,
-        scope,
-      })
-    );
+    const { name, alias, useFactory: factory, inject, scope, type } = provider;
+    return this.addWrapper({
+      instanceBy: "factory",
+      name,
+      alias,
+      type: type,
+      factory,
+      inject: inject || [],
+      instance: null,
+      isResolved: false,
+      scope,
+    });
   }
 
   public replace(toReplace: string, newProvider: Partial<Provider>) {
@@ -253,7 +289,7 @@ export class CoreContainer {
     const beforeDefinition = this.getProviderDefinitionByWrapper(provider);
     provider.replaceWith(newProvider);
     const nextDefinition = this.getProviderDefinitionByWrapper(provider);
-    this.onReplaceProviderAfter.call(nextDefinition, beforeDefinition);
+    this.onComponentReplaceAfter.call(nextDefinition, beforeDefinition);
   }
 
   public delete<T = unknown>(idOrType: string | Type<T> | Abstract<T>) {
@@ -286,7 +322,18 @@ export class CoreContainer {
   }
 
   public getProviderByName<T = any>(name: TProviderName): ComponentWrapper<T> | undefined {
-    const id = this._nameCache.get(name);
+    let id = this._nameMap.get(name);
+    if (!id) {
+      const targetName = this._aliasMap.get(name);
+      if (targetName) {
+        id = this._nameMap.get(targetName);
+        if (!id) {
+          console.debug(`Component alias '${String(name)}' can not find target name '${String(targetName)}' definition.`);
+          return undefined;
+        }
+      }
+    }
+
     if (id) {
       return this._providerStore.get(id);
     }
@@ -294,7 +341,7 @@ export class CoreContainer {
   }
 
   public getProviderByType<T = any>(type: Type | Abstract): ComponentWrapper | undefined {
-    const matchTypes = this._typeCache.get(type);
+    const matchTypes = this._typeMap.get(type);
     if (!matchTypes) {
       return undefined;
     }
@@ -319,7 +366,7 @@ export class CoreContainer {
   }
 
   public getProvidersByType<T = any>(type: Type | Abstract): string[] {
-    const matchTypes = this._typeCache.get(type);
+    const matchTypes = this._typeMap.get(type);
     if (!matchTypes) {
       return [];
     }

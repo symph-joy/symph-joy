@@ -1,7 +1,7 @@
 import assert from "assert";
 import { ICommandHandler } from "./interface/command-handler.interface";
 import { getCommandsMetadata } from "./command.decorator";
-import { IComponentWrapper, Component, InjectorHookTaps, RegisterTap } from "@symph/core";
+import { IComponentWrapper, Component, InjectorHookTaps, RegisterTap, Type, EntryType, ProviderScanner } from "@symph/core";
 import { getCommandMetadata } from "./command-provider.decorator";
 import { JoyCommand } from "./command";
 
@@ -14,17 +14,25 @@ export class CommandCenter implements InjectorHookTaps {
   @RegisterTap()
   componentAfterPropertiesSet<T = any>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
     const { instanceWrapper } = args;
+    this.registerCommand(instance, instanceWrapper.type as Type);
+    return instance;
+  }
+
+  public registerCommand(instance: Object, commandClazz?: Type) {
+    if (commandClazz === undefined) {
+      commandClazz = instance.constructor as Type;
+    }
     // register provider's method as a command
-    const commandHandlers = getCommandsMetadata(instanceWrapper.type);
+    const commandHandlers = getCommandsMetadata(commandClazz);
     commandHandlers &&
       commandHandlers.length &&
       commandHandlers.forEach((handler) => {
         handler.provider = instance;
-        this.registerCommand(handler);
+        this.registerCommandHandler(handler);
       });
 
     // register provider as a command
-    const commandHandler = getCommandMetadata(instanceWrapper.type);
+    const commandHandler = getCommandMetadata(commandClazz);
     if (commandHandler && JoyCommand.isJoyCommand(instance)) {
       // this provider is a command handler
       const handler: ICommandHandler<JoyCommand> = {
@@ -35,12 +43,11 @@ export class CommandCenter implements InjectorHookTaps {
         methodKey: "start",
         provider: instance,
       };
-      this.registerCommand(handler);
+      this.registerCommandHandler(handler);
     }
-    return instance;
   }
 
-  public registerCommand(command: ICommandHandler) {
+  private registerCommandHandler(command: ICommandHandler) {
     const { name, alias } = command.command;
     assert(!this.commands[name], `registerCommand() failed, the command ${name} is exists.`);
     this.commands[name] = command;

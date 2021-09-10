@@ -29,6 +29,6 @@ module.exports = {
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/no-empty-function": "warn",
     "prefer-const": "off",
-    "max-len": [0, { code: 300 }]
+    "max-len": [0, { code: 150 }]
   },
 };

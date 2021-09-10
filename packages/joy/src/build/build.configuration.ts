@@ -14,7 +14,7 @@ import { JoyReactBuildConfiguration } from "../react/joy-react-build.configurati
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 
 @Configuration()
-export class JoyBuildConfiguration {
+export class BuildConfiguration {
   // ====== imports
 
   // @Configuration.Provider()
@@ -45,8 +45,8 @@ export class JoyBuildConfiguration {
   @Configuration.Provider()
   public joyReactRouterPlugin: JoyReactRouterPlugin;
 
-  @Configuration.Provider()
-  public joyExportAppService: JoyExportAppService;
+  // @Configuration.Provider()
+  // public joyExportAppService: JoyExportAppService;
 
   @Configuration.Provider()
   public joyPrerenderService: JoyPrerenderService;

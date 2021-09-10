@@ -6,7 +6,7 @@ import { getInjectableMeta, Provider } from "../../src";
 
 export function createInstanceWrapper<T>(providerClazz: Type<T>, matedata?: Partial<ComponentWrapper>): ComponentWrapper<T> {
   return new ComponentWrapper({
-    name: [providerNameGenerate(providerClazz)],
+    name: providerNameGenerate(providerClazz),
     type: providerClazz,
     instance: Object.create(providerClazz.prototype),
     scope: Scope.DEFAULT,

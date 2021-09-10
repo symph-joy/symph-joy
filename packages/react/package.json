@@ -1,6 +1,6 @@
 {
   "name": "@symph/react",
-  "version": "2.0.0-alpha",
+  "version": "2.0.0",
   "description": "Joy core - modern, effect, powerful react application framework",
   "module": "src/index.ts",
   "_main": "src/index.ts",
@@ -13,7 +13,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -d  -p tsconfig.json",
+    "build": "tsc -d -p tsconfig.json",
     "watch": "tsc -w -d --sourceMap  -p tsconfig.json",
     "clean": "rm -rf dist"
   },
@@ -39,11 +39,12 @@
     "react-redux": "7.2.2",
     "redux": "4.0.5",
     "redux-saga": "1.1.1",
-    "react-router-dom": "^5.2.0"
+    "react-router-dom": "^5.2.0",
+    "@symph/core": "^2.0.0",
+    "@symph/config": "^2.0.0"
   },
   "peerDependencies": {
-    "react": "^17.0.1",
-    "@symph/core": "^2.0.0"
+    "react": "^17.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.13.10",

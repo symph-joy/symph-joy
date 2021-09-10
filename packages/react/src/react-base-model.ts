@@ -27,7 +27,7 @@ export abstract class ReactBaseModel<TState> implements ProviderLifecycle, IProv
     if (this._namespace) {
       return;
     }
-    const providerName = name.find((it) => typeof it === "string");
+    const providerName = name;
     if (!providerName || typeof providerName !== "string") {
       throw new RuntimeException(`If model namespace is not defined, the provider name must be a string,
        and will be used as it's namespace. the current get provider name is ${String(name)}).`);

@@ -19,10 +19,10 @@ export class ServerFactoryImplement<T extends ServerApplication> {
   constructor(public serverApplicationClass: { new (...args: any[]): T }) {}
 
   public async create(entry: EntryType, options?: NestApplicationOptions): Promise<T> {
-    return this.createServer(entry, undefined, options);
+    return this.createServer(entry, options);
   }
 
-  public async createServer(entry: EntryType, configurationClass: typeof ServerConfiguration = ServerConfiguration, options: NestApplicationOptions = {}): Promise<T> {
+  public async createServer(entry: EntryType, options: NestApplicationOptions = {}): Promise<T> {
     this.applyLogger(options);
     // const httpServer = options.httpServer || this.createHttpAdapter();
     const appOptions = options;
@@ -35,7 +35,7 @@ export class ServerFactoryImplement<T extends ServerApplication> {
     // container.applicationConfig = applicationConfig;
     const applicationContext = new this.serverApplicationClass(
       entry,
-      configurationClass,
+      // configurationClass,
       // httpServer,
       // applicationConfig,
       appOptions
@@ -44,7 +44,8 @@ export class ServerFactoryImplement<T extends ServerApplication> {
     await this.init(applicationContext);
 
     const target = this.createProxy(applicationContext);
-    return this.createAdapterProxy(target, applicationContext.httpAdapter);
+    return target;
+    // return this.createAdapterProxy(target, applicationContext.httpAdapter);
   }
 
   // public async createServer<T extends ServerApplication = ServerApplication>(
@@ -77,9 +78,9 @@ export class ServerFactoryImplement<T extends ServerApplication> {
   // }
 
   protected async init(
-    context: ServerApplication
+    context: T
     // httpServer?: HttpServer
-  ): Promise<ServerApplication> {
+  ): Promise<T> {
     this.logger.log(MESSAGES.APPLICATION_START);
     try {
       // if (httpServer && httpServer.init) {

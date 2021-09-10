@@ -41,9 +41,11 @@ export interface IComponentWrapper<T = any> {
 }
 
 export type InstanceBy = "class" | "factory" | "value";
+export type ComponentWrapperOptions<T = any> = Partial<ComponentWrapper<T>> & Partial<InstancePerContext<T>>;
 
 export class ComponentWrapper<T = any> implements IComponentWrapper {
-  public readonly name: TProviderName[];
+  public readonly name: TProviderName;
+  public readonly alias: TProviderName[];
   public readonly async?: boolean;
   // public readonly module?: any;
   public readonly scope?: Scope = Scope.DEFAULT;
@@ -63,8 +65,8 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
   // private isTreeStatic: boolean | undefined;
   public hasInstanced: boolean; // where has been loaded by other component
 
-  constructor(metadata: Partial<ComponentWrapper<T>> & Partial<InstancePerContext<T>> = {}) {
-    const name = String((metadata.name || [""])[0]) + "-";
+  constructor(metadata: ComponentWrapperOptions<T> = {}) {
+    const name = String(metadata.name || "") + "-";
     this[INSTANCE_ID_SYMBOL] = name + randomStringGenerator();
     this.initialize(metadata);
   }
@@ -307,4 +309,9 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
     });
     this.scope === Scope.TRANSIENT && (this.transientMap = new Map());
   }
+
+  // public toString(): string{
+  //   const {name, alias, type, scope} = this
+  //   return JSON.stringify({name, alias, type: type?.name, scope})
+  // }
 }

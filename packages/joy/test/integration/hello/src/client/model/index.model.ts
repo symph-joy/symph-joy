@@ -11,7 +11,7 @@ export class IndexModel extends ReactBaseModel<{
   }
 
   getInitState(): { message: string } {
-    return { message: "aaa" };
+    return { message: "init message" };
   }
 
   async fetchMessage() {

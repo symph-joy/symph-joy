@@ -116,7 +116,7 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
   }
 
   // @RegisterTap()
-  // protected async onRegisterProviderAfter(
+  // protected async onComponentRegisterAfter(
   //   provider: Provider,
   //   instanceWrapper: ComponentWrapper
   // ) {

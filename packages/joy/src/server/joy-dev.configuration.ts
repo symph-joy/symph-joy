@@ -1,35 +1,31 @@
 import { Configuration } from "@symph/core";
 import HotReloader from "./hot-reloader";
 import { JoyApiDevServer } from "./joy-api-dev-server";
-import { JoyReactDevServer } from "./joy-react-dev-server";
 import { JoyDevServer } from "./joy-dev-server";
 import { JoyReactDevConfiguration } from "../react/joy-react-dev.configuration";
-import { JoyBuildDevConfiguration } from "../build/joy-build-dev.configuration";
-import { JoyServerConfiguration } from "../joy-server/server/joy-server.configuration";
+import { BuildDevConfiguration } from "../build/build-dev.configuration";
+import { JoyConfigConfiguration } from "../joy-config.configuration";
+import { JoyBuildConfiguration } from "./joy-build.configuration";
 
 @Configuration()
-export class JoyServerDevConfiguration extends JoyServerConfiguration {
+export class JoyDevConfiguration extends JoyBuildConfiguration {
   // // ====== imports
-  //
   @Configuration.Provider()
-  joyBuildConfiguration: JoyBuildDevConfiguration;
+  public configConfiguration: JoyConfigConfiguration;
+
+  @Configuration.Provider()
+  joyBuildConfiguration: BuildDevConfiguration;
 
   @Configuration.Provider()
   joyReactConfiguration: JoyReactDevConfiguration;
 
   // ====== providers
 
-  // @Configuration.Provider()
-  // public serverConfig: ServerConfigDev;
-
   @Configuration.Provider()
   public hotReloader: HotReloader;
 
   @Configuration.Provider()
   public joyApiServer: JoyApiDevServer;
-
-  // @Configuration.Provider()
-  // public joyReactServer: JoyReactDevServer;
 
   @Configuration.Provider()
   public joyServer: JoyDevServer;

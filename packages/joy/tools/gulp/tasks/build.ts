@@ -5,6 +5,7 @@ import * as log from "fancy-log";
 import * as merge2 from "merge2";
 import { Simulate } from "react-dom/test-utils";
 import copy = Simulate.copy;
+import { ExecException } from "child_process";
 const { spawn, exec } = require("child_process");
 
 const DIST_DIR = "dist";
@@ -17,11 +18,7 @@ const tsProject = createProject("tsconfig.json", {
 
 function watchAsset() {
   log.info("Watching asset files..");
-  gulp.watch(
-    [`src/**/*.{handlebars,json}`],
-    { ignoreInitial: false },
-    gulp.series([copyAsset])
-  );
+  gulp.watch([`src/**/*.{handlebars,json}`], { ignoreInitial: false }, gulp.series([copyAsset]));
 }
 
 /**
@@ -37,13 +34,23 @@ function buildPackage() {
 }
 
 function tsc() {
-  return exec("tsc -d -p tsconfig.json");
+  const childProcess = exec("tsc -d -p tsconfig.json");
+  childProcess.stdout?.on("data", (chunk) => {
+    console.log(chunk);
+  });
+  childProcess.stderr?.on("data", (chunk) => {
+    console.error(chunk);
+  });
+  return childProcess;
 }
 
 function watchTsc() {
   const childProcess = exec("tsc -d -w -p tsconfig.json --sourceMap");
   childProcess.stdout?.on("data", (chunk) => {
     console.log(chunk);
+  });
+  childProcess.stderr?.on("data", (chunk) => {
+    console.error(chunk);
   });
   return childProcess;
 }

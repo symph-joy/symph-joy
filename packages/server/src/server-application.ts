@@ -37,9 +37,11 @@ export class ServerApplication extends CoreContext implements INestApplication {
   public httpAdapter: AbstractHttpAdapter;
   public readonly container: ServerContainer;
 
+  public serverConfigurationClass: typeof ServerConfiguration = ServerConfiguration;
+
   constructor(
     protected readonly entry: EntryType,
-    public readonly configurationClass: typeof ServerConfiguration = ServerConfiguration,
+    // public readonly configurationClass: typeof ServerConfiguration = ServerConfiguration,
     // public readonly httpAdapter: HttpServer,
     // protected readonly config: ApplicationConfig,
     protected readonly appOptions: NestApplicationOptions = {} // public container: ServerContainer = new ServerContainer()
@@ -61,25 +63,24 @@ export class ServerApplication extends CoreContext implements INestApplication {
         //   useValue: this.httpAdapter,
         // } as ValueProvider,
       },
-      this.configurationClass,
+      this.serverConfigurationClass,
     ]);
-
-    this.registerHttpServer();
+    await this.initHttp();
     return [...providers, ...thisProviders];
   }
 
-  async init(): Promise<this> {
+  async init(serverConfigClass: typeof ServerConfiguration = ServerConfiguration): Promise<this> {
+    this.serverConfigurationClass = serverConfigClass;
     await super.init();
-    await this.httpAdapter.init();
     return this;
   }
 
-  public registerHttpServer() {
+  private async initHttp(): Promise<void> {
     this.httpAdapter = this.syncGet(AbstractHttpAdapter);
     this.container.setHttpAdapter(this.httpAdapter);
     this.routesResolver = new RoutesResolver(this.container, this.config, this.injector);
-
     this.httpServer = this.createServer();
+    await this.httpAdapter.init();
   }
 
   public createServer<T = any>(): T {
@@ -89,7 +90,9 @@ export class ServerApplication extends CoreContext implements INestApplication {
 
   protected async initProviders(instanceWrappers: ComponentWrapper[]): Promise<void> {
     await super.initProviders(instanceWrappers);
-    await this.registerRouter(instanceWrappers);
+    if (this.hasInitialized()) {
+      await this.registerRouter(instanceWrappers);
+    }
   }
 
   // public async init(): Promise<this> {
@@ -104,7 +107,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
   //   return this;
   // }
 
-  public async registerRouter(wrappers: ComponentWrapper[]) {
+  public async registerRouter(wrappers?: ComponentWrapper[]) {
     // await this.registerMiddleware(this.httpAdapter);
 
     const prefix = this.config.getGlobalPrefix();

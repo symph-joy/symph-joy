@@ -86,7 +86,7 @@ export class JoyExportAppService {
 
   async exportApp(dir: string, options: ExportOptions): Promise<void> {
     dir = resolve(dir);
-    await this.serverApplication.loadModule(ExportServerConfiguration);
+    // await this.serverApplication.loadModule(ExportServerConfiguration);
     const port = await getPort();
     const joyServer = await this.serverApplication.get(JoyServer);
     await joyServer.prepare();
