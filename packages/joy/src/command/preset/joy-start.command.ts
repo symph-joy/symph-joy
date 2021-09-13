@@ -1,14 +1,13 @@
-import {CommandProvider} from "../command-provider.decorator";
-import {JoyCommand, JoyCommandOptionType} from "../command";
-import {printAndExit} from "../../server/lib/utils";
-import {JoyAppConfig} from "../../joy-server/server/joy-app-config";
-import {JoyServer} from "../../joy-server/server/joy-server";
-import {ServerApplication, ServerFactory} from "@symph/server";
-import {JoyServerAppConfiguration} from "../../joy-server/server/joy-server-app.configuration";
+import { CommandProvider } from "../command-provider.decorator";
+import { JoyCommand, JoyCommandOptionType } from "../command";
+import { printAndExit } from "../../server/lib/utils";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { JoyServer } from "../../joy-server/server/joy-server";
+import { ServerApplication, ServerFactory } from "@symph/server";
+import { JoyServerAppConfiguration } from "../../joy-server/server/joy-server-app.configuration";
 
 @CommandProvider()
 export class JoyStartCommand extends JoyCommand {
-
   getName(): string {
     return "start";
   }
@@ -60,7 +59,7 @@ export class JoyStartCommand extends JoyCommand {
     const appUrl = `http://${hostname}:${port}`;
     const { _, $0, ...argOpts } = args;
 
-    const appContext = await ServerFactory.createServer({}, JoyServerAppConfiguration, {  dir, hostname, port, dev: false, ...argOpts })
+    const appContext = await ServerFactory.createServer({}, JoyServerAppConfiguration, { dir, hostname, port, dev: false, ...argOpts });
 
     try {
       const server = await this.startServer(appContext);

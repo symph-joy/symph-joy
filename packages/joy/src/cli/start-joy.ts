@@ -8,11 +8,11 @@ import { join } from "path";
 import { ServerFactory } from "@symph/server";
 import { JoyBootFactory } from "../joy-boot-factory";
 import { CommandCenter } from "../command/command-center";
-import {JoyStartCommand} from "../command/preset/joy-start.command";
-import {JoyDevCommand} from "../command/preset/joy-dev.command";
-import {JoyBuildCommand} from "../command/preset/joy-build.command";
-import {JoyExportCommand} from "../command/preset/joy-export.command";
-import {JoyVersionCommand} from "../command/preset/joy-version.command";
+import { JoyStartCommand } from "../command/preset/joy-start.command";
+import { JoyDevCommand } from "../command/preset/joy-dev.command";
+import { JoyBuildCommand } from "../command/preset/joy-build.command";
+import { JoyExportCommand } from "../command/preset/joy-export.command";
+import { JoyVersionCommand } from "../command/preset/joy-version.command";
 
 export const startJoy = (async () => {
   let closed = false;

@@ -4,10 +4,10 @@ import { printAndExit } from "../../server/lib/utils";
 import { Autowire } from "@symph/core";
 import { JoyBuildService } from "../../build/joy-build.service";
 import { ConfigService } from "@symph/config";
-import {ServerApplication, ServerFactory} from "@symph/server";
+import { ServerApplication, ServerFactory } from "@symph/server";
 import { JoyBoot } from "../../joy-boot";
 import { JoyBuildConfiguration } from "../../server/joy-build.configuration";
-import {JoyDevConfiguration} from "../../server/joy-dev.configuration";
+import { JoyDevConfiguration } from "../../server/joy-dev.configuration";
 
 @CommandProvider()
 export class JoyBuildCommand extends JoyCommand {
@@ -57,7 +57,7 @@ export class JoyBuildCommand extends JoyCommand {
     const { _, $0, ...argOpts } = args;
     // this.configService.mergeConfig({ dir, dev: false, ...argOpts });
 
-    const appContext = await ServerFactory.createServer({}, JoyBuildConfiguration, { dir, dev: false, ...argOpts })
+    const appContext = await ServerFactory.createServer({}, JoyBuildConfiguration, { dir, dev: false, ...argOpts });
 
     // await this.configService.loadConfig();
     try {

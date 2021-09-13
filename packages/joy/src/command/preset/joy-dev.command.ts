@@ -1,13 +1,12 @@
-import {CommandProvider} from "../command-provider.decorator";
-import {JoyCommand, JoyCommandOptionType} from "../command";
+import { CommandProvider } from "../command-provider.decorator";
+import { JoyCommand, JoyCommandOptionType } from "../command";
 import * as Log from "../../build/output/log";
-import {startedDevelopmentServer} from "../../build/output";
-import {printAndExit} from "../../server/lib/utils";
-import {JoyAppConfig} from "../../joy-server/server/joy-app-config";
-import {ServerApplication, ServerFactory} from "@symph/server";
-import {JoyDevServer} from "../../server/joy-dev-server";
-import {JoyDevConfiguration} from "../../server/joy-dev.configuration";
-
+import { startedDevelopmentServer } from "../../build/output";
+import { printAndExit } from "../../server/lib/utils";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { ServerApplication, ServerFactory } from "@symph/server";
+import { JoyDevServer } from "../../server/joy-dev-server";
+import { JoyDevConfiguration } from "../../server/joy-dev.configuration";
 
 @CommandProvider()
 export class JoyDevCommand extends JoyCommand {
@@ -104,7 +103,7 @@ export class JoyDevCommand extends JoyCommand {
     const appUrl = `http://${hostname}:${port}`;
     const { _, $0, ...argOpts } = args;
 
-    const appContext = await ServerFactory.createServer({},JoyDevConfiguration, { dir, dev: true, ...argOpts })
+    const appContext = await ServerFactory.createServer({}, JoyDevConfiguration, { dir, dev: true, ...argOpts });
 
     this.preflight().catch(() => {});
     try {

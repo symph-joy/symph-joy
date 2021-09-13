@@ -22,10 +22,7 @@ export class ServerFactoryImplement<T extends ServerApplication> {
     return this.createServer(entry, ServerConfiguration, options);
   }
 
-  public async createServer(
-    entry: EntryType,
-    configurationClass: typeof ServerConfiguration = ServerConfiguration,
-    options: NestApplicationOptions = {}): Promise<T> {
+  public async createServer(entry: EntryType, configurationClass: typeof ServerConfiguration = ServerConfiguration, options: NestApplicationOptions = {}): Promise<T> {
     this.applyLogger(options);
     // const httpServer = options.httpServer || this.createHttpAdapter();
     const appOptions = options;

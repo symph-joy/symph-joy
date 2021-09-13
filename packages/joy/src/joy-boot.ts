@@ -3,14 +3,10 @@ import { CommandCenter } from "./command/command-center";
 import { NestApplicationOptions, ServerApplication } from "@symph/server";
 import { ServerConfiguration } from "@symph/server/dist/server.configuration";
 import { JoyBootRuntimeConfiguration } from "./joy-boot-runtime.configuration";
-import {JoyBootConfiguration} from "./joy-boot.configuration";
+import { JoyBootConfiguration } from "./joy-boot.configuration";
 
 export class JoyBoot extends ServerApplication {
-  constructor(
-    protected readonly entry: EntryType,
-    protected readonly appOptions: NestApplicationOptions = {},
-    public readonly bootRuntimeConfigClass: typeof JoyBootRuntimeConfiguration = JoyBootRuntimeConfiguration
-  ) {
+  constructor(protected readonly entry: EntryType, protected readonly appOptions: NestApplicationOptions = {}, public readonly bootRuntimeConfigClass: typeof JoyBootRuntimeConfiguration = JoyBootRuntimeConfiguration) {
     super(entry, JoyBootConfiguration, appOptions);
   }
 

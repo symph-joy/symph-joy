@@ -1,13 +1,12 @@
-import {CommandProvider} from "../command-provider.decorator";
-import {JoyCommand, JoyCommandOptionType} from "../command";
-import {printAndExit} from "../../server/lib/utils";
-import {Configuration} from "@symph/core";
-import {ServerFactory} from "@symph/server";
-import {JoyAppConfig} from "../../joy-server/server/joy-app-config";
-import {JoyExportAppService} from "../../export/joy-export-app.service";
+import { CommandProvider } from "../command-provider.decorator";
+import { JoyCommand, JoyCommandOptionType } from "../command";
+import { printAndExit } from "../../server/lib/utils";
+import { Configuration } from "@symph/core";
+import { ServerFactory } from "@symph/server";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { JoyExportAppService } from "../../export/joy-export-app.service";
 import path from "path";
-import {JoyExportConfiguration} from "../../server/joy-export.configuration";
-
+import { JoyExportConfiguration } from "../../server/joy-export.configuration";
 
 @Configuration()
 class JoyExportCommandConfig {
@@ -20,7 +19,6 @@ class JoyExportCommandConfig {
 
 @CommandProvider()
 export class JoyExportCommand extends JoyCommand {
-
   getName(): string {
     return "export";
   }
@@ -64,7 +62,7 @@ export class JoyExportCommand extends JoyCommand {
     const { _, $0, silent, outdir, threads } = args;
     let absOutdir = path.resolve(dir, outdir);
 
-    const appContext = await ServerFactory.createServer({},JoyExportConfiguration, { dir, dev: false })
+    const appContext = await ServerFactory.createServer({}, JoyExportConfiguration, { dir, dev: false });
     try {
       const exportService = await appContext.get(JoyExportAppService);
       await exportService.exportApp(dir, { outdir: absOutdir, silent, threads });

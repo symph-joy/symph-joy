@@ -1,9 +1,9 @@
-import {EntryType} from "@symph/core";
-import {NestApplicationOptions} from "@symph/server";
-import {JoyBoot} from "./joy-boot";
-import {ServerFactoryImplement} from "@symph/server/dist/server-factory";
-import {MESSAGES} from "@symph/core/dist/constants";
-import {JoyBootConfiguration} from "./joy-boot.configuration";
+import { EntryType } from "@symph/core";
+import { NestApplicationOptions } from "@symph/server";
+import { JoyBoot } from "./joy-boot";
+import { ServerFactoryImplement } from "@symph/server/dist/server-factory";
+import { MESSAGES } from "@symph/core/dist/constants";
+import { JoyBootConfiguration } from "./joy-boot.configuration";
 
 export class JoyBootFactoryImplement extends ServerFactoryImplement<JoyBoot> {
   create(entry: EntryType, options?: NestApplicationOptions): Promise<JoyBoot> {

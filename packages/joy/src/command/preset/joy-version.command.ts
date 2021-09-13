@@ -1,5 +1,5 @@
-import {CommandProvider} from "../command-provider.decorator";
-import {JoyCommand, JoyCommandOptionType} from "../command";
+import { CommandProvider } from "../command-provider.decorator";
+import { JoyCommand, JoyCommandOptionType } from "../command";
 import yargs from "yargs";
 
 @CommandProvider()
