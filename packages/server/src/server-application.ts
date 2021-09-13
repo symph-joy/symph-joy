@@ -37,11 +37,9 @@ export class ServerApplication extends CoreContext implements INestApplication {
   public httpAdapter: AbstractHttpAdapter;
   public readonly container: ServerContainer;
 
-  public serverConfigurationClass: typeof ServerConfiguration = ServerConfiguration;
-
   constructor(
     protected readonly entry: EntryType,
-    // public readonly configurationClass: typeof ServerConfiguration = ServerConfiguration,
+    public readonly configurationClass: typeof ServerConfiguration = ServerConfiguration,
     // public readonly httpAdapter: HttpServer,
     // protected readonly config: ApplicationConfig,
     protected readonly appOptions: NestApplicationOptions = {} // public container: ServerContainer = new ServerContainer()
@@ -63,14 +61,13 @@ export class ServerApplication extends CoreContext implements INestApplication {
         //   useValue: this.httpAdapter,
         // } as ValueProvider,
       },
-      this.serverConfigurationClass,
+      this.configurationClass,
     ]);
     await this.initHttp();
     return [...providers, ...thisProviders];
   }
 
-  async init(serverConfigClass: typeof ServerConfiguration = ServerConfiguration): Promise<this> {
-    this.serverConfigurationClass = serverConfigClass;
+  async init(): Promise<this> {
     await super.init();
     return this;
   }

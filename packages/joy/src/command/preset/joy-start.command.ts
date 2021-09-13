@@ -1,23 +1,14 @@
-import { CommandProvider } from "../command-provider.decorator";
-// import yargs = require('yargs');
-// import yargs from "yargs";
-import { JoyCommand, JoyCommandOptionType } from "../command";
-import { printAndExit } from "../../server/lib/utils";
-import { Autowire } from "@symph/core";
-import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
-import { JoyServer } from "../../joy-server/server/joy-server";
-import { ServerApplication } from "@symph/server";
-import { ConfigService } from "@symph/config";
-import { JoyBoot } from "../../joy-boot";
-import { JoyServerAppConfiguration } from "../../joy-server/server/joy-server-app.configuration";
+import {CommandProvider} from "../command-provider.decorator";
+import {JoyCommand, JoyCommandOptionType} from "../command";
+import {printAndExit} from "../../server/lib/utils";
+import {JoyAppConfig} from "../../joy-server/server/joy-app-config";
+import {JoyServer} from "../../joy-server/server/joy-server";
+import {ServerApplication, ServerFactory} from "@symph/server";
+import {JoyServerAppConfiguration} from "../../joy-server/server/joy-server-app.configuration";
 
 @CommandProvider()
 export class JoyStartCommand extends JoyCommand {
-  private dir: string;
 
-  constructor(@Autowire() protected configService: ConfigService, @Autowire() protected appContext: ServerApplication) {
-    super();
-  }
   getName(): string {
     return "start";
   }
@@ -30,8 +21,6 @@ export class JoyStartCommand extends JoyCommand {
   }
 
   async startServer(appContext: ServerApplication): Promise<JoyServer> {
-    await (appContext as JoyBoot).initServer(JoyServerAppConfiguration);
-
     const config = await appContext.get(JoyAppConfig);
     const { dir, hostname, port } = config;
     const server = await appContext.get(JoyServer);
@@ -70,10 +59,11 @@ export class JoyStartCommand extends JoyCommand {
     const { port, hostname } = args;
     const appUrl = `http://${hostname}:${port}`;
     const { _, $0, ...argOpts } = args;
-    this.configService.mergeConfig({ dir, hostname, port, dev: false, ...argOpts });
+
+    const appContext = await ServerFactory.createServer({}, JoyServerAppConfiguration, {  dir, hostname, port, dev: false, ...argOpts })
+
     try {
-      const server = await this.startServer(this.appContext);
-      // await server.prepare();
+      const server = await this.startServer(appContext);
       console.log(`started server on http://${args["--hostname"] || "localhost"}:${port}`);
     } catch (err) {
       console.error(err);

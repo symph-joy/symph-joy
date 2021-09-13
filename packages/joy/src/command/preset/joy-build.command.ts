@@ -4,15 +4,16 @@ import { printAndExit } from "../../server/lib/utils";
 import { Autowire } from "@symph/core";
 import { JoyBuildService } from "../../build/joy-build.service";
 import { ConfigService } from "@symph/config";
-import { ServerApplication } from "@symph/server";
+import {ServerApplication, ServerFactory} from "@symph/server";
 import { JoyBoot } from "../../joy-boot";
 import { JoyBuildConfiguration } from "../../server/joy-build.configuration";
+import {JoyDevConfiguration} from "../../server/joy-dev.configuration";
 
 @CommandProvider()
 export class JoyBuildCommand extends JoyCommand {
-  constructor(@Autowire() protected configService: ConfigService, @Autowire() protected appContext: ServerApplication) {
-    super();
-  }
+  // constructor(@Autowire() protected configService: ConfigService, @Autowire() protected appContext: ServerApplication) {
+  //   super();
+  // }
 
   getName(): string {
     return "build";
@@ -54,11 +55,14 @@ export class JoyBuildCommand extends JoyCommand {
     // process.env.NODE_ENV = "production";
     const dir = args._[0] || ".";
     const { _, $0, ...argOpts } = args;
-    this.configService.mergeConfig({ dir, dev: false, ...argOpts });
-    await this.configService.loadConfig();
+    // this.configService.mergeConfig({ dir, dev: false, ...argOpts });
+
+    const appContext = await ServerFactory.createServer({}, JoyBuildConfiguration, { dir, dev: false, ...argOpts })
+
+    // await this.configService.loadConfig();
     try {
-      await (this.appContext as JoyBoot).initServer(JoyBuildConfiguration);
-      const buildService = await this.appContext.get(JoyBuildService);
+      // await (this.appContext as JoyBoot).initServer(JoyBuildConfiguration);
+      const buildService = await appContext.get(JoyBuildService);
       await buildService.build(args.profile, args.debug);
       printAndExit(undefined, 0);
     } catch (err) {

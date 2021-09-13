@@ -1,67 +1,21 @@
-import { CommandProvider } from "../command-provider.decorator";
-// import yargs = require('yargs');
-// import yargs from "yargs";
-import { JoyCommand, JoyCommandOptionType } from "../command";
+import {CommandProvider} from "../command-provider.decorator";
+import {JoyCommand, JoyCommandOptionType} from "../command";
 import * as Log from "../../build/output/log";
-import { startedDevelopmentServer } from "../../build/output";
-import { printAndExit } from "../../server/lib/utils";
-import { Configuration, Autowire } from "@symph/core";
-import { JoyReactDevServer } from "../../server/joy-react-dev-server";
-import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
-import { ServerConfigDev } from "../../server/server-config-dev";
-import { BuildConfiguration } from "../../build/build.configuration";
-import { ReactContextFactoryDev } from "../../server/react-context-factory-dev";
-import HotReloader from "../../server/hot-reloader";
-import { JoyReactRouterPluginDev } from "../../react/router/joy-react-router-plugin-dev";
-// import { JoyServerConfig } from "./joy-start.command";
-import { ServerApplication } from "@symph/server";
-import { JoyReactConfiguration } from "../../react/joy-react.configuration";
-import { JoyApiDevServer } from "../../server/joy-api-dev-server";
-import { JoyDevServer } from "../../server/joy-dev-server";
-import { ConfigService } from "@symph/config";
-import { JoyServerConfiguration } from "../../joy-server/server/joy-server.configuration";
-import { JoyDevConfiguration } from "../../server/joy-dev.configuration";
-import { JoyBoot } from "../../joy-boot";
+import {startedDevelopmentServer} from "../../build/output";
+import {printAndExit} from "../../server/lib/utils";
+import {JoyAppConfig} from "../../joy-server/server/joy-app-config";
+import {ServerApplication, ServerFactory} from "@symph/server";
+import {JoyDevServer} from "../../server/joy-dev-server";
+import {JoyDevConfiguration} from "../../server/joy-dev.configuration";
 
-// @Configuration()
-// export class JoyReactModuleConfigDev extends JoyReactConfiguration {
-//   @Configuration.Provider()
-//   public joyReactRouter: JoyReactRouterPluginDev;
-//
-//   @Configuration.Provider()
-//   public reactContextFactory: ReactContextFactoryDev;
-// }
-
-// @Configuration({
-//   imports: {
-//     joyReactConfig: JoyReactModuleConfigDev,
-//     joyBuildConfig: JoyBuildConfig,
-//   },
-// })
-// export class JoyDevServerConfig extends JoyServerConfiguration {
-//   @Configuration.Provider()
-//   public serverConfig: ServerConfigDev;
-//
-//   @Configuration.Provider()
-//   public hotReloader: HotReloader;
-//
-//   @Configuration.Provider()
-//   public joyApiServer: JoyApiDevServer;
-//
-//   @Configuration.Provider()
-//   public joyReactServer: JoyReactDevServer;
-//
-//   @Configuration.Provider()
-//   public joyServer: JoyDevServer;
-// }
 
 @CommandProvider()
 export class JoyDevCommand extends JoyCommand {
   private dir: string;
 
-  constructor(@Autowire() protected configService: ConfigService, @Autowire() protected appContext: ServerApplication) {
-    super();
-  }
+  // constructor(@Autowire() protected configService: ConfigService, @Autowire() protected appContext: ServerApplication) {
+  //   super();
+  // }
 
   getName(): string {
     return "dev";
@@ -104,16 +58,12 @@ export class JoyDevCommand extends JoyCommand {
   // async startDevServer( appContext: CoreContext, {dir, hostname, port, dev, isJoyDevCommand}: {dir: string, hostname: string, port: number, dev: boolean, isJoyDevCommand: boolean}): Promise<JoyReactDevServer> {
 
   async startDevServer(appContext: ServerApplication): Promise<JoyDevServer> {
-    // await appContext.loadModule([JoyServerDevConfiguration]);
-    // await appContext.init(JoyServerDevConfiguration);
-    await (appContext as JoyBoot).initServer(JoyDevConfiguration);
     const config = await appContext.get(JoyAppConfig);
     if (config === undefined) {
       throw new Error("Start server error, can not find joy config provider");
     }
     const { dir, hostname, port } = config;
     const server = await appContext.get(JoyDevServer);
-    // const apiServer = await appContext.get(JoyApiDevServer);
     if (server === undefined) {
       throw new Error("Start server error, can not find joy server provider");
     }
@@ -140,15 +90,6 @@ export class JoyDevCommand extends JoyCommand {
       }
     }
 
-    // todo 重新设计，当应用关闭时，也要关闭http模块，否则jest测试item无法结束。
-    // @ts-ignore
-    server.closeSrv = async () => {
-      await server.close();
-      await appContext.close();
-    };
-    // It's up to caller to run `app.prepare()`, so it can notify that the server
-    // is listening before starting any intensive operations.
-
     return server;
   }
 
@@ -162,11 +103,12 @@ export class JoyDevCommand extends JoyCommand {
     const { port, hostname } = args;
     const appUrl = `http://${hostname}:${port}`;
     const { _, $0, ...argOpts } = args;
-    this.configService.mergeConfig({ dir, dev: true, ...argOpts });
-    await this.configService.loadConfig();
+
+    const appContext = await ServerFactory.createServer({},JoyDevConfiguration, { dir, dev: true, ...argOpts })
+
     this.preflight().catch(() => {});
     try {
-      await this.startDevServer(this.appContext);
+      await this.startDevServer(appContext);
       startedDevelopmentServer(appUrl);
     } catch (err) {
       console.error(err);
