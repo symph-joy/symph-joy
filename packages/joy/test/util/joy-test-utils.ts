@@ -5,7 +5,6 @@ import path from "path";
 import spawn from "cross-spawn";
 import child_process from "child_process";
 import treeKill from "tree-kill";
-import { ServerFactory } from "@symph/server";
 
 export async function renderViaAPI(app: JoyReactServer, pathname: string, query?: ParsedUrlQuery): Promise<string | null> {
   const url = `${pathname}${query ? `?${stringify(query)}` : ""}`;

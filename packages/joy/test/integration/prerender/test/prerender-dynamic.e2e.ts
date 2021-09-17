@@ -52,7 +52,7 @@ describe("prerender", () => {
       });
       const date = JSON.parse(fileContext);
       console.log(date);
-      const setStateAction = (date as any[]).find((it) => it.type === "reactControllerInitManager/__SET_STATE");
+      const setStateAction = (date as any[]).find((it) => it.type === "reactAppInitManager/__SET_STATE");
       expect(setStateAction).toBeTruthy();
       expect(setStateAction).toHaveProperty("state./static.initStatic", JoyRouteInitState.SUCCESS);
       expect(setStateAction).toHaveProperty("state./static.init", JoyRouteInitState.NONE);

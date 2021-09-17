@@ -1,20 +1,16 @@
-// import {
-//   CanActivate,
-//   ExceptionFilter,
-//   NestInterceptor,
-//   PipeTransform,
-//   WebSocketAdapter,
-// } from '@nestjs/common';
-// import { ComponentWrapper } from './injector/instance-wrapper';
 import { CanActivate } from "./interfaces/features/can-activate.interface";
 import { NestInterceptor } from "./interfaces/features/nest-interceptor.interface";
 import { ExceptionFilter } from "./interfaces/exceptions";
 import { PipeTransform } from "./interfaces/features/pipe-transform.interface";
 import { ComponentWrapper } from "@symph/core";
 import { WebSocketAdapter } from "./interfaces/websockets/web-socket-adapter.interface";
+import { Configurable, ConfigValue } from "@symph/config";
 
+@Configurable()
 export class ApplicationConfig {
-  private globalPrefix = "";
+  @ConfigValue({ default: "" })
+  protected globalPrefix: string;
+
   private globalPipes: PipeTransform[] = [];
   private globalFilters: ExceptionFilter[] = [];
   private globalInterceptors: NestInterceptor[] = [];
@@ -23,8 +19,9 @@ export class ApplicationConfig {
   private readonly globalRequestFilters: ComponentWrapper<ExceptionFilter>[] = [];
   private readonly globalRequestInterceptors: ComponentWrapper<NestInterceptor>[] = [];
   private readonly globalRequestGuards: ComponentWrapper<CanActivate>[] = [];
+  private ioAdapter: WebSocketAdapter;
 
-  constructor(private ioAdapter: WebSocketAdapter | null = null) {}
+  // constructor(private ioAdapter: WebSocketAdapter | null = null) {}
 
   public setGlobalPrefix(prefix: string) {
     this.globalPrefix = prefix;

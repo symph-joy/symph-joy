@@ -55,8 +55,8 @@ describe("joy export", () => {
     await checkHtmlFile(helloHtml, "msg", "Hello World!");
 
     const indexData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/index.json`);
-    await checkDataFile(indexData, "reactControllerInitManager/__SET_STATE", "state./.initStatic", JoyRouteInitState.SUCCESS);
+    await checkDataFile(indexData, "reactAppInitManager/__SET_STATE", "state./.initStatic", JoyRouteInitState.SUCCESS);
     const helloData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/index.json`);
-    await checkDataFile(helloData, "reactControllerInitManager/__SET_STATE", "state./.initStatic", JoyRouteInitState.SUCCESS);
+    await checkDataFile(helloData, "reactAppInitManager/__SET_STATE", "state./.initStatic", JoyRouteInitState.SUCCESS);
   }, 999999);
 });

@@ -9,7 +9,7 @@ import { scriptName } from "yargs";
 
 class ImportModuleSchema {
   module: string;
-  routePrefix?: string;
+  mount?: string;
   dynamic?: boolean;
 }
 
@@ -65,7 +65,7 @@ export class JoyImportService {
       }
       const fromState = fs.lstatSync(fromPath);
       if (fromState.isFile()) {
-        importModules.push({ module: fromPath, dynamic, routePrefix });
+        importModules.push({ module: fromPath, dynamic, mount: routePrefix });
       } else if (fromState.isDirectory()) {
         const packageJsonPath = path.join(fromPath, "package.json");
         if (fs.existsSync(packageJsonPath)) {
@@ -90,13 +90,13 @@ export class JoyImportService {
             return;
           }
           if (typeof importModule === "string") {
-            importModules.push({ module: path.resolve(fromPath, importModule), dynamic, routePrefix });
+            importModules.push({ module: path.resolve(fromPath, importModule), dynamic, mount: routePrefix });
           } else if (Array.isArray(importModule) && importModule.length > 0) {
             importModule.forEach((item) => {
               if (typeof item === "string") {
-                importModules.push({ module: path.resolve(fromPath, item), dynamic, routePrefix });
+                importModules.push({ module: path.resolve(fromPath, item), dynamic, mount: routePrefix });
               } else {
-                importModules.push({ dynamic, routePrefix, ...item, module: path.resolve(fromPath, item.module) });
+                importModules.push({ dynamic, mount: routePrefix, ...item, module: path.resolve(fromPath, item.module) });
               }
             });
           }
@@ -124,7 +124,7 @@ export class JoyImportService {
         onScanOutModule(scanOutModule: IScanOutModule): void | boolean {
           scanOutModule.path = importModule.module;
           scanOutModule.resource = importModule.module;
-          scanOutModule.mount = importModule.routePrefix;
+          scanOutModule.mount = importModule.mount;
         },
       });
     });

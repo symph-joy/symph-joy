@@ -1,10 +1,17 @@
-import { RuntimeException } from "@symph/core";
+export abstract class JoyFetchService {
+  static regHttpPrefix = new RegExp(`^https?:\/\/`, "i");
+  static regHostPrefix = new RegExp(`^\/\/`, "i");
 
-export class JoyFetchService {
-  async fetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
-    if (typeof window === "undefined" || typeof window.fetch === "undefined") {
-      throw new RuntimeException("Current runtime version did not support global fetch method。");
-    }
-    return window.fetch(input, init);
+  public abstract fetch(input: RequestInfo, init?: RequestInit): Promise<Response>;
+
+  public fetchApi(path: string, init?: RequestInit): Promise<Response> {
+    const url = this.getFullUrl(path);
+    return this.fetch(url, init);
   }
+
+  public fetchModuleApi(moduleMount: string, path: string, init?: RequestInit): Promise<Response> {
+    return this.fetch(this.getFullUrl(path, moduleMount), init);
+  }
+
+  public abstract getFullUrl(pathOrUrl: string, mount?: string): string;
 }

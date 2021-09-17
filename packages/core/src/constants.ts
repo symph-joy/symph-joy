@@ -16,8 +16,7 @@ export const MESSAGES = {
   MICROSERVICE_READY: `Joy microservice successfully started`,
   UNKNOWN_EXCEPTION_MESSAGE: "Internal server error",
   ERROR_DURING_SHUTDOWN: "Error happened during shutdown",
-  CALL_LISTEN_FIRST:
-    "app.listen() needs to be called before calling app.getUrl()",
+  CALL_LISTEN_FIRST: "app.listen() needs to be called before calling app.getUrl()",
 };
 
 export const APP_INTERCEPTOR = "APP_INTERCEPTOR";
@@ -26,8 +25,8 @@ export const APP_GUARD = "APP_GUARD";
 export const APP_FILTER = "APP_FILTER";
 
 //=== common
-export const INJECTABLE_METADATA = "__joy_injectable__";
-export const CONFIGURATION_METADATA = "__joy_config__";
+export const INJECTABLE_METADATA = "__joy_injectable";
+export const CONFIGURATION_METADATA = "__joy_config";
 
 export const SHARED_MODULE_METADATA = "__module:shared__";
 export const GLOBAL_MODULE_METADATA = "__module:global__";

@@ -1,9 +1,4 @@
-import {
-  StaticRouter,
-  BrowserRouter,
-  HashRouter,
-  MemoryRouter,
-} from "react-router-dom";
+import { StaticRouter, BrowserRouter, HashRouter, MemoryRouter } from "react-router-dom";
 import { ReactRouter } from "./router/react-router";
 import { Configuration } from "@symph/core";
 import { ReactAppInitManager } from "./react-app-init-manager";
@@ -14,15 +9,11 @@ export class ReactApplicationConfig {
     useValue: MemoryRouter,
     type: Object,
   })
-  public reactRouterComponent:
-    | typeof StaticRouter
-    | typeof BrowserRouter
-    | typeof MemoryRouter
-    | typeof HashRouter;
+  public reactRouterComponent: typeof StaticRouter | typeof BrowserRouter | typeof MemoryRouter | typeof HashRouter;
 
   @Configuration.Provider()
   public reactRouter: ReactRouter;
 
   @Configuration.Provider()
-  public reactControllerInitManager: ReactAppInitManager;
+  public reactAppInitManager: ReactAppInitManager;
 }

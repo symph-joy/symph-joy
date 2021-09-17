@@ -10,7 +10,7 @@ import { basename, extname, resolve } from "path";
 import fs from "fs";
 import { Configurable, ConfigValue } from "@symph/config";
 import { Integer } from "@tsed/schema";
-import { str } from "ajv";
+import { ApplicationConfig } from "@symph/server";
 
 const targets = ["server", "serverless", "experimental-serverless-trace"];
 const reactModes = ["legacy", "blocking", "concurrent"];
@@ -103,7 +103,7 @@ export interface IJoyConfig {
 
 @Configurable()
 // @Component()
-export class JoyAppConfig implements IJoyConfig {
+export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   // @Hook({
   //   id: "addJoyConfigSchema",
   //   type: HookType.Waterfall,
@@ -143,6 +143,9 @@ export class JoyAppConfig implements IJoyConfig {
   // }
 
   // [configKey: string]: any;
+
+  @ConfigValue({ default: "/api", configKey: "apiPrefix" })
+  protected globalPrefix: string;
 
   @ConfigValue()
   pagesDir?: string;
@@ -204,8 +207,8 @@ export class JoyAppConfig implements IJoyConfig {
   @ConfigValue({ default: "" })
   basePath: string;
 
-  @ConfigValue({ default: "/api" })
-  apiRoutePrefix: string;
+  // @ConfigValue({ default: "/api" })
+  // apiRoutePrefix: string;
 
   sassOptions = {};
   trailingSlash = false;

@@ -1,6 +1,6 @@
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { IncomingMessage, ServerResponse } from "http";
-import { ParsedUrlQuery } from "querystring";
+import { ParsedUrlQuery, encode } from "querystring";
 import { ApplicationConfig, ReactApplicationContext, ReactRouter } from "@symph/react";
 import { EntryType, Component, CoreContainer, Provider } from "@symph/core";
 import { JoyReactAppServerConfig } from "./joy-react-app-server-config";
@@ -43,9 +43,10 @@ export class ReactContextFactory {
     await reactApplicationContext.loadModule([...autoGenModules, this.getInitService(req, res, pathname, query), ...this.getReactAppProviderConfig()]);
 
     const reactRouter = reactApplicationContext.syncGet(ReactRouter);
+
     reactRouter.setCurrentLocation({
       pathname,
-      search: "",
+      search: encode(query),
       state: "",
       hash: "",
       key: "",
@@ -56,17 +57,22 @@ export class ReactContextFactory {
 
   protected getInitService(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery): Record<string, Provider> {
     return {
+      joyAppConfig: {
+        name: "joyAppConfig",
+        type: JoyAppConfig,
+        useValue: this.joyAppConfig,
+      },
       // StaticRouter props
       reactRouterProps: {
         name: "reactRouterProps",
         type: Object,
         useValue: { location: pathname },
       },
-      joyFetchService: {
-        name: "joyFetchService",
-        type: JoyFetchService,
-        useValue: new JoyFetchServerService(this.joyAppConfig),
-      },
+      // joyFetchService: {
+      //   name: "joyFetchService",
+      //   type: JoyFetchProxy,
+      //   useClass: JoyFetchProxyServer,
+      // },
     };
   }
 

@@ -243,7 +243,7 @@ export class Injector {
       if (!isNil(cusParam)) return cusParam;
       if (paramType === Object) {
         //when not specified a type, or set as a interface
-        throw new UndefinedDependencyException(`constructor argument(index:${index})`, {
+        throw new UndefinedDependencyException(`Constructor(${type.name}) argument(index:${index})`, {
           index: index,
           dependencies: custructionParams,
         });

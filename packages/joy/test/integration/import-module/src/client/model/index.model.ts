@@ -16,7 +16,7 @@ export class IndexModel extends ReactBaseModel<{
   }
 
   async fetchMessage() {
-    const resp = await this.joyFetchService.fetch("/api/hello");
+    const resp = await this.joyFetchService.fetchApi("/hello");
     const message = await resp.text();
     this.setState({ message });
   }

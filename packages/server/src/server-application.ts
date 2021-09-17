@@ -33,7 +33,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
   private httpServer: any;
   private isListening = false;
 
-  protected config = new ApplicationConfig();
+  protected config: ApplicationConfig;
   public httpAdapter: AbstractHttpAdapter;
   public readonly container: ServerContainer;
 
@@ -63,6 +63,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
       },
       this.configurationClass,
     ]);
+    this.config = await this.get(ApplicationConfig);
     await this.initHttp();
     return [...providers, ...thisProviders];
   }

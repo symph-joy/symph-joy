@@ -7,8 +7,9 @@ import { ServerConfiguration } from "@symph/server/dist/server.configuration";
 @Configuration()
 export class JoyServerConfiguration extends ServerConfiguration {
   // ====== providers
+
   @Configuration.Provider()
-  public joyAppConfig: JoyAppConfig;
+  applicationConfig: JoyAppConfig;
 
   @Configuration.Provider()
   public joyServer: JoyServer;

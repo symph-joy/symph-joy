@@ -1,7 +1,6 @@
 import child_process from "child_process";
 import { findPort, joyBuild, joyDev, joyStart, killApp, RunOptions } from "./joy-test-utils";
 import { stringify } from "querystring";
-import { EntryType } from "@symph/core";
 import { JoyAppConfig } from "@symph/joy";
 import fs from "fs";
 

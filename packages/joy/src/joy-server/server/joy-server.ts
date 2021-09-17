@@ -13,7 +13,8 @@ export class JoyServer {
   constructor(protected appContext: ServerApplication, public joyAppConfig: JoyAppConfig, @Optional() public reactServer: JoyReactServer) {}
 
   public async prepare(): Promise<void> {
-    const { apiRoutePrefix, basePath } = this.joyAppConfig;
+    const { basePath } = this.joyAppConfig;
+    const apiRoutePrefix = this.joyAppConfig.getGlobalPrefix();
     const reactPathReg = pathToRegexp(`${basePath || ""}/:path+`);
     const apiPathReg = pathToRegexp(`${apiRoutePrefix || ""}/:path+`);
     const reactHandler = this.reactServer ? this.reactServer.getRequestHandler() : undefined;

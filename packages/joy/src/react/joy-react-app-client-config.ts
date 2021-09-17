@@ -2,7 +2,7 @@ import { ReactRouterClient } from "./router/react-router-client";
 import { Configuration } from "@symph/core";
 import { BrowserRouter, HashRouter, MemoryRouter, StaticRouter } from "react-router-dom";
 import { ReactApplicationConfig } from "@symph/react";
-import { JoyFetchService } from "./service/joy-fetch.service";
+import { JoyFetchClientService } from "./service/joy-fetch-client.service";
 
 @Configuration({
   imports: {
@@ -22,5 +22,5 @@ export class JoyReactAppClientConfig extends ReactApplicationConfig {
   public reactRouter: ReactRouterClient;
 
   @Configuration.Provider()
-  public joyFetchService: JoyFetchService;
+  public joyFetchService: JoyFetchClientService;
 }

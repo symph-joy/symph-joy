@@ -19,7 +19,7 @@ describe("import-module", () => {
   });
 
   test("should import third module", async () => {
-    // await waitForMoment()
+    await waitForMoment();
     const response = await got.get(testContext.getUrl("/api/hello"), {
       throwHttpErrors: false,
       responseType: "text",

@@ -59,7 +59,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
   public useClass?: Type<T>; // when instanceBy class, it's used to instance the object
 
   private readonly values = new WeakMap<ContextId, InstancePerContext<T>>();
-  private readonly [INSTANCE_METADATA_SYMBOL]: InstanceMetadataStore = {};
+  private readonly [INSTANCE_METADATA_SYMBOL]: InstanceMetadataStore;
   private readonly [INSTANCE_ID_SYMBOL]: string;
   private transientMap?: Map<string, WeakMap<ContextId, InstancePerContext<T>>> | undefined;
   // private isTreeStatic: boolean | undefined;
@@ -67,6 +67,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
 
   constructor(metadata: ComponentWrapperOptions<T> = {}) {
     const name = String(metadata.name || "") + "-";
+    this[INSTANCE_METADATA_SYMBOL] = {};
     this[INSTANCE_ID_SYMBOL] = name + randomStringGenerator();
     this.initialize(metadata);
   }

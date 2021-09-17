@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { ReactBaseController, ReactController, Route } from "@symph/react";
-import { ThirdModel } from "../model/thirdModel";
+import { ThirdModel } from "../model/third-model";
 import { Autowire } from "@symph/core";
 
 @Route({ path: "/third" })

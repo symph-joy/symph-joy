@@ -208,14 +208,13 @@ export default async function getBaseWebpackConfig(
   };
 
   const babelIncludeRegexes: RegExp[] = [
-    // todo 如果不是test模式，就不用编译源代码。
-    /packages[\\/]joy[\\/]src/,
-    /packages[\\/]core[\\/]src/,
-    /packages[\\/]react[\\/]src/,
-
     /joy[\\/]dist[\\/]joy-server[\\/]lib/,
     /joy[\\/]dist[\\/]client/,
     /joy[\\/]dist[\\/]pages/,
+    // TODO 在浏览器端，如何较少这部分编译？当前的问题，如果不再次编译，那么子类被转换为ES5后，父类将不能正常初始化，报错： Class constructor cannot be invoked without 'new'
+    /core[\\/]dist[\\/]/,
+    /react[\\/]dist[\\/]/,
+    /joy[\\/]dist[\\/]/,
     /[\\/](strip-ansi|ansi-regex)[\\/]/,
     ...(config.experimental.plugins ? VALID_MIDDLEWARE.map((name) => new RegExp(`src(\\\\|/)${name}`)) : []),
   ];
