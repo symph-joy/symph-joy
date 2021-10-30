@@ -1,11 +1,18 @@
-import { isClassProvider, ProviderLifecycle, ProviderScanner, RegisterTap, TProviderName } from "@symph/core";
-import { ConfigConfiguration, Configurable, ConfigValue } from "@symph/config";
+import { ProviderScanner, RegisterTap } from "@symph/core";
+import { Configurable, ConfigValue } from "@symph/config";
 import { JoyReactRouterPlugin } from "../react/router/joy-react-router-plugin";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import fs from "fs";
 import path from "path";
-import { FileScanner, IScanOutModule } from "../joy-server/server/scanner/file-scanner";
-import { scriptName } from "yargs";
+import { FileScanner, IScanOutModule } from "../build/scanner/file-scanner";
+import { ModuleContextTypeEnum } from "../lib/constants";
+
+type TImportModule = {
+  module: string;
+  contextType: ModuleContextTypeEnum;
+  mount: string;
+  dynamic: boolean;
+};
 
 class ImportModuleSchema {
   module: string;
@@ -17,7 +24,7 @@ class ImportConfigSchema {
   from: string;
   reactModule?: string | boolean | ImportModuleSchema | ImportModuleSchema[];
   serverModule?: string | boolean | ImportModuleSchema | ImportModuleSchema[];
-  routePrefix?: string;
+  mount?: string;
   dynamic?: boolean;
 }
 
@@ -37,18 +44,17 @@ export class JoyImportService {
   onWillJoyBuild(): Promise<void> | void {
     // if (!this.hasInit){
     //   this.hasInit = true
-    this.loadImports();
+    if (this.imports && this.imports.length > 0) {
+      this.loadImports(this.imports);
+    }
+
     // }
   }
 
-  public loadImports() {
-    if (!this.imports || this.imports.length === 0) {
-      return;
-    }
-    const importModules = [] as ImportModuleSchema[];
-
-    for (const importConfig of this.imports) {
-      let { from, dynamic, serverModule, reactModule, routePrefix } = importConfig;
+  public findImportModules(imports: ImportConfigSchema[]): TImportModule[] {
+    const importModules = [] as TImportModule[];
+    for (const importConfig of imports) {
+      let { from, dynamic = false, serverModule, reactModule, mount = "" } = importConfig;
       // let serverModulePath: string, reactModulePath: string;
       let fromPath = "";
       if (path.isAbsolute(from)) {
@@ -56,103 +62,99 @@ export class JoyImportService {
       } else if (from[0] === ".") {
         fromPath = this.joyAppConfig.resolveAppDir(importConfig.from);
       } else {
-        // it's a node_module package
+        // it's maybe a node_module package
         fromPath = path.dirname(require.resolve(path.join(from, "package.json")));
       }
 
       if (!fs.existsSync(fromPath)) {
         throw new Error(`Import(from:${from}) failed, the path(${fromPath}) is not exists, `);
       }
-      const fromState = fs.lstatSync(fromPath);
-      if (fromState.isFile()) {
-        importModules.push({ module: fromPath, dynamic, mount: routePrefix });
-      } else if (fromState.isDirectory()) {
-        const packageJsonPath = path.join(fromPath, "package.json");
-        if (fs.existsSync(packageJsonPath)) {
-          let packageInfo: Record<string, unknown> = require(packageJsonPath);
-          const { serverModule: pkgServerModule, reactModule: pkgReactModule } = packageInfo as { serverModule: string | boolean; reactModule: string | boolean };
+      let fromFile = fromPath;
+      const fromState = fs.statSync(fromPath);
+      if (fromState.isDirectory()) {
+        fromFile = path.join(fromPath, "package.json");
+      }
 
-          if (serverModule === undefined || serverModule === null || serverModule === true) {
-            if (pkgServerModule) {
-              serverModule = pkgServerModule;
-            }
-          }
-
-          if (reactModule === undefined || reactModule === null || reactModule === true) {
-            if (pkgReactModule) {
-              reactModule = pkgReactModule;
-            }
+      const extname = path.extname(fromFile);
+      if (/\.js$|\.ts$/i.test(extname)) {
+        importModules.push({ module: fromFile, dynamic, mount, contextType: ModuleContextTypeEnum.Server });
+      } else if (/\.json$/i.test(extname)) {
+        let packageInfo: Record<string, unknown> = require(fromFile);
+        const joyExports = packageInfo.joyExports;
+        const { serverModule: pkgServerModule, reactModule: pkgReactModule, imports: pkgImports, mount: pkgMount } = joyExports as { serverModule?: string | boolean; reactModule?: string | boolean; imports?: ImportConfigSchema[]; mount?: string };
+        if (!mount && pkgMount) {
+          mount = pkgMount;
+        }
+        if (pkgImports && pkgImports.length) {
+          const pkgImportModules = this.findImportModules(pkgImports);
+          if (pkgImportModules && pkgImportModules.length) {
+            importModules.push(...pkgImportModules);
           }
         }
 
-        function importModuleConfig(importModule: string | boolean | ImportModuleSchema | (ImportModuleSchema | string)[]) {
+        if (serverModule === undefined || serverModule === null || serverModule === true) {
+          if (pkgServerModule) {
+            serverModule = pkgServerModule;
+          }
+        }
+
+        if (reactModule === undefined || reactModule === null || reactModule === true) {
+          if (pkgReactModule) {
+            reactModule = pkgReactModule;
+          }
+        }
+
+        function importModuleConfig(contextType: ModuleContextTypeEnum, importModule: string | boolean | ImportModuleSchema | (ImportModuleSchema | string)[]) {
           if (!importModule) {
             return;
           }
           if (typeof importModule === "string") {
-            importModules.push({ module: path.resolve(fromPath, importModule), dynamic, mount: routePrefix });
+            importModules.push({ module: path.resolve(fromPath, importModule), dynamic, mount, contextType });
           } else if (Array.isArray(importModule) && importModule.length > 0) {
             importModule.forEach((item) => {
               if (typeof item === "string") {
-                importModules.push({ module: path.resolve(fromPath, item), dynamic, mount: routePrefix });
+                importModules.push({ module: path.resolve(fromPath, item), dynamic, mount, contextType });
               } else {
-                importModules.push({ dynamic, mount: routePrefix, ...item, module: path.resolve(fromPath, item.module) });
+                importModules.push({ dynamic, mount, ...item, contextType, module: path.resolve(fromPath, item.module) });
               }
             });
           }
         }
 
         if (serverModule) {
-          importModuleConfig(serverModule);
+          importModuleConfig(ModuleContextTypeEnum.Server, serverModule);
         }
         if (reactModule) {
-          importModuleConfig(reactModule);
+          importModuleConfig(ModuleContextTypeEnum.React, reactModule);
         }
       } else {
         throw new Error(`Unknown import: ${from}`);
       }
     }
+    return importModules;
+  }
 
-    if (importModules.length > 0) {
-      this.importModule(importModules);
+  public async loadImports(imports: ImportConfigSchema[]): Promise<void> {
+    const importModules = this.findImportModules(imports);
+
+    if (importModules && importModules.length > 0) {
+      await this.importModule(importModules);
     }
   }
 
-  public importModule(importModules: ImportModuleSchema[]): void {
-    importModules.forEach((importModule) => {
-      this.fileScanner.scanFile(importModule.module, {
+  // TODO dynamic 属性未实现
+  public async importModule(importModules: TImportModule[]): Promise<void> {
+    for (const importModule of importModules) {
+      const { contextType, mount, module } = importModule;
+      await this.fileScanner.scanFile(module, {
+        contextType: contextType,
+        mount: mount,
         onScanOutModule(scanOutModule: IScanOutModule): void | boolean {
-          scanOutModule.path = importModule.module;
-          scanOutModule.resource = importModule.module;
-          scanOutModule.mount = importModule.mount;
+          scanOutModule.path = module;
+          scanOutModule.resource = module;
+          scanOutModule.mount = mount;
         },
       });
-    });
-  }
-
-  public importReact(configModulePath: string, importItem: ImportConfigSchema): void {
-    const { dynamic } = importItem;
-    const importModule = require(configModulePath);
-    const providers = this.providerScanner.scan(importModule);
-    if (!providers || providers.length === 0) {
-      return;
-    }
-    for (const provider of providers) {
-      if (isClassProvider(provider)) {
-        const routes = this.joyReactRouterPlugin.scanProvider(provider);
-        if (!routes || routes.length === 0) {
-          continue;
-        }
-        for (const route of routes) {
-          this.joyReactRouterPlugin.addRoute({
-            ...route,
-            srcPath: configModulePath,
-            dynamic: dynamic,
-          });
-        }
-      }
     }
   }
-
-  public importServer(configModulePath: string, importItem: ImportConfigSchema): void {}
 }

@@ -14,7 +14,8 @@
     "removeComments": false,
     "noLib": false,
     "resolveJsonModule": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false
   },
   "include": ["packages/**/*", "integration/**/*", "./.eslintrc.js"],
   "exclude": ["node_modules",  "dist", "test", "**/*.d.ts", "**/*.spec.ts[x]"]

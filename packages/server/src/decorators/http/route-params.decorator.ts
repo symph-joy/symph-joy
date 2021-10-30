@@ -1,7 +1,4 @@
-import {
-  RESPONSE_PASSTHROUGH_METADATA,
-  ROUTE_ARGS_METADATA,
-} from "../../constants";
+import { RESPONSE_PASSTHROUGH_METADATA, ROUTE_ARGS_METADATA } from "../../constants";
 import { RouteParamtypes } from "../../enums/route-paramtypes.enum";
 import { PipeTransform } from "../../interfaces/features/pipe-transform.interface";
 import { isNil, isString } from "@symph/core/dist/utils/shared.utils";
@@ -30,13 +27,7 @@ export interface RouteParamMetadata {
   data?: ParamData;
 }
 
-export function assignMetadata<TParamtype = any, TArgs = any>(
-  args: TArgs,
-  paramtype: TParamtype,
-  index: number,
-  data?: ParamData,
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-) {
+export function assignMetadata<TParamtype = any, TArgs = any>(args: TArgs, paramtype: TParamtype, index: number, data?: ParamData | null, ...pipes: (Type<PipeTransform> | PipeTransform)[]) {
   return {
     ...args,
     [`${paramtype}:${index}`]: {
@@ -49,38 +40,18 @@ export function assignMetadata<TParamtype = any, TArgs = any>(
 
 function createRouteParamDecorator(paramtype: RouteParamtypes) {
   return (data?: ParamData): ParameterDecorator => (target, key, index) => {
-    const args =
-      Reflect.getMetadata(ROUTE_ARGS_METADATA, target.constructor, key) || {};
-    Reflect.defineMetadata(
-      ROUTE_ARGS_METADATA,
-      assignMetadata<RouteParamtypes, Record<number, RouteParamMetadata>>(
-        args,
-        paramtype,
-        index,
-        data
-      ),
-      target.constructor,
-      key
-    );
+    const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, target.constructor, key) || {};
+    Reflect.defineMetadata(ROUTE_ARGS_METADATA, assignMetadata<RouteParamtypes, Record<number, RouteParamMetadata>>(args, paramtype, index, data), target.constructor, key);
   };
 }
 
-const createPipesRouteParamDecorator = (paramtype: RouteParamtypes) => (
-  data?: any,
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator => (target, key, index) => {
-  const args =
-    Reflect.getMetadata(ROUTE_ARGS_METADATA, target.constructor, key) || {};
+const createPipesRouteParamDecorator = (paramtype: RouteParamtypes) => (data?: any, ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator => (target, key, index) => {
+  const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, target.constructor, key) || {};
   const hasParamData = isNil(data) || isString(data);
   const paramData = hasParamData ? data : undefined;
   const paramPipes = hasParamData ? pipes : [data, ...pipes];
 
-  Reflect.defineMetadata(
-    ROUTE_ARGS_METADATA,
-    assignMetadata(args, paramtype, index, paramData, ...paramPipes),
-    target.constructor,
-    key
-  );
+  Reflect.defineMetadata(ROUTE_ARGS_METADATA, assignMetadata(args, paramtype, index, paramData, ...paramPipes), target.constructor, key);
 };
 
 /**
@@ -94,9 +65,7 @@ const createPipesRouteParamDecorator = (paramtype: RouteParamtypes) => (
  *
  * @publicApi
  */
-export const Request: () => ParameterDecorator = createRouteParamDecorator(
-  RouteParamtypes.REQUEST
-);
+export const Request: () => ParameterDecorator = createRouteParamDecorator(RouteParamtypes.REQUEST);
 
 /**
  * Route handler parameter decorator. Extracts the `Response`
@@ -107,26 +76,11 @@ export const Request: () => ParameterDecorator = createRouteParamDecorator(
  *
  * @publicApi
  */
-export const Response: (
-  options?: ResponseDecoratorOptions
-) => ParameterDecorator = (options?: ResponseDecoratorOptions) => (
-  target,
-  key,
-  index
-) => {
+export const Response: (options?: ResponseDecoratorOptions) => ParameterDecorator = (options?: ResponseDecoratorOptions) => (target, key, index) => {
   if (options?.passthrough) {
-    Reflect.defineMetadata(
-      RESPONSE_PASSTHROUGH_METADATA,
-      options?.passthrough,
-      target.constructor,
-      key
-    );
+    Reflect.defineMetadata(RESPONSE_PASSTHROUGH_METADATA, options?.passthrough, target.constructor, key);
   }
-  return createRouteParamDecorator(RouteParamtypes.RESPONSE)()(
-    target,
-    key,
-    index
-  );
+  return createRouteParamDecorator(RouteParamtypes.RESPONSE)()(target, key, index);
 };
 
 /**
@@ -136,9 +90,7 @@ export const Response: (
  *
  * @publicApi
  */
-export const Next: () => ParameterDecorator = createRouteParamDecorator(
-  RouteParamtypes.NEXT
-);
+export const Next: () => ParameterDecorator = createRouteParamDecorator(RouteParamtypes.NEXT);
 
 /**
  * Route handler parameter decorator. Extracts the `Ip` property
@@ -149,9 +101,7 @@ export const Next: () => ParameterDecorator = createRouteParamDecorator(
  *
  * @publicApi
  */
-export const Ip: () => ParameterDecorator = createRouteParamDecorator(
-  RouteParamtypes.IP
-);
+export const Ip: () => ParameterDecorator = createRouteParamDecorator(RouteParamtypes.IP);
 
 /**
  * Route handler parameter decorator. Extracts the `Session` object
@@ -162,9 +112,7 @@ export const Ip: () => ParameterDecorator = createRouteParamDecorator(
  *
  * @publicApi
  */
-export const Session: () => ParameterDecorator = createRouteParamDecorator(
-  RouteParamtypes.SESSION
-);
+export const Session: () => ParameterDecorator = createRouteParamDecorator(RouteParamtypes.SESSION);
 
 /**
  * Route handler parameter decorator. Extracts the `file` object
@@ -199,9 +147,7 @@ export function UploadedFile(): ParameterDecorator;
  *
  * @publicApi
  */
-export function UploadedFile(
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function UploadedFile(...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 
 /**
  * Route handler parameter decorator. Extracts the `file` object
@@ -219,10 +165,7 @@ export function UploadedFile(
  *
  * @publicApi
  */
-export function UploadedFile(
-  fileKey?: string,
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function UploadedFile(fileKey?: string, ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 /**
  * Route handler parameter decorator. Extracts the `file` object
  * and populates the decorated parameter with the value of `file`.
@@ -239,14 +182,8 @@ export function UploadedFile(
  *
  * @publicApi
  */
-export function UploadedFile(
-  fileKey?: string | (Type<PipeTransform> | PipeTransform),
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator {
-  return createPipesRouteParamDecorator(RouteParamtypes.FILE)(
-    fileKey,
-    ...pipes
-  );
+export function UploadedFile(fileKey?: string | (Type<PipeTransform> | PipeTransform), ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator {
+  return createPipesRouteParamDecorator(RouteParamtypes.FILE)(fileKey, ...pipes);
 }
 
 /**
@@ -282,9 +219,7 @@ export function UploadedFiles(): ParameterDecorator;
  *
  * @publicApi
  */
-export function UploadedFiles(
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function UploadedFiles(...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 /**
  * Route handler parameter decorator. Extracts the `files` object
  * and populates the decorated parameter with the value of `files`.
@@ -301,13 +236,8 @@ export function UploadedFiles(
  *
  * @publicApi
  */
-export function UploadedFiles(
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator {
-  return createPipesRouteParamDecorator(RouteParamtypes.FILES)(
-    undefined,
-    ...pipes
-  );
+export function UploadedFiles(...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator {
+  return createPipesRouteParamDecorator(RouteParamtypes.FILES)(undefined, ...pipes);
 }
 
 /**
@@ -323,9 +253,7 @@ export function UploadedFiles(
  *
  * @publicApi
  */
-export const Headers: (
-  property?: string
-) => ParameterDecorator = createRouteParamDecorator(RouteParamtypes.HEADERS);
+export const Headers: (property?: string) => ParameterDecorator = createRouteParamDecorator(RouteParamtypes.HEADERS);
 
 /**
  * Route handler parameter decorator. Extracts the `query`
@@ -364,9 +292,7 @@ export function Query(): ParameterDecorator;
  *
  * @publicApi
  */
-export function Query(
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function Query(...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 /**
  * Route handler parameter decorator. Extracts the `query`
  * property from the `req` object and populates the decorated
@@ -385,10 +311,7 @@ export function Query(
  *
  * @publicApi
  */
-export function Query(
-  property: string,
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function Query(property: string, ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 /**
  * Route handler parameter decorator. Extracts the `query`
  * property from the `req` object and populates the decorated
@@ -407,14 +330,8 @@ export function Query(
  *
  * @publicApi
  */
-export function Query(
-  property?: string | (Type<PipeTransform> | PipeTransform),
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator {
-  return createPipesRouteParamDecorator(RouteParamtypes.QUERY)(
-    property,
-    ...pipes
-  );
+export function Query(property?: string | (Type<PipeTransform> | PipeTransform), ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator {
+  return createPipesRouteParamDecorator(RouteParamtypes.QUERY)(property, ...pipes);
 }
 
 /**
@@ -452,9 +369,7 @@ export function Body(): ParameterDecorator;
  *
  * @publicApi
  */
-export function Body(
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function Body(...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 
 /**
  * Route handler parameter decorator. Extracts a single property from
@@ -476,10 +391,7 @@ export function Body(
  *
  * @publicApi
  */
-export function Body(
-  property: string,
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function Body(property: string, ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 
 /**
  * Route handler parameter decorator. Extracts the entire `body` object
@@ -501,14 +413,8 @@ export function Body(
  *
  * @publicApi
  */
-export function Body(
-  property?: string | (Type<PipeTransform> | PipeTransform),
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator {
-  return createPipesRouteParamDecorator(RouteParamtypes.BODY)(
-    property,
-    ...pipes
-  );
+export function Body(property?: string | (Type<PipeTransform> | PipeTransform), ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator {
+  return createPipesRouteParamDecorator(RouteParamtypes.BODY)(property, ...pipes);
 }
 
 /**
@@ -560,9 +466,7 @@ export function Param(): ParameterDecorator;
  *
  * @publicApi
  */
-export function Param(
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function Param(...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 /**
  * Route handler parameter decorator. Extracts the `params`
  * property from the `req` object and populates the decorated
@@ -587,10 +491,7 @@ export function Param(
  *
  * @publicApi
  */
-export function Param(
-  property: string,
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator;
+export function Param(property: string, ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator;
 /**
  * Route handler parameter decorator. Extracts the `params`
  * property from the `req` object and populates the decorated
@@ -615,14 +516,8 @@ export function Param(
  *
  * @publicApi
  */
-export function Param(
-  property?: string | (Type<PipeTransform> | PipeTransform),
-  ...pipes: (Type<PipeTransform> | PipeTransform)[]
-): ParameterDecorator {
-  return createPipesRouteParamDecorator(RouteParamtypes.PARAM)(
-    property,
-    ...pipes
-  );
+export function Param(property?: string | (Type<PipeTransform> | PipeTransform), ...pipes: (Type<PipeTransform> | PipeTransform)[]): ParameterDecorator {
+  return createPipesRouteParamDecorator(RouteParamtypes.PARAM)(property, ...pipes);
 }
 
 /**
@@ -690,9 +585,7 @@ export function HostParam(property: string): ParameterDecorator;
  *
  * @publicApi
  */
-export function HostParam(
-  property?: string | (Type<PipeTransform> | PipeTransform)
-): ParameterDecorator {
+export function HostParam(property?: string | (Type<PipeTransform> | PipeTransform)): ParameterDecorator {
   return createRouteParamDecorator(RouteParamtypes.HOST)(property);
 }
 

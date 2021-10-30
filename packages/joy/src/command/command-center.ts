@@ -12,7 +12,7 @@ export class CommandCenter implements InjectorHookTaps {
   } = {};
 
   @RegisterTap()
-  componentAfterPropertiesSet<T = any>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
+  componentAfterInitialize<T = any>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
     const { instanceWrapper } = args;
     this.registerCommand(instance, instanceWrapper.type as Type);
     return instance;

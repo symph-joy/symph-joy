@@ -3,9 +3,9 @@ import { ReactBaseController, ReactController, Route } from "@symph/react";
 import { ThirdModel } from "../model/third-model";
 import { Autowire } from "@symph/core";
 
-@Route({ path: "/third" })
+@Route({ path: "/" })
 @ReactController()
-export default class HelloReactController extends ReactBaseController {
+export default class ThirdHelloReactController extends ReactBaseController {
   @Autowire()
   thirdModel: ThirdModel;
 

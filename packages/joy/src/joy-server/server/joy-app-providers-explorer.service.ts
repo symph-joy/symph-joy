@@ -1,10 +1,11 @@
-import { ClassProvider, Component, RegisterTap } from "@symph/core";
-import { IScanOutModule } from "./scanner/file-scanner";
+import { Component, RegisterTap } from "@symph/core";
+import { IScanOutModule } from "../../build/scanner/file-scanner";
 import { handlebars } from "../../lib/handlebars";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { FileGenerator, IGenerateFiles } from "../../plugin/file-generator";
+import { FileGenerator, IGenerateFiles } from "../../build/file-generator";
 import { isReactComponent } from "@symph/react/dist/react-component.decorator";
+import { ModuleContextTypeEnum } from "../../lib/constants";
 
 @Component()
 export class JoyAppProvidersExplorerService {
@@ -13,8 +14,6 @@ export class JoyAppProvidersExplorerService {
   protected providerModules: IScanOutModule[] = [];
 
   constructor(protected fileGenerator: FileGenerator) {}
-
-  initialize(): Promise<void> | void {}
 
   public getModules(): IScanOutModule[] {
     return this.providerModules;
@@ -46,7 +45,7 @@ export class JoyAppProvidersExplorerService {
   }
 
   protected addFromScanOutModule(module: IScanOutModule): boolean {
-    if (!module.providerDefines || module.providerDefines.size === 0) {
+    if (module.contextType !== ModuleContextTypeEnum.Server || !module.providerDefines || module.providerDefines.size === 0) {
       return false;
     }
     let hasServerProvider = false;
@@ -96,6 +95,7 @@ export class JoyAppProvidersExplorerService {
   public async onGenerateFiles(genFiles: IGenerateFiles) {
     const modules = this.providerModules.map((mod) => {
       return {
+        ...mod,
         path: mod.resource,
         providerKeys: mod.providerDefines?.keys(),
       };

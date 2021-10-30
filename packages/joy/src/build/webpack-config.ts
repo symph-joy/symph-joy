@@ -214,6 +214,7 @@ export default async function getBaseWebpackConfig(
     // TODO 在浏览器端，如何较少这部分编译？当前的问题，如果不再次编译，那么子类被转换为ES5后，父类将不能正常初始化，报错： Class constructor cannot be invoked without 'new'
     /core[\\/]dist[\\/]/,
     /react[\\/]dist[\\/]/,
+    /config[\\/]dist[\\/]/,
     /joy[\\/]dist[\\/]/,
     /[\\/](strip-ansi|ansi-regex)[\\/]/,
     ...(config.experimental.plugins ? VALID_MIDDLEWARE.map((name) => new RegExp(`src(\\\\|/)${name}`)) : []),
@@ -538,7 +539,7 @@ export default async function getBaseWebpackConfig(
 
     // Anything else that is standard JavaScript within `node_modules`
     // can be externalized.
-    if (res.match(/@symph[/\\].*\.js$/)) {
+    if (res.match(/@symph[/\\].*\.js$/) || res.match(/packages[/\\]joy[/\\]dist[/\\]/) || res.match(/packages[/\\]core[/\\]dist[/\\]/) || res.match(/packages[/\\]react[/\\]dist[/\\]/) || res.match(/packages[/\\]server[/\\]dist[/\\]/) || res.match(/packages[/\\]config[/\\]dist[/\\]/)) {
       return callback(undefined, `commonjs ${request}`);
     }
 

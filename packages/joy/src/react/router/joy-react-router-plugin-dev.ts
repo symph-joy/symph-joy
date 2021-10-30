@@ -19,8 +19,8 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
   //   super(fileGenerator);
   // }
 
-  protected fromRouteMeta(path: string, providerName: TProviderName, meta: IRouteMeta, useClass: Type): IReactRouteBuildDev {
-    const route = super.fromRouteMeta(path, providerName, meta, useClass);
+  protected createFromMeta(path: string, providerName: TProviderName, providerPackage: string | undefined, meta: IRouteMeta, useClass: Type): IReactRouteBuildDev {
+    const route = super.createFromMeta(path, providerName, providerPackage, meta, useClass);
     return {
       ...route,
       isAdd: false,
@@ -44,12 +44,12 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
       if (!rootRoutes?.length) {
         return;
       }
-      rootRoutes.forEach((route) => {
+      for (const route of rootRoutes) {
         plainRoutes.push(route);
         if (route.routes?.length) {
           getFromRoutes(route.routes);
         }
-      });
+      }
     };
     getFromRoutes(routes);
     return plainRoutes;
@@ -57,11 +57,11 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
 
   public async getRouteFiles(pathname: string): Promise<string[] | undefined> {
     const matchedRoutes = this.getMatchedRoutes(pathname);
-    if (!matchedRoutes) {
+    if (!matchedRoutes || matchedRoutes.length === 0) {
       return;
     }
 
-    const usedRoutes = this.plainRoutesTree([...matchedRoutes]);
+    const usedRoutes = matchedRoutes;
     const waitingRoutes: IReactRouteBuildDev[] = [];
     usedRoutes.forEach((route) => {
       waitingRoutes.push(route);
@@ -104,7 +104,21 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
   // }
 
   protected getClientRoutes(): IReactRouteBuildDev[] {
-    return this.filterRoutes((route) => !!route.isAdd);
+    function addedFilter(routes: IReactRouteBuildDev[]): IReactRouteBuildDev[] {
+      const rst = [] as IReactRouteBuildDev[];
+      for (const route of routes) {
+        if (route.isAdd) {
+          const copyRoute = { ...route };
+          rst.push(copyRoute);
+          if (route.routes) {
+            copyRoute.routes = addedFilter(route.routes as IReactRouteBuildDev[]);
+          }
+        }
+      }
+      return rst;
+    }
+    const routes = this.getRoutes();
+    return addedFilter(routes);
   }
 
   @RegisterTap()

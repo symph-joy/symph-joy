@@ -8,6 +8,7 @@ import { CoreContainer } from "./index";
 import { Injector } from "./injector";
 import { HookCenter } from "../hook/hook-center";
 import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
+import { object } from "prop-types";
 
 function instanceContainer(): CoreContainer {
   const container = new CoreContainer();
@@ -38,7 +39,7 @@ describe("provider-scanner", () => {
       const providers = await providerScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const testProvider = providers[1];
-      expect(testProvider).toEqual({
+      expect(testProvider).toMatchObject({
         name: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
@@ -60,7 +61,7 @@ describe("provider-scanner", () => {
       const providers = await providerScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const factoryProvider = providers[1];
-      expect(factoryProvider).toEqual({
+      expect(factoryProvider).toMatchObject({
         name: "factoryProvider",
         useFactory: { factory: TestConfig, property: "factoryProvider" },
         inject: [],
@@ -83,7 +84,7 @@ describe("provider-scanner", () => {
       const providers = await providerScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const factoryProvider = providers[1];
-      expect(factoryProvider).toEqual({
+      expect(factoryProvider).toMatchObject({
         name: "factoryProvider",
         useFactory: { factory: TestConfig, property: "factoryProvider" },
         inject: [
@@ -111,7 +112,7 @@ describe("provider-scanner", () => {
       const providers = await providerScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const factoryProvider = providers[1];
-      expect(factoryProvider).toEqual({
+      expect(factoryProvider).toMatchObject({
         name: "factoryProvider",
         useFactory: { factory: TestConfig, property: "factoryProvider" },
         inject: [
@@ -127,20 +128,21 @@ describe("provider-scanner", () => {
     });
 
     test("should scan out a value provider", async () => {
-      @Configuration()
-      class TestConfig {
-        @Provider({ useValue: "hello" })
-        public valueProvider: string;
-      }
+      const valueProvider = {
+        valueProvider: {
+          name: "valueProvider",
+          type: String,
+          useValue: "hello",
+        },
+      };
 
-      const providers = await providerScanner.scanForConfig(TestConfig);
-      expect(providers && providers.length).toBe(2);
-      const provider = providers[1];
-      expect(provider).toEqual({
+      const providers = await providerScanner.scan(valueProvider);
+      expect(providers && providers.length).toBe(1);
+      const provider = providers[0];
+      expect(provider).toMatchObject({
         name: "valueProvider",
         useValue: "hello",
         type: String,
-        scope: Scope.DEFAULT,
       });
     });
 
@@ -149,7 +151,6 @@ describe("provider-scanner", () => {
       class TestConfig {
         @Provider({
           name: "testProvider1",
-          useClass: TestProvider,
           scope: Scope.TRANSIENT,
         })
         public testProvider: TestProvider;
@@ -158,7 +159,7 @@ describe("provider-scanner", () => {
       const providers = await providerScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const testProvider1 = providers[1];
-      expect(testProvider1).toEqual({
+      expect(testProvider1).toMatchObject({
         name: "testProvider1",
         useClass: TestProvider,
         scope: Scope.TRANSIENT,
@@ -187,13 +188,13 @@ describe("provider-scanner", () => {
       const providers = await providerScanner.scanForConfig(ExtendConfig);
       const testProvider = providers.find((v) => v.name === "testProvider");
       const extendTestProvider = providers.find((v) => v.name === "extendTestProvider");
-      expect(testProvider).toEqual({
+      expect(testProvider).toMatchObject({
         name: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.DEFAULT,
       });
-      expect(extendTestProvider).toEqual({
+      expect(extendTestProvider).toMatchObject({
         name: "extendTestProvider",
         useClass: TestProvider1,
         type: TestProvider1,
@@ -227,7 +228,7 @@ describe("provider-scanner", () => {
       const providers = await providerScanner.scanForConfig(ExtendConfig);
       const testProvider = providers.find((v) => v.name === "testProvider");
 
-      expect(testProvider).toEqual({
+      expect(testProvider).toMatchObject({
         name: "testProvider",
         useClass: TestProvider2,
         type: TestProvider2,
@@ -253,12 +254,12 @@ describe("provider-scanner", () => {
       container1.addProviders(providers);
       expect(providers && providers.length).toBe(1);
       const testProvider = providers[0];
-      expect(testProvider).toEqual({
+      expect(testProvider).toMatchObject({
         name: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.TRANSIENT,
-        autoRegister: false,
+        lazyRegister: false,
       });
     });
 
@@ -278,14 +279,14 @@ describe("provider-scanner", () => {
       expect(providers && providers.length).toBe(3);
       const testProvider = providers.find((it) => it.name === "testProvider");
       const testProvider1 = providers.find((it) => it.name === "testProvider1");
-      expect(testProvider).toEqual({
+      expect(testProvider).toMatchObject({
         name: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
         scope: Scope.TRANSIENT,
-        autoRegister: false,
+        lazyRegister: false,
       });
-      expect(testProvider1).toEqual({
+      expect(testProvider1).toMatchObject({
         name: "testProvider1",
         useClass: TestProvider,
         type: TestProvider,

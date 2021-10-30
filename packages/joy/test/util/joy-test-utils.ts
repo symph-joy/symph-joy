@@ -1,6 +1,6 @@
 import { ParsedUrlQuery, ParsedUrlQueryInput, stringify } from "querystring";
 import { IncomingMessage, ServerResponse } from "http";
-import { JoyBoot, JoyReactServer, JoyBootConfiguration, JoyBootFactory } from "@symph/joy";
+import { JoyBoot, JoyReactServer, JoyBootConfiguration } from "@symph/joy";
 import path from "path";
 import spawn from "cross-spawn";
 import child_process from "child_process";
@@ -226,18 +226,16 @@ export async function startJoyServer(dev: boolean, args: any): Promise<JoyBoot> 
   //   ...opts.env,
   // }
   // process.env = env
-  let app: JoyBoot;
+  let joyBoot: JoyBoot;
   try {
-    // app = new JoyBoot(PresetJoyCore);
-    app = await JoyBootFactory.createServer(JoyBoot, JoyBootConfiguration);
-    await app.init();
-    await app.runCommand(dev ? "dev" : "start", args);
+    joyBoot = new JoyBoot();
+    await joyBoot.runCommand(dev ? "dev" : "start", args);
   } catch (e) {
-    // 因为jest (v26.4.2) 的问题，
+    // 因为jest (v26.4.2) 的问题，这里泡出异常，不能打印日志详细内容，所以这里手动打印一次。
     console.error(e);
     throw e;
   }
-  return app;
+  return joyBoot;
 }
 
 // Launch the app in dev mode.

@@ -1,5 +1,5 @@
 import { AutowireHook, Component, HookType, IHook, Optional, RuntimeException } from "@symph/core";
-import { ServerApplication } from "@symph/server";
+import { MountModule, ServerApplication } from "@symph/server";
 import { pathToRegexp } from "path-to-regexp";
 import { IncomingMessage } from "http";
 import { JoyReactServer } from "./joy-react-server";
@@ -39,9 +39,24 @@ export class JoyServer {
   }
 
   public async prepareApiComponent(): Promise<void> {
-    const joyApiModulesPath = this.joyAppConfig.resolveBuildOutDir("joy/server-bundle.js");
-    const joyApiModules = require(joyApiModulesPath).default;
-    await this.appContext.loadModule(joyApiModules);
+    const joyServerModulesPath = this.joyAppConfig.resolveBuildOutDir("joy/server-bundle.js");
+    const joyServerModules = require(joyServerModulesPath).default as any[];
+    let joyGenComponents = [] as any[];
+    for (let i = 0; i < joyServerModules.length; i++) {
+      if (joyServerModules[i]["___JOY_GEN_PROVIDERS"]) {
+        let components = (joyServerModules[i]["___JOY_GEN_PROVIDERS"] as any[]) || [];
+        components.forEach((component) => {
+          const { mount, module } = component;
+          if (mount) {
+            joyGenComponents.push(new MountModule(mount, module));
+          } else {
+            joyGenComponents.push(module);
+          }
+        });
+        break;
+      }
+    }
+    await this.appContext.loadModule([...joyGenComponents, ...joyServerModules]);
   }
 
   public async close(): Promise<void> {

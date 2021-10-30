@@ -126,13 +126,18 @@ export default class OnDemandModuleHandler {
     }
 
     const rst = new Promise<void>((resolve, reject) => {
+      const timeout = 30000;
+      setTimeout(() => {
+        if (unresolvedModules.length > 0) {
+          Log.warn(`Warning: Build module timeout ${timeout}, modules:${unresolvedModules}`);
+        }
+      }, timeout);
       for (let i = 0; i < unresolvedModules.length; i++) {
         const moduleFilePath = unresolvedModules[i];
         this.doneCallbacks.once(moduleFilePath, (err: Error) => {
           if (err) return reject(err);
-
           this.compileModules.set(moduleFilePath, CompileStatusEnum.BUILT);
-          unresolvedModules.splice(i, 1);
+          unresolvedModules.splice(unresolvedModules.indexOf(moduleFilePath), 1);
           if (unresolvedModules.length === 0) {
             resolve();
           }

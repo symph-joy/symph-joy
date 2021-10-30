@@ -33,40 +33,40 @@ export class CoreContainer {
   private readonly _providerStore = new Map<string, ComponentWrapper>();
 
   private readonly _typeMap = new Map<Type | Abstract, Map<Type | Abstract, string[]>>();
-  private readonly _nameMap = new Map<TProviderName, string>(); // key: component.name, value: component.id
+  private readonly _nameMap = new Map<TProviderName, string[]>(); // key: component.name, value: component.id
   private readonly _aliasMap = new Map<TProviderName, TProviderName>(); // key: aliasName, value: component.name
 
-  /**
-   * 可使用已存在Component的情况：已存在的同名的，且类型兼容，scope相等。
-   * 所欲其它情况，直接使用新的Component定义，替换旧的Component。
-   *
-   * @param wrapperMetaOptions
-   * @private
-   */
-  private checkWrapperReplaceable(wrapperMetaOptions: ComponentWrapperOptions): ComponentWrapper | undefined {
-    const { type, name, scope } = wrapperMetaOptions;
-    if (!name) {
-      return;
-    }
-    const exist = this.getProviderByName(name);
-    if (exist) {
-      if (exist.hasInstanced) {
-        if (!(exist.type === type || isSubClass(exist.type, type)) || exist.scope !== scope) {
-          throw new RuntimeException(`Register provider failed, can not register duplicate name(${String(name)}), the previous register one has instanced, and the type and scope is not compatible。`);
-        }
-      }
-    }
-
-    return exist;
-  }
+  // /**
+  //  * 可使用已存在Component的情况：已存在的同名的，且类型兼容，scope相等。
+  //  * 所欲其它情况，直接使用新的Component定义，替换旧的Component。
+  //  *
+  //  * @param wrapperMetaOptions
+  //  * @private
+  //  */
+  // private checkWrapperReplaceable(wrapperMetaOptions: ComponentWrapperOptions): ComponentWrapper | undefined {
+  //   const {type, name, scope} = wrapperMetaOptions;
+  //   if (!name) {
+  //     return;
+  //   }
+  //   const exist = this.getProviderByName(name);
+  //   if (exist) {
+  //     if (exist.hasInstanced) {
+  //       if (!(exist.type === type || isSubClass(exist.type, type)) || exist.scope !== scope) {
+  //         throw new RuntimeException(`Register provider failed, can not register duplicate name(${String(name)}), the previous register one has instanced, and the type and scope is not compatible。`);
+  //       }
+  //     }
+  //   }
+  //
+  //   return exist;
+  // }
 
   public addWrapper(wrapperMetaOptions: ComponentWrapperOptions): ComponentWrapper {
-    const { type, name, alias, scope } = wrapperMetaOptions;
+    const { type, name, package: compPackage, alias, scope } = wrapperMetaOptions;
     if (!name) {
       throw new RuntimeException(`Register provider failed, the name is undefined.`);
     }
     let mergedAlias = alias;
-    const existOne = this.getProviderByName(name);
+    const existOne = this.getProviderByName(name, compPackage);
     if (existOne) {
       if (existOne.hasInstanced) {
         if (!(existOne.type === type || isSubClass(existOne.type, type)) || existOne.scope !== scope) {
@@ -80,9 +80,9 @@ export class CoreContainer {
       }
     }
 
-    let componentWrapper = new ComponentWrapper({ ...wrapperMetaOptions, alias: mergedAlias });
+    let componentWrapper = new ComponentWrapper({ ...wrapperMetaOptions });
     if (existOne) {
-      console.debug("Overriding component definition for component '" + String(wrapperMetaOptions.name) + "' with a different definition: replacing [" + componentWrapper + "] with [" + componentWrapper + "]");
+      console.debug(`Overriding component (name: ${String(name)}, package: ${compPackage || ""}): replacing {type:${existOne.type?.name}} with {type:${componentWrapper.type?.name}}"`);
     }
     this._providerStore.set(componentWrapper.id, componentWrapper);
     this.addNameCache(componentWrapper);
@@ -101,8 +101,9 @@ export class CoreContainer {
         this._aliasMap.set(it, name);
       }
     }
-
-    this.onComponentRegisterAfter.call(componentWrapper);
+    if (this.onComponentRegisterAfter) {
+      this.onComponentRegisterAfter.call(componentWrapper);
+    }
 
     return componentWrapper;
   }
@@ -114,7 +115,9 @@ export class CoreContainer {
 
   private addNameCache(instanceWrapper: ComponentWrapper<IInjectable>): void {
     const { id, name } = instanceWrapper;
-    this._nameMap.set(name, id);
+    const ids = this._nameMap.get(name) || [];
+    ids.push(id);
+    this._nameMap.set(name, ids);
   }
 
   private addTypeCache(instanceWrapper: ComponentWrapper<IInjectable>): void {
@@ -187,7 +190,7 @@ export class CoreContainer {
         name: name,
         useClass: type,
         scope,
-        autoRegister: wrapper.autoLoad,
+        lazyRegister: wrapper.autoLoad,
       } as ClassProvider<T>;
     } else if (instanceBy === "value") {
       definition = {
@@ -240,11 +243,13 @@ export class CoreContainer {
   }
 
   public addCustomClass(provider: ClassProvider): ComponentWrapper {
-    const { name, alias, type, useClass, scope } = provider;
+    const { name, package: packageName, global, alias, type, useClass, scope } = provider;
     return this.addWrapper({
       instanceBy: "class",
       name,
       alias,
+      package: packageName,
+      global: global,
       type: useClass,
       useClass: useClass || type,
       instance: null,
@@ -281,8 +286,8 @@ export class CoreContainer {
     });
   }
 
-  public replace(toReplace: string, newProvider: Partial<Provider>) {
-    const provider = this.getProviderByName(toReplace);
+  public replace(toReplaceWrapperId: string, newProvider: Partial<Provider>) {
+    const provider = this.getProviderById(toReplaceWrapperId);
     if (!provider) {
       throw new RuntimeException("cannot merge provider, originalProvider id${}");
     }
@@ -305,9 +310,9 @@ export class CoreContainer {
     return !isEmpty(this._providerStore.get(moduleName));
   }
 
-  public getProvider<T = unknown>(nameOrType: TProviderName | Type<T> | Abstract<T>): ComponentWrapper<T> | undefined {
+  public getProvider<T = unknown>(nameOrType: TProviderName | Type<T> | Abstract<T>, packageName?: string): ComponentWrapper<T> | undefined {
     if (typeof nameOrType === "string" || typeof nameOrType === "symbol") {
-      return this.getProviderByName(nameOrType) as ComponentWrapper<T>;
+      return this.getProviderByName(nameOrType, packageName) as ComponentWrapper<T>;
     } else {
       return this.getProviderByType(nameOrType);
     }
@@ -321,9 +326,16 @@ export class CoreContainer {
     return this._providerStore.get(id);
   }
 
-  public getProviderByName<T = any>(name: TProviderName): ComponentWrapper<T> | undefined {
+  /**
+   * 按名称查找组件策略：
+   * 1. 在包内查找。
+   * 2. 在全局公共包中查找。
+   * @param name
+   * @param packageName
+   */
+  public getProviderByName<T = any>(name: TProviderName, packageName?: string): ComponentWrapper<T> | undefined {
     let id = this._nameMap.get(name);
-    if (!id) {
+    if (!id || id.length === 0) {
       const targetName = this._aliasMap.get(name);
       if (targetName) {
         id = this._nameMap.get(targetName);
@@ -333,10 +345,23 @@ export class CoreContainer {
         }
       }
     }
-
-    if (id) {
-      return this._providerStore.get(id);
+    if (id && id.length > 0) {
+      if (packageName) {
+        for (let i = id.length - 1; i >= 0; i--) {
+          const wrapper = this._providerStore.get(id[i]);
+          if (wrapper && wrapper.package === packageName) {
+            return this._providerStore.get(id[i]);
+          }
+        }
+      }
+      for (let i = id.length - 1; i >= 0; i--) {
+        const wrapper = this._providerStore.get(id[i]);
+        if (wrapper && (!wrapper.package || wrapper.global)) {
+          return this._providerStore.get(id[i]);
+        }
+      }
     }
+
     return undefined;
   }
 

@@ -1,0 +1,22 @@
+import {JoyReactRouteLoader} from '@symph/joy/dist/react/router/joy-react-route-loader'
+import {MountModule} from "@symph/react/dist/mount/mount-module";
+
+{{#*inline "renderRoutes"}}
+  [
+  {{#routes}}
+    {
+    path: "{{path}}",
+    {{#if exact}}exact: {{exact}},{{/if}}
+    {{#if sensitive}}sensitive: {{exact}},{{/if}}
+    {{#if strict}}strict: {{exact}},{{/if}}
+    dynamic: {{json dynamic}},
+    providerName: "{{providerName}}",
+    {{#if providerPackage}}providerPackage: "{{providerPackage}}",{{/if}}
+    providerModule: {{#if mount}}new MountModule("{{mount}}", require({{json srcPath}})){{else}}require({{json srcPath}}){{/if}},
+    routes: {{> renderRoutes this}}
+    },
+  {{/routes}}
+  ]
+{{/inline}}
+
+export const joyReactAutoGenRoutes = {{> renderRoutes this}}

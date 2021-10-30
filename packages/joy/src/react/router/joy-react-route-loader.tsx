@@ -1,11 +1,10 @@
 import React, { ComponentType, useContext, useEffect, useMemo, useState } from "react";
-import { IReactRoute, JoyReactContext, JoyRouteInitState, ReactAppInitManager } from "@symph/react";
+import { IReactRoute, JoyReactContext, JoyRouteInitState, MountModule, ReactAppInitManager } from "@symph/react";
 import { ReactRouterClient } from "./react-router-client";
 import * as H from "history";
 import { match } from "react-router-dom";
-import dynamic, { DynamicLoading, Loader } from "../../joy-server/lib/dynamic";
+import { DynamicLoading, Loader } from "../../joy-server/lib/dynamic";
 import { RuntimeException } from "@symph/core";
-import { rethrow } from "@symph/server/dist/helpers/rethrow";
 
 type JoyReactRouteLoaderOptions = {
   match: match;
@@ -37,30 +36,29 @@ export function JoyReactRouteLoader({
   if (!joyAppContext) {
     throw new Error("react app context is not initialed");
   }
-  const { providerName, providerModule } = route;
-
-  // @ts-ignore
+  const { providerName, providerPackage, providerModule } = route;
 
   const LoadingComp = loading || (() => <div>route loading...</div>);
-
-  // // lazy component
-  // if (component) {
-  //   RouteComponent = (component as any).default || component;
-  // } else {
-  //   throw new RuntimeException('Joy react route loader can not get content component.')
-  // }
 
   let RouteComponent: ComponentType | Promise<ComponentType> = useMemo(() => {
     if (component) {
       return (component as any).default || component;
     } else if (typeof providerName !== "undefined") {
       const getComponent = (pModule: Record<string, unknown>) => {
-        let info = joyAppContext.getProviderDefinition(providerName);
+        let info = joyAppContext.getProviderDefinition(providerName, providerPackage);
         if (info === undefined) {
-          joyAppContext.registerModule(pModule);
+          try {
+            if (pModule instanceof MountModule) {
+              joyAppContext.registerModule(pModule.module);
+            } else {
+              joyAppContext.registerModule(pModule);
+            }
+          } catch (e) {
+            console.log(e);
+          }
         }
         // try get again
-        info = joyAppContext.getProviderDefinition(providerName);
+        info = joyAppContext.getProviderDefinition(providerName, providerPackage);
         if (!info) {
           throw new RuntimeException(`Joy can not find the route controller component(providerName:${String(providerName)})`);
         }

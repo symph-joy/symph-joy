@@ -1,7 +1,7 @@
 import { ServerFactory } from "@symph/server";
 import { PipeConfig } from "../src/pipe/pipe-config";
 import { INestApplication } from "@symph/server";
-import { findPort, getUrl } from "../../../utils/joy-test-utils";
+import { findPort, getUrl, waitForMoment } from "../../../utils/joy-test-utils";
 import got from "got";
 
 describe("Hello world", () => {
@@ -17,13 +17,14 @@ describe("Hello world", () => {
   });
 
   test(`should return been transformed value by route params pipe`, async () => {
+    // await waitForMoment()
     const url = getUrl(port, "/pipe/1");
     const response = (await got.get(url, {
       throwHttpErrors: false,
       responseType: "json",
     })) as any;
     expect(response.body.id).toBe("1");
-  });
+  }, 999999);
 
   afterAll(async () => {
     await app.close();

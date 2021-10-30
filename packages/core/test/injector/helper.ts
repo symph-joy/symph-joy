@@ -2,7 +2,7 @@ import { Scope, Type } from "../../src/interfaces";
 import { ComponentWrapper } from "../../src/injector/component-wrapper";
 import { CoreContainer } from "../../src/injector";
 import { providerNameGenerate } from "../../src/injector/provider-name-generate";
-import { getInjectableMeta, Provider } from "../../src";
+import { getComponentMeta, Provider } from "../../src";
 
 export function createInstanceWrapper<T>(providerClazz: Type<T>, matedata?: Partial<ComponentWrapper>): ComponentWrapper<T> {
   return new ComponentWrapper({
@@ -17,7 +17,7 @@ export function createInstanceWrapper<T>(providerClazz: Type<T>, matedata?: Part
   });
 }
 
-export function createProviderWrappers<T>(container: CoreContainer, ...providerDefines: (Type<any> | Provider)[]): [...ComponentWrapper<any>[]] {
+export function registerComponents<T>(container: CoreContainer, ...providerDefines: (Type<any> | Provider)[]): [...ComponentWrapper<any>[]] {
   const wrappers: any[] = [];
   if (providerDefines && providerDefines.length) {
     providerDefines.forEach((providerDefine) => {
@@ -33,7 +33,7 @@ export function createProviderWrappers<T>(container: CoreContainer, ...providerD
 
       let meta: Provider;
       if (typeof providerDefine === "function") {
-        meta = getInjectableMeta(providerDefine)!;
+        meta = getComponentMeta(providerDefine)!;
       } else {
         meta = providerDefine;
       }

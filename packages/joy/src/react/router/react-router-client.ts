@@ -7,7 +7,6 @@ import { normalizePathTrailingSlash } from "../../client/normalize-trailing-slas
 import { JoyClientConfig } from "../../client/joy-client-config";
 import { isDynamicRoute } from "../../joy-server/lib/router/utils";
 import { matchPath } from "react-router";
-import { route } from "../../joy-server/server/router";
 
 type ClientRouteSSG = string[];
 

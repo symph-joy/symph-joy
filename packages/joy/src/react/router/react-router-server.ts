@@ -3,6 +3,8 @@ import { IReactRoute, ReactRouter } from "@symph/react";
 
 @Component()
 export class ReactRouterServer extends ReactRouter {
+  protected scannedModules = [] as Record<string, unknown>[];
+
   constructor(
     @Autowire("joyReactAutoGenRoutes")
     private joyReactAutoGenRoutes: IReactRoute[]
@@ -14,5 +16,11 @@ export class ReactRouterServer extends ReactRouter {
         component: it.component?.default,
       };
     });
+
+    this.scannedModules = Array.from(new Set(joyReactAutoGenRoutes.map((r) => r.providerModule).filter(Boolean))) as Record<string, unknown>[];
+  }
+
+  public hasModuleScanned(mod: Record<string, unknown>): boolean {
+    return this.scannedModules.includes(mod);
   }
 }

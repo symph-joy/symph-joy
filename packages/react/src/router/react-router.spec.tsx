@@ -2,95 +2,101 @@ import React from "react";
 import { render } from "@testing-library/react";
 import "reflect-metadata";
 
-import Main from "./fixtures/router/pages/main";
-import Hello1 from "./fixtures/router/pages/hello1";
 import { ReactApplicationConfig } from "../react-application-config";
 import { ReactRouter } from "./react-router";
 import DynamicRoutePath from "./fixtures/router/pages/dynamic-route-path";
 import { ReactApplicationFactory } from "../react-application-factory";
+import Hello from "./fixtures/router/pages/hello";
+import NestLayout from "./fixtures/router/pages/nest/layout";
+import NestAbc from "./fixtures/router/pages/nest/abc";
+import NestIndex from "./fixtures/router/pages/nest";
+import NestChildAbc from "./fixtures/router/pages/nest/child/abc";
 
 describe("react-router", () => {
-  test("should render the main route, by special component", async () => {
-    const app = await ReactApplicationFactory.create({
-      ReactApplicationConfig,
-      reactRouterProps: { type: Object, useValue: { initialEntries: ["/"] } },
-      Main: Main,
-    });
-    const reactRouter = await app.get(ReactRouter);
-    reactRouter!.setRoutes([
+  test("should render the hello route", async () => {
+    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
       {
-        path: "/",
-        component: Main,
-      },
-    ]);
-    const appContent = app.start();
-    const { getByTestId, container, rerender, getByText } = render(appContent);
-    expect(getByText("main")).not.toBeNull();
-  });
-
-  test("should render the main route, by special providerName", async () => {
-    const app = await ReactApplicationFactory.create({
-      ReactApplicationConfig,
-      reactRouterProps: { type: Object, useValue: { initialEntries: ["/"] } },
-      Main: Main,
-    });
-    const reactRouter = await app.get(ReactRouter);
-    reactRouter!.setRoutes([
-      {
-        path: "/",
-        providerName: "main",
-      },
-    ]);
-    const appContent = app.start();
-    const { getByTestId, container, rerender, getByText } = render(appContent);
-    expect(getByText("main")).not.toBeNull();
-  });
-
-  test("should render the second level route", async () => {
-    const app = await ReactApplicationFactory.create({
-      ReactApplicationConfig,
-      reactRouterProps: {
+        name: "reactRouterProps",
         type: Object,
-        useValue: { initialEntries: ["/hello1"] },
+        useValue: { initialEntries: ["/hello"] },
       },
-      Main: Main,
-      Hello1: Hello1,
-    });
-    const reactRouter = await app.get(ReactRouter);
-    reactRouter!.setRoutes([
-      {
-        providerName: "main",
-        path: "/",
-        routes: [
-          {
-            providerName: "hello1",
-            path: "/hello1",
-          },
-        ],
-      },
+      Hello,
     ]);
+    // const reactRouter = await app.get(ReactRouter);
+    // reactRouter!.setRoutes([
+    //   {
+    //     path: "/",
+    //     component: Main,
+    //   },
+    // ]);
     const appContent = app.start();
     const { getByTestId, container, rerender, getByText } = render(appContent);
-    expect(getByText("main")).not.toBeNull();
-    expect(getByText("hello1")).not.toBeNull();
+    expect(getByTestId("hello").innerHTML).toBe("Hello");
+  });
+
+  test("should render the nesting route.", async () => {
+    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
+      {
+        name: "reactRouterProps",
+        type: Object,
+        useValue: { initialEntries: ["/nest/abc"] },
+      },
+      NestLayout,
+      NestAbc,
+    ]);
+    const reactRouter = await app.get(ReactRouter);
+    const appContent = app.start();
+    const { getByTestId, container, rerender, getByText } = render(appContent);
+    expect(getByTestId("nestLayout").innerHTML).toBe("Nest Layout");
+    expect(getByTestId("nestAbc").innerHTML).toBe("Nest Abc");
+  });
+
+  test("should render the nesting default index route.", async () => {
+    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
+      {
+        name: "reactRouterProps",
+        type: Object,
+        useValue: { initialEntries: ["/nest"] },
+      },
+      NestLayout,
+      NestIndex,
+    ]);
+    const appContent = app.start();
+    const reactRouter = await app.get(ReactRouter);
+    const matchedRoutes = reactRouter.getMatchedRoutes("/nest");
+    expect(matchedRoutes).toMatchObject([{ path: "/nest" }, { path: "/nest/index" }]);
+    const { getByTestId, container, rerender, getByText } = render(appContent);
+    expect(getByTestId("nestLayout").innerHTML).toBe("Nest Layout");
+    expect(getByTestId("nestIndex").innerHTML).toBe("Nest Index");
+  });
+
+  test("should render the nesting route, and its all child route.", async () => {
+    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
+      {
+        name: "reactRouterProps",
+        type: Object,
+        useValue: { initialEntries: ["/nest/child/abc"] },
+      },
+      NestLayout,
+      NestAbc,
+      NestIndex,
+      NestChildAbc,
+    ]);
+    const reactRouter = await app.get(ReactRouter);
+    const appContent = app.start();
+    const { getByTestId, container, rerender, getByText } = render(appContent);
+    expect(getByTestId("nestLayout").innerHTML).toBe("Nest Layout");
+    expect(getByTestId("nestChildAbc").innerHTML).toBe("Nest Child Abc");
   });
 
   test("should render the dynamic route, and bind the path param to prop", async () => {
-    const app = await ReactApplicationFactory.create({
-      ReactApplicationConfig,
-      reactRouterProps: {
-        type: Object,
-        useValue: { initialEntries: ["/hello/joy/100"] },
-      },
-      Main: Main,
-      Hello1: Hello1,
-    });
-    const reactRouter = await app.get(ReactRouter);
-    reactRouter!.setRoutes([
+    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
       {
-        path: "/hello/:message/:count",
-        component: DynamicRoutePath,
+        name: "reactRouterProps",
+        type: Object,
+        useValue: { initialEntries: ["/dynamic/joy/100"] },
       },
+      DynamicRoutePath,
     ]);
     const appContent = app.start();
     const { getByTestId, container, rerender, getByText } = render(appContent);

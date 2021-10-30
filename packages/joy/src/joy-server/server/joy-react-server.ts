@@ -1,5 +1,5 @@
 import compression from "compression";
-import fs from "fs";
+import { existsSync, readFileSync } from "fs";
 import chalk from "chalk";
 import { IncomingMessage, ServerResponse } from "http";
 import Proxy from "http-proxy";
@@ -10,7 +10,7 @@ import { PrerenderManifest } from "../../build/joy-build.service";
 import { CustomRoutes, getRedirectStatus, Header, Redirect, Rewrite, RouteType } from "../../lib/load-custom-routes";
 import { withCoalescedInvoke } from "../../lib/coalesced-function";
 import { BUILD_ID_FILE, CLIENT_PUBLIC_FILES_PATH, CLIENT_STATIC_FILES_PATH, CLIENT_STATIC_FILES_RUNTIME, OUT_DIRECTORY, PAGES_MANIFEST, PHASE_PRODUCTION_SERVER, PRERENDER_MANIFEST, ROUTES_MANIFEST, SERVER_DIRECTORY, SERVERLESS_DIRECTORY } from "../lib/constants";
-import { getRouteMatcher, getRouteRegex, getSortedRoutes, isDynamicRoute } from "../lib/router/utils";
+import { getRouteMatcher, getRouteRegex, isDynamicRoute } from "../lib/router/utils";
 import * as envConfig from "../lib/runtime-config";
 import { execOnce, isResSent, JoyApiRequest, JoyApiResponse } from "../lib/utils";
 // import { tryGetPreviewData, __ApiPreviewProps } from './api-utils'
@@ -33,7 +33,7 @@ import { PagesManifest } from "../../build/webpack/plugins/pages-manifest-plugin
 import { removePathTrailingSlash } from "../../client/normalize-trailing-slash";
 import getRouteFromAssetPath from "../lib/router/utils/get-route-from-asset-path";
 import { FontManifest } from "./font-utils";
-import { HookType, Component, ProviderLifecycle, AutowireHook, IHook } from "@symph/core";
+import { HookType, Component, IComponentLifecycle, AutowireHook, IHook } from "@symph/core";
 import { JoyAppConfig } from "./joy-app-config";
 // import { ServerConfig } from "./server-config";
 // import { JoyReactAppServerConfig } from "../lib/joy-react-app-server-config";
@@ -42,6 +42,7 @@ import React from "react";
 import { ReactContextFactory } from "../../react/react-context-factory";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 import { REACT_OUT_DIR } from "../../react/react-const";
+import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 
 const getCustomRouteMatcher = pathMatch(true);
 
@@ -72,7 +73,7 @@ export type ServerConstructor = {
 };
 
 @Component()
-export class JoyReactServer implements ProviderLifecycle {
+export class JoyReactServer implements IComponentLifecycle {
   dir: string;
   quiet: boolean;
   joyConfig: JoyConfig;
@@ -132,7 +133,7 @@ export class JoyReactServer implements ProviderLifecycle {
     this.distDir = joyAppConfig.resolveAppDir(distDir);
     this.outDir = joyAppConfig.resolveAppDir(distDir, REACT_OUT_DIR);
     this.publicDir = joyAppConfig.resolveAppDir(CLIENT_PUBLIC_FILES_PATH);
-    this.hasStaticDir = fs.existsSync(join(this.dir, "static"));
+    this.hasStaticDir = existsSync(join(this.dir, "static"));
 
     // Only serverRuntimeConfig needs the default
     // publicRuntimeConfig gets it's default in client/index.js
@@ -211,7 +212,7 @@ export class JoyReactServer implements ProviderLifecycle {
     }
   }
 
-  async afterPropertiesSet() {
+  async initialize() {
     this.buildId = await this.readBuildId();
     this.renderOpts.buildId = this.buildId;
   }
@@ -311,7 +312,7 @@ export class JoyReactServer implements ProviderLifecycle {
     useFileSystemPublicRoutes: boolean;
     dynamicRoutes: DynamicRoutes | undefined;
   } {
-    const publicRoutes = fs.existsSync(this.publicDir) ? this.generatePublicRoutes() : [];
+    const publicRoutes = existsSync(this.publicDir) ? this.generatePublicRoutes() : [];
 
     const staticFilesRoute = this.hasStaticDir
       ? [
@@ -1319,12 +1320,12 @@ export class JoyReactServer implements ProviderLifecycle {
 
     const pathUserFilesStatic = join(this.dir, "static");
     let userFilesStatic: string[] = [];
-    if (this.hasStaticDir && fs.existsSync(pathUserFilesStatic)) {
+    if (this.hasStaticDir && existsSync(pathUserFilesStatic)) {
       userFilesStatic = recursiveReadDirSync(pathUserFilesStatic).map((f) => join(".", "static", f));
     }
 
     let userFilesPublic: string[] = [];
-    if (this.publicDir && fs.existsSync(this.publicDir)) {
+    if (this.publicDir && existsSync(this.publicDir)) {
       userFilesPublic = recursiveReadDirSync(this.publicDir).map((f) => join(".", "public", f));
     }
 
@@ -1373,9 +1374,9 @@ export class JoyReactServer implements ProviderLifecycle {
   protected async readBuildId(): Promise<string> {
     const buildIdFile = join(this.outDir, BUILD_ID_FILE);
     try {
-      return fs.readFileSync(buildIdFile, "utf8").trim();
+      return readFileSync(buildIdFile, "utf8").trim();
     } catch (err) {
-      if (!fs.existsSync(buildIdFile)) {
+      if (!existsSync(buildIdFile)) {
         throw new Error(`Could not find a valid build in the '${this.outDir}' directory! Try building your app with 'joy build' before starting the server.`);
       }
       throw err;

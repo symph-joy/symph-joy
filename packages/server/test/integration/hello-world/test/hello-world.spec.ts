@@ -1,6 +1,6 @@
 import { INestApplication, ServerFactory } from "@symph/server";
 import { HelloConfig } from "../src/hello-config";
-import { findPort, getUrl, waitForMoment } from "../../../utils/joy-test-utils";
+import { findPort, getUrl } from "../../../utils/joy-test-utils";
 import got from "got";
 
 describe("Hello world", () => {
@@ -18,7 +18,6 @@ describe("Hello world", () => {
   }, 999999);
 
   test(`should response message`, async () => {
-    // await waitForMoment()
     const url = getUrl(port, "/hello/hi");
     const response = await got.get(url, { throwHttpErrors: false });
     expect(response.statusCode).toBe(200);

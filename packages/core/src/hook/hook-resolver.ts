@@ -11,9 +11,9 @@ export class HookResolver implements InjectorHookTaps {
       propKey: "onComponentRegisterAfter",
       provider: this,
     });
-    pluginCenter.registerTap("componentAfterPropertiesSet", {
+    pluginCenter.registerTap("componentAfterInitialize", {
       id: "plugin-center-resolve-hooks-register-component",
-      propKey: "componentAfterPropertiesSet",
+      propKey: "componentAfterInitialize",
       provider: this,
     });
   }
@@ -23,7 +23,7 @@ export class HookResolver implements InjectorHookTaps {
     return componentWrapper;
   }
 
-  componentAfterPropertiesSet<T>(instance: T, args: { instanceWrapper: ComponentWrapper }): T {
+  componentAfterInitialize<T>(instance: T, args: { instanceWrapper: ComponentWrapper }): T {
     const { instanceWrapper } = args;
     if (instanceWrapper.scope === Scope.DEFAULT) {
       this.pluginCenter.registerProviderHooks(instance, instanceWrapper.type);

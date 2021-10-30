@@ -1,4 +1,4 @@
-import { ClassProvider, Scope } from "@symph/core";
+import { ComponentOptions, Scope } from "@symph/core";
 import { ReactComponent } from "./react-component.decorator";
 
 export interface ControllerMeta {
@@ -11,7 +11,7 @@ export interface PathVariable {
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export function ReactController<T>(options: Partial<ClassProvider & ControllerMeta> = {}): <TFunction extends Function>(target: TFunction) => TFunction | void {
+export function ReactController<T>(options: ComponentOptions & Partial<ControllerMeta> = {}): <TFunction extends Function>(target: TFunction) => TFunction | void {
   return (constructor) => {
     class ExtReactControllerDeco extends (constructor as any) {
       public wrapperComponent: typeof constructor;
@@ -39,7 +39,7 @@ export function ReactController<T>(options: Partial<ClassProvider & ControllerMe
       // { type: ExtReactControllerDeco, useClass: ExtReactControllerDeco },
       { name },
       options,
-      { scope: Scope.TRANSIENT, autoRegister: false }
+      { scope: Scope.TRANSIENT, lazyRegister: false }
     );
     ReactComponent(options)(ExtReactControllerDeco);
 

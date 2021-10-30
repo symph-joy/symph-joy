@@ -1,5 +1,5 @@
 import { ReactBaseModel, ReactModel } from "@symph/react";
-import { JoyFetchService } from "@symph/joy";
+import { ReactFetchService } from "@symph/joy";
 import { Autowire } from "@symph/core";
 
 interface Entity {
@@ -12,7 +12,7 @@ export class EntityModel extends ReactBaseModel<{
   entities: Entity[];
   showEntity?: Entity;
 }> {
-  constructor(@Autowire("joyFetchService") public fetchService: JoyFetchService) {
+  constructor(@Autowire("joyFetchService") public fetchService: ReactFetchService) {
     super();
   }
 

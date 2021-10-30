@@ -6,17 +6,8 @@ import textTable from "text-table";
 import path from "path";
 import { isValidElementType } from "react-is";
 import stripAnsi from "strip-ansi";
-import {
-  Redirect,
-  Rewrite,
-  Header,
-  CustomRoutes,
-} from "../lib/load-custom-routes";
-import {
-  SSG_GET_INITIAL_PROPS_CONFLICT,
-  SERVER_PROPS_GET_INIT_PROPS_CONFLICT,
-  SERVER_PROPS_SSG_CONFLICT,
-} from "../lib/constants";
+import { Redirect, Rewrite, Header, CustomRoutes } from "../lib/load-custom-routes";
+import { SSG_GET_INITIAL_PROPS_CONFLICT, SERVER_PROPS_GET_INIT_PROPS_CONFLICT, SERVER_PROPS_SSG_CONFLICT } from "../lib/constants";
 import prettyBytes from "../lib/pretty-bytes";
 import { recursiveReadDir } from "../lib/recursive-readdir";
 import { getRouteMatcher, getRouteRegex } from "../joy-server/lib/router/utils";
@@ -31,19 +22,13 @@ import type { UnwrapPromise } from "../lib/coalesced-function";
 
 const fileGzipStats: { [k: string]: Promise<number> } = {};
 const fsStatGzip = (file: string) => {
-  if (fileGzipStats[file]) return fileGzipStats[file];
+  if (fileGzipStats.hasOwnProperty(file)) return fileGzipStats[file];
   fileGzipStats[file] = gzipSize.file(file);
   return fileGzipStats[file];
 };
 
-export function collectPages(
-  directory: string,
-  pageExtensions: string[]
-): Promise<string[]> {
-  return recursiveReadDir(
-    directory,
-    new RegExp(`\\.(?:${pageExtensions.join("|")})$`)
-  );
+export function collectPages(directory: string, pageExtensions: string[]): Promise<string[]> {
+  return recursiveReadDir(directory, new RegExp(`\\.(?:${pageExtensions.join("|")})$`));
 }
 
 export interface PageInfo {
@@ -98,11 +83,7 @@ export async function printTreeView(
       // Remove file hash
       .replace(/[.-]([0-9a-z]{6})[0-9a-z]{14}(?=\.)/, ".$1");
 
-  const messages: [string, string, string][] = [
-    ["Page", "Size", "First Load JS"].map((entry) =>
-      chalk.underline(entry)
-    ) as [string, string, string],
-  ];
+  const messages: [string, string, string][] = [["Page", "Size", "First Load JS"].map((entry) => chalk.underline(entry)) as [string, string, string]];
 
   const hasCustomApp = await findPageFile(pagesDir, "/_app", pageExtensions);
 
@@ -115,83 +96,33 @@ export async function printTreeView(
     list = [...list, "/404"];
   }
 
-  const sizeData = await computeFromManifest(
-    buildManifest,
-    distPath,
-    isModern,
-    pageInfos
-  );
+  const sizeData = await computeFromManifest(buildManifest, distPath, isModern, pageInfos);
 
   const pageList = list
     .slice()
-    .filter(
-      (e) =>
-        !(
-          e === "/_document" ||
-          e === "/_error" ||
-          (!hasCustomApp && e === "/_app")
-        )
-    )
+    .filter((e) => !(e === "/_document" || e === "/_error" || (!hasCustomApp && e === "/_app")))
     .sort((a, b) => a.localeCompare(b));
 
   pageList.forEach((item, i, arr) => {
-    const symbol =
-      i === 0
-        ? arr.length === 1
-          ? "─"
-          : "┌"
-        : i === arr.length - 1
-        ? "└"
-        : "├";
+    const symbol = i === 0 ? (arr.length === 1 ? "─" : "┌") : i === arr.length - 1 ? "└" : "├";
 
     const pageInfo = pageInfos.get(item);
     const ampFirst = buildManifest.ampFirstPages.includes(item);
 
     messages.push([
-      `${symbol} ${
-        item === "/_app"
-          ? " "
-          : pageInfo?.static
-          ? "○"
-          : pageInfo?.isSsg
-          ? "●"
-          : "λ"
-      } ${
-        pageInfo?.initialRevalidateSeconds
-          ? `${item} (ISR: ${pageInfo?.initialRevalidateSeconds} Seconds)`
-          : item
-      }`,
-      pageInfo
-        ? ampFirst
-          ? chalk.cyan("AMP")
-          : pageInfo.size >= 0
-          ? prettyBytes(pageInfo.size)
-          : ""
-        : "",
-      pageInfo
-        ? ampFirst
-          ? chalk.cyan("AMP")
-          : pageInfo.size >= 0
-          ? getPrettySize(pageInfo.totalSize)
-          : ""
-        : "",
+      `${symbol} ${item === "/_app" ? " " : pageInfo?.static ? "○" : pageInfo?.isSsg ? "●" : "λ"} ${pageInfo?.initialRevalidateSeconds ? `${item} (ISR: ${pageInfo?.initialRevalidateSeconds} Seconds)` : item}`,
+      pageInfo ? (ampFirst ? chalk.cyan("AMP") : pageInfo.size >= 0 ? prettyBytes(pageInfo.size) : "") : "",
+      pageInfo ? (ampFirst ? chalk.cyan("AMP") : pageInfo.size >= 0 ? getPrettySize(pageInfo.totalSize) : "") : "",
     ]);
 
-    const uniqueCssFiles =
-      buildManifest.pages[item]?.filter(
-        (file) => file.endsWith(".css") && sizeData.uniqueFiles.includes(file)
-      ) || [];
+    const uniqueCssFiles = buildManifest.pages[item]?.filter((file) => file.endsWith(".css") && sizeData.uniqueFiles.includes(file)) || [];
 
     if (uniqueCssFiles.length > 0) {
       const contSymbol = i === arr.length - 1 ? " " : "├";
 
       uniqueCssFiles.forEach((file, index, { length }) => {
         const innerSymbol = index === length - 1 ? "└" : "├";
-        messages.push([
-          `${contSymbol}   ${innerSymbol} ${getCleanName(file)}`,
-          prettyBytes(sizeData.sizeUniqueFiles[file]),
-          "",
-        ]);
+        messages.push([`${contSymbol}   ${innerSymbol} ${getCleanName(file)}`, prettyBytes(sizeData.sizeUniqueFiles[file]), ""]);
       });
     }
 
@@ -216,11 +147,7 @@ export async function printTreeView(
   const sharedFilesSize = sizeData.sizeCommonFiles;
   const sharedFiles = sizeData.sizeCommonFile;
 
-  messages.push([
-    "+ First Load JS shared by all",
-    getPrettySize(sharedFilesSize),
-    "",
-  ]);
+  messages.push(["+ First Load JS shared by all", getPrettySize(sharedFilesSize), ""]);
   const sharedFileKeys = Object.keys(sharedFiles);
   const sharedCssFiles: string[] = [];
   [
@@ -241,11 +168,7 @@ export async function printTreeView(
     const originalName = fileName.replace("<buildId>", buildId);
     const cleanName = getCleanName(fileName);
 
-    messages.push([
-      `  ${innerSymbol} ${cleanName}`,
-      prettyBytes(sharedFiles[originalName]),
-      "",
-    ]);
+    messages.push([`  ${innerSymbol} ${cleanName}`, prettyBytes(sharedFiles[originalName]), ""]);
   });
 
   console.log(
@@ -259,32 +182,10 @@ export async function printTreeView(
   console.log(
     textTable(
       [
-        [
-          "λ",
-          serverless ? "(Lambda)" : "(Server)",
-          `server-side renders at runtime (uses ${chalk.cyan(
-            "getInitialProps"
-          )} or ${chalk.cyan("getServerSideProps")})`,
-        ],
-        [
-          "○",
-          "(Static)",
-          "automatically rendered as static HTML (uses no initial props)",
-        ],
-        [
-          "●",
-          "(SSG)",
-          `automatically generated as static HTML + JSON (uses ${chalk.cyan(
-            "getStaticProps"
-          )})`,
-        ],
-        [
-          "",
-          "(ISR)",
-          `incremental static regeneration (uses revalidate in ${chalk.cyan(
-            "getStaticProps"
-          )})`,
-        ],
+        ["λ", serverless ? "(Lambda)" : "(Server)", `server-side renders at runtime (uses ${chalk.cyan("getInitialProps")} or ${chalk.cyan("getServerSideProps")})`],
+        ["○", "(Static)", "automatically rendered as static HTML (uses no initial props)"],
+        ["●", "(SSG)", `automatically generated as static HTML + JSON (uses ${chalk.cyan("getStaticProps")})`],
+        ["", "(ISR)", `incremental static regeneration (uses revalidate in ${chalk.cyan("getStaticProps")})`],
       ] as [string, string, string][],
       {
         align: ["l", "l", "l"],
@@ -296,15 +197,8 @@ export async function printTreeView(
   console.log();
 }
 
-export function printCustomRoutes({
-  redirects,
-  rewrites,
-  headers,
-}: CustomRoutes) {
-  const printRoutes = (
-    routes: Redirect[] | Rewrite[] | Header[],
-    type: "Redirects" | "Rewrites" | "Headers"
-  ) => {
+export function printCustomRoutes({ redirects, rewrites, headers }: CustomRoutes) {
+  const printRoutes = (routes: Redirect[] | Rewrite[] | Header[], type: "Redirects" | "Rewrites" | "Headers") => {
     const isRedirects = type === "Redirects";
     const isHeaders = type === "Headers";
     console.log(chalk.underline(type));
@@ -321,17 +215,11 @@ export function printCustomRoutes({
 
         if (!isHeaders) {
           const r = route as Rewrite;
-          routeStr += `${isRedirects ? "├" : "└"} destination: ${
-            r.destination
-          }\n`;
+          routeStr += `${isRedirects ? "├" : "└"} destination: ${r.destination}\n`;
         }
         if (isRedirects) {
           const r = route as Redirect;
-          routeStr += `└ ${
-            r.statusCode
-              ? `status: ${r.statusCode}`
-              : `permanent: ${r.permanent}`
-          }\n`;
+          routeStr += `└ ${r.statusCode ? `status: ${r.statusCode}` : `permanent: ${r.permanent}`}\n`;
         }
 
         if (isHeaders) {
@@ -342,9 +230,7 @@ export function printCustomRoutes({
             const header = r.headers[i];
             const last = i === headers.length - 1;
 
-            routeStr += `  ${last ? "└" : "├"} ${header.key}: ${
-              header.value
-            }\n`;
+            routeStr += `  ${last ? "└" : "├"} ${header.key}: ${header.value}\n`;
           }
         }
 
@@ -380,17 +266,8 @@ let lastCompute: ComputeManifestShape | undefined;
 let lastComputeModern: boolean | undefined;
 let lastComputePageInfo: boolean | undefined;
 
-async function computeFromManifest(
-  manifest: BuildManifest,
-  distPath: string,
-  isModern: boolean,
-  pageInfos?: Map<string, PageInfo>
-): Promise<ComputeManifestShape> {
-  if (
-    Object.is(cachedBuildManifest, manifest) &&
-    lastComputeModern === isModern &&
-    lastComputePageInfo === !!pageInfos
-  ) {
+async function computeFromManifest(manifest: BuildManifest, distPath: string, isModern: boolean, pageInfos?: Map<string, PageInfo>): Promise<ComputeManifestShape> {
+  if (Object.is(cachedBuildManifest, manifest) && lastComputeModern === isModern && lastComputePageInfo === !!pageInfos) {
     return lastCompute!;
   }
 
@@ -425,33 +302,19 @@ async function computeFromManifest(
     });
   });
 
-  const commonFiles = [...files.entries()]
-    .filter(([, len]) => len === expected || len === Infinity)
-    .map(([f]) => f);
-  const uniqueFiles = [...files.entries()]
-    .filter(([, len]) => len === 1)
-    .map(([f]) => f);
+  const commonFiles = [...files.entries()].filter(([, len]) => len === expected || len === Infinity).map(([f]) => f);
+  const uniqueFiles = [...files.entries()].filter(([, len]) => len === 1).map(([f]) => f);
 
   let stats: [string, number][];
   try {
-    stats = await Promise.all(
-      commonFiles.map(
-        async (f) =>
-          [f, await fsStatGzip(path.join(distPath, f))] as [string, number]
-      )
-    );
+    stats = await Promise.all(commonFiles.map(async (f) => [f, await fsStatGzip(path.join(distPath, f))] as [string, number]));
   } catch (_) {
     stats = [];
   }
 
   let uniqueStats: [string, number][];
   try {
-    uniqueStats = await Promise.all(
-      uniqueFiles.map(
-        async (f) =>
-          [f, await fsStatGzip(path.join(distPath, f))] as [string, number]
-      )
-    );
+    uniqueStats = await Promise.all(uniqueFiles.map(async (f) => [f, await fsStatGzip(path.join(distPath, f))] as [string, number]));
   } catch (_) {
     uniqueStats = [];
   }
@@ -459,14 +322,8 @@ async function computeFromManifest(
   lastCompute = {
     commonFiles,
     uniqueFiles,
-    sizeUniqueFiles: uniqueStats.reduce(
-      (obj, n) => Object.assign(obj, { [n[0]]: n[1] }),
-      {}
-    ),
-    sizeCommonFile: stats.reduce(
-      (obj, n) => Object.assign(obj, { [n[0]]: n[1] }),
-      {}
-    ),
+    sizeUniqueFiles: uniqueStats.reduce((obj, n) => Object.assign(obj, { [n[0]]: n[1] }), {}),
+    sizeCommonFile: stats.reduce((obj, n) => Object.assign(obj, { [n[0]]: n[1] }), {}),
     sizeCommonFiles: stats.reduce((size, [f, stat]) => {
       if (f.endsWith(".css")) return size;
       return size + stat;
@@ -495,31 +352,18 @@ function sum(a: number[]): number {
   return a.reduce((size, stat) => size + stat, 0);
 }
 
-export async function getJsPageSizeInKb(
-  page: string,
-  distPath: string,
-  buildManifest: BuildManifest,
-  isModern: boolean
-): Promise<[number, number]> {
+export async function getJsPageSizeInKb(page: string, distPath: string, buildManifest: BuildManifest, isModern: boolean): Promise<[number, number]> {
   const data = await computeFromManifest(buildManifest, distPath, isModern);
 
-  const fnFilterModern = (entry: string) =>
-    entry.endsWith(".js") && entry.endsWith(".module.js") === isModern;
+  const fnFilterModern = (entry: string) => entry.endsWith(".js") && entry.endsWith(".module.js") === isModern;
 
-  const pageFiles = (
-    buildManifest.pages[denormalizePagePath(page)] || []
-  ).filter(fnFilterModern);
+  const pageFiles = (buildManifest.pages[denormalizePagePath(page)] || []).filter(fnFilterModern);
   const appFiles = (buildManifest.pages["/_app"] || []).filter(fnFilterModern);
 
   const fnMapRealPath = (dep: string) => `${distPath}/${dep}`;
 
-  const allFilesReal = [...new Set([...pageFiles, ...appFiles])].map(
-    fnMapRealPath
-  );
-  const selfFilesReal = difference(
-    intersect(pageFiles, data.uniqueFiles),
-    data.commonFiles
-  ).map(fnMapRealPath);
+  const allFilesReal = [...new Set([...pageFiles, ...appFiles])].map(fnMapRealPath);
+  const selfFilesReal = difference(intersect(pageFiles, data.uniqueFiles), data.commonFiles).map(fnMapRealPath);
 
   try {
     // Doesn't use `Promise.all`, as we'd double compute duplicate files. This
@@ -532,12 +376,7 @@ export async function getJsPageSizeInKb(
   return [-1, -1];
 }
 
-export async function buildStaticPaths(
-  page: string,
-  getStaticPaths: GetStaticPaths
-): Promise<
-  Omit<UnwrapPromise<ReturnType<GetStaticPaths>>, "paths"> & { paths: string[] }
-> {
+export async function buildStaticPaths(page: string, getStaticPaths: GetStaticPaths): Promise<Omit<UnwrapPromise<ReturnType<GetStaticPaths>>, "paths"> & { paths: string[] }> {
   const prerenderPaths = new Set<string>();
   const _routeRegex = getRouteRegex(page);
   const _routeMatcher = getRouteMatcher(_routeRegex);
@@ -549,47 +388,24 @@ export async function buildStaticPaths(
 
   const expectedReturnVal = `Expected: { paths: [], fallback: boolean }\n`;
 
-  if (
-    !staticPathsResult ||
-    typeof staticPathsResult !== "object" ||
-    Array.isArray(staticPathsResult)
-  ) {
-    throw new Error(
-      `Invalid value returned from getStaticPaths in ${page}. Received ${typeof staticPathsResult} ${expectedReturnVal}`
-    );
+  if (!staticPathsResult || typeof staticPathsResult !== "object" || Array.isArray(staticPathsResult)) {
+    throw new Error(`Invalid value returned from getStaticPaths in ${page}. Received ${typeof staticPathsResult} ${expectedReturnVal}`);
   }
 
-  const invalidStaticPathKeys = Object.keys(staticPathsResult).filter(
-    (key) => !(key === "paths" || key === "fallback")
-  );
+  const invalidStaticPathKeys = Object.keys(staticPathsResult).filter((key) => !(key === "paths" || key === "fallback"));
 
   if (invalidStaticPathKeys.length > 0) {
-    throw new Error(
-      `Extra keys returned from getStaticPaths in ${page} (${invalidStaticPathKeys.join(
-        ", "
-      )}) ${expectedReturnVal}`
-    );
+    throw new Error(`Extra keys returned from getStaticPaths in ${page} (${invalidStaticPathKeys.join(", ")}) ${expectedReturnVal}`);
   }
 
-  if (
-    !(
-      typeof staticPathsResult.fallback === "boolean" ||
-      staticPathsResult.fallback === "unstable_blocking"
-    )
-  ) {
-    throw new Error(
-      `The \`fallback\` key must be returned from getStaticPaths in ${page}.\n` +
-        expectedReturnVal
-    );
+  if (!(typeof staticPathsResult.fallback === "boolean" || staticPathsResult.fallback === "unstable_blocking")) {
+    throw new Error(`The \`fallback\` key must be returned from getStaticPaths in ${page}.\n` + expectedReturnVal);
   }
 
   const toPrerender = staticPathsResult.paths;
 
   if (!Array.isArray(toPrerender)) {
-    throw new Error(
-      `Invalid \`paths\` value returned from getStaticProps in ${page}.\n` +
-        `\`paths\` must be an array of strings or objects of shape { params: [key: string]: string }`
-    );
+    throw new Error(`Invalid \`paths\` value returned from getStaticProps in ${page}.\n` + `\`paths\` must be an array of strings or objects of shape { params: [key: string]: string }`);
   }
 
   toPrerender.forEach((entry) => {
@@ -599,9 +415,7 @@ export async function buildStaticPaths(
       entry = removePathTrailingSlash(entry);
       const result = _routeMatcher(entry);
       if (!result) {
-        throw new Error(
-          `The provided path \`${entry}\` does not match the page: \`${page}\`.`
-        );
+        throw new Error(`The provided path \`${entry}\` does not match the page: \`${page}\`.`);
       }
 
       prerenderPaths?.add(entry);
@@ -614,9 +428,7 @@ export async function buildStaticPaths(
         throw new Error(
           `Additional keys were returned from \`getStaticPaths\` in page "${page}". ` +
             `URL Parameters intended for this dynamic route must be nested under the \`params\` key, i.e.:` +
-            `\n\n\treturn { params: { ${_validParamKeys
-              .map((k) => `${k}: ...`)
-              .join(", ")} } }` +
+            `\n\n\treturn { params: { ${_validParamKeys.map((k) => `${k}: ...`).join(", ")} } }` +
             `\n\nKeys that need to be moved: ${invalidKeys.join(", ")}.\n`
         );
       }
@@ -626,37 +438,17 @@ export async function buildStaticPaths(
       _validParamKeys.forEach((validParamKey) => {
         const { repeat, optional } = _routeRegex.groups[validParamKey];
         let paramValue = params[validParamKey];
-        if (
-          optional &&
-          params.hasOwnProperty(validParamKey) &&
-          (paramValue === null ||
-            paramValue === undefined ||
-            (paramValue as any) === false)
-        ) {
+        if (optional && params.hasOwnProperty(validParamKey) && (paramValue === null || paramValue === undefined || (paramValue as any) === false)) {
           paramValue = [];
         }
-        if (
-          (repeat && !Array.isArray(paramValue)) ||
-          (!repeat && typeof paramValue !== "string")
-        ) {
-          throw new Error(
-            `A required parameter (${validParamKey}) was not provided as ${
-              repeat ? "an array" : "a string"
-            } in getStaticPaths for ${page}`
-          );
+        if ((repeat && !Array.isArray(paramValue)) || (!repeat && typeof paramValue !== "string")) {
+          throw new Error(`A required parameter (${validParamKey}) was not provided as ${repeat ? "an array" : "a string"} in getStaticPaths for ${page}`);
         }
         let replaced = `[${repeat ? "..." : ""}${validParamKey}]`;
         if (optional) {
           replaced = `[${replaced}]`;
         }
-        builtPage = builtPage
-          .replace(
-            replaced,
-            repeat
-              ? (paramValue as string[]).map(escapePathDelimiters).join("/")
-              : escapePathDelimiters(paramValue as string)
-          )
-          .replace(/(?!^)\/$/, "");
+        builtPage = builtPage.replace(replaced, repeat ? (paramValue as string[]).map(escapePathDelimiters).join("/") : escapePathDelimiters(paramValue as string)).replace(/(?!^)\/$/, "");
       });
 
       prerenderPaths?.add(builtPage);
@@ -698,27 +490,19 @@ export async function isPageStatic(
     const hasLegacyStaticParams = !!mod.unstable_getStaticParams;
 
     if (hasLegacyStaticParams) {
-      throw new Error(
-        `unstable_getStaticParams was replaced with getStaticPaths. Please update your code.`
-      );
+      throw new Error(`unstable_getStaticParams was replaced with getStaticPaths. Please update your code.`);
     }
 
     if (hasLegacyStaticPaths) {
-      throw new Error(
-        `unstable_getStaticPaths was replaced with getStaticPaths. Please update your code.`
-      );
+      throw new Error(`unstable_getStaticPaths was replaced with getStaticPaths. Please update your code.`);
     }
 
     if (hasLegacyStaticProps) {
-      throw new Error(
-        `unstable_getStaticProps was replaced with getStaticProps. Please update your code.`
-      );
+      throw new Error(`unstable_getStaticProps was replaced with getStaticProps. Please update your code.`);
     }
 
     if (hasLegacyServerProps) {
-      throw new Error(
-        `unstable_getServerProps was replaced with getServerSideProps. Please update your code.`
-      );
+      throw new Error(`unstable_getServerProps was replaced with getServerSideProps. Please update your code.`);
     }
 
     // A page cannot be prerendered _and_ define a data requirement. That's
@@ -738,24 +522,17 @@ export async function isPageStatic(
     const pageIsDynamic = isDynamicRoute(page);
     // A page cannot have static parameters if it is not a dynamic page.
     if (hasStaticProps && hasStaticPaths && !pageIsDynamic) {
-      throw new Error(
-        `getStaticPaths can only be used with dynamic pages, not '${page}'.`
-      );
+      throw new Error(`getStaticPaths can only be used with dynamic pages, not '${page}'.`);
     }
 
     if (hasStaticProps && pageIsDynamic && !hasStaticPaths) {
-      throw new Error(
-        `getStaticPaths is required for dynamic SSG pages and is missing for '${page}'.`
-      );
+      throw new Error(`getStaticPaths is required for dynamic SSG pages and is missing for '${page}'.`);
     }
 
     let prerenderRoutes: Array<string> | undefined;
     let prerenderFallback: boolean | "unstable_blocking" | undefined;
     if (hasStaticProps && hasStaticPaths) {
-      ({
-        paths: prerenderRoutes,
-        fallback: prerenderFallback,
-      } = await buildStaticPaths(page, mod.getStaticPaths));
+      ({ paths: prerenderRoutes, fallback: prerenderFallback } = await buildStaticPaths(page, mod.getStaticPaths));
     }
 
     const config = mod.config || {};
@@ -775,11 +552,7 @@ export async function isPageStatic(
 }
 
 // todo 判断是一个路由是否是静态的：当前controller以及父级路由的controller是否都是静态的。
-export function hasCustomGetInitialProps(
-  bundle: string,
-  runtimeEnvConfig: any,
-  checkingApp: boolean
-): boolean {
+export function hasCustomGetInitialProps(bundle: string, runtimeEnvConfig: any, checkingApp: boolean): boolean {
   require("../joy-server/lib/runtime-config").setConfig(runtimeEnvConfig);
   let mod = require(bundle);
 
@@ -791,10 +564,7 @@ export function hasCustomGetInitialProps(
   return mod.getInitialProps !== mod.origGetInitialProps;
 }
 
-export function getNamedExports(
-  bundle: string,
-  runtimeEnvConfig: any
-): Array<string> {
+export function getNamedExports(bundle: string, runtimeEnvConfig: any): Array<string> {
   require("../joy-server/lib/runtime-config").setConfig(runtimeEnvConfig);
   return Object.keys(require(bundle));
 }

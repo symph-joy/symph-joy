@@ -46,6 +46,8 @@ export type ComponentWrapperOptions<T = any> = Partial<ComponentWrapper<T>> & Pa
 export class ComponentWrapper<T = any> implements IComponentWrapper {
   public readonly name: TProviderName;
   public readonly alias: TProviderName[];
+  public readonly package?: string;
+  public readonly global = false as boolean; // 如果为false，只有通过明确的包名，才能找到该Component，无法通过匿名包名或全局找到。
   public readonly async?: boolean;
   // public readonly module?: any;
   public readonly scope?: Scope = Scope.DEFAULT;
@@ -56,7 +58,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
 
   public autoLoad: boolean | "lazy";
   public instanceBy: InstanceBy;
-  public useClass?: Type<T>; // when instanceBy class, it's used to instance the object
+  public useClass?: Type<T> | Function; // when instanceBy class, it's used to instance the object
 
   private readonly values = new WeakMap<ContextId, InstancePerContext<T>>();
   private readonly [INSTANCE_METADATA_SYMBOL]: InstanceMetadataStore;
@@ -268,11 +270,11 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
     if ((provider as any).useValue) {
       this.setInstanceByContextId(STATIC_CONTEXT, (provider as ValueProvider).useValue);
     } else if ((provider as any).useClass) {
-      const { type, scope, autoRegister, useClass } = provider as ClassProvider;
+      const { type, scope, lazyRegister, useClass } = provider as ClassProvider;
       Object.assign(this, {
         type,
         scope,
-        autoLoad: autoRegister,
+        autoLoad: lazyRegister,
         useClass,
         inject: null,
       });

@@ -6,10 +6,8 @@ import { waitForMoment } from "../../../util/joy-test-utils";
 import { getDomInnerHtml } from "../../../util/html-utils";
 
 describe("prerender-with-api", () => {
-  let start: number;
   let testContext: JoyTestContext;
   beforeAll(async () => {
-    start = Date.now();
     const curPath = path.resolve(__dirname, "../");
     testContext = await JoyTestContext.createServerContext(curPath);
   }, 3000000);

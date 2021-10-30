@@ -14,3 +14,5 @@ export * from "./application-config";
 export * from "./react-app-container";
 export * from "./react-app-component";
 export * from "./react-application-config";
+export * from "./mount/mount-module";
+export * from "./mount/mount.service";

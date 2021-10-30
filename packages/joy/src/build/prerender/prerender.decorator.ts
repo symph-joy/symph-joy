@@ -25,7 +25,7 @@ export function Prerender(options?: PrerenderMeta): <TFunction extends Function>
         byProvider: true,
       } as PrerenderMetaByProvider;
       Reflect.defineMetadata(JOY_PRERENDER_META, meta, constructor);
-      ReactComponent(Object.assign({}, options, { autoRegister: true }))(constructor);
+      ReactComponent(Object.assign({}, options, { lazyRegister: true }))(constructor);
     } else {
       const routeMeta = getRouteMeta(constructor);
       if (!routeMeta) {
@@ -52,6 +52,6 @@ export function Prerender(options?: PrerenderMeta): <TFunction extends Function>
   };
 }
 
-export function getPrerenderMeta(target: Type): PrerenderMeta | PrerenderMetaByProvider {
+export function getPrerenderMeta(target: object): PrerenderMeta | PrerenderMetaByProvider {
   return Reflect.getMetadata(JOY_PRERENDER_META, target);
 }

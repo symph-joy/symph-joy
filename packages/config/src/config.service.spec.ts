@@ -1,8 +1,8 @@
-import { CoreContextFactory, Component } from "@symph/core";
+import { Component, CoreContextFactory } from "@symph/core";
 import { ConfigValue } from "./config-value.decorator";
 import { ConfigService } from "./config.service";
 import { Configurable } from "./configurable.decorator";
-import { Max, MaxLength, MinLength, Schema } from "@tsed/schema";
+import { Max, MaxLength } from "@tsed/schema";
 import { SYMPH_CONFIG_INIT_VALUE } from "./constants";
 
 describe("config.service", () => {
@@ -18,8 +18,8 @@ describe("config.service", () => {
 
     @Component()
     class CustomConfigService extends ConfigService {
-      async afterPropertiesSet(): Promise<void> {
-        await super.afterPropertiesSet();
+      async initialize(): Promise<void> {
+        await super.initialize();
         this.mergeConfig({ msg: "From afterPropertiesSet", isOk: true });
       }
     }
@@ -43,8 +43,8 @@ describe("config.service", () => {
 
     @Component()
     class CustomConfigService extends ConfigService {
-      async afterPropertiesSet(): Promise<void> {
-        await super.afterPropertiesSet();
+      async initialize(): Promise<void> {
+        await super.initialize();
         this.mergeConfig({ funProp: funValue });
       }
     }

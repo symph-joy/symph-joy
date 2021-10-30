@@ -1,9 +1,9 @@
 import { IReactRoute } from "../interfaces/react-route.interface";
 import { Component } from "react";
-import { getInjectableMeta, Type } from "@symph/core";
-import { any } from "prop-types";
+import { getComponentMeta, Type } from "@symph/core";
 
-const REACT_ROUTE_META_KEY = "__joy_route";
+const REACT_ROUTE_META = "__joy_route";
+const REACT_ROUTE_PARAM_META = "__joy_route_param";
 
 export interface IReactRouteMatched {
   isExact: boolean;
@@ -18,33 +18,46 @@ export interface ParsedUrlQuery {
 
 export interface IReactRouteStaticPathGenerator<P extends ParsedUrlQuery = ParsedUrlQuery> {
   isFallback(): Promise<boolean> | boolean;
+
   getPaths(): Promise<Array<string | { params: P }>>;
 }
 
-// export type IRouteMeta<TParams extends ParsedUrlQuery = ParsedUrlQuery> = {
 export type IRouteMeta = {
   path: string | string[];
   dynamic?: boolean;
-  // staticPathGenerator?:
-  //   | IReactRouteStaticPathGenerator<TParams>
-  //   | (new (...args: any[]) => IReactRouteStaticPathGenerator<TParams>);
+  isContainer?: boolean;
 } & Pick<IReactRoute, "exact" | "sensitive" | "strict">;
 
-export function Route(options: IRouteMeta): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
+export type RouteOptions = Omit<IReactRoute, "isContainer">;
+
+export function Route(options: RouteOptions): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
   return (constructor) => {
-    const injectableMeta = getInjectableMeta(constructor);
+    const injectableMeta = getComponentMeta(constructor);
     if (!injectableMeta) {
       throw new Error(`@Route() decorator used on ${constructor.name} class, but ${constructor.name} is not an injectable component`);
     }
 
-    options = Object.assign({}, options);
-    Reflect.defineMetadata(REACT_ROUTE_META_KEY, options, constructor);
+    options = Object.assign({ exact: true }, options);
+    Reflect.defineMetadata(REACT_ROUTE_META, options, constructor);
+    return constructor;
+  };
+}
+
+export function RouteContainer(options: RouteOptions): ClassDecorator {
+  return (constructor) => {
+    const injectableMeta = getComponentMeta(constructor);
+    if (!injectableMeta) {
+      throw new Error(`@Route() decorator used on ${constructor.name} class, but ${constructor.name} is not an injectable component`);
+    }
+
+    options = Object.assign({}, options, { isContainer: true });
+    Reflect.defineMetadata(REACT_ROUTE_META, options, constructor);
     return constructor;
   };
 }
 
 export function getRouteMeta(target: Object): IRouteMeta {
-  return Reflect.getMetadata(REACT_ROUTE_META_KEY, target);
+  return Reflect.getMetadata(REACT_ROUTE_META, target);
 }
 
 export type IReactRouteParamBind = {
@@ -61,15 +74,22 @@ export function RouteParam(options: Partial<Omit<IReactRouteParamBind, "propKey"
     const paramName = name || propKey;
     const paramType = type || Reflect.getMetadata("design:type", target, propKey) || String;
 
-    let params: IReactRouteParamBind[] = Reflect.getMetadata("ROUTE_PARAMS", target) || [];
+    let params: IReactRouteParamBind[] = getRouteParamsMeta(target) || [];
 
     params = [...params, { propKey, name: paramName, type: paramType, isOptional, ...restOps }];
-    Reflect.defineMetadata("ROUTE_PARAMS", params, target);
+    Reflect.defineMetadata(REACT_ROUTE_PARAM_META, params, target);
   };
 }
 
-export function bindRouteFromCompProps(routeCompInstance: Component<any>, props: Record<string, any>): IReactRouteParamBind[] {
-  const parmas: IReactRouteParamBind[] = Reflect.getMetadata("ROUTE_PARAMS", routeCompInstance);
+export function getRouteParamsMeta(target: Object): IReactRouteParamBind[] {
+  return Reflect.getMetadata(REACT_ROUTE_PARAM_META, target) || [];
+}
+
+export function bindRouteFromCompProps(routeCompInstance: Component<any>, props: Record<string, any>): IReactRouteParamBind[] | undefined {
+  const parmas: IReactRouteParamBind[] = getRouteParamsMeta(routeCompInstance);
+  if (!parmas || parmas.length === 0) {
+    return undefined;
+  }
 
   const match = props.match as IReactRouteMatched | undefined;
   if (!match) {

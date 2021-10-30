@@ -12,7 +12,7 @@
     "noLib": false,
     "resolveJsonModule": true,
     "strictPropertyInitialization": false,
-
+    "useUnknownInCatchVariables": false,
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,

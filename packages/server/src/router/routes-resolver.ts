@@ -1,17 +1,7 @@
-// import { BadRequestException, NotFoundException } from '@nestjs/common';
-// import { HOST_METADATA, MODULE_PATH } from '@nestjs/common/constants';
-// import { HttpServer, Type } from '@nestjs/common/interfaces';
-// import { Controller } from '@nestjs/common/interfaces/controllers/controller.interface';
-// import { Logger } from '@nestjs/common/services/logger.service';
-// import { ApplicationConfig } from '../application-config';
-// import { CONTROLLER_MAPPING_MESSAGE } from '../helpers/messages';
-// import { NestContainer } from '../injector/container';
-// import { Injector } from '../injector/injector';
-// import { ComponentWrapper } from '../injector/instance-wrapper';
 import { MetadataScanner } from "../metadata-scanner";
 import { Resolver } from "./interfaces/resolver.interface";
 import { RouterExceptionFilters } from "./router-exception-filters";
-import { RouterExplorer } from "./router-explorer";
+import { addLeadingSlash, RouterExplorer } from "./router-explorer";
 import { RouterProxy } from "./router-proxy";
 import { ServerContainer } from "../server-container";
 import { ApplicationConfig } from "../application-config";
@@ -21,6 +11,7 @@ import { HttpServer } from "../interfaces/http";
 import { BadRequestException, NotFoundException } from "../exceptions-common";
 import { Controller } from "../interfaces/controllers";
 import { CONTROLLER_MAPPING_MESSAGE } from "../helpers/messages";
+import { MountService } from "../mount/mount.service";
 
 export class RoutesResolver implements Resolver {
   private readonly logger = new Logger(RoutesResolver.name, true);
@@ -28,7 +19,7 @@ export class RoutesResolver implements Resolver {
   private readonly routerExceptionsFilter: RouterExceptionFilters;
   private readonly routerExplorer: RouterExplorer;
 
-  constructor(private readonly container: ServerContainer, private readonly config: ApplicationConfig, private readonly injector: Injector) {
+  constructor(private readonly container: ServerContainer, private readonly config: ApplicationConfig, private readonly injector: Injector, private readonly mountService: MountService) {
     this.routerExceptionsFilter = new RouterExceptionFilters(container, config, container.getHttpAdapterRef());
     const metadataScanner = new MetadataScanner();
     this.routerExplorer = new RouterExplorer(metadataScanner, this.container, this.injector, this.routerProxy, this.routerExceptionsFilter, this.config);
@@ -77,8 +68,15 @@ export class RoutesResolver implements Resolver {
     routes.forEach((instanceWrapper) => {
       const { type: metatype } = instanceWrapper;
 
+      const mount = this.mountService.getMount(instanceWrapper.name);
+      let fullBasePath: string;
+      if (mount) {
+        fullBasePath = basePath + addLeadingSlash(mount);
+      } else {
+        fullBasePath = basePath;
+      }
       const host = this.getHostMetadata(metatype) || "";
-      const paths = this.routerExplorer.extractRouterPath(metatype as Type<any>, basePath);
+      const paths = this.routerExplorer.extractRouterPath(metatype as Type<any>, fullBasePath);
       const controllerName = metatype.name;
 
       paths.forEach((path) => {

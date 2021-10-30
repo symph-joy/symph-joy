@@ -1,6 +1,5 @@
 import { Configuration } from "@symph/core";
 import { JoyAppConfig } from "./joy-app-config";
-import { JoyApiServer } from "./joy-api-server";
 import { JoyServer } from "./joy-server";
 import { ServerConfiguration } from "@symph/server/dist/server.configuration";
 

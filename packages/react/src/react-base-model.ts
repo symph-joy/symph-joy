@@ -1,8 +1,8 @@
 import { ReactReduxService } from "./redux/react-redux.service";
-import { Autowire, IProviderInfoWare, ProviderInfo, ProviderLifecycle, RuntimeException, TProviderName } from "@symph/core";
+import { Autowire, IComponentInfoAware, ComponentAwareInfo, IComponentLifecycle, RuntimeException, TProviderName } from "@symph/core";
 import { Action } from "redux";
 
-export abstract class ReactBaseModel<TState> implements ProviderLifecycle, IProviderInfoWare {
+export abstract class ReactBaseModel<TState> implements IComponentLifecycle, IComponentInfoAware {
   public getNamespace(): string {
     return this._namespace;
   }
@@ -18,12 +18,12 @@ export abstract class ReactBaseModel<TState> implements ProviderLifecycle, IProv
 
   private _namespace: string;
 
-  afterPropertiesSet(): void {
+  initialize(): void {
     const initState = this.state || this.getInitState();
     this.reduxStore.registerModel(this, initState);
   }
 
-  setProviderInfo({ name }: ProviderInfo): void {
+  setProviderInfo({ name }: ComponentAwareInfo): void {
     if (this._namespace) {
       return;
     }

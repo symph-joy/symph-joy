@@ -1,15 +1,19 @@
-import { ClassProvider, Component, RegisterTap } from "@symph/core";
+import { ClassProvider, Component, Provider, RegisterTap } from "@symph/core";
 import { IReactRoute, ReactRouter } from "@symph/react";
-import { IScanOutModule } from "../../joy-server/server/scanner/file-scanner";
+import { IScanOutModule } from "../../build/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-import { IGenerateFiles } from "../../plugin/file-generator";
+import { IGenerateFiles } from "../../build/file-generator";
 import { handlebars } from "../../lib/handlebars";
+import { ModuleContextTypeEnum } from "../../lib/constants";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { normalizeConventionRoute } from "./router-utils";
 
 export interface IJoyReactRouteBuild extends IReactRoute {
   // staticPathGenerator?: IRouteMeta["staticPathGenerator"];
   srcPath?: string;
+  mount?: string;
 }
 
 /**
@@ -17,16 +21,15 @@ export interface IJoyReactRouteBuild extends IReactRoute {
  */
 @Component()
 export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRouteBuild> extends ReactRouter<T> {
-  protected routesTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes.handlebars"), "utf-8"));
+  protected routesTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes-client.handlebars"), "utf-8"));
 
-  protected routesServerTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes.server.handlebars"), "utf-8"));
+  protected routesServerTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes-server.handlebars"), "utf-8"));
 
-  // constructor(
-  //   // protected fileGenerator: FileGenerator,
-  //   // protected fileScanner: FileScanner
-  // ) {
-  //   super();
-  // }
+  constructor(
+    protected joyAppConfig: JoyAppConfig // protected fileGenerator: FileGenerator, // protected fileScanner: FileScanner
+  ) {
+    super();
+  }
 
   // protected fromRouteMeta(
   //   path: string,
@@ -59,29 +62,29 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
   //   return route as T;
   // }
 
-  addBuildRouteProvider(resourcePath: string | undefined, provider: ClassProvider): T[] | undefined {
-    const routes = super.addRouteProvider(provider);
-    if (routes && routes.length > 0) {
-      for (const route of routes) {
-        route.srcPath = resourcePath;
-      }
-    }
-    return routes;
-  }
-
-  protected addFromScanOutModule(scanOutmodule: IScanOutModule): boolean {
-    if (!scanOutmodule.providerDefines || scanOutmodule.providerDefines.size === 0) {
+  protected addFromScanOutModule(scanOutModule: IScanOutModule): boolean {
+    if (scanOutModule.contextType !== ModuleContextTypeEnum.React || !scanOutModule.providerDefines || scanOutModule.providerDefines.size === 0) {
       return false;
     }
-
     let hasRoute = false;
-    scanOutmodule.providerDefines.forEach((providerDefine, exportKey) => {
+    scanOutModule.providerDefines.forEach((providerDefine, exportKey) => {
       providerDefine.providers.forEach((provider) => {
-        if (!(provider as ClassProvider).useClass) {
-          return;
+        let routes = this.addRouteProvider(provider, scanOutModule.mount);
+        if (!routes?.length) {
+          // 未自定义路由信息，尝试使用文件约定路由
+          const fsRoute = this.addFSRoute(scanOutModule, exportKey, provider, scanOutModule.mount) as T | undefined;
+          if (fsRoute) {
+            routes = [fsRoute];
+          }
         }
-        const classProvider = provider as ClassProvider;
-        const routes = this.addBuildRouteProvider(scanOutmodule.resource, classProvider);
+
+        if (routes && routes.length > 0) {
+          for (const route of routes) {
+            route.srcPath = scanOutModule.resource;
+            route.mount = scanOutModule.mount;
+          }
+        }
+
         hasRoute = hasRoute || !!(routes && routes.length);
       });
     });
@@ -115,29 +118,43 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     }
   }
 
-  // @RegisterTap()
-  // protected async onComponentRegisterAfter(
-  //   provider: Provider,
-  //   instanceWrapper: ComponentWrapper
-  // ) {
-  //   if (!isClassProvider(provider)) {
-  //     return;
-  //   }
-  //   const addedRoutes = this.addRouteProvider(provider);
-  //   if (addedRoutes && addedRoutes.length > 0) {
-  //   }
-  // }
-  //
-  // @RegisterTap()
-  // protected async onReplaceProviderAfter(
-  //   nextProvider: Provider,
-  //   preProvider: Provider
-  // ) {
-  //   if (!isClassProvider(nextProvider)) {
-  //     return;
-  //   }
-  //   this.replaceRouteProvider(nextProvider, preProvider.id);
-  // }
+  private addFSRoute(scanOutModule: IScanOutModule, exportKey: string, provider: Provider, basePath?: string): T | undefined {
+    const filePath = scanOutModule.resource;
+    if (!filePath) {
+      return undefined;
+    }
+    const pagesDir = this.joyAppConfig.resolvePagesDir();
+    if (!filePath.startsWith(pagesDir)) {
+      return undefined;
+    }
+    let exact = true;
+    let routePath = filePath.substr(pagesDir.length);
+    const pathSegments = routePath.split("/").filter(Boolean);
+    let lastSeg = pathSegments[pathSegments.length - 1];
+    if (lastSeg.includes(".")) {
+      lastSeg = lastSeg.slice(0, lastSeg.indexOf("."));
+      pathSegments[pathSegments.length - 1] = lastSeg;
+    }
+    const isContainer = lastSeg === "layout";
+    if (isContainer) {
+      exact = false;
+      pathSegments.pop();
+    }
+    routePath = "/" + pathSegments.join("/");
+    if (basePath) {
+      routePath = basePath + routePath;
+    }
+    routePath = normalizeConventionRoute(routePath);
+    const fsRoute = {
+      path: routePath,
+      isContainer,
+      exact,
+      providerName: provider.name,
+      providerPackage: provider.package,
+    } as T;
+    this.addRoute(fsRoute);
+    return fsRoute;
+  }
 
   protected getClientRoutes(): T[] {
     return this.getRoutes();

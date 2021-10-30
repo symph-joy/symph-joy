@@ -1,24 +1,26 @@
-// import {JoyReactRouteLoader} from '@symph/joy/dist/react/router/joy-react-route-loader'
-//
-//export const joyAppModules = [
-//{{#modules}}
-//  {
-//    path: "{{path}}",
-//    module: require({{json path}}),
-//    providerKeys: {{json exportKeys}},
-//  },
-//{{/modules}}
-//]
+
+import { MountModule } from "@symph/server";
+
+export const ___JOY_GEN_PROVIDERS = [
+{{#modules}}
+  {
+    path: "{{path}}",
+    mount: {{json mount}},
+    module: require({{json path}}),
+    providerKeys: {{json exportKeys}},
+  },
+{{/modules}}
+]
 
 
 import { Configuration } from "@symph/core";
 
-@Configuration({imports: {
-{{#modules}}
-  "{{path}}": require({{json path}}),
-{{/modules}}
-}})
-export class ReactApplicationConfig {
-
-
-}
+//@Configuration({imports: {
+//{{#modules}}
+//  "{{path}}": require({{json path}}),
+//{{/modules}}
+//}})
+//export class ReactApplicationConfig {
+//
+//
+//}

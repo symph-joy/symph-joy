@@ -1,4 +1,4 @@
-import { ClassProvider, Component, RegisterTap } from "@symph/core";
+import { ClassProvider, Component, ComponentOptions, RegisterTap } from "@symph/core";
 import { getJsonSchema, JsonSchema } from "@tsed/schema";
 import { getConfigMetadata } from "./config-value.decorator";
 import Ajv from "ajv";
@@ -8,7 +8,7 @@ import { ConfigService } from "./config.service";
 
 class EmptySchemaClass {}
 
-export function Configurable(options: Partial<ClassProvider> = {}): ClassDecorator {
+export function Configurable(options: ComponentOptions = {}): ClassDecorator {
   return (target) => {
     const configMetas = getConfigMetadata(target) || [];
     // const propKeys: string[] = new Array(configMetas.length);

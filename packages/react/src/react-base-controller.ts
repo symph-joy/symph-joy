@@ -8,6 +8,9 @@ import { JoyRouteInitState, ReactAppInitManager } from "./react-app-init-manager
 import { ReactRouter } from "./router/react-router";
 import type { Location } from "history";
 import { EnumReactAppInitStage } from "./react-app-init-stage.enum";
+import { IReactRoute } from "./interfaces";
+import { match } from "react-router";
+import * as H from "history";
 
 export type ControllerBaseStateType = {
   _modelStateVersion: number;
@@ -27,10 +30,17 @@ export interface ReactBaseController {
   initialModelState?(context: any): Promise<void>;
 }
 
+interface ControllerProps {
+  route?: IReactRoute;
+  match?: match;
+  location?: Location;
+  history?: H.History;
+}
+
 /**
  * todo model 状态发生改变后，如何精细的判断是否有必要刷新组件？
  */
-export abstract class ReactBaseController<TProps = Record<string, unknown>, TState = Record<string, unknown>, TContext extends ICoreContext = ICoreContext> extends Component<TProps, TState, TContext> {
+export abstract class ReactBaseController<TProps = Record<string, unknown>, TState = Record<string, unknown>, TContext extends ICoreContext = ICoreContext> extends Component<TProps & ControllerProps, TState, TContext> {
   __proto__: typeof React.Component;
 
   /**
@@ -63,12 +73,13 @@ export abstract class ReactBaseController<TProps = Record<string, unknown>, TSta
   public async prepareComponent(): Promise<any> {}
 
   constructor(props: TProps, context: TContext) {
-    super(props, context);
+    super(props as any, context);
     // this.hasInitInvoked = false;
     // this.hasInjectProps = false;
     this.isCtlMounted = false;
 
     this.routeMeta = getRouteMeta(this.constructor);
+
     this.appContext = context;
     this.reduxStore = this.appContext.syncGet(ReactReduxService)!;
   }
@@ -95,9 +106,7 @@ export abstract class ReactBaseController<TProps = Record<string, unknown>, TSta
 
   protected bindProps() {
     this.location = (this.props as any).location || window.location;
-    if (this.routeMeta) {
-      bindRouteFromCompProps(this, this.props);
-    }
+    bindRouteFromCompProps(this, this.props);
   }
 
   protected async init(): Promise<void> {

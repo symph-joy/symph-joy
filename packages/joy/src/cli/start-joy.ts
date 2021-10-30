@@ -1,18 +1,9 @@
 import "@babel/runtime/regenerator";
 import chalk from "chalk";
 import { JoyBoot } from "../joy-boot";
-import { JoyBootConfiguration } from "../joy-boot.configuration";
 import yargs from "yargs";
 import { existsSync } from "fs";
 import { join } from "path";
-import { ServerFactory } from "@symph/server";
-import { JoyBootFactory } from "../joy-boot-factory";
-import { CommandCenter } from "../command/command-center";
-import { JoyStartCommand } from "../command/preset/joy-start.command";
-import { JoyDevCommand } from "../command/preset/joy-dev.command";
-import { JoyBuildCommand } from "../command/preset/joy-build.command";
-import { JoyExportCommand } from "../command/preset/joy-export.command";
-import { JoyVersionCommand } from "../command/preset/joy-version.command";
 
 export const startJoy = (async () => {
   let closed = false;
@@ -42,12 +33,13 @@ export const startJoy = (async () => {
   }
 
   // const joyBoot = await JoyBootFactory.createServer({});
-  const commandCenter = new CommandCenter();
-  commandCenter.registerCommand(new JoyStartCommand());
-  commandCenter.registerCommand(new JoyBuildCommand());
-  commandCenter.registerCommand(new JoyExportCommand());
-  commandCenter.registerCommand(new JoyDevCommand());
-  commandCenter.registerCommand(new JoyVersionCommand());
+  // const commandCenter = new CommandCenter();
+  // commandCenter.registerCommand(new JoyStartCommand());
+  // commandCenter.registerCommand(new JoyBuildCommand());
+  // commandCenter.registerCommand(new JoyExportCommand());
+  // commandCenter.registerCommand(new JoyDevCommand());
+  // commandCenter.registerCommand(new JoyVersionCommand());
+  const joyBoot = new JoyBoot();
 
   function onSignal(signal: string) {
     if (closed) return;
@@ -64,5 +56,5 @@ export const startJoy = (async () => {
   process.once("SIGTERM", () => onSignal("SIGTERM"));
 
   // return await joyBoot.runCommand(command);
-  return await commandCenter.runCommand(command);
+  return joyBoot.runCommand(command);
 })();

@@ -16,7 +16,6 @@ describe("hello joy dev", () => {
   });
 
   test("api: should return hello message", async () => {
-    // await waitForMoment()
     const response = await got.get(testContext.getUrl("/api/hello"), {
       throwHttpErrors: false,
       responseType: "text",

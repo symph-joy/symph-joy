@@ -1,6 +1,10 @@
 {
   "name": "third-module",
   "version": "v1.0.0",
-  "serverConfig": "dist/server/server-application.configuration.js",
-  "clientConfig": "dist/server/react-application.configuration.js"
+  "joyExports": {
+    "mount": "third",
+    "serverModule": "./dist/server/third-server-application.configuration.js",
+    "reactModule": "./dist/client/third-react-application.configuration.js",
+    "imports": []
+  }
 }

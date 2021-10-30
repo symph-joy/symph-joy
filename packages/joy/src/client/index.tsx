@@ -17,9 +17,10 @@ import PageLoader, { looseToArray, StyleSheetTuple } from "./page-loader";
 import measureWebVitals from "./performance-relayer";
 import { createRouter, makePublicRouterInstance } from "./router";
 import { CoreContainer } from "@symph/core";
-import { JoyReactAppClientConfig } from "../react/joy-react-app-client-config";
+import { JoyReactAppClientConfiguration } from "../react/joy-react-app-client.configuration";
 import { ReactAppContainer, ApplicationConfig, ReactApplicationContext } from "@symph/react";
 import { JoyClientConfig } from "./joy-client-config";
+import { JoyReactApplicationContext } from "../react/joy-react-application-context";
 
 /// <reference types="react-dom/experimental" />
 
@@ -282,20 +283,16 @@ export default async (opts: { webpackHMR?: any } = {}) => {
 
   const applicationConfig = new ApplicationConfig();
   const joyContainer = new CoreContainer();
-  const reactApplicationContext = new ReactApplicationContext(
+  joyContainer.addProviders([
     {
-      JoyReactAppClientConfig,
-      joyClientConfig: {
-        type: JoyClientConfig,
-        useFactory: () => {
-          return JoyClientConfig.fromJoyData(data);
-        },
+      name: "joyClientConfig",
+      type: JoyClientConfig,
+      useFactory: () => {
+        return JoyClientConfig.fromJoyData(data);
       },
     },
-    applicationConfig,
-    joyContainer,
-    hydrateInitState
-  );
+  ]);
+  const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppClientConfiguration, applicationConfig, joyContainer, hydrateInitState);
   await reactApplicationContext.init();
 
   const renderCtx = {

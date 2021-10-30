@@ -14,7 +14,7 @@ import { fileExists } from "../lib/file-exists";
 import loadCustomRoutes, { CustomRoutes } from "../lib/load-custom-routes";
 import { verifyTypeScriptSetup } from "../lib/verifyTypeScriptSetup";
 import { CLIENT_STATIC_FILES_PATH, DEV_CLIENT_PAGES_MANIFEST, PHASE_DEVELOPMENT_SERVER } from "../joy-server/lib/constants";
-import { getRouteMatcher, getRouteRegex, getSortedRoutes, isDynamicRoute } from "../joy-server/lib/router/utils";
+import { getRouteMatcher, getRouteRegex, isDynamicRoute } from "../joy-server/lib/router/utils";
 import { __ApiPreviewProps } from "../joy-server/server/api-utils";
 import { JoyReactServer } from "../joy-server/server/joy-react-server";
 import { normalizePagePath } from "../joy-server/server/normalize-page-path";
@@ -24,12 +24,13 @@ import { findPageFile } from "./lib/find-page-file";
 import { withCoalescedInvoke } from "../lib/coalesced-function";
 import { Autowire, Component, EntryType } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import { FileScanner } from "../joy-server/server/scanner/file-scanner";
+import { FileScanner } from "../build/scanner/file-scanner";
 import { BuildDevConfig } from "./build-dev-config";
-import { FileGenerator } from "../plugin/file-generator";
-import { JoyReactAppServerDevConfig } from "../react/joy-react-app-server-dev-config";
+import { FileGenerator } from "../build/file-generator";
+import { JoyReactAppServerDevConfiguration } from "../react/joy-react-app-server-dev.configuration";
 import { ReactContextFactoryDev } from "./react-context-factory-dev";
 import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
+import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 
 if (typeof React.Suspense === "undefined") {
   throw new Error(`The version of React you are using is lower than the minimum required version needed for Joy.js. Please upgrade "react" and "react-dom": "npm install react react-dom"`);
@@ -518,7 +519,7 @@ export class JoyReactDevServer extends JoyReactServer {
   }
 
   protected getReactAppProviderConfig(): EntryType[] {
-    return [JoyReactAppServerDevConfig];
+    return [JoyReactAppServerDevConfiguration];
   }
 
   // protected async getReactAppContext(

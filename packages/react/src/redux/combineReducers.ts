@@ -1,10 +1,5 @@
 import { AnyAction, Action } from "./types/actions";
-import {
-  ActionFromReducersMapObject,
-  Reducer,
-  ReducersMapObject,
-  StateFromReducersMapObject,
-} from "./types/reducers";
+import { ActionFromReducersMapObject, Reducer, ReducersMapObject, StateFromReducersMapObject } from "./types/reducers";
 import { CombinedState } from "./types/store";
 
 import ActionTypes from "./utils/actionTypes";
@@ -13,46 +8,23 @@ import warning from "./utils/warning";
 
 function getUndefinedStateErrorMessage(key: string, action: Action) {
   const actionType = action && action.type;
-  const actionDescription =
-    (actionType && `action "${String(actionType)}"`) || "an action";
+  const actionDescription = (actionType && `action "${String(actionType)}"`) || "an action";
 
-  return (
-    `Given ${actionDescription}, reducer "${key}" returned undefined. ` +
-    `To ignore an action, you must explicitly return the previous state. ` +
-    `If you want this reducer to hold no value, you can return null instead of undefined.`
-  );
+  return `Given ${actionDescription}, reducer "${key}" returned undefined. ` + `To ignore an action, you must explicitly return the previous state. ` + `If you want this reducer to hold no value, you can return null instead of undefined.`;
 }
 
-function getUnexpectedStateShapeWarningMessage(
-  inputState: object,
-  reducers: ReducersMapObject,
-  action: Action,
-  unexpectedKeyCache: { [key: string]: true }
-) {
+function getUnexpectedStateShapeWarningMessage(inputState: object, reducers: ReducersMapObject, action: Action, unexpectedKeyCache: { [key: string]: true }) {
   const reducerKeys = Object.keys(reducers);
-  const argumentName =
-    action && action.type === ActionTypes.INIT
-      ? "preloadedState argument passed to createStore"
-      : "previous state received by the reducer";
+  const argumentName = action && action.type === ActionTypes.INIT ? "preloadedState argument passed to createStore" : "previous state received by the reducer";
 
   if (reducerKeys.length === 0) {
-    return (
-      "Store does not have a valid reducer. Make sure the argument passed " +
-      "to combineReducers is an object whose values are reducers."
-    );
+    return "Store does not have a valid reducer. Make sure the argument passed " + "to combineReducers is an object whose values are reducers.";
   }
 
   if (!isPlainObject(inputState)) {
-    const match = Object.prototype.toString
-      .call(inputState)
-      .match(/\s([a-z|A-Z]+)/);
+    const match = Object.prototype.toString.call(inputState).match(/\s([a-z|A-Z]+)/);
     const matchType = match ? match[1] : "";
-    return (
-      `The ${argumentName} has unexpected type of "` +
-      matchType +
-      `". Expected argument to be an object with the following ` +
-      `keys: "${reducerKeys.join('", "')}"`
-    );
+    return `The ${argumentName} has unexpected type of "` + matchType + `". Expected argument to be an object with the following ` + `keys: "${reducerKeys.join('", "')}"`;
   }
 
   // modified for joy, in order to support dynamic load model
@@ -126,18 +98,9 @@ function assertReducerShape(reducers: ReducersMapObject) {
  * @returns A reducer function that invokes every reducer inside the passed
  *   object, and builds a state object with the same shape.
  */
-export default function combineReducers<S>(
-  reducers: ReducersMapObject<S, any>
-): Reducer<CombinedState<S>>;
-export default function combineReducers<S, A extends Action = AnyAction>(
-  reducers: ReducersMapObject<S, A>
-): Reducer<CombinedState<S>, A>;
-export default function combineReducers<M extends ReducersMapObject>(
-  reducers: M
-): Reducer<
-  CombinedState<StateFromReducersMapObject<M>>,
-  ActionFromReducersMapObject<M>
->;
+export default function combineReducers<S>(reducers: ReducersMapObject<S, any>): Reducer<CombinedState<S>>;
+export default function combineReducers<S, A extends Action = AnyAction>(reducers: ReducersMapObject<S, A>): Reducer<CombinedState<S>, A>;
+export default function combineReducers<M extends ReducersMapObject>(reducers: M): Reducer<CombinedState<StateFromReducersMapObject<M>>, ActionFromReducersMapObject<M>>;
 export default function combineReducers(reducers: ReducersMapObject) {
   const reducerKeys = Object.keys(reducers);
   const finalReducers: ReducersMapObject = {};
@@ -170,21 +133,13 @@ export default function combineReducers(reducers: ReducersMapObject) {
     shapeAssertionError = e;
   }
 
-  return function combination(
-    state: StateFromReducersMapObject<typeof reducers> = {},
-    action: AnyAction
-  ) {
+  return function combination(state: StateFromReducersMapObject<typeof reducers> = {}, action: AnyAction) {
     if (shapeAssertionError) {
       throw shapeAssertionError;
     }
 
     if (process.env.NODE_ENV !== "production") {
-      const warningMessage = getUnexpectedStateShapeWarningMessage(
-        state,
-        finalReducers,
-        action,
-        unexpectedKeyCache
-      );
+      const warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action, unexpectedKeyCache);
       if (warningMessage) {
         warning(warningMessage);
       }
@@ -192,10 +147,7 @@ export default function combineReducers(reducers: ReducersMapObject) {
 
     let hasChanged = false;
     // modified for joy， keep the prefetch data even if the model has not registered。
-    const nextState: StateFromReducersMapObject<typeof reducers> = Object.assign(
-      {},
-      state
-    );
+    const nextState: StateFromReducersMapObject<typeof reducers> = Object.assign({}, state);
     for (let i = 0; i < finalReducerKeys.length; i++) {
       const key = finalReducerKeys[i];
       const reducer = finalReducers[key];
@@ -208,8 +160,7 @@ export default function combineReducers(reducers: ReducersMapObject) {
       nextState[key] = nextStateForKey;
       hasChanged = hasChanged || nextStateForKey !== previousStateForKey;
     }
-    hasChanged =
-      hasChanged || finalReducerKeys.length !== Object.keys(state).length;
+    hasChanged = hasChanged || finalReducerKeys.length !== Object.keys(state).length;
     return hasChanged ? nextState : state;
   };
 }

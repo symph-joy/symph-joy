@@ -1,11 +1,39 @@
-import { ClassProvider, FactoryProvider, Provider as ProviderType, ValueProvider } from "../../../interfaces/context/provider.interface";
+import { ClassProvider, FactoryProvider, Provider as ProviderType, TProviderName, ValueProvider } from "../../../interfaces/context/provider.interface";
 import { isNil, isUndefined } from "../../../utils/shared.utils";
 import { METADATA } from "../../../constants";
 import { Scope } from "../../../interfaces";
 import { CUSTOM_INJECT_FUNC_PARAM_META } from "../autowire.decorator";
 import { InjectCustomOptionsInterface } from "../../../interfaces/inject-custom-options.interface";
 
-export function Provider(options?: Partial<ProviderType>): PropertyDecorator {
+/**
+ * Defines the injection scope.
+ *
+ * @publicApi
+ */
+export type ProviderOptions = {
+  /**
+   * provider name
+   */
+  name?: TProviderName;
+
+  /**
+   * Optional enum defining lifetime of the provider that is injected.
+   */
+  scope?: Scope;
+
+  /**
+   * 如果为false，只有通过明确的包名，才能找到该Component.
+   * 依赖注入时，只指定了被依赖的组件名称，只有在同一个包名下，或者全局公开同名的组件，才能被注入。
+   */
+  global?: boolean;
+
+  /**
+   * alias array
+   */
+  alias?: TProviderName[];
+};
+
+export function Provider(options: ProviderOptions = {}): PropertyDecorator {
   return (target, propertyKey) => {
     const propType = Reflect.getMetadata("design:type", target, propertyKey);
     const paramTypes = Reflect.getMetadata("design:paramtypes", target, propertyKey);

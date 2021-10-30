@@ -19,7 +19,7 @@ export default function ReactAppComponent({ appContext }: TReactAppComponentProp
 
   return (
     <>
-      <h1>ReactAppComponent</h1>
+      <div>ReactAppComponent</div>
       <RouteSwitch routes={routes} extraProps={{}} />
     </>
   );

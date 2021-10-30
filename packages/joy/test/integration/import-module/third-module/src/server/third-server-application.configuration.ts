@@ -1,8 +1,8 @@
 import { Configuration } from "@symph/core";
-import { HelloController } from "./controller/hello.controller";
+import { ThirdHelloController } from "./controller/third-hello.controller";
 
 @Configuration()
 export class ThirdServerApplicationConfiguration {
   @Configuration.Provider()
-  public helloController: HelloController;
+  public thirdHelloController: ThirdHelloController;
 }

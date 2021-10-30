@@ -4,7 +4,7 @@ import { useJoyContext } from "../hooks";
 import { IReactRoute } from "../interfaces";
 
 interface RouterContainerType extends SwitchProps {
-  routes: IReactRoute[];
+  routes?: IReactRoute[];
   extraProps?: any;
 }
 
@@ -12,17 +12,20 @@ export function RouteSwitch({ routes, location, extraProps }: RouterContainerTyp
   if (!location) {
     location = useLocation();
   }
-
   const joyContext = useJoyContext();
-
   return (
     <Switch location={location}>
       {(routes || []).map((route, i) => {
         const RouteComponent = route.component;
+        let path: string | string[] = route.path;
+        const isIndexPath = path.endsWith("/index");
+        if (isIndexPath) {
+          path = [route.path, path.slice(0, -6)];
+        }
         return (
           <Route
             key={typeof route.providerName === "string" ? route.providerName : i}
-            path={route.path}
+            path={path}
             exact={route.exact}
             strict={route.strict}
             render={(props) => {

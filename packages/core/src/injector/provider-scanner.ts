@@ -1,8 +1,7 @@
-import { ClassProvider, EntryType, FactoryProvider, isClassProvider, Provider, Type, ValueProvider } from "../interfaces";
-import { CONFIGURATION_METADATA, INJECTABLE_METADATA, METADATA } from "../constants";
+import { ClassProvider, EntryType, FactoryProvider, Provider, Type, ValueProvider } from "../interfaces";
+import { METADATA } from "../constants";
 import { isFunction, isNil, isObject } from "../utils/shared.utils";
-import { CoreContainer } from "./index";
-import { getConfigurationMeta, getInjectableMeta, IConfigurationOptions } from "../decorators";
+import { getComponentMeta, getConfigurationMeta } from "../decorators";
 
 export class ProviderScanner {
   private ctxRegistry: EntryType[] = [];
@@ -19,7 +18,6 @@ export class ProviderScanner {
         });
       }
     } else if (isFunction(config)) {
-      // 模拟一个配置对象
       providers = this.scanForConfig(config as Type);
     } else if (isObject(config)) {
       providers = this.scanObject(config);
@@ -36,13 +34,17 @@ export class ProviderScanner {
     if (ctxRegistry.includes(obj)) {
       return providers;
     }
+    if (this.isProvider(obj)) {
+      providers.push(obj);
+      return providers;
+    }
     ctxRegistry.push(obj);
     Object.keys(obj).forEach((prop) => {
       const propValue = obj[prop];
       if (isNil(propValue)) return;
 
       // 1. value provider
-      if (this.isValueProvider(propValue)) {
+      if (this.isProvider(propValue)) {
         // @ts-ignore
         providers.push({ name: prop, ...propValue });
       }
@@ -53,7 +55,7 @@ export class ProviderScanner {
           providers = providers.concat(this.scanForConfig(propValue));
         } else {
           // 2. class provider
-          const componentMeta = getInjectableMeta(propValue);
+          const componentMeta = getComponentMeta(propValue);
           if (!isNil(componentMeta)) {
             providers.push({ ...componentMeta });
           }
@@ -77,7 +79,7 @@ export class ProviderScanner {
     }
     ctxRegistry.push(configClazz);
 
-    const componentMeta = getInjectableMeta(configClazz);
+    const componentMeta = getComponentMeta(configClazz);
     componentMeta && providers.push(componentMeta);
 
     const configMeta = getConfigurationMeta(configClazz);
@@ -123,11 +125,7 @@ export class ProviderScanner {
     return false;
   }
 
-  public isValueProvider(val: any): val is Provider {
+  public isProvider(val: any): val is Provider {
     return val && typeof val === "object" && (val.useFactory || val.useValue || val.useClass);
-  }
-
-  public isCustomProvider(provider: Provider): provider is ClassProvider | ValueProvider | FactoryProvider {
-    return provider && !isNil((provider as any).provide);
   }
 }

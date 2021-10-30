@@ -45,6 +45,7 @@ export interface IJoyConfig {
   webpackDevMiddleware: any; //= null
   distDir: string; // = '.joy'
   assetPrefix: string; // = ''
+  fileSystemRouter: boolean; // = true
   configOrigin: string; // = 'default'
   useFileSystemPublicRoutes: boolean; // = true
   generateBuildId: () => null; // = () => null
@@ -180,6 +181,9 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
 
   @ConfigValue({ default: "" })
   assetPrefix: string;
+
+  @ConfigValue({ default: true })
+  fileSystemRouter: boolean;
 
   configOrigin = "default";
   useFileSystemPublicRoutes = true;

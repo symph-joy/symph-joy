@@ -8,9 +8,7 @@ export const route = pathMatch();
 
 export type Params = { [param: string]: any };
 
-export type RouteMatch = (
-  pathname: string | null | undefined
-) => false | Params;
+export type RouteMatch = (pathname: string | null | undefined) => false | Params;
 
 type RouteResult = {
   finished: boolean;
@@ -25,12 +23,7 @@ export type Route = {
   statusCode?: number;
   name: string;
   requireBasePath?: false;
-  fn: (
-    req: IncomingMessage,
-    res: ServerResponse,
-    params: Params,
-    parsedUrl: UrlWithParsedQuery
-  ) => Promise<RouteResult> | RouteResult;
+  fn: (req: IncomingMessage, res: ServerResponse, params: Params, parsedUrl: UrlWithParsedQuery) => Promise<RouteResult> | RouteResult;
 };
 
 export type DynamicRoutes = Array<{ page: string; match: RouteMatch }>;
@@ -95,15 +88,11 @@ export default class Router {
     this.fsRoutes.unshift(fsRoute);
   }
 
-  async execute(
-    req: IncomingMessage,
-    res: ServerResponse,
-    parsedUrl: UrlWithParsedQuery
-  ): Promise<boolean> {
+  async execute(req: IncomingMessage, res: ServerResponse, parsedUrl: UrlWithParsedQuery): Promise<boolean> {
     // memoize page check calls so we don't duplicate checks for pages
     const pageChecks: { [name: string]: Promise<boolean> } = {};
     const memoizedPageChecker = async (p: string): Promise<boolean> => {
-      if (pageChecks[p]) {
+      if (await pageChecks[p]) {
         return pageChecks[p];
       }
       const result = this.pageChecker(p);
@@ -143,12 +132,7 @@ export default class Router {
                 }
 
                 if (await memoizedPageChecker(pathname)) {
-                  return this.catchAllRoute.fn(
-                    checkerReq,
-                    checkerRes,
-                    params,
-                    parsedCheckerUrl
-                  );
+                  return this.catchAllRoute.fn(checkerReq, checkerRes, params, parsedCheckerUrl);
                 }
                 return { finished: false };
               },
@@ -160,8 +144,7 @@ export default class Router {
       // disabled
       ...(this.useFileSystemPublicRoutes ? [this.catchAllRoute] : []),
     ];
-    const originallyHadBasePath =
-      !this.basePath || (req as any)._joyHadBasePath;
+    const originallyHadBasePath = !this.basePath || (req as any)._joyHadBasePath;
 
     for (const testRoute of allRoutes) {
       // if basePath is being used, the basePath will still be included
@@ -172,8 +155,7 @@ export default class Router {
       const originalPathname = currentPathname;
       const requireBasePath = testRoute.requireBasePath !== false;
       const isCustomRoute = customRouteTypes.has(testRoute.type);
-      const isPublicFolderCatchall =
-        testRoute.name === "public folder catchall";
+      const isPublicFolderCatchall = testRoute.name === "public folder catchall";
       const keepBasePath = isCustomRoute || isPublicFolderCatchall;
 
       if (!keepBasePath) {
@@ -200,12 +182,7 @@ export default class Router {
           parsedUrlUpdated.pathname = currentPathname;
         }
 
-        const result = await testRoute.fn(
-          req,
-          res,
-          newParams,
-          parsedUrlUpdated
-        );
+        const result = await testRoute.fn(req, res, newParams, parsedUrlUpdated);
 
         // The response was handled
         if (result.finished) {
@@ -232,10 +209,7 @@ export default class Router {
         // check filesystem
         if (testRoute.check === true) {
           const originalFsPathname = parsedUrlUpdated.pathname;
-          const fsPathname = replaceBasePath(
-            this.basePath,
-            originalFsPathname!
-          );
+          const fsPathname = replaceBasePath(this.basePath, originalFsPathname!);
 
           for (const fsRoute of this.fsRoutes) {
             const fsParams = fsRoute.match(fsPathname);
@@ -243,12 +217,7 @@ export default class Router {
             if (fsParams) {
               parsedUrlUpdated.pathname = fsPathname;
 
-              const fsResult = await fsRoute.fn(
-                req,
-                res,
-                fsParams,
-                parsedUrlUpdated
-              );
+              const fsResult = await fsRoute.fn(req, res, fsParams, parsedUrlUpdated);
 
               if (fsResult.finished) {
                 return true;
@@ -273,16 +242,9 @@ export default class Router {
           if (matchedPage) {
             parsedUrlUpdated.pathname = fsPathname;
 
-            const pageParams = this.catchAllRoute.match(
-              parsedUrlUpdated.pathname
-            );
+            const pageParams = this.catchAllRoute.match(parsedUrlUpdated.pathname);
 
-            await this.catchAllRoute.fn(
-              req,
-              res,
-              pageParams as Params,
-              parsedUrlUpdated
-            );
+            await this.catchAllRoute.fn(req, res, pageParams as Params, parsedUrlUpdated);
             return true;
           }
         }

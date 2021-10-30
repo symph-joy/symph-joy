@@ -1,16 +1,16 @@
-import HelloReactController from "./pages/index";
-import EmbedView1 from "./pages/embed/view1";
+import ThirdHelloReactController from "./pages/index";
+import ThirdEmbedView1 from "./pages/embed/view1";
 import { ReactConfiguration } from "@symph/react/dist/react-configuration.decorator";
 import { ThirdFetchService } from "./service/third-fetch.service";
 
 @ReactConfiguration()
 export class ThirdReactApplicationConfiguration {
   @ReactConfiguration.Provider()
-  public helloReactController: HelloReactController;
+  public thirdHelloReactController: ThirdHelloReactController;
 
   @ReactConfiguration.Provider()
-  public embedView1: EmbedView1;
+  public thirdEmbedView1: ThirdEmbedView1;
 
-  // @ReactConfiguration.Provider()
-  // public thirdFetchService: ThirdFetchService;
+  @ReactConfiguration.Provider()
+  public thirdFetchService: ThirdFetchService;
 }

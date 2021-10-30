@@ -19,12 +19,12 @@ export class ConfigConfiguration {
     return new ConfigLoaderFactory();
   }
 
-  @Configuration.Provider({ name: SYMPH_CONFIG_DEFAULT_VALUE, type: Object })
+  @Configuration.Provider({ name: SYMPH_CONFIG_DEFAULT_VALUE })
   getDefaultConfig(): Record<string, unknown> {
     return {};
   }
 
-  @Configuration.Provider({ name: SYMPH_CONFIG_OPTIONS, type: Object })
+  @Configuration.Provider({ name: SYMPH_CONFIG_OPTIONS })
   getConfigServiceOptions(): ConfigServiceOptions {
     return {
       isAutoLoadConfig: this.isAutoLoadConfig(),

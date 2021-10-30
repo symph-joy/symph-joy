@@ -61,3 +61,5 @@ export * from "./server-application";
 export { ServerFactory } from "./server-factory";
 export * from "./router";
 export * from "./services";
+export * from "./mount/mount-module";
+export * from "./mount/mount.service";

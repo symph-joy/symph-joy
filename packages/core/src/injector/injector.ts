@@ -10,13 +10,15 @@ import { TaskThenable, ThenableResult } from "../utils/task-thenable";
 import { EnuInjectBy, IInjectableDependency } from "../interfaces/injectable-dependency.interface";
 import { CoreContainer } from "./core-container";
 import { providerNameGenerate } from "./provider-name-generate";
-import { getInjectableMeta } from "../decorators/core";
-import { isProviderInfoWareProvider } from "../interfaces/context/provider-info-ware.interface";
+import { getComponentMeta } from "../decorators/core";
+import { isComponentInfoAwareComp } from "../interfaces/context/component-info-aware.interface";
 import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dependency-type.exception";
 import { HookCenter } from "../hook/hook-center";
 import { HookType, IHook } from "../hook/interface/hook.interface";
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
 import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
+import { isApplicationContextAwareComp } from "../interfaces/context/application-context-ware.interface";
+import { CoreContext } from "../core-context";
 // const SyncThenable = Promise
 // type SyncThenable<T> = Promise<T>
 /**
@@ -57,15 +59,15 @@ export interface InjectorDependencyContext {
 }
 
 export interface InjectorHookTaps {
-  componentAfterPropertiesSet<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T;
+  componentAfterInitialize<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T;
 }
 
 export class Injector {
-  private afterPropertiesSetHook: IHook;
+  private componentAfterInitialize: IHook;
 
   constructor(private pluginCenter: HookCenter) {
-    this.afterPropertiesSetHook = this.pluginCenter.registerHook({
-      id: "componentAfterPropertiesSet",
+    this.componentAfterInitialize = this.pluginCenter.registerHook({
+      id: "componentAfterInitialize",
       async: false,
       parallel: false,
       type: HookType.Waterfall,
@@ -109,33 +111,35 @@ export class Injector {
         });
       })
       .then((instance: any) => {
-        if (isProviderInfoWareProvider(instance)) {
+        if (isComponentInfoAwareComp(instance)) {
           instance.setProviderInfo({
             name: wrapper.name,
             type: wrapper.type,
             scope: wrapper.scope!,
           });
         }
-        if (isNil(inject) && isFunction(instance.afterPropertiesSet)) {
-          const rst = instance.afterPropertiesSet();
-          if (isPromise(rst)) {
-            return new Promise((resolve, reject) => {
-              rst.then(() => {
-                resolve(instance);
-              }, reject);
-            });
+        if (isApplicationContextAwareComp(instance)) {
+          const contextWrapper = container.getProviderByType(CoreContext)!;
+          const context = contextWrapper && this.loadProvider(contextWrapper, container);
+          if (!context || context.then) {
+            throw new RuntimeException(`Can not call setApplicationContext on component '${String(wrapper.name)}, because can not get app context instance.'`);
           }
+          instance.setApplicationContext(context);
         }
+        // if (isNil(inject) && isFunction(instance.afterPropertiesSet)) {
+        //   const rst = instance.afterPropertiesSet();
+        //   if (isPromise(rst)) {
+        //     return new Promise((resolve, reject) => {
+        //       rst.then(() => {
+        //         resolve(instance);
+        //       }, reject);
+        //     });
+        //   }
+        // }
         return instance;
       })
       .then((instance: any) => {
-        instance = this.afterPropertiesSetHook.call(instance, {
-          instanceWrapper: wrapper,
-        });
-        return instance;
-      })
-      .then((instance: any) => {
-        if (isNil(inject) && isFunction(instance.initialize)) {
+        if (isFunction(instance.initialize)) {
           const rst = instance.initialize();
           if (isPromise(rst)) {
             return new Promise((resolve, reject) => {
@@ -145,7 +149,12 @@ export class Injector {
             });
           }
         }
-
+        return instance;
+      })
+      .then((instance: any) => {
+        instance = this.componentAfterInitialize.call(instance, {
+          instanceWrapper: wrapper,
+        });
         instanceHost.isResolved = true;
         return instance;
       });
@@ -156,7 +165,7 @@ export class Injector {
   }
 
   public loadInstanceProperties<T>(instance: unknown, wrapper: ComponentWrapper<T>, container: CoreContainer, contextId = STATIC_CONTEXT): TaskThenable<IInjectableDependency[]> {
-    const properties = this.resolveProperties(wrapper, container, contextId, wrapper);
+    const properties = this.resolveProperties(wrapper, container, contextId);
     if (properties.length === 0) {
       return TaskThenable.resolve([]);
     }
@@ -270,7 +279,7 @@ export class Injector {
     return Reflect.getMetadata(SELF_DECLARED_DEPS_METADATA, type) || [];
   }
 
-  public resolveSingleParam<T>(wrapper: ComponentWrapper<T>, dependency: IInjectableDependency, container: CoreContainer, contextId = STATIC_CONTEXT, inquirer?: ComponentWrapper): TaskThenable<unknown> {
+  public resolveSingleParam<T>(wrapper: ComponentWrapper<T>, dependency: IInjectableDependency, container: CoreContainer, contextId = STATIC_CONTEXT): TaskThenable<unknown> {
     if (isUndefined(dependency)) {
       throw new UndefinedDependencyException(String(wrapper.name), dependency);
     }
@@ -280,31 +289,31 @@ export class Injector {
       throw new InvalidDependencyTypeException(String(wrapper.name), index, undefined, `should not set Object type to ${String(wrapper.name)} argument at index [${index}]`);
     }
 
-    let instanceWrapper = this.getInstanceWrapper(container, injectBy, type, name);
+    let paramWrapper = this.getInstanceWrapper(container, injectBy, type, name, wrapper.package);
 
-    if (isNil(instanceWrapper) && !isNil(dependency.type)) {
-      instanceWrapper = this.dynamicAddWrapper(container, dependency.type, dependency.name);
+    if (isNil(paramWrapper) && !isNil(dependency.type)) {
+      paramWrapper = this.dynamicAddWrapper(container, dependency.type, dependency.name);
     }
 
-    if (isNil(instanceWrapper)) {
+    if (isNil(paramWrapper)) {
       throw new UnknownDependenciesException(String(wrapper.name), dependency);
     }
-    if (designType && designType !== Object && instanceWrapper.type !== Object && designType !== instanceWrapper.type && !isSubClass(instanceWrapper.type, designType)) {
-      throw new InvalidDependencyTypeException(String(wrapper.name), index, key, `${instanceWrapper.type.name} class provider can not set to ${type?.name} class`);
+    if (designType && designType !== Object && paramWrapper.type !== Object && designType !== paramWrapper.type && !isSubClass(paramWrapper.type, designType)) {
+      throw new InvalidDependencyTypeException(String(wrapper.name), index, key, `${paramWrapper.type.name} class provider can not set to ${type?.name} class`);
     }
 
-    !isNil(key) ? wrapper.addPropertiesMetadata(key, instanceWrapper) : wrapper.addCtorMetadata(index!, instanceWrapper);
+    !isNil(key) ? wrapper.addPropertiesMetadata(key, paramWrapper) : wrapper.addCtorMetadata(index!, paramWrapper);
 
-    return this.resolveInstance(container, instanceWrapper, contextId, inquirer);
+    return this.resolveInstance(container, paramWrapper, contextId);
   }
 
   public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy.TYPE, type: Type, name: string | undefined): ComponentWrapper | undefined;
 
-  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy.NAME, type: Type | undefined, name: string): ComponentWrapper | undefined;
+  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy.NAME, type: Type | undefined, name: string, packageName: string | undefined): ComponentWrapper | undefined;
 
-  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy | undefined, type: Type | undefined, name: string | undefined): ComponentWrapper | undefined;
+  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy | undefined, type: Type | undefined, name: string | undefined, packageName?: string | undefined): ComponentWrapper | undefined;
 
-  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy | undefined, type: Type | undefined, name: string | undefined): ComponentWrapper | undefined {
+  public getInstanceWrapper(container: CoreContainer, injectBy: EnuInjectBy | undefined, type: Type | undefined, name: string | undefined, packageName?: string | undefined): ComponentWrapper | undefined {
     let instanceWrapper;
     if (type === undefined && name === undefined) {
       throw new Error("Can not find provider by type and name, the both are undefined.");
@@ -320,7 +329,7 @@ export class Injector {
         if (name === undefined) {
           throw new Error("Can not find provider by name, the name is undefined.");
         }
-        instanceWrapper = container.getProviderByName(name);
+        instanceWrapper = container.getProviderByName(name, packageName);
         if (instanceWrapper && !isSubClass(instanceWrapper.type, type)) {
           // todo print warn log, but not interrupt running
         }
@@ -340,7 +349,7 @@ export class Injector {
         }
         if (!instanceWrapper && name !== undefined) {
           // then not found by type, or found out more than one provider
-          instanceWrapper = container.getProviderByName(name);
+          instanceWrapper = container.getProviderByName(name, packageName);
         }
         if (!instanceWrapper && err) {
           throw err;
@@ -350,8 +359,8 @@ export class Injector {
   }
 
   private dynamicAddWrapper(container: CoreContainer, type: Type, name?: string): ComponentWrapper | undefined {
-    const meta = getInjectableMeta(type);
-    if (!meta || !meta.autoRegister) {
+    const meta = getComponentMeta(type);
+    if (!meta || !meta.lazyRegister) {
       return undefined;
     }
     if (name) {
@@ -368,11 +377,11 @@ export class Injector {
     return param.forwardRef();
   }
 
-  public resolveInstance<T>(container: CoreContainer, instanceWrapper: ComponentWrapper<T>, contextId = STATIC_CONTEXT, inquirer?: ComponentWrapper): TaskThenable<T> {
+  public resolveInstance<T>(container: CoreContainer, instanceWrapper: ComponentWrapper<T>, contextId = STATIC_CONTEXT): TaskThenable<T> {
     return this.loadInstance(instanceWrapper, container, contextId);
   }
 
-  public resolveProperties<T>(wrapper: ComponentWrapper<T>, container: CoreContainer, contextId = STATIC_CONTEXT, inquirer?: ComponentWrapper): PropertyDependencyLoadTask[] {
+  public resolveProperties<T>(wrapper: ComponentWrapper<T>, container: CoreContainer, contextId = STATIC_CONTEXT): PropertyDependencyLoadTask[] {
     const metadata = wrapper.getPropertiesMetadata();
     if (metadata) {
       return this.loadPropertiesMetadata(container, metadata, contextId);
@@ -382,7 +391,7 @@ export class Injector {
     return properties.map((propDep) => {
       let instanceRst;
       try {
-        instanceRst = this.resolveSingleParam<T>(wrapper, propDep, container, contextId, inquirer);
+        instanceRst = this.resolveSingleParam<T>(wrapper, propDep, container, contextId);
       } catch (e) {
         if (!propDep.isOptional) {
           throw e;

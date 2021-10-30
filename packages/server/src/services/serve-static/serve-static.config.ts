@@ -1,4 +1,4 @@
-import { Configuration, Autowire, Component, ProviderLifecycle } from "@symph/core";
+import { Configuration, Autowire, Component, IComponentLifecycle } from "@symph/core";
 import { AbstractHttpAdapter } from "../../adapters";
 import { ServeStaticService } from "./serve-static.service";
 import { ServeStaticOptions } from "./interfaces/serve-static-options.interface";
@@ -9,7 +9,7 @@ import { AbstractLoader } from "./loaders/abstract.loader";
 @Configurable()
 @Configuration()
 @Component()
-export class ServeStaticConfig implements ProviderLifecycle {
+export class ServeStaticConfig implements IComponentLifecycle {
   @Autowire()
   private httpAdapter: AbstractHttpAdapter;
 
@@ -25,7 +25,7 @@ export class ServeStaticConfig implements ProviderLifecycle {
     return this.instanceService(this.httpAdapter, this.getConfigs(), this.loader);
   }
 
-  afterPropertiesSet(): Promise<void> | void {}
+  initialize(): Promise<void> | void {}
 
   public getConfigs(): ServeStaticOptions[] {
     return this.static;

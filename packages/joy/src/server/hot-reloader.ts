@@ -21,9 +21,9 @@ import { isWriteable } from "../build/is-writeable";
 import { ClientPagesLoaderOptions } from "../build/webpack/loaders/joy-client-pages-loader";
 import { stringify } from "querystring";
 import loadCustomRoutes, { Rewrite } from "../lib/load-custom-routes";
-import { FileScanner } from "../joy-server/server/scanner/file-scanner";
+import { FileScanner } from "../build/scanner/file-scanner";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import { FileGenerator } from "../plugin/file-generator";
+import { FileGenerator } from "../build/file-generator";
 import { EventEmitter } from "events";
 import OnDemandModuleHandler from "./on-demand-module-handler";
 import { getWebpackConfigForSrc } from "../build/webpack-config-for-src";
@@ -35,6 +35,7 @@ import { ReactRouter } from "@symph/react";
 import { getWebpackConfigForJoy } from "../build/webpack-config-for-joy";
 import chalk from "chalk";
 import { JoyBuildService } from "../build/joy-build.service";
+import * as Log from "../build/output/log";
 
 export async function renderScriptError(res: ServerResponse, error: Error, { verbose = true } = {}) {
   // Asks CDNs and others to not to cache the errored page
@@ -374,8 +375,7 @@ export default class HotReloader {
       this.srcStats = stats;
       this.srcError = null;
       const distPagesDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, "dist/src");
-      await this.fileScanner.scan(distPagesDir);
-
+      await this.fileScanner.scanDist(distPagesDir);
       // ===== 重新生成客户端需要的文件，比如路由和插件配置等。
       await this.fileGenerator.generate(false);
       // if (this.watcher){

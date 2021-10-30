@@ -2,7 +2,10 @@ import { AutowireHook, ClassProvider, Component, CoreContainer, CoreContext, Hoo
 import { getPrerenderMeta, PrerenderMeta } from "./prerender.decorator";
 import { ApplicationConfig, ReactApplicationContext } from "@symph/react";
 import { JoyPrerenderInterface } from "./prerender.interface";
-import { IScanOutModule } from "../../joy-server/server/scanner/file-scanner";
+import { IScanOutModule } from "../scanner/file-scanner";
+import { JoyReactAppServerConfiguration } from "../../react/joy-react-app-server.configuration";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { JoyReactApplicationContext } from "../../react/joy-react-application-context";
 
 export interface JoyPrerenderInfo {
   route: string;
@@ -18,7 +21,7 @@ interface PrerenderModule {
 
 @Component()
 export class JoyPrerenderService {
-  constructor(private readonly coreContext: CoreContext) {}
+  constructor(private readonly coreContext: CoreContext, private readonly joyAppConfig: JoyAppConfig) {}
 
   /**
    * 在服务端渲染html之前调用的hook
@@ -100,7 +103,7 @@ export class JoyPrerenderService {
       return [];
     }
 
-    const modules = [] as Record<string, any>;
+    const modules = [] as Record<string, any>[];
     let ids = [] as TProviderName[];
     this.prerenderProviderIds.forEach((it) => {
       modules.push(it.module.module);
@@ -109,8 +112,17 @@ export class JoyPrerenderService {
 
     const applicationConfig = new ApplicationConfig();
     const joyContainer = new CoreContainer();
-    const reactApplicationContext = new ReactApplicationContext(modules, applicationConfig, joyContainer);
+    joyContainer.addProviders([
+      {
+        name: "joyAppConfig",
+        type: JoyAppConfig,
+        useValue: this.joyAppConfig,
+      },
+    ]);
+    const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppServerConfiguration, applicationConfig, joyContainer);
     await reactApplicationContext.init();
+    reactApplicationContext.scannedModules.push(...modules); // 防止再次注册再编译时的模块，或导致路由等重复注册。
+    reactApplicationContext.registerModule(modules);
 
     const tasks = ids.map(async (prerenderId) => {
       const provider: JoyPrerenderInterface = await reactApplicationContext.get(prerenderId);

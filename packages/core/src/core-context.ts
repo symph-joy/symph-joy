@@ -13,7 +13,7 @@ import { ProviderScanner } from "./injector/provider-scanner";
 import { providerNameGenerate } from "./injector/provider-name-generate";
 import { HookCenter } from "./hook/hook-center";
 import { HookResolver } from "./hook/hook-resolver";
-import { getInjectableMeta } from "./decorators/core";
+import { getComponentMeta } from "./decorators/core";
 import { ComponentWrapper } from "./injector";
 import { HookType, IHook } from "./hook";
 
@@ -33,8 +33,8 @@ interface CoreContextEventListener {
 export class CoreContext implements ICoreContext {
   protected isInitialized = false;
 
-  private instanceLoader: InstanceLoader;
-  private dependenciesScanner: ProviderScanner;
+  protected instanceLoader: InstanceLoader;
+  protected dependenciesScanner: ProviderScanner;
   protected readonly hookCenter: HookCenter;
   protected readonly hookResolver: HookResolver;
   protected readonly injector;
@@ -106,27 +106,27 @@ export class CoreContext implements ICoreContext {
   }
 
   private registerCoreProviders() {
-    this.registerModule({
-      tempoContext: {
+    this.container.addProviders([
+      {
         name: Symbol("coreContext"),
         type: this.constructor,
         useValue: this,
       },
-      providerScanner: {
+      {
         name: Symbol("providerScanner"),
         type: ProviderScanner,
         useValue: this.dependenciesScanner,
       },
-      hookCenter: {
+      {
         name: Symbol("hookCenter"),
         type: HookCenter,
         useValue: this.hookCenter,
       },
-    });
+    ]);
   }
 
-  public getProviderDefinition<TInput = any>(typeOrToken: TypeOrTokenType<TInput>): ComponentWrapper<TInput> | undefined {
-    const instanceWrapper = this.container.getProvider(typeOrToken);
+  public getProviderDefinition<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, packageName?: string): ComponentWrapper<TInput> | undefined {
+    const instanceWrapper = this.container.getProvider(typeOrToken, packageName);
     return instanceWrapper;
   }
 
@@ -186,32 +186,11 @@ export class CoreContext implements ICoreContext {
     return injectedProps;
   }
 
-  protected async initContext(): Promise<ComponentWrapper[]> {
-    return [];
-  }
-
-  // protected registerInternalModules(moduleConfig: EntryType) {
-  //   const providers = this.dependenciesScanner.scan(moduleConfig);
-  //   const infos =  this.container.addProviders(providers);
-  //   if (infos && infos.length) {
-  //     const ids  = infos.map(it => it.name)
-  //     this.loadInternalModule(ids)
-  //   }
-  // }
-
-  // private async loadInternalModule(ids: string[]): Promise<void> {
-  //   // const internalProviderIds = this.container.getProviderNames();
-  //   const providerIds = Array.from(ids);
-  //   await this.instanceLoader.createInstancesOfDependencies(providerIds);
-  // }
+  protected async initContext(): Promise<void> {}
 
   public registerModule(module: EntryType | EntryType[]): ComponentWrapper[] {
     const providers = this.dependenciesScanner.scan(module);
     const wrappers = this.container.addProviders(providers);
-    // const providerIds = []
-    // for (const wrapper of wrappers) {
-    //   providerIds.push(wrapper.id)
-    // }
     return wrappers;
   }
 
@@ -232,13 +211,13 @@ export class CoreContext implements ICoreContext {
     if (this.isInitialized) {
       return this;
     }
-    this.isInitialized = true;
-
-    let providers = await this.initContext();
-    providers = providers.concat(this.registerModule(this.entry));
+    await this.initContext();
+    let providers = this.registerModule(this.entry);
     await this.initProviders(providers);
 
+    this.isInitialized = true;
     await this.onContextInitialized.call();
+
     return this;
   }
 
@@ -271,7 +250,7 @@ export class CoreContext implements ICoreContext {
 
   private getProviderId(typeOrToken: TypeOrTokenType<unknown>): string {
     if (isFunction(typeOrToken)) {
-      const meta = getInjectableMeta(typeOrToken);
+      const meta = getComponentMeta(typeOrToken);
       if (meta?.name) {
         return meta.name.toString();
       } else {

@@ -12724,10 +12724,10 @@ platform@1.3.6, platform@^1.3.3:
   resolved "https://registry.npm.taobao.org/platform/download/platform-1.3.6.tgz#48b4ce983164b209c2d45a107adb31f473a6e7a7"
   integrity sha1-SLTOmDFksgnC1FoQetsx9HOm56c=
 
-playwright-chromium@^1.13.1:
-  version "1.13.1"
-  resolved "https://registry.nlark.com/playwright-chromium/download/playwright-chromium-1.13.1.tgz#cd4c6427602239be689e7fee8cf59003818cb24c"
-  integrity sha1-zUxkJ2AiOb5onn/ujPWQA4GMskw=
+playwright-chromium@^1.15.2:
+  version "1.15.2"
+  resolved "https://registry.npmmirror.com/playwright-chromium/download/playwright-chromium-1.15.2.tgz#59493f7843c7fd0e40b909cce7494a8032026b96"
+  integrity sha1-WUk/eEPH/Q5AuQnM50lKgDICa5Y=
   dependencies:
     commander "^6.1.0"
     debug "^4.1.1"
@@ -15818,10 +15818,10 @@ typescript-tuple@^2.2.1:
   dependencies:
     typescript-compare "^0.0.2"
 
-typescript@^4.2.3, typescript@^4.3.5:
-  version "4.3.5"
-  resolved "https://registry.nlark.com/typescript/download/typescript-4.3.5.tgz#4d1c37cc16e893973c45a06886b7113234f119f4"
-  integrity sha1-TRw3zBbok5c8RaBohrcRMjTxGfQ=
+typescript@^4.4.4:
+  version "4.4.4"
+  resolved "https://registry.npmmirror.com/typescript/download/typescript-4.4.4.tgz#2cd01a1a1f160704d3101fd5a58ff0f9fcb8030c"
+  integrity sha1-LNAaGh8WBwTTEB/VpY/w+fy4Aww=
 
 uglify-js@^3.1.4:
   version "3.14.1"

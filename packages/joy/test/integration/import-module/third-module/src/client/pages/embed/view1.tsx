@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
 import { ReactBaseController, ReactController, Route } from "@symph/react";
 
-@Route({ path: "/third/embed/view1" })
+@Route({ path: "/embed/view1" })
 @ReactController()
-export default class EmbedView1 extends ReactBaseController {
+export default class ThirdEmbedView1 extends ReactBaseController {
   renderView(): ReactNode {
     return (
       <>

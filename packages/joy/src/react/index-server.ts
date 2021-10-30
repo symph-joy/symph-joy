@@ -1,1 +1,1 @@
-export * from "./service/joy-fetch-server.service";
+export * from "./service/react-fetch-server.service";

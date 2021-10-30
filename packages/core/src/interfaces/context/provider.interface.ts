@@ -27,6 +27,13 @@ export interface IProvider<T = any> {
   name: TProviderName;
 
   /**
+   * in which package domain
+   */
+  package?: string;
+
+  global?: boolean; // 如果为false，只有通过明确的包名，才能找到该Component，无法通过匿名包名或全局找到。
+
+  /**
    * alias array
    */
   alias?: TProviderName[];
@@ -58,7 +65,7 @@ export interface ClassProvider<T = any> extends IProvider<T> {
   /**
    * Type (class name) of provider (instance to be injected).
    */
-  useClass: Type<T>;
+  useClass: Function | Type;
   /**
    * Optional enum defining lifetime of the provider that is injected.
    */
@@ -67,7 +74,7 @@ export interface ClassProvider<T = any> extends IProvider<T> {
   /**
    * whether auto register into container,
    */
-  autoRegister?: boolean | "lazy";
+  lazyRegister?: boolean;
 }
 
 /**
@@ -111,7 +118,7 @@ export interface FactoryProvider<T = any> extends IProvider<T> {
   /**
    * Factory function that returns an instance of the provider to be injected.
    */
-  useFactory: (...args: any[]) => T | { factory: Type; property: string };
+  useFactory: ((...args: any[]) => T) | { factory: Type; property: string };
   /**
    * Optional list of providers to be injected into the context of the Factory function.
    */

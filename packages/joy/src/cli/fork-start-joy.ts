@@ -1,7 +1,6 @@
 import chalk from "chalk";
 import { JoyBoot } from "../joy-boot";
 import { JoyBootConfiguration } from "../joy-boot.configuration";
-import { JoyBootFactory } from "../joy-boot-factory";
 
 export const startTask = (async () => {
   let closed = false;
@@ -30,10 +29,11 @@ export const startTask = (async () => {
       command = "help";
     }
 
-    // joyBoot = new JoyBoot(PresetJoyCore);
-    joyBoot = await JoyBootFactory.createServer(JoyBoot, JoyBootConfiguration);
-    await joyBoot.init();
+    joyBoot = new JoyBoot();
     await joyBoot.runCommand(command);
+    // joyBoot = await JoyBootFactory.createServer(JoyBoot, JoyBootConfiguration);
+    // await joyBoot.init();
+    // await joyBoot.runCommand(command);
   } catch (e) {
     console.error(chalk.red(e.message));
     console.error(e.stack);

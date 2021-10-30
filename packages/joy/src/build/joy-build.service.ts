@@ -13,7 +13,7 @@ import crypto from "crypto";
 import { createEntrypoints, createPagesMapping } from "./entries";
 import { PUBLIC_DIR_MIDDLEWARE_CONFLICT } from "../lib/constants";
 import { pathToRegexp } from "path-to-regexp";
-import { getRouteRegex, getSortedRoutes, isDynamicRoute } from "../joy-server/lib/router/utils";
+import { getRouteRegex, isDynamicRoute } from "../joy-server/lib/router/utils";
 import { promises, writeFileSync } from "fs";
 import getBaseWebpackConfig from "./webpack-config";
 import { CompilerResult, runCompiler } from "./compiler";
@@ -28,15 +28,16 @@ import { writeBuildId } from "./write-build-id";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
-import { CoreContext, Component, AutowireHook, HookType, IHook } from "@symph/core";
+import { AutowireHook, Component, CoreContext, HookType, IHook } from "@symph/core";
 import { getWebpackConfigForSrc } from "./webpack-config-for-src";
-import { FileGenerator } from "../plugin/file-generator";
-import { FileScanner } from "../joy-server/server/scanner/file-scanner";
+import { FileGenerator } from "./file-generator";
+import { FileScanner } from "./scanner/file-scanner";
 import { Worker } from "jest-worker";
 import { ReactRouter } from "@symph/react";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
 import { getWebpackConfigForJoy } from "./webpack-config-for-joy";
+import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 
 export type SsgRoute = {
   initialRevalidateSeconds: number | false;
@@ -104,15 +105,14 @@ export class JoyBuildService {
       rewrites: [],
     });
 
-    const distPagesDir = this.joyConfig.resolveAppDir(this.joyConfig.distDir, "dist/src");
-
     const srcWebpackConfig = await getWebpackConfigForSrc(serverWebpackConfig, this.joyConfig);
     const srcResult = await runCompiler(srcWebpackConfig);
     if (!srcResult.errors) {
       return srcResult;
     }
 
-    await this.fileScanner.scan(distPagesDir);
+    const distSrcDir = this.joyConfig.resolveAppDir(this.joyConfig.distDir, "dist/src");
+    await this.fileScanner.scanDist(distSrcDir);
     await this.fileGenerator.generate(false);
 
     return srcResult;
@@ -169,7 +169,7 @@ export class JoyBuildService {
         // >(providerId);
         // const routeClass = (routeModule?.useClass as any) as typeof ReactBaseController;
         const pathIsDynamic = isDynamicRoute(path);
-        const parentRoutes = this.joyReactRoute.getParentRoutes(reactRoute.path);
+        // const parentRoutes = this.joyReactRoute.getParentRoutes(reactRoute.path);
 
         // const hasStaticModelState = !!routeClass.prototype.initialModelStaticState;
         const hasStaticModelState = !!hasStaticState;

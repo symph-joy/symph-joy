@@ -1,19 +1,12 @@
 import devalue from "devalue";
 import webpack, { Chunk, Compiler } from "webpack";
 import sources from "webpack-sources";
-import {
-  BUILD_MANIFEST,
-  CLIENT_STATIC_FILES_PATH,
-  CLIENT_STATIC_FILES_RUNTIME_MAIN,
-  CLIENT_STATIC_FILES_RUNTIME_POLYFILLS,
-  CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH,
-  CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
-} from "../../../joy-server/lib/constants";
+import { BUILD_MANIFEST, CLIENT_STATIC_FILES_PATH, CLIENT_STATIC_FILES_RUNTIME_MAIN, CLIENT_STATIC_FILES_RUNTIME_POLYFILLS, CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH, CLIENT_STATIC_FILES_RUNTIME_WEBPACK } from "../../../joy-server/lib/constants";
 import { BuildManifest } from "../../../joy-server/server/get-page-files";
 import getRouteFromEntrypoint from "../../../joy-server/server/get-route-from-entrypoint";
 import { Rewrite } from "../../../lib/load-custom-routes";
-import { getSortedRoutes } from "../../../joy-server/lib/router/utils";
 import { IJoyReactRouteBuild } from "../../../react/router/joy-react-router-plugin";
+import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 
 // @ts-ignore: TODO: remove ignore when webpack 5 is stable
 const { RawSource } = webpack.sources || sources;
@@ -26,11 +19,7 @@ export type ClientBuildManifest = Record<string, string[]>;
 
 // This function takes the asset map generated in BuildManifestPlugin and creates a
 // reduced version to send to the client.
-function generateClientManifest(
-  assetMap: BuildManifest,
-  isModern: boolean,
-  rewrites: Rewrite[]
-): string {
+function generateClientManifest(assetMap: BuildManifest, isModern: boolean, rewrites: Rewrite[]): string {
   const clientManifest: ClientBuildManifest = {
     // TODO: update manifest type to include rewrites
     __rewrites: rewrites as any,
@@ -44,11 +33,7 @@ function generateClientManifest(
     if (page === "/_app") return;
     // Filter out dependencies in the _app entry, because those will have already
     // been loaded by the client prior to a navigation event
-    const filteredDeps = dependencies.filter(
-      (dep) =>
-        !appDependencies.has(dep) &&
-        (!dep.endsWith(".js") || dep.endsWith(".module.js") === isModern)
-    );
+    const filteredDeps = dependencies.filter((dep) => !appDependencies.has(dep) && (!dep.endsWith(".js") || dep.endsWith(".module.js") === isModern));
 
     // The manifest can omit the page if it has no requirements
     if (filteredDeps.length) {
@@ -86,12 +71,7 @@ export default class BuildManifestPlugin {
   private rewrites: Rewrite[];
   private routes: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]);
 
-  constructor(options: {
-    buildId: string;
-    modern: boolean;
-    rewrites: Rewrite[];
-    routes: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]);
-  }) {
+  constructor(options: { buildId: string; modern: boolean; rewrites: Rewrite[]; routes: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]) }) {
     this.buildId = options.buildId;
     this.modern = options.modern;
     this.routes = options.routes;
@@ -149,42 +129,24 @@ export default class BuildManifestPlugin {
     //   }
     // }
 
-    const webpackRuntimeJsChunk = namedChunks.get(
-      CLIENT_STATIC_FILES_RUNTIME_WEBPACK
-    );
-    const webpackRuntimeJsFiles: string[] = getFilesArray(
-      webpackRuntimeJsChunk?.files
-    ).filter(isJsFile);
+    const webpackRuntimeJsChunk = namedChunks.get(CLIENT_STATIC_FILES_RUNTIME_WEBPACK);
+    const webpackRuntimeJsFiles: string[] = getFilesArray(webpackRuntimeJsChunk?.files).filter(isJsFile);
     const mainJsChunk = namedChunks.get(CLIENT_STATIC_FILES_RUNTIME_MAIN);
-    const mainJsFiles: string[] = getFilesArray(mainJsChunk?.files).filter(
-      isJsFile
-    );
+    const mainJsFiles: string[] = getFilesArray(mainJsChunk?.files).filter(isJsFile);
     assetMap.commonFiles = [...mainJsFiles, ...webpackRuntimeJsFiles];
 
-    const polyfillChunk = namedChunks.get(
-      CLIENT_STATIC_FILES_RUNTIME_POLYFILLS
-    );
+    const polyfillChunk = namedChunks.get(CLIENT_STATIC_FILES_RUNTIME_POLYFILLS);
     // Create a separate entry  for polyfills
-    assetMap.polyfillFiles = getFilesArray(polyfillChunk?.files).filter(
-      isJsFile
-    );
+    assetMap.polyfillFiles = getFilesArray(polyfillChunk?.files).filter(isJsFile);
 
-    const reactRefreshChunk = namedChunks.get(
-      CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH
-    );
-    assetMap.devFiles = getFilesArray(reactRefreshChunk?.files).filter(
-      isJsFile
-    );
+    const reactRefreshChunk = namedChunks.get(CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH);
+    assetMap.devFiles = getFilesArray(reactRefreshChunk?.files).filter(isJsFile);
 
     const chunks = [...compilation.chunks];
-    const routes =
-      typeof this.routes === "function" ? this.routes() : this.routes;
+    const routes = typeof this.routes === "function" ? this.routes() : this.routes;
     for (const route of routes) {
       if (route.srcPath) {
-        assetMap.pages[route.path] = this.filterChunks(
-          chunks,
-          route.srcPath
-        ).filter(isJsFile);
+        assetMap.pages[route.path] = this.filterChunks(chunks, route.srcPath).filter(isJsFile);
       }
     }
 
@@ -226,13 +188,9 @@ export default class BuildManifestPlugin {
     // Add the runtime build manifest file (generated later in this file)
     // as a dependency for the app. If the flag is false, the file won't be
     // downloaded by the client.
-    assetMap.lowPriorityFiles.push(
-      `${CLIENT_STATIC_FILES_PATH}/${this.buildId}/_buildManifest.js`
-    );
+    assetMap.lowPriorityFiles.push(`${CLIENT_STATIC_FILES_PATH}/${this.buildId}/_buildManifest.js`);
     if (this.modern) {
-      assetMap.lowPriorityFiles.push(
-        `${CLIENT_STATIC_FILES_PATH}/${this.buildId}/_buildManifest.module.js`
-      );
+      assetMap.lowPriorityFiles.push(`${CLIENT_STATIC_FILES_PATH}/${this.buildId}/_buildManifest.module.js`);
     }
 
     // Add the runtime ssg manifest file as a lazy-loaded file dependency.
@@ -259,24 +217,12 @@ export default class BuildManifestPlugin {
 
     const clientManifestPath = `${CLIENT_STATIC_FILES_PATH}/${this.buildId}/_buildManifest.js`;
 
-    assets[clientManifestPath] = new RawSource(
-      `self.__BUILD_MANIFEST = ${generateClientManifest(
-        assetMap,
-        false,
-        this.rewrites
-      )};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()`
-    );
+    assets[clientManifestPath] = new RawSource(`self.__BUILD_MANIFEST = ${generateClientManifest(assetMap, false, this.rewrites)};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()`);
 
     if (this.modern) {
       const modernClientManifestPath = `${CLIENT_STATIC_FILES_PATH}/${this.buildId}/_buildManifest.module.js`;
 
-      assets[modernClientManifestPath] = new RawSource(
-        `self.__BUILD_MANIFEST = ${generateClientManifest(
-          assetMap,
-          true,
-          this.rewrites
-        )};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()`
-      );
+      assets[modernClientManifestPath] = new RawSource(`self.__BUILD_MANIFEST = ${generateClientManifest(assetMap, true, this.rewrites)};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()`);
     }
 
     return assets;

@@ -7,6 +7,10 @@ import { IReactRoute } from "./interfaces/react-route.interface";
 import { ComponentWrapper, CoreContainer, CoreContext, EntryType, Logger } from "@symph/core";
 import { IReactApplication } from "./interfaces";
 import { TReactAppComponent } from "./react-app-component";
+import { MountModule } from "./mount/mount-module";
+import { MountService } from "./mount/mount.service";
+import { ReactApplicationConfig } from "./react-application-config";
+import { ReactRouter } from "./router/react-router";
 
 /**
  * @publicApi
@@ -15,40 +19,98 @@ export class ReactApplicationContext extends CoreContext implements IReactApplic
   private readonly logger = new Logger(ReactApplicationContext.name, true);
   protected readonly reduxStore: ReactReduxService;
   protected routes: IReactRoute[];
+  public mountService: MountService;
+  public router: ReactRouter;
 
-  constructor(protected readonly entry: EntryType, protected readonly appConfig: ApplicationConfig, container?: CoreContainer, initState: Record<string, any> = {}) {
-    super(entry, container);
+  constructor(
+    // protected readonly entry: EntryType| EntryType[],
+    protected reactApplicationConfig: typeof ReactApplicationConfig,
+    protected readonly appConfig: ApplicationConfig,
+    container?: CoreContainer,
+    initState: Record<string, any> = {}
+  ) {
+    super([], container);
     this.reduxStore = new ReactReduxService(this.appConfig, initState);
   }
 
-  protected async initContext(): Promise<ComponentWrapper[]> {
-    const superIds = await super.initContext();
-    const myIds = await this.loadModule({
-      applicationConfig: {
-        id: "applicationConfig",
+  protected async initContext(): Promise<void> {
+    await super.initContext();
+    const coreComps = [
+      {
+        name: "applicationConfig",
         type: ApplicationConfig,
         useValue: this.appConfig,
       },
-      reduxStore: {
-        id: "reduxStore",
+      {
+        name: "reduxStore",
         type: ReactReduxService,
         useValue: this.reduxStore,
       },
-    });
-    return [...superIds, ...myIds];
+      ...this.dependenciesScanner.scan(this.reactApplicationConfig),
+    ];
+    const coreWrappers = this.container.addProviders(coreComps);
+    await this.createInstancesOfDependencies(coreWrappers);
+
+    this.router = this.syncGet(ReactRouter);
+    this.mountService = this.syncGet(MountService);
   }
 
   public async init(): Promise<this> {
     await super.init();
+    this.router = this.syncGet(ReactRouter);
+
     await this.registerMiddleware();
     // await this.registerRouter();
     // await this.callInitHook()
     // await this.registerRouterHooks();
     // await this.callBootstrapHook()
 
-    this.isInitialized = true;
     this.logger.log("Joy application successfully started");
     return this;
+  }
+
+  public registerModule(module: EntryType | EntryType[]): ComponentWrapper[] {
+    const modules = Array.isArray(module) ? module : [module];
+    let wrappers = [] as ComponentWrapper[];
+    for (const md of modules) {
+      let compWrappers: ComponentWrapper[];
+      let mount = "";
+      if (md instanceof MountModule) {
+        mount = md.mount;
+        compWrappers = super.registerModule(md.module);
+        if (compWrappers && compWrappers.length > 0) {
+          this.mountService.setMount(mount, compWrappers);
+        }
+      } else {
+        compWrappers = super.registerModule(md);
+      }
+      if (!compWrappers || compWrappers.length === 0) {
+        continue;
+      }
+      this.registerModuleRouter(md, compWrappers);
+      compWrappers = compWrappers.concat(compWrappers);
+    }
+
+    return wrappers;
+  }
+
+  protected registerModuleRouter(md: EntryType, compWrappers: ComponentWrapper[]): IReactRoute[] | undefined {
+    let mount = "";
+    if (md instanceof MountModule) {
+      mount = md.mount;
+    }
+    let addedRoutes: IReactRoute[] | undefined;
+    compWrappers.forEach((wrapper) => {
+      const routes = this.router.addRouteProvider(wrapper, mount);
+      if (routes && routes.length > 0) {
+        if (!addedRoutes) {
+          addedRoutes = routes;
+        } else {
+          addedRoutes.push(...routes);
+        }
+      }
+    });
+    return addedRoutes;
   }
 
   public async registerMiddleware() {

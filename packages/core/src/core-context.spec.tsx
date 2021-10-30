@@ -6,6 +6,7 @@ import { ComponentWrapper, CoreContainer } from "./injector";
 import { RegisterTap } from "./hook";
 import { TProviderName } from "./interfaces";
 import { Component } from "./decorators";
+import { IApplicationContextAware } from "./interfaces/context/application-context-ware.interface";
 
 describe("core-context", () => {
   test("inject context self", async () => {
@@ -32,6 +33,24 @@ describe("core-context", () => {
 
     const helloProvider = await app.get(HelloProvider);
     expect(helloProvider!.hello()).toBe("hello world");
+  });
+
+  describe("application context aware", () => {
+    it("should set application context to component.", async () => {
+      @Component()
+      class MyProvider implements IApplicationContextAware {
+        public context: CoreContext;
+        setApplicationContext(coreContext: CoreContext): void {
+          this.context = coreContext;
+        }
+      }
+
+      const container = new CoreContainer();
+      const app = new CoreContext([MyProvider], container);
+      await app.init();
+      const myProvider = await app.get(MyProvider);
+      expect(myProvider!.context).toBeInstanceOf(CoreContext);
+    });
   });
 
   test("loadModule", async () => {

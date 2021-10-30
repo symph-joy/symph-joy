@@ -84,7 +84,7 @@ import HelloModel from './models/HelloModel'
     message: store.hello.message,    // 绑定model中的数据
   }
 })
-export default class HelloController extends Component {
+export default class ThirdHelloController extends Component {
 
   @autowire()                       // 声明依赖的Model
   helloModel: HelloModel      

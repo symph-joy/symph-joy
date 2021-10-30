@@ -1,5 +1,5 @@
-import { HookType, IComponentWrapper, Autowire, Component, InjectorHookTaps, Optional, ProviderLifecycle, RegisterTap, AutowireHook, IHook } from "@symph/core";
-import { PROP_KEY_JOY_CONFIG_SET_VALUE, SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_INIT_VALUE, SYMPH_CONFIG_LOADERS, SYMPH_CONFIG_OPTIONS } from "./constants";
+import { Autowire, AutowireHook, Component, HookType, IComponentWrapper, IHook, InjectorHookTaps, Optional, IComponentLifecycle, RegisterTap } from "@symph/core";
+import { PROP_KEY_JOY_CONFIG_SET_VALUE, SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_INIT_VALUE, SYMPH_CONFIG_OPTIONS } from "./constants";
 import { object } from "prop-types";
 import { isNil } from "@symph/core/dist/utils/shared.utils";
 import { VALIDATED_ENV_PROPNAME } from "./config.constants";
@@ -8,7 +8,6 @@ import has from "lodash.has";
 import set from "lodash.set";
 import merge from "lodash.merge";
 import { NoInferType } from "./types";
-import { ConfigLoader } from "./loader/loaders/config-loader";
 import { ConfigLoaderFactory } from "./loader/factories/config-loader-factory";
 
 const CONFIG_FILE = "joy.config.js";
@@ -18,7 +17,7 @@ export interface ConfigServiceOptions {
 }
 
 @Component()
-export class ConfigService<K = Record<string, any>> implements InjectorHookTaps, ProviderLifecycle {
+export class ConfigService<K = Record<string, any>> implements InjectorHookTaps, IComponentLifecycle {
   @Optional()
   @Autowire()
   public configLoaderFactory?: ConfigLoaderFactory;
@@ -40,7 +39,7 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
   private onJoyConfigChanged: IHook;
 
   @RegisterTap()
-  componentAfterPropertiesSet<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
+  componentAfterInitialize<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
     const setConfigValue = (instance as any)[PROP_KEY_JOY_CONFIG_SET_VALUE];
     if (setConfigValue) {
       setConfigValue.call(instance, this.internalConfig);
@@ -75,7 +74,7 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
 
   private readonly cache: Partial<K> = {} as any;
 
-  async afterPropertiesSet(): Promise<void> {
+  async initialize(): Promise<void> {
     if (this.configOptions.isAutoLoadConfig) {
       await this.loadConfig();
     }

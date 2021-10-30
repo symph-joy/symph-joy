@@ -158,7 +158,7 @@ declare module 'webpack' {
     }
 
     interface Output {
-      /** When used in tandem with output.library and output.libraryTarget, this option allows users to insert comments within the export wrapper. */
+      /** When used in tandem with output.library and output.libraryTarget, this option allows users to insertRoute comments within the export wrapper. */
       auxiliaryComment?: string | AuxiliaryCommentObject
       /** The filename of the entry chunk as relative path inside the output.path directory. */
       filename?: string | Function

@@ -1,16 +1,17 @@
 import { Autowire, Component, Optional } from "../decorators/core";
-import { ProviderLifecycle, Scope } from "../interfaces";
+import { IComponentLifecycle, Scope } from "../interfaces";
 import { CoreContainer } from "../injector";
 import { ComponentWrapper } from "./component-wrapper";
 import { Injector } from "../injector/injector";
-import { createProviderWrappers } from "../../test/injector/helper";
+import { registerComponents } from "../../test/injector/helper";
 import sinon from "sinon";
 import { UnknownDependenciesException } from "../errors/exceptions/unknown-dependencies.exception";
 import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dependency-type.exception";
 import { HookCenter } from "../hook/hook-center";
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
+import { createPackage } from "../package/package";
 
-function instanceContainer(): CoreContainer {
+function instanceTestContainer(): CoreContainer {
   const container = new CoreContainer();
   const hookCenter = new HookCenter();
   hookCenter.registerProviderHooks(container);
@@ -48,7 +49,7 @@ describe("injector", () => {
       let singProviderWrapper: ComponentWrapper<SingProvider>, transProviderWrapper: ComponentWrapper<TransProvider>, mainTestWrapper: ComponentWrapper<MainTest>, container: CoreContainer;
 
       beforeAll(async () => {
-        container = instanceContainer();
+        container = instanceTestContainer();
         transProviderWrapper = new ComponentWrapper({
           name: "transProvider",
           type: TransProvider,
@@ -134,7 +135,7 @@ describe("injector", () => {
 
     describe("load factory provider", () => {
       test("should return the value created by factory", async () => {
-        const container = instanceContainer();
+        const container = instanceTestContainer();
 
         class Provider1 {}
 
@@ -157,7 +158,7 @@ describe("injector", () => {
       });
 
       test("should return different instance, when cope=TRANSIENT", async () => {
-        const container = instanceContainer();
+        const container = instanceTestContainer();
 
         class Provider1 {}
 
@@ -177,7 +178,7 @@ describe("injector", () => {
       });
 
       test("should return the value created by factory, with custom inject param.", async () => {
-        const container = instanceContainer();
+        const container = instanceTestContainer();
 
         class Provider1 {
           constructor(public msg: string) {}
@@ -206,7 +207,7 @@ describe("injector", () => {
       });
 
       test("should return the value created by factory, with optional param.", async () => {
-        const container = instanceContainer();
+        const container = instanceTestContainer();
 
         class Provider1 {
           constructor(public msg: string) {}
@@ -238,8 +239,8 @@ describe("injector", () => {
       @Component({ name: symbolName })
       class MyProvider {}
 
-      const container = instanceContainer();
-      const [myWrapper] = createProviderWrappers(container, MyProvider);
+      const container = instanceTestContainer();
+      const [myWrapper] = registerComponents(container, MyProvider);
       const wrapperA = container.getProvider(symbolName);
       const wrapperB = container.getProvider(MyProvider);
 
@@ -251,8 +252,8 @@ describe("injector", () => {
       @Component({ name: "a", alias: ["b"] })
       class MyProvider {}
 
-      const container = instanceContainer();
-      const [myWrapper] = createProviderWrappers(container, MyProvider);
+      const container = instanceTestContainer();
+      const [myWrapper] = registerComponents(container, MyProvider);
       const wrapperA = container.getProvider("a");
       const wrapperB = container.getProvider("b");
       expect(wrapperA).not.toBeNull();
@@ -279,8 +280,8 @@ describe("injector", () => {
         public helloOptional: HelloOptional;
       }
 
-      const container = instanceContainer();
-      const [mainWrapper, helloWrapper] = createProviderWrappers(container, Main, Hello);
+      const container = instanceTestContainer();
+      const [mainWrapper, helloWrapper] = registerComponents(container, Main, Hello);
 
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance.hello).toBeInstanceOf(Hello);
@@ -299,8 +300,8 @@ describe("injector", () => {
         constructor(@Optional() @Autowire() public hello: Hello, @Optional() @Autowire() public helloOptional: HelloOptional) {}
       }
 
-      const container = instanceContainer();
-      const [mainWrapper, helloWrapper] = createProviderWrappers(container, Main, Hello);
+      const container = instanceTestContainer();
+      const [mainWrapper, helloWrapper] = registerComponents(container, Main, Hello);
 
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance.hello).toBeInstanceOf(Hello);
@@ -316,8 +317,8 @@ describe("injector", () => {
       @Component()
       class Sub1 extends SuperClazz {}
 
-      const container = instanceContainer();
-      const [subWrapper] = createProviderWrappers(container, Sub1);
+      const container = instanceTestContainer();
+      const [subWrapper] = registerComponents(container, Sub1);
 
       const wrapper = container.getProvider(SuperClazz);
       expect(wrapper?.type).toBe(Sub1);
@@ -335,8 +336,8 @@ describe("injector", () => {
       @Component()
       class Sub2 extends SuperClazz {}
 
-      const container = instanceContainer();
-      const [sub1Wrapper, sub2Wrapper] = createProviderWrappers(container, Sub1, Sub2);
+      const container = instanceTestContainer();
+      const [sub1Wrapper, sub2Wrapper] = registerComponents(container, Sub1, Sub2);
 
       let err: Error | undefined = undefined;
       try {
@@ -363,9 +364,9 @@ describe("injector", () => {
         constructor(@Autowire("thisIsWrong") public dep: Dep) {}
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
 
-      const [mainWrapper, depWrapper, wrongMainWrapper] = createProviderWrappers(container, Main, Dep, WrongMain);
+      const [mainWrapper, depWrapper, wrongMainWrapper] = registerComponents(container, Main, Dep, WrongMain);
 
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance).toBeTruthy();
@@ -393,9 +394,9 @@ describe("injector", () => {
         constructor(@Autowire("thisIsWrong") public dep: Dep) {}
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
 
-      const [mainWrapper, depWrapper] = createProviderWrappers(container, Main, Dep);
+      const [mainWrapper, depWrapper] = registerComponents(container, Main, Dep);
 
       let error;
       let wrongInstance: Main | undefined = undefined;
@@ -428,8 +429,8 @@ describe("injector", () => {
         public propSubDep: Dep;
       }
 
-      const container = instanceContainer();
-      const [mainWrapper, depWrapper, subDepWrapper] = createProviderWrappers(container, Main, Dep, SubDep);
+      const container = instanceTestContainer();
+      const [mainWrapper, depWrapper, subDepWrapper] = registerComponents(container, Main, Dep, SubDep);
 
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance).toBeTruthy();
@@ -452,8 +453,8 @@ describe("injector", () => {
         constructor(@Autowire(Object) public constructorDep2: Dep) {}
       }
 
-      const container = instanceContainer();
-      const [mainWrapper, depWrapper] = createProviderWrappers(container, Main, Dep);
+      const container = instanceTestContainer();
+      const [mainWrapper, depWrapper] = registerComponents(container, Main, Dep);
 
       try {
         const instance = await injector.loadProvider<Main>(mainWrapper, container);
@@ -483,8 +484,8 @@ describe("injector", () => {
         constructor(@Autowire(Dep1) public constructorDep2: Dep2) {}
       }
 
-      const container = instanceContainer();
-      const [mainWrapper, dep1Wrapper, dep2Wrapper] = createProviderWrappers(container, Main, Dep1, Dep2);
+      const container = instanceTestContainer();
+      const [mainWrapper, dep1Wrapper, dep2Wrapper] = registerComponents(container, Main, Dep1, Dep2);
 
       try {
         const instance = await injector.loadProvider<Main>(mainWrapper, container);
@@ -514,8 +515,8 @@ describe("injector", () => {
         constructor(@Autowire(BaseDep) public constructorDep2: Dep) {}
       }
 
-      const container = instanceContainer();
-      const [mainWrapper, baseDepWrapper, depWrapper] = createProviderWrappers(container, Main, BaseDep, Dep);
+      const container = instanceTestContainer();
+      const [mainWrapper, baseDepWrapper, depWrapper] = registerComponents(container, Main, BaseDep, Dep);
 
       try {
         const instance = await injector.loadProvider<Main>(mainWrapper, container);
@@ -541,8 +542,8 @@ describe("injector", () => {
         public subDep2: Dep;
       }
 
-      const container = instanceContainer();
-      const [mainWrapper, dep1Wrapper, dep2Wrapper] = createProviderWrappers(container, Main, SubDep1, SubDep2);
+      const container = instanceTestContainer();
+      const [mainWrapper, dep1Wrapper, dep2Wrapper] = registerComponents(container, Main, SubDep1, SubDep2);
       const instance = await injector.loadProvider<Main>(mainWrapper, container);
       expect(instance).toBeTruthy();
       expect(instance.subDep2).toBeInstanceOf(SubDep2);
@@ -571,11 +572,11 @@ describe("injector", () => {
         public dep2: Dep2;
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
 
       class TestModule {}
 
-      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, Main);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = registerComponents(container, Dep1, Dep2, Main);
 
       const instance = injector.loadInstance(mainWrapper, container).getResult() as Main;
 
@@ -588,7 +589,7 @@ describe("injector", () => {
       @Component()
       class Dep1 {}
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
       const dep1ProviderWrapper = new ComponentWrapper({
         name: "dep1",
         type: Dep1,
@@ -618,8 +619,8 @@ describe("injector", () => {
         constructor(@Autowire() public dep1: Dep1) {}
       }
 
-      const container = instanceContainer();
-      const [mainWrapper] = createProviderWrappers(container, Main);
+      const container = instanceTestContainer();
+      const [mainWrapper] = registerComponents(container, Main);
       const dep1ProviderWrapper = new ComponentWrapper({
         name: "dep1",
         type: Dep1,
@@ -661,9 +662,9 @@ describe("injector", () => {
         constructor(public dep1: Dep1, public dep2: Dep2) {}
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
 
-      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, Main);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = registerComponents(container, Dep1, Dep2, Main);
 
       const loadCtorMetadata = sinonBox.spy(injector, "loadCtorMetadata");
 
@@ -700,9 +701,9 @@ describe("injector", () => {
         public dep2: Dep2;
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
 
-      const [dep1Wrapper, dep2Wrapper, mainWrapper] = createProviderWrappers(container, Dep1, Dep2, Main);
+      const [dep1Wrapper, dep2Wrapper, mainWrapper] = registerComponents(container, Dep1, Dep2, Main);
 
       const loadCtorMetadata = sinonBox.spy(injector, "loadPropertiesMetadata");
 
@@ -736,9 +737,9 @@ describe("injector", () => {
         public dep: Dep;
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
 
-      const [mainWrapper, depWrapper] = createProviderWrappers(container, Main, Dep);
+      const [mainWrapper, depWrapper] = registerComponents(container, Main, Dep);
 
       const addProvider = sinonBox.spy(container, "addProvider");
 
@@ -749,7 +750,7 @@ describe("injector", () => {
     });
 
     it("should dynamic loading the model instance, at run time", async () => {
-      @Component({ autoRegister: true })
+      @Component({ lazyRegister: true })
       class Dep {}
 
       @Component()
@@ -758,9 +759,9 @@ describe("injector", () => {
         public dep: Dep;
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
 
-      const [mainWrapper] = createProviderWrappers(container, Main);
+      const [mainWrapper] = registerComponents(container, Main);
 
       const addProvider = sinonBox.spy(container, "addProvider");
 
@@ -793,16 +794,15 @@ describe("injector", () => {
         }
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
 
-      createProviderWrappers(container, Dep);
+      registerComponents(container, Dep);
 
       const depWrapper = container.getProvider(Dep)!;
 
       const instance = (await injector.loadProvider(depWrapper, container)) as Dep;
       expect(instance.getMessage()).toBe("message");
-
-      container.replace("dep", { type: Dep1, useClass: Dep1 });
+      container.replace(depWrapper?.id, { type: Dep1, useClass: Dep1 });
       const dep1Wrapper = container.getProvider(Dep)!;
 
       const instance1 = (await injector.loadProvider(dep1Wrapper, container)) as Dep;
@@ -813,41 +813,41 @@ describe("injector", () => {
   describe("life cycle", () => {
     it("should call life cycle methods.", async () => {
       @Component()
-      class MyProvider implements ProviderLifecycle {
-        public afterPropertiesSetMsg: string;
+      class MyProvider implements IComponentLifecycle {
+        // public afterPropertiesSetMsg: string;
         public initializeMsg: string;
 
-        afterPropertiesSet(): Promise<void> | void {
-          this.afterPropertiesSetMsg = "hello afterPropertiesSet";
-        }
+        // afterPropertiesSet(): Promise<void> | void {
+        //   this.afterPropertiesSetMsg = "hello afterPropertiesSet";
+        // }
 
         initialize(): Promise<void> | void {
           this.initializeMsg = "hello initialize";
         }
       }
 
-      const container = instanceContainer();
-      createProviderWrappers(container, MyProvider);
+      const container = instanceTestContainer();
+      registerComponents(container, MyProvider);
       const myWrapper = container.getProvider(MyProvider)!;
       const instance = (await injector.loadProvider(myWrapper, container)) as MyProvider;
-      expect(instance.afterPropertiesSetMsg).toBe("hello afterPropertiesSet");
+      // expect(instance.afterPropertiesSetMsg).toBe("hello afterPropertiesSet");
       expect(instance.initializeMsg).toBe("hello initialize");
     });
 
     it("should call life cycle async methods.", async () => {
       @Component()
-      class MyProvider implements ProviderLifecycle {
-        public afterPropertiesSetMsg: string;
+      class MyProvider implements IComponentLifecycle {
+        // public afterPropertiesSetMsg: string;
         public initializeMsg: string;
 
-        async afterPropertiesSet(): Promise<void> {
-          await new Promise<void>((resolve) => {
-            setTimeout(() => {
-              this.afterPropertiesSetMsg = "hello afterPropertiesSet";
-              resolve();
-            }, 5);
-          });
-        }
+        // async afterPropertiesSet(): Promise<void> {
+        //   await new Promise<void>((resolve) => {
+        //     setTimeout(() => {
+        //       this.afterPropertiesSetMsg = "hello afterPropertiesSet";
+        //       resolve();
+        //     }, 5);
+        //   });
+        // }
 
         async initialize(): Promise<void> {
           await new Promise<void>((resolve) => {
@@ -859,30 +859,30 @@ describe("injector", () => {
         }
       }
 
-      const container = instanceContainer();
-      createProviderWrappers(container, MyProvider);
+      const container = instanceTestContainer();
+      registerComponents(container, MyProvider);
       const myWrapper = container.getProvider(MyProvider)!;
       const instance = (await injector.loadProvider(myWrapper, container)) as MyProvider;
-      expect(instance.afterPropertiesSetMsg).toBe("hello afterPropertiesSet");
+      // expect(instance.afterPropertiesSetMsg).toBe("hello afterPropertiesSet");
       expect(instance.initializeMsg).toBe("hello initialize");
     });
 
-    it("should not call life cycle methods, when registered as a factory provider.", async () => {
+    it("should call life cycle methods, when registered as a factory provider.", async () => {
       @Component()
-      class MyProvider implements ProviderLifecycle {
-        public afterPropertiesSetMsg = "hello";
+      class MyProvider implements IComponentLifecycle {
+        // public afterPropertiesSetMsg = "hello";
         public initializeMsg = "hello";
 
-        afterPropertiesSet(): Promise<void> | void {
-          this.afterPropertiesSetMsg = "hello afterPropertiesSet";
-        }
+        // afterPropertiesSet(): Promise<void> | void {
+        //   this.afterPropertiesSetMsg = "hello afterPropertiesSet";
+        // }
 
         initialize(): Promise<void> | void {
           this.initializeMsg = "hello initialize";
         }
       }
 
-      const container = instanceContainer();
+      const container = instanceTestContainer();
       container.addCustomFactory({
         name: "MyProvider",
         type: MyProvider,
@@ -892,8 +892,109 @@ describe("injector", () => {
       });
       const myWrapper = container.getProvider(MyProvider)!;
       const instance = (await injector.loadProvider(myWrapper, container)) as MyProvider;
-      expect(instance.afterPropertiesSetMsg).toBe("hello");
-      expect(instance.initializeMsg).toBe("hello");
+      // expect(instance.afterPropertiesSetMsg).toBe("hello");
+      expect(instance.initializeMsg).toBe("hello initialize");
     });
+  });
+
+  describe("component with package", () => {
+    test("Should GLOBAL access control work well.", async () => {
+      const helloPackage = createPackage("helloPackage");
+
+      @helloPackage.Package()
+      @Component({ global: true })
+      class PublicComp {}
+
+      @Component()
+      class GlobalComp {
+        constructor(@Autowire("publicComp") public publicComp: PublicComp) {}
+      }
+
+      const container = instanceTestContainer();
+      registerComponents(container, PublicComp, GlobalComp);
+      const publicWrapper = container.getProviderByName("publicComp");
+      expect(publicWrapper?.useClass).toBe(PublicComp);
+
+      const globalWrapper = container.getProvider(GlobalComp)!;
+      const globalComp = await injector.loadProvider(globalWrapper, container);
+      expect(globalComp.publicComp).toBeInstanceOf(PublicComp);
+    });
+
+    test("Should NOT GLOBAL access control work well.", async () => {
+      const helloPackage = createPackage("HelloPackage");
+
+      @helloPackage.Package()
+      @Component({ global: false })
+      class PrivateComp {}
+
+      @Component()
+      class GlobalComp {
+        constructor(@Autowire("privateComp") public dep: PrivateComp) {}
+      }
+
+      const container = instanceTestContainer();
+      registerComponents(container, PrivateComp, GlobalComp);
+      let privateWrapper = container.getProviderByName("privateComp");
+      expect(privateWrapper).toBeFalsy();
+      privateWrapper = container.getProviderByName("privateComp", "HelloPackage"); // specify package,
+      expect(privateWrapper).toBeTruthy();
+      expect(privateWrapper?.useClass).toBe(PrivateComp);
+
+      const globalWrapper = container.getProvider(GlobalComp)!;
+      let loadErr = null;
+      try {
+        await injector.loadProvider(globalWrapper, container);
+      } catch (err) {
+        loadErr = err;
+      }
+      expect(loadErr?.message).toContain("privateComp");
+
+      // expect(globalComp.dep).toBeInstanceOf(PrivateComp)
+    });
+
+    test("Should load component in same package priority.", async () => {
+      const helloPackage = createPackage("HelloPackage");
+
+      @helloPackage.Package()
+      @Component({ name: "comp1" })
+      class Comp1 {}
+
+      @helloPackage.Package()
+      @Component({ name: "comp2" })
+      class Comp2 {
+        constructor(@Autowire("comp1") public dep: Object) {}
+      }
+
+      @Component({ name: "comp1" })
+      class Comp3 {}
+
+      const container = instanceTestContainer();
+      registerComponents(container, Comp1, Comp2, Comp3);
+      const wrapper2 = container.getProvider(Comp2)!;
+      const comp2 = await injector.loadProvider(wrapper2, container);
+      expect(comp2.dep).toBeInstanceOf(Comp1);
+    });
+  });
+
+  test("Should load component in global public domain, when host is global.", async () => {
+    const helloPackage = createPackage("HelloPackage");
+
+    @helloPackage.Package()
+    @Component({ name: "comp1" })
+    class Comp1 {}
+
+    @Component({ name: "comp2" })
+    class Comp2 {
+      constructor(@Autowire("comp1") public dep: Object) {}
+    }
+
+    @Component({ name: "comp1" })
+    class Comp3 {}
+
+    const container = instanceTestContainer();
+    registerComponents(container, Comp1, Comp2, Comp3);
+    const wrapper2 = container.getProvider(Comp2)!;
+    const comp2 = await injector.loadProvider(wrapper2, container);
+    expect(comp2.dep).toBeInstanceOf(Comp3);
   });
 });

@@ -6,8 +6,7 @@ import sources from "webpack-sources";
 import CssDependency from "./CssDependency";
 import CssModule from "./CssModule";
 
-const { ConcatSource, SourceMapSource, OriginalSource } =
-  webpack.sources || sources;
+const { ConcatSource, SourceMapSource, OriginalSource } = webpack.sources || sources;
 const {
   Template,
   util: { createHash },
@@ -61,42 +60,24 @@ class MiniCssExtractPlugin {
         this.options.chunkFilename = filename;
       } else {
         // Elsewise prefix '[id].' in front of the basename to make it changing
-        this.options.chunkFilename = filename.replace(
-          /(^|\/)([^/]*(?:\?|$))/,
-          "$1[id].$2"
-        );
+        this.options.chunkFilename = filename.replace(/(^|\/)([^/]*(?:\?|$))/, "$1[id].$2");
       }
     }
   }
 
   apply(compiler) {
     compiler.hooks.thisCompilation.tap(pluginName, (compilation) => {
-      compilation.dependencyFactories.set(
-        CssDependency,
-        new CssModuleFactory()
-      );
+      compilation.dependencyFactories.set(CssDependency, new CssModuleFactory());
 
-      compilation.dependencyTemplates.set(
-        CssDependency,
-        new CssDependencyTemplate()
-      );
+      compilation.dependencyTemplates.set(CssDependency, new CssDependencyTemplate());
 
       const renderManifestFn = (result, { chunk }) => {
-        const renderedModules = Array.from(
-          getModulesIterable(compilation, chunk)
-        ).filter((module) => module.type === MODULE_TYPE);
+        const renderedModules = Array.from(getModulesIterable(compilation, chunk)).filter((module) => module.type === MODULE_TYPE);
 
         if (renderedModules.length > 0) {
           result.push({
-            render: () =>
-              this.renderContentAsset(
-                compilation,
-                chunk,
-                renderedModules,
-                compilation.runtimeTemplate.requestShortener
-              ),
-            filenameTemplate: ({ chunk: chunkData }) =>
-              this.options.moduleFilename(chunkData),
+            render: () => this.renderContentAsset(compilation, chunk, renderedModules, compilation.runtimeTemplate.requestShortener),
+            filenameTemplate: ({ chunk: chunkData }) => this.options.moduleFilename(chunkData),
             pathOptions: {
               chunk,
               contentHashType: MODULE_TYPE,
@@ -112,14 +93,8 @@ class MiniCssExtractPlugin {
       } else {
         // In webpack 5 the 2 separate hooks are now one hook: `compilation.hooks.renderManifest`
         // So we no longer have to double-apply the same function
-        compilation.mainTemplate.hooks.renderManifest.tap(
-          pluginName,
-          renderManifestFn
-        );
-        compilation.chunkTemplate.hooks.renderManifest.tap(
-          pluginName,
-          renderManifestFn
-        );
+        compilation.mainTemplate.hooks.renderManifest.tap(pluginName, renderManifestFn);
+        compilation.chunkTemplate.hooks.renderManifest.tap(pluginName, renderManifestFn);
       }
 
       const handleHashForChunk = (hash, chunk) => {
@@ -130,11 +105,7 @@ class MiniCssExtractPlugin {
         }
 
         if (REGEXP_CONTENTHASH.test(chunkFilename)) {
-          hash.update(
-            JSON.stringify(
-              chunk.getChunkMaps(true).contentHash[MODULE_TYPE] || {}
-            )
-          );
+          hash.update(JSON.stringify(chunk.getChunkMaps(true).contentHash[MODULE_TYPE] || {}));
         }
 
         if (REGEXP_NAME.test(chunkFilename)) {
@@ -142,18 +113,13 @@ class MiniCssExtractPlugin {
         }
       };
       if (isWebpack5) {
-        const JSModulesHooks = webpack.javascript.JavascriptModulesPlugin.getCompilationHooks(
-          compilation
-        );
+        const JSModulesHooks = webpack.javascript.JavascriptModulesPlugin.getCompilationHooks(compilation);
         JSModulesHooks.chunkHash.tap(pluginName, (chunk, hash) => {
           if (!chunk.hasRuntime()) return;
           return handleHashForChunk(hash, chunk);
         });
       } else {
-        compilation.mainTemplate.hooks.hashForChunk.tap(
-          pluginName,
-          handleHashForChunk
-        );
+        compilation.mainTemplate.hooks.hashForChunk.tap(pluginName, handleHashForChunk);
       }
 
       compilation.hooks.contentHash.tap(pluginName, (chunk) => {
@@ -183,9 +149,7 @@ class MiniCssExtractPlugin {
 
         const { contentHash } = chunk;
 
-        contentHash[MODULE_TYPE] = hash
-          .digest(hashDigest)
-          .substring(0, hashDigestLength);
+        contentHash[MODULE_TYPE] = hash.digest(hashDigest).substring(0, hashDigestLength);
       });
 
       const { mainTemplate } = compilation;
@@ -194,153 +158,107 @@ class MiniCssExtractPlugin {
         const chunkMap = this.getCssChunkObject(compilation, chunk);
 
         if (Object.keys(chunkMap).length > 0) {
-          return Template.asString([
-            source,
-            "",
-            "// object to store loaded CSS chunks",
-            "var installedCssChunks = {",
-            Template.indent(
-              chunk.ids.map((id) => `${JSON.stringify(id)}: 0`).join(",\n")
-            ),
-            "};",
-          ]);
+          return Template.asString([source, "", "// object to store loaded CSS chunks", "var installedCssChunks = {", Template.indent(chunk.ids.map((id) => `${JSON.stringify(id)}: 0`).join(",\n")), "};"]);
         }
 
         return source;
       });
 
-      mainTemplate.hooks.requireEnsure.tap(
-        pluginName,
-        (source, chunk, hash) => {
-          const chunkMap = this.getCssChunkObject(compilation, chunk);
+      mainTemplate.hooks.requireEnsure.tap(pluginName, (source, chunk, hash) => {
+        const chunkMap = this.getCssChunkObject(compilation, chunk);
 
-          if (Object.keys(chunkMap).length > 0) {
-            const chunkMaps = chunk.getChunkMaps();
-            const { crossOriginLoading } = mainTemplate.outputOptions;
-            const linkHrefPath = mainTemplate.getAssetPath(
-              JSON.stringify(this.options.chunkFilename),
-              {
-                hash: `" + ${mainTemplate.renderCurrentHashCode(hash)} + "`,
-                hashWithLength: (length) =>
-                  `" + ${mainTemplate.renderCurrentHashCode(hash, length)} + "`,
-                chunk: {
-                  id: '" + chunkId + "',
-                  hash: `" + ${JSON.stringify(chunkMaps.hash)}[chunkId] + "`,
-                  hashWithLength(length) {
-                    const shortChunkHashMap = Object.create(null);
+        if (Object.keys(chunkMap).length > 0) {
+          const chunkMaps = chunk.getChunkMaps();
+          const { crossOriginLoading } = mainTemplate.outputOptions;
+          const linkHrefPath = mainTemplate.getAssetPath(JSON.stringify(this.options.chunkFilename), {
+            hash: `" + ${mainTemplate.renderCurrentHashCode(hash)} + "`,
+            hashWithLength: (length) => `" + ${mainTemplate.renderCurrentHashCode(hash, length)} + "`,
+            chunk: {
+              id: '" + chunkId + "',
+              hash: `" + ${JSON.stringify(chunkMaps.hash)}[chunkId] + "`,
+              hashWithLength(length) {
+                const shortChunkHashMap = Object.create(null);
 
-                    for (const chunkId of Object.keys(chunkMaps.hash)) {
-                      if (typeof chunkMaps.hash[chunkId] === "string") {
-                        shortChunkHashMap[chunkId] = chunkMaps.hash[
-                          chunkId
-                        ].substring(0, length);
-                      }
+                for (const chunkId of Object.keys(chunkMaps.hash)) {
+                  if (typeof chunkMaps.hash[chunkId] === "string") {
+                    shortChunkHashMap[chunkId] = chunkMaps.hash[chunkId].substring(0, length);
+                  }
+                }
+
+                return `" + ${JSON.stringify(shortChunkHashMap)}[chunkId] + "`;
+              },
+              contentHash: {
+                [MODULE_TYPE]: `" + ${JSON.stringify(chunkMaps.contentHash[MODULE_TYPE])}[chunkId] + "`,
+              },
+              contentHashWithLength: {
+                [MODULE_TYPE]: (length) => {
+                  const shortContentHashMap = {};
+                  const contentHash = chunkMaps.contentHash[MODULE_TYPE];
+
+                  for (const chunkId of Object.keys(contentHash)) {
+                    if (typeof contentHash[chunkId] === "string") {
+                      shortContentHashMap[chunkId] = contentHash[chunkId].substring(0, length);
                     }
+                  }
 
-                    return `" + ${JSON.stringify(
-                      shortChunkHashMap
-                    )}[chunkId] + "`;
-                  },
-                  contentHash: {
-                    [MODULE_TYPE]: `" + ${JSON.stringify(
-                      chunkMaps.contentHash[MODULE_TYPE]
-                    )}[chunkId] + "`,
-                  },
-                  contentHashWithLength: {
-                    [MODULE_TYPE]: (length) => {
-                      const shortContentHashMap = {};
-                      const contentHash = chunkMaps.contentHash[MODULE_TYPE];
-
-                      for (const chunkId of Object.keys(contentHash)) {
-                        if (typeof contentHash[chunkId] === "string") {
-                          shortContentHashMap[chunkId] = contentHash[
-                            chunkId
-                          ].substring(0, length);
-                        }
-                      }
-
-                      return `" + ${JSON.stringify(
-                        shortContentHashMap
-                      )}[chunkId] + "`;
-                    },
-                  },
-                  name: `" + (${JSON.stringify(
-                    chunkMaps.name
-                  )}[chunkId]||chunkId) + "`,
+                  return `" + ${JSON.stringify(shortContentHashMap)}[chunkId] + "`;
                 },
-                contentHashType: MODULE_TYPE,
-              }
-            );
+              },
+              name: `" + (${JSON.stringify(chunkMaps.name)}[chunkId]||chunkId) + "`,
+            },
+            contentHashType: MODULE_TYPE,
+          });
 
-            return Template.asString([
-              source,
-              "",
-              `// ${pluginName} CSS loading`,
-              `var cssChunks = ${JSON.stringify(chunkMap)};`,
-              "if(installedCssChunks[chunkId]) promises.push(installedCssChunks[chunkId]);",
-              "else if(installedCssChunks[chunkId] !== 0 && cssChunks[chunkId]) {",
+          return Template.asString([
+            source,
+            "",
+            `// ${pluginName} CSS loading`,
+            `var cssChunks = ${JSON.stringify(chunkMap)};`,
+            "if(installedCssChunks[chunkId]) promises.push(installedCssChunks[chunkId]);",
+            "else if(installedCssChunks[chunkId] !== 0 && cssChunks[chunkId]) {",
+            Template.indent([
+              "promises.push(installedCssChunks[chunkId] = new Promise(function(resolve, reject) {",
               Template.indent([
-                "promises.push(installedCssChunks[chunkId] = new Promise(function(resolve, reject) {",
+                `var href = ${linkHrefPath};`,
+                `var fullhref = ${mainTemplate.requireFn}.p + href;`,
+                'var existingLinkTags = document.getElementsByTagName("link");',
+                "for(var i = 0; i < existingLinkTags.length; i++) {",
+                Template.indent(["var tag = existingLinkTags[i];", 'var dataHref = tag.getAttribute("data-href") || tag.getAttribute("href");', 'if(tag.rel === "stylesheet" && (dataHref === href || dataHref === fullhref)) return resolve();']),
+                "}",
+                'var existingStyleTags = document.getElementsByTagName("style");',
+                "for(var i = 0; i < existingStyleTags.length; i++) {",
+                Template.indent(["var tag = existingStyleTags[i];", 'var dataHref = tag.getAttribute("data-href");', "if(dataHref === href || dataHref === fullhref) return resolve();"]),
+                "}",
+                'var linkTag = document.createElement("link");',
+                'linkTag.rel = "stylesheet";',
+                'linkTag.type = "text/css";',
+                "linkTag.onload = resolve;",
+                "linkTag.onerror = function(event) {",
                 Template.indent([
-                  `var href = ${linkHrefPath};`,
-                  `var fullhref = ${mainTemplate.requireFn}.p + href;`,
-                  'var existingLinkTags = document.getElementsByTagName("link");',
-                  "for(var i = 0; i < existingLinkTags.length; i++) {",
-                  Template.indent([
-                    "var tag = existingLinkTags[i];",
-                    'var dataHref = tag.getAttribute("data-href") || tag.getAttribute("href");',
-                    'if(tag.rel === "stylesheet" && (dataHref === href || dataHref === fullhref)) return resolve();',
-                  ]),
-                  "}",
-                  'var existingStyleTags = document.getElementsByTagName("style");',
-                  "for(var i = 0; i < existingStyleTags.length; i++) {",
-                  Template.indent([
-                    "var tag = existingStyleTags[i];",
-                    'var dataHref = tag.getAttribute("data-href");',
-                    "if(dataHref === href || dataHref === fullhref) return resolve();",
-                  ]),
-                  "}",
-                  'var linkTag = document.createElement("link");',
-                  'linkTag.rel = "stylesheet";',
-                  'linkTag.type = "text/css";',
-                  "linkTag.onload = resolve;",
-                  "linkTag.onerror = function(event) {",
-                  Template.indent([
-                    "var request = event && event.target && event.target.src || fullhref;",
-                    'var err = new Error("DynamicLoading CSS chunk " + chunkId + " failed.\\n(" + request + ")");',
-                    'err.code = "CSS_CHUNK_LOAD_FAILED";',
-                    "err.request = request;",
-                    "delete installedCssChunks[chunkId]",
-                    "linkTag.parentNode.removeChild(linkTag)",
-                    "reject(err);",
-                  ]),
-                  "};",
-                  "linkTag.href = fullhref;",
-                  crossOriginLoading
-                    ? Template.asString([
-                        `if (linkTag.href.indexOf(window.location.origin + '/') !== 0) {`,
-                        Template.indent(
-                          `linkTag.crossOrigin = ${JSON.stringify(
-                            crossOriginLoading
-                          )};`
-                        ),
-                        "}",
-                      ])
-                    : "",
-                  'var head = document.getElementsByTagName("head")[0];',
-                  "head.appendChild(linkTag);",
+                  "var request = event && event.target && event.target.src || fullhref;",
+                  'var err = new Error("DynamicLoading CSS chunk " + chunkId + " failed.\\n(" + request + ")");',
+                  'err.code = "CSS_CHUNK_LOAD_FAILED";',
+                  "err.request = request;",
+                  "delete installedCssChunks[chunkId]",
+                  "linkTag.parentNode.removeChild(linkTag)",
+                  "reject(err);",
                 ]),
-                "}).then(function() {",
-                Template.indent(["installedCssChunks[chunkId] = 0;"]),
-                "}));",
+                "};",
+                "linkTag.href = fullhref;",
+                crossOriginLoading ? Template.asString([`if (linkTag.href.indexOf(window.location.origin + '/') !== 0) {`, Template.indent(`linkTag.crossOrigin = ${JSON.stringify(crossOriginLoading)};`), "}"]) : "",
+                'var head = document.getElementsByTagName("head")[0];',
+                "head.appendChild(linkTag);",
               ]),
-              "}",
-            ]);
-          }
-
-          return source;
+              "}).then(function() {",
+              Template.indent(["installedCssChunks[chunkId] = 0;"]),
+              "}));",
+            ]),
+            "}",
+          ]);
         }
-      );
+
+        return source;
+      });
     });
   }
 
@@ -364,14 +282,11 @@ class MiniCssExtractPlugin {
 
     const [chunkGroup] = chunk.groupsIterable;
 
-    const getModulePostOrderIndex =
-      chunkGroup.getModulePostOrderIndex || chunkGroup.getModuleIndex2;
+    const getModulePostOrderIndex = chunkGroup.getModulePostOrderIndex || chunkGroup.getModuleIndex2;
     if (typeof getModulePostOrderIndex === "function") {
       // Store dependencies for modules
       const moduleDependencies = new Map(modules.map((m) => [m, new Set()]));
-      const moduleDependenciesReasons = new Map(
-        modules.map((m) => [m, new Map()])
-      );
+      const moduleDependenciesReasons = new Map(modules.map((m) => [m, new Map()]));
 
       // Get ordered list of modules per chunk group
       // This loop also gathers dependencies from the ordered lists
@@ -381,9 +296,7 @@ class MiniCssExtractPlugin {
           .map((m) => {
             return {
               module: m,
-              index: isWebpack5
-                ? cg.getModulePostOrderIndex(m)
-                : cg.getModuleIndex2(m),
+              index: isWebpack5 ? cg.getModulePostOrderIndex(m) : cg.getModuleIndex2(m),
             };
           })
           // eslint-disable-next-line no-undefined
@@ -463,23 +376,10 @@ class MiniCssExtractPlugin {
                   "despite it was not able to fulfill desired ordering with these modules:",
                   ...bestMatchDeps.map((m) => {
                     const goodReasonsMap = moduleDependenciesReasons.get(m);
-                    const goodReasons =
-                      goodReasonsMap && goodReasonsMap.get(fallbackModule);
-                    const failedChunkGroups = Array.from(
-                      reasons.get(m),
-                      (cg) => cg.name
-                    ).join(", ");
-                    const goodChunkGroups =
-                      goodReasons &&
-                      Array.from(goodReasons, (cg) => cg.name).join(", ");
-                    return [
-                      ` * ${m.readableIdentifier(requestShortener)}`,
-                      `   - couldn't fulfill desired order of chunk group(s) ${failedChunkGroups}`,
-                      goodChunkGroups &&
-                        `   - while fulfilling desired order of chunk group(s) ${goodChunkGroups}`,
-                    ]
-                      .filter(Boolean)
-                      .join("\n");
+                    const goodReasons = goodReasonsMap && goodReasonsMap.get(fallbackModule);
+                    const failedChunkGroups = Array.from(reasons.get(m), (cg) => cg.name).join(", ");
+                    const goodChunkGroups = goodReasons && Array.from(goodReasons, (cg) => cg.name).join(", ");
+                    return [` * ${m.readableIdentifier(requestShortener)}`, `   - couldn't fulfill desired order of chunk group(s) ${failedChunkGroups}`, goodChunkGroups && `   - while fulfilling desired order of chunk group(s) ${goodChunkGroups}`].filter(Boolean).join("\n");
                   }),
                 ].join("\n")
               )
@@ -508,7 +408,7 @@ class MiniCssExtractPlugin {
         let { content } = m;
 
         if (m.media) {
-          // insert media into the @import
+          // insertRoute media into the @import
           // this is rar
           // TODO improve this and parse the CSS to support multiple medias
           content = content.replace(/;|\s*$/, m.media);
@@ -522,20 +422,9 @@ class MiniCssExtractPlugin {
         }
 
         if (m.sourceMap) {
-          source.add(
-            new SourceMapSource(
-              m.content,
-              m.readableIdentifier(requestShortener),
-              m.sourceMap
-            )
-          );
+          source.add(new SourceMapSource(m.content, m.readableIdentifier(requestShortener), m.sourceMap));
         } else {
-          source.add(
-            new OriginalSource(
-              m.content,
-              m.readableIdentifier(requestShortener)
-            )
-          );
+          source.add(new OriginalSource(m.content, m.readableIdentifier(requestShortener)));
         }
         source.add("\n");
 

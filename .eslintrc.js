@@ -25,7 +25,7 @@ module.exports = {
   },
   rules: {
     "@typescript-eslint/no-var-requires": 0,
-    "@typescript-eslint/ban-types": "warn",
+    "@typescript-eslint/ban-types": 0,
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/no-empty-function": "warn",
     "prefer-const": "off",

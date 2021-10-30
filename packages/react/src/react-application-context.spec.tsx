@@ -33,8 +33,9 @@ describe("react-application", () => {
 
       const applicationConfig = new ApplicationConfig();
       const container = new CoreContainer();
-      const app = new ReactApplicationContext(AppConfig, applicationConfig, container);
+      const app = new ReactApplicationContext(ReactApplicationConfig, applicationConfig, container);
       await app.init();
+      app.registerModule(AppConfig);
 
       const helloProvider = await app.get(HelloProvider);
       expect(helloProvider!.hello()).toBe("hello world");

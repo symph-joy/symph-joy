@@ -15,9 +15,6 @@ export class JoyDevServer extends JoyServer {
     await this.hotReloader.start();
     const genFilePath = this.joyAppConfig.resolveAutoGenOutDir("./joy/server-providers.config.js");
     await this.hotReloader.ensureModules([genFilePath]);
-
-    const joyApiModulesPath = this.joyAppConfig.resolveBuildOutDir("joy/server-bundle.js");
-    const joyApiModules = require(joyApiModulesPath).default;
-    await this.appContext.loadModule(joyApiModules);
+    await super.prepareApiComponent();
   }
 }

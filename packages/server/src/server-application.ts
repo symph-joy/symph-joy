@@ -26,6 +26,8 @@ import { createContextId } from "./helpers";
 import { AbstractHttpAdapter } from "./adapters";
 import { SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
 import { ServerConfiguration } from "./server.configuration";
+import { MountService } from "./mount/mount.service";
+import { MountModule } from "./mount/mount-module";
 
 export class ServerApplication extends CoreContext implements INestApplication {
   private readonly logger = new Logger(ServerApplication.name, true);
@@ -36,6 +38,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
   protected config: ApplicationConfig;
   public httpAdapter: AbstractHttpAdapter;
   public readonly container: ServerContainer;
+  public mountService: MountService;
 
   constructor(
     protected readonly entry: EntryType,
@@ -45,27 +48,32 @@ export class ServerApplication extends CoreContext implements INestApplication {
     protected readonly appOptions: NestApplicationOptions = {} // public container: ServerContainer = new ServerContainer()
   ) {
     super(entry, new ServerContainer());
+    this.mountService = new MountService();
   }
 
-  protected async initContext(): Promise<ComponentWrapper[]> {
-    const providers = await super.initContext();
-    const thisProviders = this.registerModule([
+  protected async initContext(): Promise<void> {
+    await super.initContext();
+    const coreComps = [
       {
-        [SYMPH_CONFIG_INIT_VALUE]: {
-          name: SYMPH_CONFIG_INIT_VALUE,
-          useValue: this.appOptions,
-        } as ValueProvider,
-        // httpAdapter: {
-        //   name: "httpAdapter",
-        //   type: Object,
-        //   useValue: this.httpAdapter,
-        // } as ValueProvider,
+        name: SYMPH_CONFIG_INIT_VALUE,
+        useValue: this.appOptions,
+      } as ValueProvider,
+      {
+        name: Symbol("mountService"),
+        type: MountService,
+        useValue: this.mountService,
       },
-      this.configurationClass,
-    ]);
+      ...this.dependenciesScanner.scan(this.configurationClass),
+    ];
+    const coreWrappers = this.container.addProviders(coreComps);
+    await this.createInstancesOfDependencies(coreWrappers);
+
     this.config = await this.get(ApplicationConfig);
+    this.httpAdapter = this.syncGet(AbstractHttpAdapter);
+    this.container.setHttpAdapter(this.httpAdapter);
+    this.routesResolver = new RoutesResolver(this.container, this.config, this.injector, this.mountService);
+    this.httpServer = this.createServer();
     await this.initHttp();
-    return [...providers, ...thisProviders];
   }
 
   async init(): Promise<this> {
@@ -74,10 +82,6 @@ export class ServerApplication extends CoreContext implements INestApplication {
   }
 
   private async initHttp(): Promise<void> {
-    this.httpAdapter = this.syncGet(AbstractHttpAdapter);
-    this.container.setHttpAdapter(this.httpAdapter);
-    this.routesResolver = new RoutesResolver(this.container, this.config, this.injector);
-    this.httpServer = this.createServer();
     await this.httpAdapter.init();
   }
 
@@ -86,28 +90,33 @@ export class ServerApplication extends CoreContext implements INestApplication {
     return this.httpAdapter.getHttpServer() as T;
   }
 
-  protected async initProviders(instanceWrappers: ComponentWrapper[]): Promise<void> {
-    await super.initProviders(instanceWrappers);
-    if (this.hasInitialized()) {
-      await this.registerRouter(instanceWrappers);
+  public registerModule(module: EntryType | EntryType[]): ComponentWrapper[] {
+    const modules = Array.isArray(module) ? module : [module];
+    let wrappers = [] as ComponentWrapper[];
+    for (const md of modules) {
+      let providers: ComponentWrapper[];
+      if (md instanceof MountModule) {
+        providers = super.registerModule(md.module);
+        if (providers && providers.length > 0) {
+          this.mountService.setMount(md.mount, providers);
+        }
+      } else {
+        providers = super.registerModule(md);
+      }
+      if (!providers || providers.length === 0) {
+        continue;
+      }
+      wrappers = wrappers.concat(providers);
     }
+    return wrappers;
   }
 
-  // public async init(): Promise<this> {
-  //   await super.init();
-  //   // await this.registerRouter();
-  //   // await this.callInitHook()
-  //   // await this.registerRouterHooks();
-  //   // await this.callBootstrapHook()
-  //
-  //   // this.isInitialized = true;
-  //   this.logger.log("ServerApplication successfully started");
-  //   return this;
-  // }
+  protected async initProviders(instanceWrappers: ComponentWrapper[]): Promise<void> {
+    await super.initProviders(instanceWrappers);
+    await this.registerRouter(instanceWrappers);
+  }
 
   public async registerRouter(wrappers?: ComponentWrapper[]) {
-    // await this.registerMiddleware(this.httpAdapter);
-
     const prefix = this.config.getGlobalPrefix();
     const basePath = prefix ? (prefix.charAt(0) !== "/" ? "/" + prefix : prefix) : "";
     this.routesResolver.resolve(this.httpAdapter, basePath, wrappers);

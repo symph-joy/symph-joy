@@ -8,7 +8,7 @@ export default function App(props: { appContext: IReactApplication }) {
 
   return (
     <div>
-      <h1>App Container</h1>
+      <div>App Container</div>
       <RouteSwitch routes={routes} extraProps={{}} />
     </div>
   );

@@ -15,7 +15,7 @@ export type TypeOrTokenType<T = any> = Type<T> | Abstract<T> | TProviderName;
  * @publicApi
  */
 export interface ICoreContext {
-  getProviderDefinition<TInput = any>(typeOrToken: TypeOrTokenType<TInput>): ComponentWrapper<TInput> | undefined;
+  getProviderDefinition<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, packageName?: string): ComponentWrapper<TInput> | undefined;
 
   registerModule(module: EntryType | EntryType[]): ComponentWrapper[];
 

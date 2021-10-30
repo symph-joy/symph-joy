@@ -18,12 +18,32 @@ describe("import-module", () => {
     await testContext.killServer();
   });
 
-  test("should import third module", async () => {
-    await waitForMoment();
+  test("main module api", async () => {
+    // await waitForMoment();
     const response = await got.get(testContext.getUrl("/api/hello"), {
       throwHttpErrors: false,
       responseType: "text",
     });
     expect(response.body.trim()).toBe("Hello main");
-  }, 99999999);
+  }, 999999);
+
+  test("main module page", async () => {
+    await page.goto(testContext.getUrl("/"));
+    const message = await page.$eval("#message", (el: any) => el.innerHTML);
+    expect(message).toBe("Hello main");
+  });
+
+  test("third module api", async () => {
+    const response = await got.get(testContext.getUrl("/api/third/third-hello"), {
+      throwHttpErrors: false,
+      responseType: "text",
+    });
+    expect(response.body.trim()).toBe("Hello third module");
+  });
+
+  test("main module page", async () => {
+    await page.goto(testContext.getUrl("/third"));
+    const message = await page.$eval("#message", (el: any) => el.innerHTML);
+    expect(message).toBe("Hello third module");
+  });
 });
