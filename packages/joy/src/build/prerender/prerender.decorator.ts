@@ -1,4 +1,3 @@
-import { Component, Type } from "@symph/core";
 import { getRouteMeta, ReactComponent } from "@symph/react";
 import { isPrerenderClazz } from "./prerender.interface";
 import { isDynamicRoute } from "../../joy-server/lib/router/utils";

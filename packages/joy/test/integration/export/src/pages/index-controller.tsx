@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { ReactBaseController, ReactController, Route } from "@symph/react";
-import { Prerender } from "@symph/joy/dist/build/prerender";
+import {Prerender} from '@symph/joy/react';
 
 @Prerender()
 @Route({ path: "/" })

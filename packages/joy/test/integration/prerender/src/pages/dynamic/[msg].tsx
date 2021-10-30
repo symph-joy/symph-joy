@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { ReactBaseController, ReactController, Route, RouteParam } from "@symph/react";
 import { ICoreContext } from "@symph/core";
-import { JoyPrerenderInterface, Prerender } from "@symph/joy/dist/build/prerender";
+import { JoyPrerenderInterface, Prerender } from "@symph/joy/react";
 
 @Prerender()
 export class DynamicStaticPathGenerator implements JoyPrerenderInterface {

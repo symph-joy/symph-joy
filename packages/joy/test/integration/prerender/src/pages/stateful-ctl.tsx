@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { ReactModel, ReactBaseController, ReactController, ReactBaseModel, Route } from "@symph/react";
 import { Autowire } from "@symph/core";
-import { Prerender } from "@symph/joy/dist/build/prerender";
+import {Prerender} from '@symph/joy/react';
 
 @ReactModel()
 export class StatefulModel extends ReactBaseModel<{
