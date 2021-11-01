@@ -2,7 +2,7 @@ import { ClassProvider, Component, Provider, RegisterTap } from "@symph/core";
 import { IReactRoute, ReactRouter } from "@symph/react";
 import { IScanOutModule } from "../../build/scanner/file-scanner";
 import { readFileSync } from "fs";
-import { join } from "path";
+import { join, sep } from "path";
 
 import { IGenerateFiles } from "../../build/file-generator";
 import { handlebars } from "../../lib/handlebars";
@@ -129,7 +129,7 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     }
     let exact = true;
     let routePath = filePath.substr(pagesDir.length);
-    const pathSegments = routePath.split("/").filter(Boolean);
+    const pathSegments = routePath.split(sep).filter(Boolean);
     let lastSeg = pathSegments[pathSegments.length - 1];
     if (lastSeg.includes(".")) {
       lastSeg = lastSeg.slice(0, lastSeg.indexOf("."));

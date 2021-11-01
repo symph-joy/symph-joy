@@ -953,7 +953,6 @@ export default async function getBaseWebpackConfig(
       // !isWebpack5 && !dev && new webpack.HashedModuleIdsPlugin(),
       !dev &&
         new webpack.IgnorePlugin({
-          resourceRegExp: /react-is/,
           contextRegExp: /(joy-server|joy)[\\/]/,
         }),
       isServerless && isServer && new ServerlessPlugin(),

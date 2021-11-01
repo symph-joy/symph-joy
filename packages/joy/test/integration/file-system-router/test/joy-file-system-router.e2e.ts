@@ -1,6 +1,7 @@
 import * as path from "path";
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
+import {waitForMoment} from "../../../util/joy-test-utils";
 
 describe("joy file system router", () => {
   let testContext: JoyTestContext;
@@ -14,6 +15,7 @@ describe("joy file system router", () => {
   });
 
   test("render the root route.", async () => {
+    // await waitForMoment()
     await page.goto(testContext.getUrl("/"));
   }, 999999);
 

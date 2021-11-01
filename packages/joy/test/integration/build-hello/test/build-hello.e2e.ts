@@ -9,7 +9,7 @@ describe("build-hello", () => {
     start = Date.now();
     const curPath = path.resolve(__dirname, "../");
     testContext = await JoyTestContext.createServerContext(curPath);
-  }, 3000000);
+  }, 999999);
 
   afterAll(async () => {
     await testContext.killServer();
@@ -19,5 +19,5 @@ describe("build-hello", () => {
     await page.goto(testContext.getUrl("/"));
     const browser = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(browser).toContain("Welcome to Joy!");
-  });
+  }, 999999);
 });
