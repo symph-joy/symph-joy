@@ -8,18 +8,10 @@ import { JoyBuildService } from "./joy-build.service";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyAppProvidersExplorerService } from "../joy-server/server/joy-app-providers-explorer.service";
 import { JoyImportService } from "../server/joy-import.service";
+import { GlobalCssPlugin } from "../plugin/global-css-plugin";
 
 @Configuration()
 export class BuildConfiguration {
-  // ====== imports
-
-  // @Configuration.Provider()
-  // public joyReactBuildConfiguration: JoyReactBuildConfiguration;
-
-  // ====== providers
-  // @Configuration.Provider()
-  // public joyAppConfig: JoyAppConfig
-
   @Configuration.Provider()
   public buildConfig: BuildDevConfig;
 
@@ -35,14 +27,8 @@ export class BuildConfiguration {
   @Configuration.Provider()
   public joyAppProvidersExplorerService: JoyAppProvidersExplorerService;
 
-  // @Configuration.Provider()
-  // public routerPlugin: RouterPlugin;
-
   @Configuration.Provider()
   public joyReactRouterPlugin: JoyReactRouterPlugin;
-
-  // @Configuration.Provider()
-  // public joyExportAppService: JoyExportAppService;
 
   @Configuration.Provider()
   public joyPrerenderService: JoyPrerenderService;
@@ -52,4 +38,8 @@ export class BuildConfiguration {
 
   @Configuration.Provider()
   public buildService: JoyBuildService;
+
+  // feature serviers
+  @Configuration.Provider()
+  public globalCssPlugin: GlobalCssPlugin;
 }

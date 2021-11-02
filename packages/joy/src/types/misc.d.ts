@@ -15,7 +15,7 @@ declare module "amphtml-validator" {
   import m from "amphtml-validator";
   export = m;
 }
-declare module "async-retry";
+// declare module "async-retry";
 // declare module 'async-sema' {
 //   import m from 'async-sema'
 //   export = m
@@ -127,10 +127,10 @@ declare module "lru-cache" {
   import m from "lru-cache";
   export = m;
 }
-declare module "nanoid/index.js" {
-  function nanoid(size?: number): string;
-  export = nanoid;
-}
+// declare module "nanoid/index.js" {
+//   function nanoid(size?: number): string;
+//   export = nanoid;
+// }
 declare module "node-fetch" {
   import m from "node-fetch";
   export = m;

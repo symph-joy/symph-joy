@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "joy": "node ../../../../../node_modules/@symph/joy/dist/cli/cli.js dev"
+  }
+}

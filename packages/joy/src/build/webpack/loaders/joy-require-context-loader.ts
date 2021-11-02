@@ -59,7 +59,7 @@ const JoyClientGenerateLoader: loader.Loader = function () {
       }
 
       const modules = sourceFiles.map((f) => {
-        return `modules.push(require("${f}"))`;
+        return `modules.push(require("${f}"));\n`;
       });
       const code = `
       const modules = [];

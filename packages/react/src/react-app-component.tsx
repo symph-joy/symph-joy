@@ -17,10 +17,5 @@ export default function ReactAppComponent({ appContext }: TReactAppComponentProp
   const reactRouter = appContext.syncGet<ReactRouter>("reactRouter");
   const routes = reactRouter.getRoutes() || [];
 
-  return (
-    <>
-      <div>ReactAppComponent</div>
-      <RouteSwitch routes={routes} extraProps={{}} />
-    </>
-  );
+  return <RouteSwitch routes={routes} extraProps={{}} />;
 }

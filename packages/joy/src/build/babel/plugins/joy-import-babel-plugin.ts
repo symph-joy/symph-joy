@@ -1,11 +1,7 @@
 import { NodePath, PluginObj, types as BabelTypes } from "@babel/core";
 const joyClient = require("@symph/joy/dist/index-client");
 
-export default function ({
-  types: t,
-}: {
-  types: typeof BabelTypes;
-}): PluginObj<any> {
+export default function ({ types }: { types: typeof BabelTypes }): PluginObj<any> {
   return {
     visitor: {
       ImportDeclaration(path: NodePath<BabelTypes.ImportDeclaration>, state) {
@@ -19,9 +15,7 @@ export default function ({
             // @ts-ignore
             const name = spec.imported.name;
             if (!Object.keys(joyClient).includes(name)) {
-              throw path.buildCodeFrameError(
-                `Error import { ${name} } from "@symph/joy", ${name} is a server side component, can not used in client side.`
-              );
+              throw path.buildCodeFrameError(`Error import { ${name} } from "@symph/joy", ${name} is a server side component, can not used in client side.`);
             }
           });
         } else if (isServer === true) {

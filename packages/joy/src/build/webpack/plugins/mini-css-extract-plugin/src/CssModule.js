@@ -20,9 +20,7 @@ class CssModule extends webpack.Module {
   }
 
   readableIdentifier(requestShortener) {
-    return `css ${requestShortener.shorten(this._identifier)}${
-      this._identifierIndex ? ` (${this._identifierIndex})` : ""
-    }`;
+    return `css ${requestShortener.shorten(this._identifier)}${this._identifierIndex ? ` (${this._identifierIndex})` : ""}`;
   }
 
   nameForCondition() {
@@ -55,9 +53,9 @@ class CssModule extends webpack.Module {
 
   updateHash(hash, context) {
     super.updateHash(hash, context);
-    hash.replace(this.content);
-    hash.replace(this.media || "");
-    hash.replace(this.sourceMap ? JSON.stringify(this.sourceMap) : "");
+    hash.update(this.content);
+    hash.update(this.media || "");
+    hash.update(this.sourceMap ? JSON.stringify(this.sourceMap) : "");
   }
 }
 
@@ -65,33 +63,28 @@ const isWebpack5 = parseInt(webpack.version) === 5;
 
 if (isWebpack5) {
   // @ts-ignore TODO: remove ts-ignore when webpack 5 is stable
-  webpack.util.serialization.register(
-    CssModule,
-    "@symph/joy/dist/build/webpack/plugins/mini-css-extract-plugin/src/CssModule",
-    null,
-    {
-      serialize(obj, { write }) {
-        write(obj.context);
-        write(obj._identifier);
-        write(obj._identifierIndex);
-        write(obj.content);
-        write(obj.media);
-        write(obj.sourceMap);
-      },
-      deserialize({ read }) {
-        const obj = new CssModule({
-          context: read(),
-          identifier: read(),
-          identifierIndex: read(),
-          content: read(),
-          media: read(),
-          sourceMap: read(),
-        });
+  webpack.util.serialization.register(CssModule, "@symph/joy/dist/build/webpack/plugins/mini-css-extract-plugin/src/CssModule", null, {
+    serialize(obj, { write }) {
+      write(obj.context);
+      write(obj._identifier);
+      write(obj._identifierIndex);
+      write(obj.content);
+      write(obj.media);
+      write(obj.sourceMap);
+    },
+    deserialize({ read }) {
+      const obj = new CssModule({
+        context: read(),
+        identifier: read(),
+        identifierIndex: read(),
+        content: read(),
+        media: read(),
+        sourceMap: read(),
+      });
 
-        return obj;
-      },
-    }
-  );
+      return obj;
+    },
+  });
 }
 
 export default CssModule;

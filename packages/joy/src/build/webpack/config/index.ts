@@ -1,6 +1,7 @@
 import webpack from "webpack";
 import { base } from "./blocks/base";
 import { css } from "./blocks/css";
+import { images } from "./blocks/images";
 import { ConfigurationContext, pipe } from "./utils";
 
 export async function build(
@@ -12,6 +13,7 @@ export async function build(
     isServer,
     assetPrefix,
     sassOptions,
+    lessOptions,
     productionBrowserSourceMaps,
   }: {
     rootDirectory: string;
@@ -20,6 +22,7 @@ export async function build(
     isServer: boolean;
     assetPrefix: string;
     sassOptions: any;
+    lessOptions: any;
     productionBrowserSourceMaps: boolean;
   }
 ): Promise<webpack.Configuration> {
@@ -30,15 +33,12 @@ export async function build(
     isProduction: !isDevelopment,
     isServer,
     isClient: !isServer,
-    assetPrefix: assetPrefix
-      ? assetPrefix.endsWith("/")
-        ? assetPrefix.slice(0, -1)
-        : assetPrefix
-      : "",
+    assetPrefix: assetPrefix ? (assetPrefix.endsWith("/") ? assetPrefix.slice(0, -1) : assetPrefix) : "",
     sassOptions,
+    lessOptions,
     productionBrowserSourceMaps,
   };
 
-  const fn = pipe(base(ctx), css(ctx));
+  const fn = pipe(base(ctx), css(ctx), images(ctx));
   return fn(config) as any;
 }

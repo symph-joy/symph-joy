@@ -1,13 +1,7 @@
-import webpack from "webpack";
+import { RuleSetUseItem } from "webpack";
 import MiniCssExtractPlugin from "../../../../plugins/mini-css-extract-plugin";
 
-export function getClientStyleLoader({
-  isDevelopment,
-  assetPrefix,
-}: {
-  isDevelopment: boolean;
-  assetPrefix: string;
-}): webpack.RuleSetUseItem {
+export function getClientStyleLoader({ isDevelopment, assetPrefix }: { isDevelopment: boolean; assetPrefix: string }): RuleSetUseItem {
   return isDevelopment
     ? {
         loader: require.resolve("style-loader"),
@@ -20,10 +14,8 @@ export function getClientStyleLoader({
           insert: function (element: Node) {
             // These elements should always exist. If they do not,
             // this code should fail.
-            let anchorElement = document.querySelector(
-              "#__joy_css__DO_NOT_USE__"
-            )!;
-            let parentNode = anchorElement.parentNode!; // Normally <head>
+            const anchorElement = document.querySelector("#__joy_css__DO_NOT_USE__")!;
+            const parentNode = anchorElement.parentNode!; // Normally <head>
 
             // Each style tag should be placed right before our
             // anchor. By inserting before and not after, we do not
@@ -35,6 +27,6 @@ export function getClientStyleLoader({
     : {
         // @ts-ignore: TODO: remove when webpack 5 is stable
         loader: MiniCssExtractPlugin.loader,
-        options: { publicPath: `${assetPrefix}/_joy/` },
+        options: { publicPath: `${assetPrefix}/_joy/`, esModule: false },
       };
 }

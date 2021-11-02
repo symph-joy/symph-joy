@@ -105,7 +105,7 @@ export function joyBabelPreset(api: any, options: JoyBabelPresetOptions = {}): B
     ],
     plugins: [
       [require("./plugins/joy-import-babel-plugin"), { isServer: isServer }],
-
+      [require("./plugins/joy-auto-css-modules")],
       [
         require("./plugins/jsx-pragma"),
         {

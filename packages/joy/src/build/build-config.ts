@@ -1,7 +1,7 @@
 import { Component } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { generateBuildId } from "./generate-build-id";
-import nanoid from "nanoid/index.js";
+import { nanoid } from "nanoid";
 
 @Component()
 export class BuildConfig {

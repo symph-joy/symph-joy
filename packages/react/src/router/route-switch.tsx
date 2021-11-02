@@ -4,7 +4,7 @@ import { useJoyContext } from "../hooks";
 import { IReactRoute } from "../interfaces";
 
 interface RouterContainerType extends SwitchProps {
-  routes?: IReactRoute[];
+  routes: IReactRoute[];
   extraProps?: any;
 }
 

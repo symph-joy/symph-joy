@@ -39,9 +39,12 @@ import OptimizationSplitChunksOptions = webpack5.OptimizationSplitChunksOptions;
 import { stringify } from "querystring";
 import { IJoyReactRouteBuild } from "../react/router/joy-react-router-plugin";
 import { REACT_OUT_DIR } from "../react/react-const";
+import { Span } from "../trace";
 type ExcludesFalse = <T>(x: T | false) => x is T;
 
 const isWebpack5 = parseInt(webpack.version!) === 5;
+
+export const joyImageLoaderRegex = /\.(png|jpg|jpeg|gif|webp|avif|ico|bmp|svg)$/i;
 
 const escapePathVariables = (value: any) => {
   return typeof value === "string" ? value.replace(/\[(\\*[\w:]+\\*)\]/gi, "[\\$1\\]") : value;
@@ -143,12 +146,12 @@ export default async function getBaseWebpackConfig(
     dev = false,
     isServer = false,
     pagesDir,
-    tracer,
     target = "server",
     reactProductionProfiling = false,
     entrypoints,
     rewrites,
     routes,
+    runWebpackSpan,
   }: {
     buildId: string;
     config: any;
@@ -156,11 +159,11 @@ export default async function getBaseWebpackConfig(
     isServer?: boolean;
     pagesDir: string;
     target?: string;
-    tracer?: any;
     reactProductionProfiling?: boolean;
     entrypoints: WebpackEntrypoints;
     rewrites: Rewrite[];
     routes?: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]);
+    runWebpackSpan?: Span;
   }
 ): Promise<webpack.Configuration> {
   const productionBrowserSourceMaps = config.experimental.productionBrowserSourceMaps && !isServer;
@@ -951,10 +954,13 @@ export default async function getBaseWebpackConfig(
         : []),
       // Webpack 5 no longer requires this plugin in production:
       // !isWebpack5 && !dev && new webpack.HashedModuleIdsPlugin(),
-      !dev &&
-        new webpack.IgnorePlugin({
-          contextRegExp: /(joy-server|joy)[\\/]/,
-        }),
+
+      // react-router内引用了react-is，导致该配置暂时无法使用。
+      // !dev &&
+      //   new webpack.IgnorePlugin({
+      //     resourceRegExp: /react-is/,
+      //     contextRegExp: /(joy-server|joy)[\\/]/,
+      //   }),
       isServerless && isServer && new ServerlessPlugin(),
       isServer && new PagesManifestPlugin(isLikeServerless),
       !isWebpack5 && target === "server" && isServer && new JoyJsSSRModuleCachePlugin({ outputPath }),
@@ -966,10 +972,7 @@ export default async function getBaseWebpackConfig(
           modern: config.experimental.modern,
           routes: routes || [],
         }),
-      tracer &&
-        new ProfilingPlugin({
-          tracer,
-        }),
+      runWebpackSpan && new ProfilingPlugin({ runWebpackSpan }),
       !isWebpack5 &&
         config.experimental.modern &&
         !isServer &&
@@ -1103,6 +1106,7 @@ export default async function getBaseWebpackConfig(
     isServer,
     assetPrefix: config.assetPrefix || "",
     sassOptions: config.sassOptions,
+    lessOptions: config.lessOptions,
     productionBrowserSourceMaps,
   });
 

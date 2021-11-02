@@ -1,27 +1,20 @@
-import { process as minify } from "cssnano-simple";
-import webpack, { Chunk } from "webpack";
-// import Chunk = webpack.compilation.Chunk;
-// import sources from 'webpack-sources'
-
-// @ts-ignore1: TODO: remove ignore when webpack 5 is stable
-// const { RawSource, SourceMapSource } = webpack.sources || sources
-const { RawSource, SourceMapSource } = webpack.sources;
+import cssnanoSimple from "cssnano-simple";
+import postcssScss from "postcss-scss";
+import postcss, { Parser } from "postcss";
+import { webpack, sources, Compiler } from "webpack";
+import { spans } from "./profiling-plugin";
 
 // https://github.com/NMFR/optimize-css-assets-webpack-plugin/blob/0a410a9bf28c7b0e81a3470a13748e68ca2f50aa/src/index.js#L20
 const CSS_REGEX = /\.css(\?.*)?$/i;
 
 type CssMinimizerPluginOptions = {
   postcssOptions: {
-    map:
-      | false
-      | { prev?: string | false; inline: boolean; annotation: boolean };
+    map: false | { prev?: string | false; inline: boolean; annotation: boolean };
   };
 };
 
-const isWebpack5 = parseInt(webpack.version!) === 5;
-
 export class CssMinimizerPlugin {
-  __joy_css_remove = true;
+  __next_css_remove = true;
 
   private options: CssMinimizerPluginOptions;
 
@@ -29,11 +22,16 @@ export class CssMinimizerPlugin {
     this.options = options;
   }
 
-  optimizeAsset(file: string, asset: any): any {
+  optimizeAsset(file: string, asset: any) {
     const postcssOptions = {
       ...this.options.postcssOptions,
       to: file,
       from: file,
+
+      // We don't actually add this parser to support Sass. It can also be used
+      // for inline comment support. See the README:
+      // https://github.com/postcss/postcss-scss/blob/master/README.md#2-inline-comments-for-postcss
+      parser: (postcssScss as any) as Parser,
     };
 
     let input: string;
@@ -45,69 +43,61 @@ export class CssMinimizerPlugin {
       input = asset.source();
     }
 
-    return minify(input, postcssOptions).then((res) => {
-      if (res.map) {
-        return new SourceMapSource(res.css, file, res.map.toJSON());
-      } else {
-        return new RawSource(res.css);
-      }
-    });
+    return postcss([cssnanoSimple({}, postcss)])
+      .process(input, postcssOptions)
+      .then((res) => {
+        if (res.map) {
+          return new sources.SourceMapSource(res.css, file, res.map.toJSON());
+        } else {
+          return new sources.RawSource(res.css);
+        }
+      });
   }
 
-  apply(compiler: webpack.Compiler) {
+  apply(compiler: Compiler) {
     compiler.hooks.compilation.tap("CssMinimizerPlugin", (compilation: any) => {
-      if (isWebpack5) {
-        const cache = compilation.getCache("CssMinimizerPlugin");
-        compilation.hooks.processAssets.tapPromise(
-          {
-            name: "CssMinimizerPlugin",
-            // @ts-ignore TODO: Remove ignore when webpack 5 is stable
-            stage: webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE,
-          },
-          async (assets: any) => {
+      const cache = compilation.getCache("CssMinimizerPlugin");
+      compilation.hooks.processAssets.tapPromise(
+        {
+          name: "CssMinimizerPlugin",
+          // @ts-ignore TODO: Remove ignore when webpack 5 is stable
+          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE,
+        },
+        async (assets: any) => {
+          const compilationSpan = spans.get(compilation) || spans.get(compiler);
+          const cssMinimizerSpan = compilationSpan!.traceChild("css-minimizer-plugin");
+          cssMinimizerSpan.setAttribute("webpackVersion", 5);
+
+          return cssMinimizerSpan.traceAsyncFn(async () => {
             const files = Object.keys(assets);
             await Promise.all(
               files
                 .filter((file) => CSS_REGEX.test(file))
                 .map(async (file) => {
-                  const asset = assets[file];
+                  const assetSpan = cssMinimizerSpan.traceChild("minify-css");
+                  assetSpan.setAttribute("file", file);
 
-                  const etag = cache.getLazyHashedEtag(asset);
+                  return assetSpan.traceAsyncFn(async () => {
+                    const asset = assets[file];
 
-                  const cachedResult = await cache.getPromise(file, etag);
-                  if (cachedResult) {
-                    assets[file] = cachedResult;
-                    return;
-                  }
+                    const etag = cache.getLazyHashedEtag(asset);
 
-                  const result = await this.optimizeAsset(file, asset);
-                  await cache.storePromise(file, etag, result);
-                  assets[file] = result;
+                    const cachedResult = await cache.getPromise(file, etag);
+
+                    assetSpan.setAttribute("cache", cachedResult ? "HIT" : "MISS");
+                    if (cachedResult) {
+                      assets[file] = cachedResult;
+                      return;
+                    }
+
+                    const result = await this.optimizeAsset(file, asset);
+                    await cache.storePromise(file, etag, result);
+                    assets[file] = result;
+                  });
                 })
             );
-          }
-        );
-        return;
-      }
-      compilation.hooks.optimizeChunkAssets.tapPromise(
-        "CssMinimizerPlugin",
-        (chunks: Chunk[]) =>
-          Promise.all(
-            chunks
-              .reduce(
-                (acc, chunk) => acc.concat(Array.from(chunk.files) || []),
-                [] as string[]
-              )
-              .filter((entry) => CSS_REGEX.test(entry))
-              .map(async (file) => {
-                const asset = compilation.assets[file];
-
-                compilation.assets[file] = await this.optimizeAsset(
-                  file,
-                  asset
-                );
-              })
-          )
+          });
+        }
       );
     });
   }

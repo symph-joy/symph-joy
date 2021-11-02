@@ -38,6 +38,7 @@ import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
 import { getWebpackConfigForJoy } from "./webpack-config-for-joy";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
+import { trace } from "../trace";
 
 export type SsgRoute = {
   initialRevalidateSeconds: number | false;
@@ -363,6 +364,7 @@ export class JoyBuildService {
   }
 
   public async build(reactProductionProfiling = false, debugOutput = false): Promise<void> {
+    const nextBuildSpan = trace("joy-build");
     // await this.onWillJoyBuild.call({dev: false})
     await this.triggerOnWillJoyBuild();
     const config = this.joyConfig;
@@ -406,13 +408,6 @@ export class JoyBuildService {
     // const ignoreTypeScriptErrors = Boolean(config.typescript?.ignoreBuildErrors);
     const ignoreTypeScriptErrors = Boolean(true); // todo 从配置中读取值
     await verifyTypeScriptSetup(dir, pagesDir, !ignoreTypeScriptErrors);
-
-    let tracer: any = null;
-    if (config.experimental.profiling) {
-      const { createTrace } = require("./profiler/profiler.js");
-      tracer = createTrace(path.join(outDir, `profile-events.json`));
-      tracer.profiler.startProfiling();
-    }
 
     // const isLikeServerless = isTargetLikeServerless(target);
     const isLikeServerless = false; // todo remove
@@ -559,12 +554,13 @@ export class JoyBuildService {
     //   JSON.stringify(routesManifest),
     //   "utf8"
     // );
+    const runWebpackSpan = nextBuildSpan.traceChild("run-webpack-compiler");
 
     const srcResult = await this.buildSrcAndScan();
 
+    const genWebpackConfigSpan = runWebpackSpan.traceChild("generate-webpack-config");
     const configs = await Promise.all([
       getBaseWebpackConfig(dir, {
-        tracer,
         buildId,
         reactProductionProfiling,
         isServer: false,
@@ -574,9 +570,9 @@ export class JoyBuildService {
         entrypoints: entrypoints.client,
         rewrites,
         routes: this.joyReactRoute.getRoutes(),
+        runWebpackSpan,
       }),
       getBaseWebpackConfig(dir, {
-        tracer,
         buildId,
         reactProductionProfiling,
         isServer: true,
@@ -586,8 +582,10 @@ export class JoyBuildService {
         entrypoints: entrypoints.server,
         rewrites,
         routes: this.joyReactRoute.getRoutes(),
+        runWebpackSpan,
       }),
     ]);
+    genWebpackConfigSpan.stop();
 
     const [clientConfig, serverConfig] = configs;
 

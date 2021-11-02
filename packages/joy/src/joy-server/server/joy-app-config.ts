@@ -70,6 +70,7 @@ export interface IJoyConfig {
   // }
   basePath: string; // = ''
   sassOptions: any; // = {}
+  lessOptions: any; // = {}
   trailingSlash: boolean; // = false
   experimental: any;
   //   = {
@@ -215,6 +216,8 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   // apiRoutePrefix: string;
 
   sassOptions = {};
+  lessOptions = {};
+
   trailingSlash = false;
   experimental = {
     cpus: 1, // todo remove

@@ -30,14 +30,15 @@ export class DirConfigLoader extends ConfigLoader {
       const configPath = this.findConfigPath();
       if (configPath?.length) {
         config = await readConfigFile(configPath);
+        console.log(`Info: Read config value from "${configPath}".`);
       } else {
         const configFileName = this.configName;
         const configBaseName = basename(configFileName, extname(configFileName));
         const nonJsPath = findUp.sync([`${configBaseName}.jsx`, `${configBaseName}.ts`, `${configBaseName}.tsx`, `${configBaseName}.json`], { cwd: this.dir });
         if (nonJsPath?.length) {
-          throw new Error(`Configuring Joy via '${basename(nonJsPath)}' is not supported. Please replace the file with 'joy.config.js'.`);
+          throw new Error(`Configuring Joy via "${basename(nonJsPath)}" is not supported. Please replace the file with "${configBaseName}".`);
         } else {
-          console.log(`Config file is not found.`);
+          console.log(`Info: Config file "${configBaseName}.js" was not found.`);
           // throw new ConfigNotExistException(this.dir);
         }
       }
