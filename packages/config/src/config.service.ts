@@ -139,40 +139,13 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
 
   public mergeConfig(customConfig: { [key: string]: any }, deepMerge = true): void {
     const configs = this.internalConfig;
-    Object.keys(customConfig).forEach((key) => {
-      const value = customConfig[key];
-      if (isNil(value)) {
-        return;
-      }
-      if (deepMerge && typeof value === "object" && value.constructor !== Array) {
-        if (isNil(configs[key])) {
-          configs[key] = {} as any;
-        }
-        this.deepMergeObj(configs[key], object);
-      } else {
-        configs[key] = value;
-      }
-    });
-  }
-
-  private deepMergeObj(objA: any = {}, objB: any): any {
-    Object.keys(objB).forEach((key) => {
-      if (!objB.hasOwnProperty(key)) return;
-      const bValue = objB[key];
-      if (isNil(bValue)) {
-        return;
-      }
-      if (typeof bValue === "object" && bValue.constructor !== Array) {
-        if (isNil(bValue)) {
-          objA[key] = {} as any;
-        }
-        this.deepMergeObj(objA[key], bValue);
-      } else {
-        // 如果不是，就直接赋值
-        objA[key] = bValue;
-      }
-    });
-    return objA;
+    if (deepMerge) {
+      merge(configs, customConfig);
+    } else {
+      Object.keys(customConfig).forEach((key) => {
+        configs[key] = customConfig[key];
+      });
+    }
   }
 
   private normalizeConfig(

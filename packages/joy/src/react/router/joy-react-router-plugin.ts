@@ -131,8 +131,8 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     let routePath = filePath.substr(pagesDir.length);
     const pathSegments = routePath.split(sep).filter(Boolean);
     let lastSeg = pathSegments[pathSegments.length - 1];
-    if (lastSeg.includes(".")) {
-      lastSeg = lastSeg.slice(0, lastSeg.indexOf("."));
+    if (/\.\w+$/.test(lastSeg)) {
+      lastSeg = lastSeg.slice(0, lastSeg.lastIndexOf("."));
       pathSegments[pathSegments.length - 1] = lastSeg;
     }
     const isContainer = lastSeg === "layout";

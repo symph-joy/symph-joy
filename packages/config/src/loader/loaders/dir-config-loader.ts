@@ -30,7 +30,7 @@ export class DirConfigLoader extends ConfigLoader {
       const configPath = this.findConfigPath();
       if (configPath?.length) {
         config = await readConfigFile(configPath);
-        console.log(`Info: Read config value from "${configPath}".`);
+        console.log(`Info: Using config "${configPath}".`);
       } else {
         const configFileName = this.configName;
         const configBaseName = basename(configFileName, extname(configFileName));

@@ -17,7 +17,7 @@ export type JoyRequireContextLoaderOptions = {
 const JoyClientGenerateLoader: loader.Loader = function () {
   const { absolutePath, regExp, globalVar, globalKey, useFileScan = false } = loaderUtils.getOptions(this) as JoyRequireContextLoaderOptions;
   const strAbsolutePath = JSON.stringify(absolutePath);
-  const reg = regExp || "/.(jsx?|tsx?|json)$/i";
+  const reg = regExp || "/(?<!\\.test|spec|e2e).(jsx?|tsx?|json)$/i";
 
   let globalCode = "";
   if (globalVar && globalKey) {

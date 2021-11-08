@@ -92,6 +92,7 @@ export class JoyReactServer implements IComponentLifecycle {
     generateEtags: boolean;
     runtimeConfig?: { [key: string]: any };
     assetPrefix?: string;
+    apiPrefix?: string;
     canonicalBase: string;
     dev?: boolean;
     previewProps: __ApiPreviewProps;
@@ -137,7 +138,7 @@ export class JoyReactServer implements IComponentLifecycle {
 
     // Only serverRuntimeConfig needs the default
     // publicRuntimeConfig gets it's default in client/index.js
-    const { serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, generateEtags, compress } = this.joyConfig;
+    const { serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, globalPrefix, generateEtags, compress } = this.joyConfig;
 
     this.renderOpts = {
       initStage: EnumReactAppInitStage.DYNAMIC,
@@ -177,6 +178,7 @@ export class JoyReactServer implements IComponentLifecycle {
     this.customRoutes = this.getCustomRoutes();
     this.router = new Router(this.generateRoutes());
     this.setAssetPrefix(assetPrefix);
+    this.setApiPrefix(globalPrefix);
 
     // call init-server middleware, this is also handled
     // individually in serverless bundles when deployed
@@ -266,6 +268,10 @@ export class JoyReactServer implements IComponentLifecycle {
 
   public setAssetPrefix(prefix?: string): void {
     this.renderOpts.assetPrefix = prefix ? prefix.replace(/\/$/, "") : "";
+  }
+
+  public setApiPrefix(prefix?: string): void {
+    this.renderOpts.apiPrefix = prefix ? prefix.replace(/\/$/, "") : "";
   }
 
   // Backwards compatibility

@@ -1,8 +1,8 @@
 import "jest-playwright-preset";
 import * as path from "path";
-import {JoyTestContext} from "../../../util/joy-test-context";
-import {waitForMoment} from "../../../util/joy-test-utils";
-import {Page} from "playwright-core";
+import { JoyTestContext } from "../../../util/joy-test-context";
+import { waitForMoment } from "../../../util/joy-test-utils";
+import { Page } from "playwright-core";
 
 describe("react-css", () => {
   let testContext: JoyTestContext;
@@ -44,7 +44,7 @@ describe("react-css", () => {
     await page.goto(testContext.getUrl("/sass-variables"));
     const scssStyleColor = await page.$eval("#sassVariable", (e: any) => getComputedStyle(e).color);
     expect(scssStyleColor).toBe("rgb(255, 0, 0)");
-  })
+  });
 
   test("should render with convention global.css style", async () => {
     await page.goto(testContext.getUrl("/"));

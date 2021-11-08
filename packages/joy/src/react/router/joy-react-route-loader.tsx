@@ -87,7 +87,7 @@ export function JoyReactRouteLoader({
    */
   const isUseSSGData = useMemo(() => {
     const initManager = joyAppContext.syncGet(ReactAppInitManager);
-    const initState = initManager.getState(href);
+    const initState = initManager.getPathState(href);
     if (initState && initState.initStatic === JoyRouteInitState.SUCCESS) {
       return false;
     }

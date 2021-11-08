@@ -13,36 +13,19 @@ import mitt, { MittEmitter } from "../lib/mitt";
 import postProcess from "../lib/post-process";
 import { JoyRouter } from "../lib/router/router";
 import { isDynamicRoute } from "../lib/router/utils/is-dynamic";
-import {
-  AppType,
-  ComponentsEnhancer,
-  DocumentInitialProps,
-  DocumentProps,
-  DocumentType,
-  getDisplayName,
-  isResSent,
-  loadGetInitialProps,
-  JoyComponentType,
-  RenderPage,
-} from "../lib/utils";
+import { AppType, ComponentsEnhancer, DocumentInitialProps, DocumentProps, DocumentType, getDisplayName, isResSent, loadGetInitialProps, JoyComponentType, RenderPage } from "../lib/utils";
 import { __ApiPreviewProps } from "./api-utils";
 import { denormalizePagePath } from "./denormalize-page-path";
 import { FontManifest, getFontDefinitionFromManifest } from "./font-utils";
 import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
-import {
-  JoyRouteInitState,
-  ReactAppContainer,
-  ReactAppInitManager,
-  ReactApplicationContext,
-} from "@symph/react";
+import { JoyRouteInitState, ReactAppContainer, ReactAppInitManager, ReactApplicationContext } from "@symph/react";
 import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 
 function noRouter() {
-  const message =
-    'No router instance found. you should only use "next/router" inside the client side of your app. https://err.sh/vercel/next.js/no-router-instance';
+  const message = 'No router instance found. you should only use "next/router" inside the client side of your app. https://err.sh/vercel/next.js/no-router-instance';
   throw new Error(message);
 }
 
@@ -57,13 +40,7 @@ class ServerRouter implements JoyRouter {
   // TODO: Remove in the next major version, as this would mean the user is adding event listeners in server-side `render` method
   static events: MittEmitter = mitt();
 
-  constructor(
-    pathname: string,
-    query: ParsedUrlQuery,
-    as: string,
-    { isFallback }: { isFallback: boolean },
-    basePath: string
-  ) {
+  constructor(pathname: string, query: ParsedUrlQuery, as: string, { isFallback }: { isFallback: boolean }, basePath: string) {
     this.route = pathname.replace(/\/$/, "") || "/";
     this.pathname = pathname;
     this.query = query;
@@ -71,21 +48,27 @@ class ServerRouter implements JoyRouter {
     this.isFallback = isFallback;
     this.basePath = basePath;
   }
+
   push(): any {
     noRouter();
   }
+
   replace(): any {
     noRouter();
   }
+
   reload() {
     noRouter();
   }
+
   back() {
     noRouter();
   }
+
   prefetch(): any {
     noRouter();
   }
+
   beforePopState() {
     noRouter();
   }
@@ -109,9 +92,7 @@ function enhanceComponents(
 
   return {
     App: options.enhanceApp ? options.enhanceApp(App) : App,
-    Component: options.enhanceComponent
-      ? options.enhanceComponent(Component)
-      : Component,
+    Component: options.enhanceComponent ? options.enhanceComponent(Component) : Component,
   };
 }
 
@@ -121,6 +102,7 @@ export type RenderOptsPartial = {
   canonicalBase: string;
   runtimeConfig?: { [key: string]: any };
   assetPrefix?: string;
+  apiPrefix?: string;
   err?: Error | null;
   autoExport?: boolean;
   joyExport?: boolean;
@@ -161,6 +143,7 @@ function renderDocument(
     buildId,
     canonicalBase,
     assetPrefix,
+    apiPrefix,
     runtimeConfig,
     joyExport,
     autoExport,
@@ -218,12 +201,12 @@ function renderDocument(
             query, // querystring parsed / passed by the user
             buildId, // buildId is used to facilitate caching of page bundles, we send it to the client so that pageloader knows where to load bundles
             assetPrefix: assetPrefix === "" ? undefined : assetPrefix, // send assetPrefix to the client side when configured, otherwise don't sent in the resulting HTML
+            apiPrefix: apiPrefix === "" ? undefined : apiPrefix, // send apiPrefix to the client side when configured, otherwise don't sent in the resulting HTML
             runtimeConfig, // runtimeConfig if provided, otherwise don't sent in the resulting HTML
             joyExport, // If this is a page exported by `joy export`
             autoExport, // If this is an auto exported page
             isFallback,
-            dynamicIds:
-              dynamicImportsIds.length === 0 ? undefined : dynamicImportsIds,
+            dynamicIds: dynamicImportsIds.length === 0 ? undefined : dynamicImportsIds,
             err: err ? serializeError(dev, err) : undefined, // Error if one happened, otherwise don't sent in the resulting HTML
             gsp, // whether the page is getStaticProps
             gssp, // whether the page is getServerSideProps
@@ -260,18 +243,10 @@ const invalidKeysMsg = (methodName: string, invalidKeys: string[]) => {
   );
 };
 
-export async function renderToHTML(
-  req: IncomingMessage,
-  res: ServerResponse,
-  pathname: string,
-  query: ParsedUrlQuery,
-  renderOpts: RenderOpts
-): Promise<string | null> {
+export async function renderToHTML(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery, renderOpts: RenderOpts): Promise<string | null> {
   // In dev we invalidate the cache by appending a timestamp to the resource URL.
   // TODO: remove this workaround when https://bugs.webkit.org/show_bug.cgi?id=187726 is fixed.
-  renderOpts.devOnlyCacheBusterQueryString = renderOpts.dev
-    ? renderOpts.devOnlyCacheBusterQueryString || `?ts=${Date.now()}`
-    : "";
+  renderOpts.devOnlyCacheBusterQueryString = renderOpts.dev ? renderOpts.devOnlyCacheBusterQueryString || `?ts=${Date.now()}` : "";
 
   const {
     err,
@@ -335,8 +310,7 @@ export async function renderToHTML(
   const isSSG = true;
   // const isSSG = !!getStaticProps
   // const isBuildTimeSSG = isSSG && renderOpts.joyExport
-  const defaultAppGetInitialProps =
-    App.getInitialProps === (App as any).origGetInitialProps;
+  const defaultAppGetInitialProps = App.getInitialProps === (App as any).origGetInitialProps;
 
   // todo 在controller装饰器中，校验controller类的合法性
   // const hasPageGetInitialProps = !!(Component as any).getInitialProps
@@ -395,15 +369,11 @@ export async function renderToHTML(
     // }
 
     if (!isValidElementType(App)) {
-      throw new Error(
-        `The default export is not a React Component in page: "/_app"`
-      );
+      throw new Error(`The default export is not a React Component in page: "/_app"`);
     }
 
     if (!isValidElementType(Document)) {
-      throw new Error(
-        `The default export is not a React Component in page: "/_document"`
-      );
+      throw new Error(`The default export is not a React Component in page: "/_document"`);
     }
 
     if (isAutoExport || isFallback) {
@@ -488,9 +458,7 @@ export async function renderToHTML(
           mountedInstances: new Set(),
         }}
       >
-        <LoadableContext.Provider
-          value={(moduleName) => reactLoadableModules.push(moduleName)}
-        >
+        <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
           <App {...props} />
           {/*<RouteSwitch routes={routes} />*/}
         </LoadableContext.Provider>
@@ -499,12 +467,7 @@ export async function renderToHTML(
   );
 
   const AppContainer = () => {
-    return (
-      <ReactAppContainer
-        appContext={reactApplicationContext!}
-        Component={ExtendAppComp}
-      />
-    );
+    return <ReactAppContainer appContext={reactApplicationContext!} Component={ExtendAppComp} />;
   };
 
   // try {
@@ -705,16 +668,9 @@ export async function renderToHTML(
         ...filteredBuildManifest,
         pages: {
           ...filteredBuildManifest.pages,
-          [page]: [
-            ...filteredBuildManifest.pages[page],
-            ...filteredBuildManifest.lowPriorityFiles.filter((f) =>
-              f.includes("_buildManifest")
-            ),
-          ],
+          [page]: [...filteredBuildManifest.pages[page], ...filteredBuildManifest.lowPriorityFiles.filter((f) => f.includes("_buildManifest"))],
         },
-        lowPriorityFiles: filteredBuildManifest.lowPriorityFiles.filter(
-          (f) => !f.includes("_buildManifest")
-        ),
+        lowPriorityFiles: filteredBuildManifest.lowPriorityFiles.filter((f) => !f.includes("_buildManifest")),
       };
     }
   }
@@ -724,9 +680,7 @@ export async function renderToHTML(
       return {};
     }
     if (!reactApplicationContext) {
-      throw new Error(
-        "init controller data error, react application context is undefined."
-      );
+      throw new Error("init controller data error, react application context is undefined.");
     }
 
     const initManager = await reactApplicationContext.get(ReactAppInitManager);
@@ -734,18 +688,30 @@ export async function renderToHTML(
     initManager.resetInitState(pathname);
     initManager.initStage = initStage;
     reduxService.startRecordState();
-
-    let state = reactApplicationContext.getState();
+    /**
+     * 执行一次页面渲染，触发页面的initialStaticModelState()方法，获取页面的数据，然后用数据在重新绘制一次页面
+     * 相当于一次页面请求，服务端需要执行两次 React 渲染
+     */
     const html = renderToStaticMarkup(<AppContainer />);
-    const { revalidate } = await initManager.waitAllFinished(pathname);
+    let revalidate: number | undefined;
+    try {
+      const initRst = await initManager.waitAllFinished(pathname);
+      revalidate = initRst.revalidate;
+      let { initStatic, init } = initManager.getPathState(pathname);
+      if (initStatic === JoyRouteInitState.NONE || initStatic === JoyRouteInitState.LOADING) {
+        initStatic = JoyRouteInitState.SUCCESS;
+      }
+      if (init === JoyRouteInitState.NONE || init === JoyRouteInitState.LOADING) {
+        init = JoyRouteInitState.SUCCESS;
+      }
+      initManager.setInitState(pathname, { initStatic, init });
+    } catch (e) {
+      initManager.setInitState(pathname, { initStatic: JoyRouteInitState.ERROR });
+    }
 
-    // initManager.setInitState(pathname, {initStatic: JoyRouteInitState.SUCCESS, init: JoyRouteInitState.SUCCESS});
     const reduxStateHistories = reduxService.stopRecordState();
-    (renderOpts as any).revalidate = revalidate;
     (renderOpts as any).pageData = reduxStateHistories;
-
-    state = reactApplicationContext.getState();
-
+    (renderOpts as any).revalidate = revalidate;
     return {
       revalidate,
       stateHistories: reduxStateHistories,
@@ -754,9 +720,7 @@ export async function renderToHTML(
 
   await renderData();
 
-  const renderPage: RenderPage = (
-    options: ComponentsEnhancer = {}
-  ): { html: string; head: any } => {
+  const renderPage: RenderPage = (options: ComponentsEnhancer = {}): { html: string; head: any } => {
     if (ctx.err && ErrorComponent) {
       return { html: renderToString(<ErrorComponent error={ctx.err} />), head };
     }
@@ -783,17 +747,12 @@ export async function renderToHTML(
     return { html, head };
   };
   const documentCtx = { ...ctx, renderPage };
-  const docProps: DocumentInitialProps = await loadGetInitialProps(
-    Document,
-    documentCtx
-  );
+  const docProps: DocumentInitialProps = await loadGetInitialProps(Document, documentCtx);
   // the response might be finished on the getInitialProps call
   if (isResSent(res) && !isSSG) return null;
 
   if (!docProps || typeof docProps.html !== "string") {
-    const message = `"${getDisplayName(
-      Document
-    )}.getInitialProps()" should resolve to an object with a "html" prop set with a valid html string`;
+    const message = `"${getDisplayName(Document)}.getInitialProps()" should resolve to an object with a "html" prop set with a valid html string`;
     throw new Error(message);
   }
 
@@ -825,10 +784,7 @@ export async function renderToHTML(
     docComponentsRendered,
     buildManifest: filteredBuildManifest,
     // Only enabled in production as development mode has features relying on HMR (style injection for example)
-    unstable_runtimeJS:
-      process.env.NODE_ENV === "production"
-        ? pageConfig.unstable_runtimeJS
-        : undefined,
+    unstable_runtimeJS: process.env.NODE_ENV === "production" ? pageConfig.unstable_runtimeJS : undefined,
     dangerousAsPath: router.asPath,
     ampState,
     initState: reactApplicationContext?.getState() || {},
@@ -865,14 +821,7 @@ export async function renderToHTML(
     const plural = nonRenderedComponents.length !== 1 ? "s" : "";
 
     if (nonRenderedComponents.length) {
-      console.warn(
-        `Expected Document Component${plural} ${nonRenderedComponents.join(
-          ", "
-        )} ${
-          plural ? "were" : "was"
-        } not rendered. Make sure you render them in your custom \`_document\`\n` +
-          `See more info here https://err.sh/next.js/missing-document-component`
-      );
+      console.warn(`Expected Document Component${plural} ${nonRenderedComponents.join(", ")} ${plural ? "were" : "was"} not rendered. Make sure you render them in your custom \`_document\`\n` + `See more info here https://err.sh/next.js/missing-document-component`);
     }
   }
 
@@ -880,10 +829,7 @@ export async function renderToHTML(
     // inject HTML to AMP_RENDER_TARGET to allow rendering
     // directly to body in AMP mode
     const ampRenderIndex = html.indexOf(AMP_RENDER_TARGET);
-    html =
-      html.substring(0, ampRenderIndex) +
-      `<!-- __JOY_DATA__ -->${docProps.html}` +
-      html.substring(ampRenderIndex + AMP_RENDER_TARGET.length);
+    html = html.substring(0, ampRenderIndex) + `<!-- __JOY_DATA__ -->${docProps.html}` + html.substring(ampRenderIndex + AMP_RENDER_TARGET.length);
     html = await optimizeAmp(html, renderOpts.ampOptimizerConfig);
 
     if (!renderOpts.ampSkipValidation && renderOpts.ampValidator) {
@@ -915,10 +861,7 @@ function errorToJSON(err: Error): Error {
   return { name, message, stack };
 }
 
-function serializeError(
-  dev: boolean | undefined,
-  err: Error
-): Error & { statusCode?: number } {
+function serializeError(dev: boolean | undefined, err: Error): Error & { statusCode?: number } {
   if (dev) {
     return errorToJSON(err);
   }

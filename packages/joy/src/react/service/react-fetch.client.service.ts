@@ -1,11 +1,16 @@
 import { RuntimeException } from "@symph/core";
 import { ReactComponent } from "@symph/react";
 import { ReactFetchService } from "./react-fetch.service";
+import { JoyClientConfig } from "../../client/joy-client-config";
 
 @ReactComponent()
 export class ReactFetchClientService extends ReactFetchService {
   static regHttpPrefix = new RegExp(`^https?:\/\/`, "i");
   static regHostPrefix = new RegExp(`^\/\/`, "i");
+
+  constructor(private joyClientConfig: JoyClientConfig) {
+    super();
+  }
 
   public async fetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
     if (typeof window === "undefined" || typeof window.fetch === "undefined") {
@@ -25,6 +30,6 @@ export class ReactFetchClientService extends ReactFetchService {
       throw new RuntimeException('Url path must start with "/", it should be a absolute path.');
     }
     // todo add client basePath
-    return `${window.location.origin}${mount}${pathOrUrl}`;
+    return `${window.location.origin}${this.joyClientConfig.apiPrefix}${mount}${pathOrUrl}`;
   }
 }

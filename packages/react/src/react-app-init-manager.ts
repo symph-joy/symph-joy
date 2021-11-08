@@ -81,7 +81,7 @@ export class ReactAppInitManager extends ReactBaseModel<
     });
   }
 
-  getState(pathname: string): { initStatic: JoyRouteInitState; init: JoyRouteInitState } {
+  getPathState(pathname: string): { initStatic: JoyRouteInitState; init: JoyRouteInitState } {
     return (
       this.state[pathname] || {
         initStatic: JoyRouteInitState.NONE,

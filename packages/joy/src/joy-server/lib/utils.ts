@@ -12,11 +12,7 @@ import { BuildManifest } from "../server/get-page-files";
  * Types used by both joy and joy-server
  */
 
-export type JoyComponentType<
-  C extends BaseContext = JoyPageContext,
-  IP = {},
-  P = {}
-> = ComponentType<P> & {
+export type JoyComponentType<C extends BaseContext = JoyPageContext, IP = {}, P = {}> = ComponentType<P> & {
   /**
    * Used for initial page load data population. Data returned from `getInitialProps` is serialized when server rendered.
    * Make sure to return plain `Object` without using `Date`, `Map`, `Set`.
@@ -25,26 +21,13 @@ export type JoyComponentType<
   getInitialProps?(context: C): IP | Promise<IP>;
 };
 
-export type DocumentType = JoyComponentType<
-  DocumentContext,
-  DocumentInitialProps,
-  DocumentProps
-> & {
-  renderDocument(
-    Document: DocumentType,
-    props: DocumentProps
-  ): React.ReactElement;
+export type DocumentType = JoyComponentType<DocumentContext, DocumentInitialProps, DocumentProps> & {
+  renderDocument(Document: DocumentType, props: DocumentProps): React.ReactElement;
 };
 
-export type AppType = JoyComponentType<
-  AppContextType,
-  AppInitialProps,
-  AppPropsType
->;
+export type AppType = JoyComponentType<AppContextType, AppInitialProps, AppPropsType>;
 
-export type AppTreeType = ComponentType<
-  AppInitialProps & { [name: string]: any }
->;
+export type AppTreeType = ComponentType<AppInitialProps & { [name: string]: any }>;
 
 /**
  * Web vitals provided to _app.reportWebVitals by Core Web Vitals plugin developed by Google Chrome team.
@@ -71,9 +54,7 @@ export type RenderPageResult = {
   head?: Array<JSX.Element | null>;
 };
 
-export type RenderPage = (
-  options?: ComponentsEnhancer
-) => RenderPageResult | Promise<RenderPageResult>;
+export type RenderPage = (options?: ComponentsEnhancer) => RenderPageResult | Promise<RenderPageResult>;
 
 export type BaseContext = {
   res?: ServerResponse;
@@ -87,6 +68,7 @@ export type JOY_DATA = {
   query: ParsedUrlQuery;
   buildId: string;
   assetPrefix?: string;
+  apiPrefix?: string;
   runtimeConfig?: { [key: string]: any };
   joyExport?: boolean;
   autoExport?: boolean;
@@ -145,10 +127,7 @@ export type AppInitialProps = {
   pageProps: any;
 };
 
-export type AppPropsType<
-  R extends JoyRouter = JoyRouter,
-  P = {}
-> = AppInitialProps & {
+export type AppPropsType<R extends JoyRouter = JoyRouter, P = {}> = AppInitialProps & {
   Component: JoyComponentType<JoyPageContext, any, P>;
   router: R;
   __N_SSG?: boolean;
@@ -255,17 +234,12 @@ export type JoyApiResponse<T = any> = ServerResponse & {
 /**
  * Joy `API` route handler
  */
-export type JoyApiHandler<T = any> = (
-  req: JoyApiRequest,
-  res: JoyApiResponse<T>
-) => void | Promise<void>;
+export type JoyApiHandler<T = any> = (req: JoyApiRequest, res: JoyApiResponse<T>) => void | Promise<void>;
 
 /**
  * Utils
  */
-export function execOnce<T extends (...args: any[]) => ReturnType<T>>(
-  fn: T
-): T {
+export function execOnce<T extends (...args: any[]) => ReturnType<T>>(fn: T): T {
   let used = false;
   let result: ReturnType<T>;
 
@@ -290,25 +264,17 @@ export function getURL() {
 }
 
 export function getDisplayName<P>(Component: ComponentType<P>) {
-  return typeof Component === "string"
-    ? Component
-    : Component.displayName || Component.name || "Unknown";
+  return typeof Component === "string" ? Component : Component.displayName || Component.name || "Unknown";
 }
 
 export function isResSent(res: ServerResponse) {
   return res.finished || res.headersSent;
 }
 
-export async function loadGetInitialProps<
-  C extends BaseContext,
-  IP = {},
-  P = {}
->(App: JoyComponentType<C, IP, P>, ctx: C): Promise<IP> {
+export async function loadGetInitialProps<C extends BaseContext, IP = {}, P = {}>(App: JoyComponentType<C, IP, P>, ctx: C): Promise<IP> {
   if (process.env.NODE_ENV !== "production") {
     if (App.prototype?.getInitialProps) {
-      const message = `"${getDisplayName(
-        App
-      )}.getInitialProps()" is defined as an instance method`;
+      const message = `"${getDisplayName(App)}.getInitialProps()" is defined as an instance method`;
       throw new Error(message);
     }
   }
@@ -332,48 +298,27 @@ export async function loadGetInitialProps<
   }
 
   if (!props) {
-    const message = `"${getDisplayName(
-      App
-    )}.getInitialProps()" should resolve to an object. But found "${props}" instead.`;
+    const message = `"${getDisplayName(App)}.getInitialProps()" should resolve to an object. But found "${props}" instead.`;
     throw new Error(message);
   }
 
   if (process.env.NODE_ENV !== "production") {
     if (Object.keys(props).length === 0 && !ctx.ctx) {
-      console.warn(
-        `${getDisplayName(
-          App
-        )} returned an empty object from \`getInitialProps\`. This de-optimizes and prevents automatic static optimization.`
-      );
+      console.warn(`${getDisplayName(App)} returned an empty object from \`getInitialProps\`. This de-optimizes and prevents automatic static optimization.`);
     }
   }
 
   return props;
 }
 
-export const urlObjectKeys = [
-  "auth",
-  "hash",
-  "host",
-  "hostname",
-  "href",
-  "path",
-  "pathname",
-  "port",
-  "protocol",
-  "query",
-  "search",
-  "slashes",
-];
+export const urlObjectKeys = ["auth", "hash", "host", "hostname", "href", "path", "pathname", "port", "protocol", "query", "search", "slashes"];
 
 export function formatWithValidation(url: UrlObject): string {
   if (process.env.NODE_ENV === "development") {
     if (url !== null && typeof url === "object") {
       Object.keys(url).forEach((key) => {
         if (urlObjectKeys.indexOf(key) === -1) {
-          console.warn(
-            `Unknown key passed via urlObject into url.format: ${key}`
-          );
+          console.warn(`Unknown key passed via urlObject into url.format: ${key}`);
         }
       });
     }
@@ -383,7 +328,4 @@ export function formatWithValidation(url: UrlObject): string {
 }
 
 export const SP = typeof performance !== "undefined";
-export const ST =
-  SP &&
-  typeof performance.mark === "function" &&
-  typeof performance.measure === "function";
+export const ST = SP && typeof performance.mark === "function" && typeof performance.measure === "function";

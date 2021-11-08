@@ -16,11 +16,12 @@ export class JoyServer {
     const { basePath } = this.joyAppConfig;
     const apiRoutePrefix = this.joyAppConfig.getGlobalPrefix();
     const reactPathReg = pathToRegexp(`${basePath || ""}/:path+`);
-    const apiPathReg = pathToRegexp(`${apiRoutePrefix || ""}/:path+`);
+    const apiPathReg = new RegExp(`^${apiRoutePrefix}/?`);
     const reactHandler = this.reactServer ? this.reactServer.getRequestHandler() : undefined;
     this.appContext.use((req: IncomingMessage, res: any, next: any) => {
       const url = req.url;
       if (url) {
+        // 未配置api前缀，则默认为后端应用，
         if (!apiRoutePrefix || apiPathReg.exec(url)) {
           return next();
         }
