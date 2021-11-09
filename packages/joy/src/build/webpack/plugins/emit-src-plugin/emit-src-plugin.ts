@@ -5,6 +5,7 @@ import { webpack5 } from "../../../../types/webpack5";
 import { existsSync } from "fs";
 import mkdirp from "mkdirp";
 import OutputFileSystem = webpack5.OutputFileSystem;
+import { RawSource } from "webpack-sources";
 
 function isNormalModule(mod: Module): mod is NormalModule {
   return !!(mod as any).resource;
@@ -21,33 +22,40 @@ function getModuleSourceValue(mod: NormalModule): string {
  * 待优化： 如果node的运行环境支持es6的import，则可以不用再转换。
  * @param src
  */
-async function transformSource(src: string): Promise<string> {
+async function transformSource(filePath: string, src: string): Promise<string> {
   if (process.env.NODE_ENV === "test") {
     // 测试环境，会有jest的loader进行转换，所以不需要babel处理。
     return src;
   }
-  const babel = require("@babel/core");
-  return new Promise<string>((resolve, reject) => {
-    babel.transform(
-      src,
-      {
-        presets: [
-          [
-            "@babel/preset-env",
-            {
-              modules: "cjs",
-            },
+  const ext = path.extname(filePath);
+  src = src && src.replace(/require\("([^?]+)(\?[^"]*)"\)/, 'require("$1")');
+
+  if (!/js|jsx|ts|tsx|mjs|mjsx/.test(ext)) {
+    const babel = require("@babel/core");
+    return new Promise<string>((resolve, reject) => {
+      babel.transform(
+        src,
+        {
+          presets: [
+            [
+              "@babel/preset-env",
+              {
+                modules: "cjs",
+              },
+            ],
           ],
-        ],
-      },
-      function (err: any, result: any) {
-        if (err) {
-          reject(err);
+        },
+        function (err: any, result: any) {
+          if (err) {
+            reject(err);
+          }
+          resolve(result?.code);
         }
-        resolve(result?.code);
-      }
-    );
-  });
+      );
+    });
+  }
+
+  return src;
 }
 
 export interface IWebpackEmitModule {
@@ -74,9 +82,7 @@ export class EmitSrcPlugin {
   modules: TWebpackEmitModuleManifest = new Map<string, IWebpackEmitModule>();
 
   constructor(opts: EmitAllPluginOptions = {}) {
-    this.ignorePattern =
-      opts.ignorePattern ||
-      /([\\/]node_modules)|([\\/]joy[\\/](src|dist))|([\\/]core[\\/](src|dist))|([\\/]react[\\/](src|dist))/;
+    this.ignorePattern = opts.ignorePattern || /([\\/]node_modules)|([\\/]joy[\\/](src|dist))|([\\/]core[\\/](src|dist))|([\\/]react[\\/](src|dist))/;
     this.ignoreExternals = !!opts.ignoreExternals;
     this.path = opts.path;
   }
@@ -94,11 +100,7 @@ export class EmitSrcPlugin {
     return hastVal.substr(0, 8);
   }
 
-  async writeFile(
-    outputFileSystem: OutputFileSystem,
-    dest: string,
-    content: Parameters<OutputFileSystem["writeFile"]>[1]
-  ) {
+  async writeFile(outputFileSystem: OutputFileSystem, dest: string, content: Parameters<OutputFileSystem["writeFile"]>[1]) {
     await new Promise<void>((resolve, reject) => {
       outputFileSystem.writeFile(dest, content, (err) => {
         if (err) {
@@ -110,11 +112,7 @@ export class EmitSrcPlugin {
     });
   }
 
-  async mkdir(
-    outputFileSystem: OutputFileSystem,
-    destDir: string,
-    options: { recursive: boolean }
-  ): Promise<void> {
+  async mkdir(outputFileSystem: OutputFileSystem, destDir: string, options: { recursive: boolean }): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       outputFileSystem.mkdir(destDir, options, (err) => {
         if (err) {
@@ -126,10 +124,7 @@ export class EmitSrcPlugin {
     });
   }
 
-  private getNormalModules(
-    modules: Set<Module>,
-    normalModules: NormalModule[] = []
-  ) {
+  private getNormalModules(modules: Set<Module>, normalModules: NormalModule[] = []) {
     modules.forEach((mod) => {
       if (isNormalModule(mod)) {
         normalModules.push(mod);
@@ -141,11 +136,10 @@ export class EmitSrcPlugin {
   }
 
   apply(compiler: Compiler) {
-    compiler.hooks.afterEmit.tapPromise(
-      "EmitAllPlugin",
-      async (compilation: Compilation) => {
+    compiler.hooks.compilation.tap("EmitSrc", async (compilation: Compilation) => {
+      compilation.hooks.additionalAssets.tapPromise("EmitSrc", async () => {
         const normalModules = this.getNormalModules(compilation.modules);
-        const outputFileSystem: OutputFileSystem = compiler.outputFileSystem as any;
+        // const outputFileSystem: OutputFileSystem = compiler.outputFileSystem as any;
         const out = this.path || (compiler.options.output?.path as string);
 
         const isOutDirExists = await existsSync(out);
@@ -174,16 +168,20 @@ export class EmitSrcPlugin {
           }
 
           let source = getModuleSourceValue(mod);
-          source = await transformSource(source);
+          source = await transformSource(absolutePath, source);
           const projectRoot = compiler.context;
 
-          let dest = path.join(out, absolutePath.replace(projectRoot, ""));
-          dest = dest.replace(/\.ts$/, ".js").replace(/\.tsx$/, ".js");
+          let emitDest = path.join(out, absolutePath.replace(projectRoot, ""));
+          emitDest = emitDest.replace(/\.ts$/, ".js").replace(/\.tsx$/, ".js");
+          const dest = path.resolve(compilation.outputOptions.path as string, emitDest);
+          // await this.mkdir(outputFileSystem, path.dirname(dest), {
+          //   recursive: true,
+          // });
+          //
+          // await this.writeFile(outputFileSystem, dest, source);
 
-          await this.mkdir(outputFileSystem, path.dirname(dest), {
-            recursive: true,
-          });
-          await this.writeFile(outputFileSystem, dest, source);
+          // @ts-ignore
+          compilation.emitAsset(emitDest, new RawSource(source));
 
           this.modules.set(dest, {
             resource: absolutePath,
@@ -194,19 +192,19 @@ export class EmitSrcPlugin {
 
         const emitManifestPath = path.join(out, "emit-manifest.json");
         //JSON.stringify 不能直接序列化Map对象，需求先转换为对象。
-        const objModules: Record<string, IWebpackEmitModule> = Object.create(
-          null
-        );
+        const objModules: Record<string, IWebpackEmitModule> = Object.create(null);
         for (const [k, v] of this.modules) {
           objModules[k] = v;
         }
         const emitManifestContent = JSON.stringify(objModules);
-        await this.writeFile(
-          outputFileSystem,
-          emitManifestPath,
-          emitManifestContent
-        );
-      }
-    );
+        // @ts-ignore
+        compilation.emitAsset(emitManifestPath, new RawSource(emitManifestContent));
+        // await this.writeFile(
+        //   outputFileSystem,
+        //   emitManifestPath,
+        //   emitManifestContent
+        // );
+      });
+    });
   }
 }

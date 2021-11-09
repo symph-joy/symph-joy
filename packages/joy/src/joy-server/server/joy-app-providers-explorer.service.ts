@@ -74,7 +74,9 @@ export class JoyAppProvidersExplorerService {
     if (hasReactProvider) {
       throw new Error(`Module can not include server and react component. module path: ${module.resource || module.path}`);
     }
-
+    if (!module.resource) {
+      console.warn(`Server module(${module.path}) can not found resource code.`);
+    }
     this.providerModules.push(module);
     return true;
   }
@@ -96,7 +98,7 @@ export class JoyAppProvidersExplorerService {
     const modules = this.providerModules.map((mod) => {
       return {
         ...mod,
-        path: mod.resource,
+        path: mod.resource || mod.path,
         providerKeys: mod.providerDefines?.keys(),
       };
     });

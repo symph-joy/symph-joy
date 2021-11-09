@@ -12,11 +12,7 @@ const cacheKey = "babel-cache-" + "m" + "-";
 
 const getModernOptions = (babelOptions = {}) => {
   const presetEnvOptions = Object.assign({}, babelOptions["preset-env"]);
-  const transformRuntimeOptions = Object.assign(
-    {},
-    babelOptions["transform-runtime"],
-    { regenerator: false }
-  );
+  const transformRuntimeOptions = Object.assign({}, babelOptions["transform-runtime"], { regenerator: false });
 
   presetEnvOptions.targets = {
     esmodules: true,
@@ -35,21 +31,14 @@ const getModernOptions = (babelOptions = {}) => {
   };
 };
 
-const joyBabelPresetModern = (presetOptions) => (context) =>
-  joyBabelPreset(context, getModernOptions(presetOptions));
+const joyBabelPresetModern = (presetOptions) => (context) => joyBabelPreset(context, getModernOptions(presetOptions));
 
 module.exports = babelLoader.custom((babel) => {
   const presetItem = babel.createConfigItem(joyBabelPreset, {
     type: "preset",
   });
-  const applyCommonJs = babel.createConfigItem(
-    require("../../babel/plugins/commonjs"),
-    { type: "plugin" }
-  );
-  const commonJsItem = babel.createConfigItem(
-    require("@babel/plugin-transform-modules-commonjs"),
-    { type: "plugin" }
-  );
+  const applyCommonJs = babel.createConfigItem(require("../../babel/plugins/commonjs"), { type: "plugin" });
+  const commonJsItem = babel.createConfigItem(require("@babel/plugin-transform-modules-commonjs"), { type: "plugin" });
 
   const configs = new Set();
 
@@ -57,6 +46,7 @@ module.exports = babelLoader.custom((babel) => {
     customOptions(opts) {
       const custom = {
         isServer: opts.isServer,
+        isSrc: opts.isSrc,
         isModern: opts.isModern,
         pagesDir: opts.pagesDir,
         hasModern: opts.hasModern,
@@ -73,6 +63,7 @@ module.exports = babelLoader.custom((babel) => {
               cacheIdentifier:
                 cacheKey +
                 (opts.isServer ? "-server" : "") +
+                (opts.isSrc ? "-src" : "") +
                 (opts.isModern ? "-modern" : "") +
                 (opts.hasModern ? "-has-modern" : "") +
                 "-new-polyfills" +
@@ -93,6 +84,7 @@ module.exports = babelLoader.custom((babel) => {
       );
 
       delete loader.isServer;
+      delete loader.isSrc;
       delete loader.cache;
       delete loader.distDir;
       delete loader.isModern;
@@ -103,21 +95,7 @@ module.exports = babelLoader.custom((babel) => {
       delete loader.hasReactRefresh;
       return { loader, custom };
     },
-    config(
-      cfg,
-      {
-        source,
-        customOptions: {
-          isServer,
-          isModern,
-          hasModern,
-          pagesDir,
-          babelPresetPlugins,
-          development,
-          hasReactRefresh,
-        },
-      }
-    ) {
+    config(cfg, { source, customOptions: { isServer, isSrc, isModern, hasModern, pagesDir, babelPresetPlugins, development, hasReactRefresh } }) {
       const filename = this.resourcePath;
       const options = Object.assign({}, cfg.options);
       const isPageFile = filename.startsWith(pagesDir);
@@ -137,6 +115,7 @@ module.exports = babelLoader.custom((babel) => {
       }
 
       options.caller.isServer = isServer;
+      options.caller.isSrc = isSrc;
       options.caller.isModern = isModern;
       options.caller.isDev = development;
 
@@ -155,65 +134,35 @@ module.exports = babelLoader.custom((babel) => {
       options.plugins = options.plugins || [];
 
       if (hasReactRefresh) {
-        const reactRefreshPlugin = babel.createConfigItem(
-          [require("react-refresh/babel"), { skipEnvCheck: true }],
-          { type: "plugin" }
-        );
+        const reactRefreshPlugin = babel.createConfigItem([require("react-refresh/babel"), { skipEnvCheck: true }], { type: "plugin" });
         options.plugins.unshift(reactRefreshPlugin);
         if (!isServer && isCwdFile) {
-          const noAnonymousDefaultExportPlugin = babel.createConfigItem(
-            [
-              require("../../babel/plugins/no-anonymous-default-export"),
-              { dir: pagesDir },
-            ],
-            { type: "plugin" }
-          );
+          const noAnonymousDefaultExportPlugin = babel.createConfigItem([require("../../babel/plugins/no-anonymous-default-export"), { dir: pagesDir }], { type: "plugin" });
           options.plugins.unshift(noAnonymousDefaultExportPlugin);
         }
       }
 
       if (!isServer && isPageFile) {
-        const pageConfigPlugin = babel.createConfigItem(
-          [require("../../babel/plugins/joy-page-config")],
-          { type: "plugin" }
-        );
+        const pageConfigPlugin = babel.createConfigItem([require("../../babel/plugins/joy-page-config")], { type: "plugin" });
         options.plugins.push(pageConfigPlugin);
 
-        const diallowExportAll = babel.createConfigItem(
-          [
-            require("../../babel/plugins/joy-page-disallow-re-export-all-exports"),
-          ],
-          { type: "plugin" }
-        );
+        const diallowExportAll = babel.createConfigItem([require("../../babel/plugins/joy-page-disallow-re-export-all-exports")], { type: "plugin" });
         options.plugins.push(diallowExportAll);
       }
 
       if (isServer && source.indexOf("joy/data") !== -1) {
-        const joyDataPlugin = babel.createConfigItem(
-          [
-            require("../../babel/plugins/joy-data"),
-            { key: basename(filename) + "-" + hash(filename) },
-          ],
-          { type: "plugin" }
-        );
+        const joyDataPlugin = babel.createConfigItem([require("../../babel/plugins/joy-data"), { key: basename(filename) + "-" + hash(filename) }], { type: "plugin" });
         options.plugins.push(joyDataPlugin);
       }
 
       if (isModern) {
-        const joyPreset = options.presets.find(
-          (preset) => preset && preset.value === joyBabelPreset
-        ) || { options: {} };
+        const joyPreset = options.presets.find((preset) => preset && preset.value === joyBabelPreset) || { options: {} };
 
-        const additionalPresets = options.presets.filter(
-          (preset) => preset !== joyPreset
-        );
+        const additionalPresets = options.presets.filter((preset) => preset !== joyPreset);
 
-        const presetItemModern = babel.createConfigItem(
-          joyBabelPresetModern(joyPreset.options),
-          {
-            type: "preset",
-          }
-        );
+        const presetItemModern = babel.createConfigItem(joyBabelPresetModern(joyPreset.options), {
+          type: "preset",
+        });
 
         options.presets = [...additionalPresets, presetItemModern];
       }
@@ -236,10 +185,7 @@ module.exports = babelLoader.custom((babel) => {
 
       if (isPageFile) {
         if (!isServer) {
-          options.plugins.push([
-            require.resolve("../../babel/plugins/joy-ssg-transform"),
-            {},
-          ]);
+          options.plugins.push([require.resolve("../../babel/plugins/joy-ssg-transform"), {}]);
         }
       }
 
@@ -262,10 +208,7 @@ module.exports = babelLoader.custom((babel) => {
       // ]
 
       for (const plugin of babelPresetPlugins) {
-        require(join(plugin.dir, "src", "babel-preset-build.js"))(
-          options,
-          plugin.config || {}
-        );
+        require(join(plugin.dir, "src", "babel-preset-build.js"))(options, plugin.config || {});
       }
 
       return options;

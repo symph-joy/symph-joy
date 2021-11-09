@@ -61,6 +61,7 @@ function supportsStaticESM(caller: any): boolean {
 export function joyBabelPreset(api: any, options: JoyBabelPresetOptions = {}): BabelPreset {
   const supportsESM = api.caller(supportsStaticESM);
   const isServer = api.caller((caller: any) => !!caller && caller.isServer);
+  const isSrc = api.caller((caller: any) => !!caller && caller.isSrc);
   const isModern = api.caller((caller: any) => !!caller && caller.isModern);
 
   const isLaxModern = isModern || (options["preset-env"]?.targets && options["preset-env"].targets.esmodules);
@@ -163,6 +164,7 @@ export function joyBabelPreset(api: any, options: JoyBabelPresetOptions = {}): B
       [require("@babel/plugin-proposal-numeric-separator").default, false],
       require("@babel/plugin-proposal-export-namespace-from"),
       ["@babel/plugin-proposal-private-methods", { loose: true }],
+      isSrc && require("@babel/plugin-transform-modules-commonjs"),
     ].filter(Boolean),
     overrides: [
       {

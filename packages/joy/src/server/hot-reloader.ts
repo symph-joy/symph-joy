@@ -32,7 +32,7 @@ import { BuildDevConfig } from "./build-dev-config";
 import crypto from "crypto";
 import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
 import { ReactRouter } from "@symph/react";
-import { getWebpackConfigForJoy } from "../build/webpack-config-for-joy";
+import { getWebpackConfigForApi } from "../build/webpack-config-for-api";
 import chalk from "chalk";
 import { JoyBuildService } from "../build/joy-build.service";
 import * as Log from "../build/output/log";
@@ -344,7 +344,7 @@ export default class HotReloader {
 
     const [clientConfig, serverConfig] = _configs;
     const srcConfig = await getWebpackConfigForSrc(serverConfig, this.joyAppConfig);
-    const joyAppModulesConfig = await getWebpackConfigForJoy(serverConfig, this.joyAppConfig);
+    const joyAppModulesConfig = await getWebpackConfigForApi(serverConfig, this.joyAppConfig);
     const configs = [clientConfig, serverConfig, joyAppModulesConfig, srcConfig];
     const multiCompiler = webpack(configs);
 

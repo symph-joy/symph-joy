@@ -3,7 +3,7 @@ import { stringify } from "querystring";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import path from "path";
 
-export async function getWebpackConfigForJoy(serverConfig: webpack.Configuration, joyConfig: JoyAppConfig): Promise<webpack.Configuration> {
+export async function getWebpackConfigForApi(serverConfig: webpack.Configuration, joyConfig: JoyAppConfig): Promise<webpack.Configuration> {
   const srcConfig = { ...serverConfig };
   const distDir = joyConfig.resolveBuildOutDir("joy");
 

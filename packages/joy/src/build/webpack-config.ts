@@ -204,10 +204,6 @@ export default async function getBaseWebpackConfig(
         hasReactRefresh,
       },
     },
-    // Backwards compat
-    hotSelfAccept: {
-      loader: "noop-loader",
-    },
   };
 
   const babelIncludeRegexes: RegExp[] = [
@@ -246,6 +242,7 @@ export default async function getBaseWebpackConfig(
   // );
   const autoGenClientOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/client");
   const autoGenServerOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/server");
+
   const clientEntries = !isServer
     ? () =>
         ({

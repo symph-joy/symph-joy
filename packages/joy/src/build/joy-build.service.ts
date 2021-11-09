@@ -36,7 +36,7 @@ import { Worker } from "jest-worker";
 import { ReactRouter } from "@symph/react";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
-import { getWebpackConfigForJoy } from "./webpack-config-for-joy";
+import { getWebpackConfigForApi } from "./webpack-config-for-api";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 import { trace } from "../trace";
 
@@ -589,7 +589,7 @@ export class JoyBuildService {
 
     const [clientConfig, serverConfig] = configs;
 
-    const joyWebpackConfig = await getWebpackConfigForJoy(serverConfig, this.joyConfig);
+    const joyWebpackConfig = await getWebpackConfigForApi(serverConfig, this.joyConfig);
 
     if (clientConfig.optimization && (clientConfig.optimization.minimize !== true || (clientConfig.optimization.minimizer && clientConfig.optimization.minimizer.length === 0))) {
       Log.warn(`Production code optimization has been disabled in your project.`);
