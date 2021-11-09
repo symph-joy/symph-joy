@@ -31,7 +31,7 @@ export class GlobalCssPlugin {
     const globalCSSFiles = this.getGlobalFiles(clientRoot, files);
 
     const content = `
-    ${globalCSSFiles.map((file) => `import '${file}';\n`)}
+    ${globalCSSFiles.map((file) => `import ${JSON.stringify(file)};\n`)}
     `;
 
     genFiles["./react/client/joyGlobalCss.js"] = content;
