@@ -142,10 +142,10 @@ export class EmitSrcPlugin {
         // const outputFileSystem: OutputFileSystem = compiler.outputFileSystem as any;
         const out = this.path || (compiler.options.output?.path as string);
 
-        const isOutDirExists = await existsSync(out);
-        if (!isOutDirExists) {
-          await mkdirp(out);
-        }
+        // const isOutDirExists = await existsSync(out);
+        // if (!isOutDirExists) {
+        //   await mkdirp(out);
+        // }
 
         for (const mod of normalModules) {
           if (!isNormalModule(mod) || mod.getNumberOfErrors() > 0) {
