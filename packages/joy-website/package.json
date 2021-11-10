@@ -7,9 +7,9 @@
   "bugs": "https://github.com/lnlfps/symph-joy/issues",
   "homepage": "https://lnlfps.github.io/symph-joy",
   "scripts": {
-    "dev": "joy dev",
-    "build": "joy build",
-    "export": "joy build&&joy export"
+    "joy-dev": "joy dev",
+    "joy-build": "joy build",
+    "joy-export": "joy build&&joy export"
   },
   "dependencies": {
     "react": "^17.0.1",
