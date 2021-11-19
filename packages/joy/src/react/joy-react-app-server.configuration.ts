@@ -1,14 +1,14 @@
 import { ReactRouterServer } from "./router/react-router-server";
 import { Autowire, Configuration } from "@symph/core";
 import { BrowserRouter, HashRouter, MemoryRouter, StaticRouter } from "react-router-dom";
-import { IReactRoute, ReactApplicationConfig } from "@symph/react";
+import { IReactRoute, ReactApplicationConfiguration } from "@symph/react";
 import { ReactFetchServerService } from "./service/react-fetch-server.service";
 import path from "path";
 import { REACT_OUT_DIR } from "./react-const";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 
 @Configuration()
-export class JoyReactAppServerConfiguration extends ReactApplicationConfig {
+export class JoyReactAppServerConfiguration extends ReactApplicationConfiguration {
   @Configuration.Provider()
   public reactRouterComponent(): typeof StaticRouter | typeof BrowserRouter | typeof MemoryRouter | typeof HashRouter {
     return StaticRouter;

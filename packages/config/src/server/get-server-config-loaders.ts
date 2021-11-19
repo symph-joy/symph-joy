@@ -1,10 +1,8 @@
-import { Configuration } from "@symph/core";
 import { resolve } from "path";
-import { FileConfigLoader } from "./loader/loaders/file-config-loader";
-import { ConfigLoader } from "./loader/loaders/config-loader";
-import { ConfigConfiguration } from "./config.configuration";
-import { DirConfigLoader } from "./loader/loaders/dir-config-loader";
-import { DotenvConfigLoader } from "./loader/loaders/dotenv-config-loader";
+import { FileConfigLoader } from "./loaders/file-config-loader";
+import { ConfigLoader } from "../loader/config-loader";
+import { DirConfigLoader } from "./loaders/dir-config-loader";
+import { DotenvConfigLoader } from "./loaders/dotenv-config-loader";
 
 // export class ServerConfigLoaders {
 export function getServerConfigLoaders(

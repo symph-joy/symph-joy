@@ -1,7 +1,7 @@
 import { Configuration, CoreContext } from "@symph/core";
 import { ConfigService, ConfigServiceOptions } from "./config.service";
 import { SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_OPTIONS } from "./constants";
-import { ConfigLoaderFactory } from "./loader/factories/config-loader-factory";
+import { ConfigLoaderFactory } from "./loader/config-loader-factory";
 
 @Configuration()
 export class ConfigConfiguration {

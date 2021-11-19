@@ -46,9 +46,7 @@ describe("command-center", () => {
         return `hello ${message}`;
       }
     }
-
-    const container = new CoreContainer();
-    const app = new CoreContext({ CommandCenter, HelloCommand }, container);
+    const app = new CoreContext({ CommandCenter, HelloCommand });
     await app.init();
     const commandCenter = await app.get(CommandCenter);
     // const helloCommand = await app.get(HelloCommand)

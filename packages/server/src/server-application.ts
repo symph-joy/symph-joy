@@ -1,7 +1,7 @@
 /**
  * @publicApi
  */
-import { Abstract, ContextId, CoreContext, EntryType, ComponentWrapper, Logger, Type, ValueProvider } from "@symph/core";
+import { Abstract, ComponentWrapper, ContextId, CoreContext, EntryType, ICoreContext, Logger, Type, ValueProvider } from "@symph/core";
 import { ServerContainer } from "./server-container";
 import { Resolver } from "./router/interfaces/resolver.interface";
 import { RoutesResolver } from "./router/routes-resolver";
@@ -32,7 +32,7 @@ import { MountModule } from "./mount/mount-module";
 export class ServerApplication extends CoreContext implements INestApplication {
   private readonly logger = new Logger(ServerApplication.name, true);
   private routesResolver: Resolver;
-  private httpServer: any;
+  protected httpServer: any;
   private isListening = false;
 
   protected config: ApplicationConfig;
@@ -45,10 +45,15 @@ export class ServerApplication extends CoreContext implements INestApplication {
     public readonly configurationClass: typeof ServerConfiguration = ServerConfiguration,
     // public readonly httpAdapter: HttpServer,
     // protected readonly config: ApplicationConfig,
-    protected readonly appOptions: NestApplicationOptions = {} // public container: ServerContainer = new ServerContainer()
+    protected readonly appOptions: NestApplicationOptions = {}, // public container: ServerContainer = new ServerContainer()
+    public readonly parent: ICoreContext | undefined
   ) {
-    super(entry, new ServerContainer());
+    super(entry, parent);
     this.mountService = new MountService();
+  }
+
+  protected instanceContainer(): ServerContainer {
+    return new ServerContainer();
   }
 
   protected async initContext(): Promise<void> {
@@ -67,12 +72,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
     ];
     const coreWrappers = this.container.addProviders(coreComps);
     await this.createInstancesOfDependencies(coreWrappers);
-
     this.config = await this.get(ApplicationConfig);
-    this.httpAdapter = this.syncGet(AbstractHttpAdapter);
-    this.container.setHttpAdapter(this.httpAdapter);
-    this.routesResolver = new RoutesResolver(this.container, this.config, this.injector, this.mountService);
-    this.httpServer = this.createServer();
     await this.initHttp();
   }
 
@@ -81,7 +81,11 @@ export class ServerApplication extends CoreContext implements INestApplication {
     return this;
   }
 
-  private async initHttp(): Promise<void> {
+  protected async initHttp(): Promise<void> {
+    this.httpAdapter = this.syncGet(AbstractHttpAdapter);
+    this.container.setHttpAdapter(this.httpAdapter);
+    this.routesResolver = new RoutesResolver(this.container, this.config, this.injector, this.mountService);
+    this.httpServer = this.createServer();
     await this.httpAdapter.init();
   }
 
@@ -220,7 +224,11 @@ export class ServerApplication extends CoreContext implements INestApplication {
     this.container.registerRequestProvider(request, contextId);
   }
 
-  resolve<TInput = any>(typeOrToken: Type<TInput> | Abstract<TInput> | string, contextId = createContextId(), options?: { strict: boolean }): Promise<TInput> {
+  resolve<TInput = any>(
+    typeOrToken: Type<TInput> | Abstract<TInput> | string,
+    contextId = createContextId(),
+    options?: { strict: boolean }
+  ): Promise<TInput> {
     return Promise.resolve(this.resolvePerContext(typeOrToken, contextId));
   }
 
@@ -282,7 +290,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
     if (isNil(instanceWrapper)) {
       throw new UnknownElementException();
     }
-    const provider = this.injector.loadProvider(instanceWrapper, this.container, contextId);
+    const provider = this.injector.loadProvider(instanceWrapper, contextId);
     return provider as Promise<TInput> | TInput;
   }
 
@@ -296,11 +304,11 @@ export class ServerApplication extends CoreContext implements INestApplication {
 
   protected async dispose(): Promise<void> {
     await super.dispose();
-
     // this.socketModule && (await this.socketModule.close());
     // this.microservicesModule && (await this.microservicesModule.close());
-    this.httpAdapter && (await this.httpAdapter.close());
-
+    if (this.httpAdapter) {
+      await this.httpAdapter.close();
+    }
     // await Promise.all(
     //   iterate(this.microservices).map(async microservice => {
     //     microservice.setIsTerminated(true);

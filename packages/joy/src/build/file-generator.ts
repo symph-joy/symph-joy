@@ -114,35 +114,35 @@ export class FileGenerator implements IComponentLifecycle {
 
   public async generate(watch: boolean) {
     await this.generateFiles();
-    if (watch) {
-      const watchPaths = await this.addTmpGenerateWatcherPaths.call([]);
-      lodash.uniq<string>(watchPaths.map((p: string) => winPath(p))).forEach((p) => {
-        this.watcherPath(p);
-      });
-    }
+    // if (watch) {
+    //   const watchPaths = await this.addTmpGenerateWatcherPaths.call([]);
+    //   lodash.uniq<string>(watchPaths.map((p: string) => winPath(p))).forEach((p) => {
+    //     this.watcherPath(p);
+    //   });
+    // }
   }
 
-  public watcherPath(path: string) {
-    const watcher = watch(path, {
-      // ignore .dotfiles and _mock.js
-      ignored: /(^|[\/\\])(_mock.js$|\..)/,
-      ignoreInitial: true,
-    });
-    watcher.on(
-      "all",
-      lodash.throttle(async (event, path) => {
-        // debug(`${event} ${path}`);
-        await this.generateFiles();
-      }, 100)
-    );
-    this.watchers.push(watcher);
-  }
-
-  public unwatch() {
-    this.watchers.forEach((watcher) => {
-      watcher.close();
-    });
-  }
+  // public watcherPath(path: string) {
+  //   const watcher = watch(path, {
+  //     // ignore .dotfiles and _mock.js
+  //     ignored: /(^|[\/\\])(_mock.js$|\..)/,
+  //     ignoreInitial: true,
+  //   });
+  //   watcher.on(
+  //     "all",
+  //     lodash.throttle(async (event, path) => {
+  //       // debug(`${event} ${path}`);
+  //       await this.generateFiles();
+  //     }, 100)
+  //   );
+  //   this.watchers.push(watcher);
+  // }
+  //
+  // public unwatch() {
+  //   this.watchers.forEach((watcher) => {
+  //     watcher.close();
+  //   });
+  // }
 
   public async mkdirp(path: string) {
     if (!(await fileExists(path))) {

@@ -1,4 +1,4 @@
-import { EntryType, JoyContextOptions, Logger, Type } from "@symph/core";
+import { EntryType, ICoreContext, JoyContextOptions, Logger, Type } from "@symph/core";
 import { MESSAGES } from "@symph/core/dist/constants";
 import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
 import { ServerApplication } from "./server-application";
@@ -12,17 +12,22 @@ import { ExceptionsZone } from "./errors/exceptions-zone";
 import { FastifyAdapter } from "./platform/fastify";
 import { ServerConfiguration } from "./server.configuration";
 
-export class ServerFactoryImplement<T extends ServerApplication> {
+export class ServerFactoryProtoClass<T extends ServerApplication, OPT extends Record<string, unknown> = {}> {
   protected logger = new Logger(`${this.serverApplicationClass.name}-factory`, true);
   protected abortOnError = true;
 
   constructor(public serverApplicationClass: { new (...args: any[]): T }) {}
 
   public async create(entry: EntryType, options?: NestApplicationOptions): Promise<T> {
-    return this.createServer(entry, ServerConfiguration, options);
+    return this.createServer(entry, ServerConfiguration, options, undefined);
   }
 
-  public async createServer(entry: EntryType, configurationClass: typeof ServerConfiguration = ServerConfiguration, options: NestApplicationOptions = {}): Promise<T> {
+  public async createServer(
+    entry: EntryType,
+    configurationClass: typeof ServerConfiguration = ServerConfiguration,
+    options: NestApplicationOptions | OPT = {},
+    parent?: ICoreContext
+  ): Promise<T> {
     this.applyLogger(options);
     // const httpServer = options.httpServer || this.createHttpAdapter();
     const appOptions = options;
@@ -31,15 +36,15 @@ export class ServerFactoryImplement<T extends ServerApplication> {
     //   : [this.createHttpAdapter(), serverOrOptions];
     // const applicationConfig = new ApplicationConfig();
     this.setAbortOnError(appOptions);
-    const container = new ServerContainer();
+    // const container = new ServerContainer();
     // container.applicationConfig = applicationConfig;
     const applicationContext = new this.serverApplicationClass(
       entry,
       configurationClass,
       // httpServer,
       // applicationConfig,
-      appOptions
-      // container
+      appOptions,
+      parent
     );
     await this.init(applicationContext);
 
@@ -191,4 +196,4 @@ export class ServerFactoryImplement<T extends ServerApplication> {
   }
 }
 
-export const ServerFactory = new ServerFactoryImplement(ServerApplication);
+export const ServerFactory = new ServerFactoryProtoClass(ServerApplication);

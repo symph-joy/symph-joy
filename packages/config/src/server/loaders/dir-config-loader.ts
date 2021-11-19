@@ -1,9 +1,9 @@
 import fs from "fs";
 import findUp from "find-up";
 import { basename, extname } from "path";
-import { ConfigLoader } from "./config-loader";
+import { ConfigLoader } from "../../loader/config-loader";
 import { ConfigNotExistException } from "../../errors/config-not-exist-exception";
-import { readConfigFile } from "./utils/read-config-file";
+import { readConfigFile } from "./read-config-file";
 import { ConfigPathIsFileException } from "../../errors/config-path-is-file-exception";
 
 export class DirConfigLoader extends ConfigLoader {
@@ -34,7 +34,9 @@ export class DirConfigLoader extends ConfigLoader {
       } else {
         const configFileName = this.configName;
         const configBaseName = basename(configFileName, extname(configFileName));
-        const nonJsPath = findUp.sync([`${configBaseName}.jsx`, `${configBaseName}.ts`, `${configBaseName}.tsx`, `${configBaseName}.json`], { cwd: this.dir });
+        const nonJsPath = findUp.sync([`${configBaseName}.jsx`, `${configBaseName}.ts`, `${configBaseName}.tsx`, `${configBaseName}.json`], {
+          cwd: this.dir,
+        });
         if (nonJsPath?.length) {
           throw new Error(`Configuring Joy via "${basename(nonJsPath)}" is not supported. Please replace the file with "${configBaseName}".`);
         } else {

@@ -28,7 +28,7 @@ describe("core-context", () => {
     }
 
     const container = new CoreContainer();
-    const app = new CoreContext(AppConfig, container);
+    const app = new CoreContext(AppConfig);
     await app.init();
 
     const helloProvider = await app.get(HelloProvider);
@@ -46,7 +46,7 @@ describe("core-context", () => {
       }
 
       const container = new CoreContainer();
-      const app = new CoreContext([MyProvider], container);
+      const app = new CoreContext([MyProvider]);
       await app.init();
       const myProvider = await app.get(MyProvider);
       expect(myProvider!.context).toBeInstanceOf(CoreContext);
@@ -80,19 +80,18 @@ describe("core-context", () => {
   });
 
   describe("context hooks", () => {
-    test("onDidProvidersRegister", async () => {
+    test("onModuleAfterLoad", async () => {
       @Component()
       class HelloProvider {
         public allProviderNames: TProviderName[] = [];
 
         @RegisterTap()
-        async onDidProvidersRegister(instanceWrappers: ComponentWrapper[]) {
+        async onModuleAfterLoad(modules: any, instanceWrappers: ComponentWrapper[]) {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               instanceWrappers.forEach((it) => {
                 this.allProviderNames.push(it.name);
               });
-
               resolve();
             }, 50);
           });
@@ -105,9 +104,9 @@ describe("core-context", () => {
         public helloProvider: HelloProvider;
       }
 
-      const container = new CoreContainer();
-      const app = new CoreContext(AppConfig, container);
+      const app = new CoreContext();
       await app.init();
+      await app.loadModule(AppConfig);
 
       const helloProvider = await app.get(HelloProvider);
       expect(helloProvider.allProviderNames).toContain("helloProvider");
@@ -137,7 +136,7 @@ describe("core-context", () => {
       }
 
       const container = new CoreContainer();
-      const app = new CoreContext(AppConfig, container);
+      const app = new CoreContext(AppConfig);
       await app.init();
 
       const helloProvider = await app.get(HelloProvider);

@@ -219,16 +219,16 @@ declare namespace NodeJS {
   }
 }
 
-declare module "watchpack" {
-  import { EventEmitter } from "events";
-
-  class Watchpack extends EventEmitter {
-    constructor(options?: any);
-    watch(files: string[], directories: string[], startTime?: number): void;
-    close(): void;
-
-    getTimeInfoEntries(): Map<string, { safeTime: number; timestamp: number; accuracy?: number }>;
-  }
-
-  export default Watchpack;
-}
+// declare module "watchpack" {
+//   import { EventEmitter } from "events";
+//
+//   class Watchpack extends EventEmitter {
+//     constructor(options?: any);
+//     watch(files: string[], directories: string[], startTime?: number): void;
+//     close(): void;
+//
+//     getTimeInfoEntries(): Map<string, { safeTime: number; timestamp: number; accuracy?: number }>;
+//   }
+//
+//   export default Watchpack;
+// }

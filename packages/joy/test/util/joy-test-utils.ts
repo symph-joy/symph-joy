@@ -5,6 +5,8 @@ import path from "path";
 import spawn from "cross-spawn";
 import child_process from "child_process";
 import treeKill from "tree-kill";
+import {OptionsOfTextResponseBody} from "got/dist/source/types";
+import got from "got";
 
 export async function renderViaAPI(app: JoyReactServer, pathname: string, query?: ParsedUrlQuery): Promise<string | null> {
   const url = `${pathname}${query ? `?${stringify(query)}` : ""}`;
@@ -27,6 +29,49 @@ export async function findPort(): Promise<number> {
 
 export async function waitForMoment(millisecond = 100000000): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, millisecond));
+}
+
+/**
+ * 轮询的方式获取接口数据，直到获取到匹配的内容，或者超时。
+ * @param url
+ * @param options
+ * @param waitingReg
+ * @param timeout
+ */
+export async function pollGetText(url: string, options: OptionsOfTextResponseBody | undefined, waitingReg: RegExp, timeout = 30000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const pollFn = async () => {
+      try {
+        const res = await got.get(url, Object.assign({
+          throwHttpErrors: false,
+          responseType: "text",
+        }, options));
+        const respText = res.body.trim()
+        if (waitingReg.test(respText)) {
+          pollTimer = undefined
+          if (timeoutTimer) {
+            clearTimeout(timeoutTimer)
+            timeoutTimer = undefined
+          }
+          return resolve(respText)
+        }
+      } catch (e) {
+        //do nothing, should continual waiting
+      }
+      pollTimer = setTimeout(pollFn, 1000)
+    }
+
+    let pollTimer: NodeJS.Timeout | undefined = setTimeout(pollFn, 500)
+
+    let timeoutTimer: NodeJS.Timeout | undefined = setTimeout(() => {
+      if (pollTimer) {
+        clearTimeout(pollTimer)
+        pollTimer = undefined
+      }
+      reject(new Error(`pollGet url:${url} timeout:${timeout}`))
+    }, timeout)
+  })
+
 }
 
 export interface RunOptions {

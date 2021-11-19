@@ -1,5 +1,5 @@
 import { Component } from "@symph/core";
-import { IWebpackEmitModule } from "./emit-src-plugin";
+import { IWebpackEmitModule } from "./emit-src-webpack-plugin";
 import path from "path";
 import { existsSync } from "fs";
 import { JoyAppConfig } from "../../../../joy-server/server/joy-app-config";
@@ -24,11 +24,23 @@ export class EmitSrcService {
     return this.manifest;
   }
 
-  public getEmitInfo(distFilePath: string): IWebpackEmitModule | undefined {
+  public getEmitInfo(distAbsPath: string): IWebpackEmitModule | undefined {
     if (!this.manifest) {
       return undefined;
     }
-    return this.manifest[distFilePath];
+    return this.manifest[distAbsPath];
+  }
+
+  public getEmitInfoBySrc(srcAbsPath: string): IWebpackEmitModule | undefined {
+    if (!this.manifest) {
+      return undefined;
+    }
+    for (const key of Object.keys(this.manifest)) {
+      if (this.manifest[key].resource === srcAbsPath) {
+        return this.manifest[key];
+      }
+    }
+    return undefined;
   }
 
   private readCurrentEmitManifest(): TEmitManifest | undefined {

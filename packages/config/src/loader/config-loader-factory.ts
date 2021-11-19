@@ -1,4 +1,4 @@
-import { ConfigLoader } from "../loaders/config-loader";
+import { ConfigLoader } from "./config-loader";
 import { Component } from "@symph/core";
 
 @Component()

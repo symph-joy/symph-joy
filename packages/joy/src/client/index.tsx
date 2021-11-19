@@ -4,21 +4,20 @@ import ReactDOM from "react-dom";
 import { HeadManagerContext } from "../joy-server/lib/head-manager-context";
 import mitt from "../joy-server/lib/mitt";
 import { RouterContext } from "../joy-server/lib/router-context";
-import { delBasePath, hasBasePath } from "../joy-server/lib/router/router";
-import type Router from "../joy-server/lib/router/router";
 import type { AppComponent, AppProps, PrivateRouteInfo } from "../joy-server/lib/router/router";
+import type Router from "../joy-server/lib/router/router";
+import { delBasePath, hasBasePath } from "../joy-server/lib/router/router";
 import { isDynamicRoute } from "../joy-server/lib/router/utils/is-dynamic";
 import * as querystring from "../joy-server/lib/router/utils/querystring";
 import * as envConfig from "../joy-server/lib/runtime-config";
-import { getURL, loadGetInitialProps, ST } from "../joy-server/lib/utils";
 import type { JOY_DATA } from "../joy-server/lib/utils";
+import { getURL, loadGetInitialProps, ST } from "../joy-server/lib/utils";
 import initHeadManager from "./head-manager";
 import PageLoader, { looseToArray, StyleSheetTuple } from "./page-loader";
 import measureWebVitals from "./performance-relayer";
 import { createRouter, makePublicRouterInstance } from "./router";
-import { CoreContainer } from "@symph/core";
 import { JoyReactAppClientConfiguration } from "../react/joy-react-app-client.configuration";
-import { ReactAppContainer, ApplicationConfig, ReactApplicationContext } from "@symph/react";
+import { ReactAppContainer, ReactApplicationContext } from "@symph/react";
 import { JoyClientConfig } from "./joy-client-config";
 import { JoyReactApplicationContext } from "../react/joy-react-application-context";
 
@@ -50,7 +49,18 @@ window.__JOY_DATA__ = data;
 
 export const version = process.env.__JOY_VERSION;
 
-const { initState: hydrateInitState, props: hydrateProps, err: hydrateErr, page, query, buildId, assetPrefix, runtimeConfig, dynamicIds, isFallback } = data;
+const {
+  initState: hydrateInitState,
+  props: hydrateProps,
+  err: hydrateErr,
+  page,
+  query,
+  buildId,
+  assetPrefix,
+  runtimeConfig,
+  dynamicIds,
+  isFallback,
+} = data;
 
 const prefix = assetPrefix || "";
 
@@ -107,20 +117,29 @@ class Container extends React.Component<{
     // - the page was (auto) exported and has a query string or search (hash)
     // - it was auto exported and is a dynamic route (to provide params)
     // - if it is a client-side skeleton (fallback render)
-    if (router.isSsr && (isFallback || (data.joyExport && (isDynamicRoute(router.pathname) || location.search)) || (hydrateProps && hydrateProps.__N_SSG && location.search))) {
+    if (
+      router.isSsr &&
+      (isFallback ||
+        (data.joyExport && (isDynamicRoute(router.pathname) || location.search)) ||
+        (hydrateProps && hydrateProps.__N_SSG && location.search))
+    ) {
       // update query on mount for exported pages
-      router.replace(router.pathname + "?" + String(querystring.assign(querystring.urlQueryToSearchParams(router.query), new URLSearchParams(location.search))), asPath, {
-        // @ts-ignore
-        // WARNING: `_h` is an internal option for handing Joy.js
-        // client-side hydration. Your app should _never_ use this property.
-        // It may change at any time without notice.
-        _h: 1,
-        // Fallback pages must trigger the data fetch, so the transition is
-        // not shallow.
-        // Other pages (strictly updating query) happens shallowly, as data
-        // requirements would already be present.
-        shallow: !isFallback,
-      });
+      router.replace(
+        router.pathname + "?" + String(querystring.assign(querystring.urlQueryToSearchParams(router.query), new URLSearchParams(location.search))),
+        asPath,
+        {
+          // @ts-ignore
+          // WARNING: `_h` is an internal option for handing Joy.js
+          // client-side hydration. Your app should _never_ use this property.
+          // It may change at any time without notice.
+          _h: 1,
+          // Fallback pages must trigger the data fetch, so the transition is
+          // not shallow.
+          // Other pages (strictly updating query) happens shallowly, as data
+          // requirements would already be present.
+          shallow: !isFallback,
+        }
+      );
     }
 
     if (process.env.__JOY_TEST_MODE) {
@@ -281,9 +300,8 @@ export default async (opts: { webpackHMR?: any } = {}) => {
       });
   }
 
-  const applicationConfig = new ApplicationConfig();
-  const joyContainer = new CoreContainer();
-  joyContainer.addProviders([
+  const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppClientConfiguration, hydrateInitState);
+  reactApplicationContext.container.addProviders([
     {
       name: "joyClientConfig",
       type: JoyClientConfig,
@@ -292,7 +310,6 @@ export default async (opts: { webpackHMR?: any } = {}) => {
       },
     },
   ]);
-  const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppClientConfiguration, applicationConfig, joyContainer, hydrateInitState);
   await reactApplicationContext.init();
 
   const renderCtx = {
@@ -404,7 +421,10 @@ function renderReactElement(reactEl: JSX.Element, domEl: HTMLElement) {
   if (process.env.__JOY_REACT_MODE !== "legacy") {
     if (!reactRoot) {
       const opts = { hydrate: true };
-      reactRoot = process.env.__JOY_REACT_MODE === "concurrent" ? (ReactDOM as any).unstable_createRoot(domEl, opts) : (ReactDOM as any).unstable_createBlockingRoot(domEl, opts);
+      reactRoot =
+        process.env.__JOY_REACT_MODE === "concurrent"
+          ? (ReactDOM as any).unstable_createRoot(domEl, opts)
+          : (ReactDOM as any).unstable_createBlockingRoot(domEl, opts);
     }
     reactRoot.render(reactEl);
   } else {

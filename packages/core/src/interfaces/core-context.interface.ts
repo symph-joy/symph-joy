@@ -3,7 +3,7 @@ import { Abstract } from "./abstract.interface";
 import { Type } from "./type.interface";
 import { ThenableResult } from "../utils/task-thenable";
 import { IInjectableDependency } from "./injectable-dependency.interface";
-import { ComponentWrapper } from "../injector";
+import { ComponentWrapper, CoreContainer, Injector } from "../injector";
 import { TProviderName } from "./context/provider.interface";
 
 export type EntryType = Record<string, unknown> | Type<unknown>;
@@ -15,6 +15,11 @@ export type TypeOrTokenType<T = any> = Type<T> | Abstract<T> | TProviderName;
  * @publicApi
  */
 export interface ICoreContext {
+  readonly container: CoreContainer;
+  readonly injector: Injector;
+
+  readonly parent?: ICoreContext;
+
   getProviderDefinition<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, packageName?: string): ComponentWrapper<TInput> | undefined;
 
   registerModule(module: EntryType | EntryType[]): ComponentWrapper[];

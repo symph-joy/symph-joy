@@ -40,7 +40,11 @@ interface ControllerProps {
 /**
  * todo model 状态发生改变后，如何精细的判断是否有必要刷新组件？
  */
-export abstract class ReactBaseController<TProps = Record<string, unknown>, TState = Record<string, unknown>, TContext extends ICoreContext = ICoreContext> extends Component<TProps & ControllerProps, TState, TContext> {
+export abstract class ReactBaseController<
+  TProps = Record<string, unknown>,
+  TState = Record<string, unknown>,
+  TContext extends ICoreContext = ICoreContext
+> extends Component<TProps & ControllerProps, TState, TContext> {
   __proto__: typeof React.Component;
 
   /**
@@ -124,10 +128,10 @@ export abstract class ReactBaseController<TProps = Record<string, unknown>, TSta
     };
 
     const { pathname } = this.location;
-    const renderStage = this.initManager.initStage;
+    const initStage = this.initManager.initStage;
     const { initStatic, init } = this.initManager.getPathState(pathname);
 
-    if (renderStage >= EnumReactAppInitStage.STATIC) {
+    if (initStage >= EnumReactAppInitStage.STATIC) {
       if (initStatic === JoyRouteInitState.NONE || initStatic === JoyRouteInitState.ERROR) {
         if (this.initialModelStaticState) {
           const initStaticTask = Promise.resolve(this.initialModelStaticState({})).catch((e) => {
@@ -145,7 +149,7 @@ export abstract class ReactBaseController<TProps = Record<string, unknown>, TSta
       }
     }
 
-    if (renderStage >= EnumReactAppInitStage.DYNAMIC) {
+    if (initStage >= EnumReactAppInitStage.DYNAMIC) {
       if (init === JoyRouteInitState.NONE || init === JoyRouteInitState.ERROR) {
         if (this.initialModelState) {
           const initTask = Promise.resolve(this.initialModelState({})).catch((e) => {

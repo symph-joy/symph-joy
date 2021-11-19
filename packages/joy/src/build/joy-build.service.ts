@@ -1,6 +1,18 @@
 import { isWriteable } from "./is-writeable";
 import { loadEnvConfig } from "../lib/load-env-config";
-import { BUILD_MANIFEST, CLIENT_STATIC_FILES_PATH, EXPORT_DETAIL, EXPORT_MARKER, OUT_DIRECTORY, PAGES_MANIFEST, PHASE_PRODUCTION_BUILD, PRERENDER_MANIFEST, ROUTES_MANIFEST, SERVER_DIRECTORY, SERVERLESS_DIRECTORY } from "../joy-server/lib/constants";
+import {
+  BUILD_MANIFEST,
+  CLIENT_STATIC_FILES_PATH,
+  EXPORT_DETAIL,
+  EXPORT_MARKER,
+  OUT_DIRECTORY,
+  PAGES_MANIFEST,
+  PHASE_PRODUCTION_BUILD,
+  PRERENDER_MANIFEST,
+  ROUTES_MANIFEST,
+  SERVER_DIRECTORY,
+  SERVERLESS_DIRECTORY,
+} from "../joy-server/lib/constants";
 import path from "path";
 import loadCustomRoutes, { getRedirectStatus, normalizeRouteRegex, Redirect, RouteType } from "../lib/load-custom-routes";
 import { fileExists } from "../lib/file-exists";
@@ -355,7 +367,6 @@ export class JoyBuildService {
     });
 
     if (postBuildSpinner) postBuildSpinner.stopAndPersist();
-    console.log();
     return prerenderManifest;
   }
 
@@ -591,7 +602,10 @@ export class JoyBuildService {
 
     const joyWebpackConfig = await getWebpackConfigForApi(serverConfig, this.joyConfig);
 
-    if (clientConfig.optimization && (clientConfig.optimization.minimize !== true || (clientConfig.optimization.minimizer && clientConfig.optimization.minimizer.length === 0))) {
+    if (
+      clientConfig.optimization &&
+      (clientConfig.optimization.minimize !== true || (clientConfig.optimization.minimizer && clientConfig.optimization.minimizer.length === 0))
+    ) {
       Log.warn(`Production code optimization has been disabled in your project.`);
     }
 
@@ -716,7 +730,9 @@ export class JoyBuildService {
         namedDataRouteRegex = routeRegex.namedRegex!.replace(/\(\?:\/\)\?\$$/, "\\.json$");
         routeKeys = routeRegex.routeKeys;
       } else {
-        dataRouteRegex = normalizeRouteRegex(new RegExp(`^${path.posix.join("/_joy/data", escapeStringRegexp(buildId), `${pagePath}.json`)}$`).source);
+        dataRouteRegex = normalizeRouteRegex(
+          new RegExp(`^${path.posix.join("/_joy/data", escapeStringRegexp(buildId), `${pagePath}.json`)}$`).source
+        );
       }
 
       return {
@@ -775,7 +791,10 @@ export class JoyBuildService {
     }
   }
 
-  private generateClientSsgManifest(prerenderManifest: PrerenderManifest, { buildId, outDir, isModern }: { buildId: string; outDir: string; isModern: boolean }) {
+  private generateClientSsgManifest(
+    prerenderManifest: PrerenderManifest,
+    { buildId, outDir, isModern }: { buildId: string; outDir: string; isModern: boolean }
+  ) {
     const ssgPages: ClientSsgManifest = new Set<string>([
       ...Object.entries(prerenderManifest.routes)
         // Filter out dynamic routes
@@ -784,7 +803,9 @@ export class JoyBuildService {
       ...Object.keys(prerenderManifest.dynamicRoutes),
     ]);
 
-    const clientSsgManifestPaths = ["_ssgManifest.js", isModern && "_ssgManifest.module.js"].filter(Boolean).map((f) => path.join(`${CLIENT_STATIC_FILES_PATH}/${buildId}`, f as string));
+    const clientSsgManifestPaths = ["_ssgManifest.js", isModern && "_ssgManifest.module.js"]
+      .filter(Boolean)
+      .map((f) => path.join(`${CLIENT_STATIC_FILES_PATH}/${buildId}`, f as string));
     const clientSsgManifestContent = `self.__SSG_MANIFEST=${devalue(ssgPages)};self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()`;
     clientSsgManifestPaths.forEach((clientSsgManifestPath) => writeFileSync(path.join(outDir, clientSsgManifestPath), clientSsgManifestContent));
   }

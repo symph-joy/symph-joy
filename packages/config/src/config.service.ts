@@ -1,14 +1,23 @@
-import { Autowire, AutowireHook, Component, HookType, IComponentWrapper, IHook, InjectorHookTaps, Optional, IComponentLifecycle, RegisterTap } from "@symph/core";
+import {
+  Autowire,
+  AutowireHook,
+  Component,
+  HookType,
+  IComponentLifecycle,
+  IComponentWrapper,
+  IHook,
+  InjectorHookTaps,
+  Optional,
+  RegisterTap,
+} from "@symph/core";
 import { PROP_KEY_JOY_CONFIG_SET_VALUE, SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_INIT_VALUE, SYMPH_CONFIG_OPTIONS } from "./constants";
-import { object } from "prop-types";
-import { isNil } from "@symph/core/dist/utils/shared.utils";
 import { VALIDATED_ENV_PROPNAME } from "./config.constants";
 import get from "lodash.get";
 import has from "lodash.has";
 import set from "lodash.set";
 import merge from "lodash.merge";
 import { NoInferType } from "./types";
-import { ConfigLoaderFactory } from "./loader/factories/config-loader-factory";
+import { ConfigLoaderFactory } from "./loader/config-loader-factory";
 
 const CONFIG_FILE = "joy.config.js";
 
@@ -87,7 +96,7 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
     }
     const configLoaders = this.configLoaderFactory.getLoaders(this.internalConfig);
     if (!configLoaders || configLoaders.length === 0) {
-      console.warn("There is no config loader.");
+      // console.info("There is no config loader.");
       return;
     }
     const loadedValues = {};

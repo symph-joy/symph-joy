@@ -26,7 +26,7 @@ export class RoutesResolver implements Resolver {
   }
 
   public resolve<T extends HttpServer>(applicationRef: T, basePath: string, wrappers?: ComponentWrapper[]) {
-    const ctsWrappers = [] as ComponentWrapper[];
+    let ctsWrappers = [] as ComponentWrapper[];
     if (wrappers) {
       wrappers.forEach((wrapper) => {
         if (!wrapper || wrapper.instanceBy !== "class") {
@@ -52,9 +52,9 @@ export class RoutesResolver implements Resolver {
         //     return true
         //   }
         // }
-        return false;
+        return true;
       });
-      ctsWrappers.concat(wrappers);
+      ctsWrappers = ctsWrappers.concat(wrappers);
     }
     this.registerRouters(ctsWrappers, basePath, applicationRef);
   }

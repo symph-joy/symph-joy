@@ -1,8 +1,8 @@
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { IncomingMessage, ServerResponse } from "http";
 import { encode, ParsedUrlQuery } from "querystring";
-import { ApplicationConfig, ReactApplicationContext, ReactRouter } from "@symph/react";
-import { Component, CoreContainer } from "@symph/core";
+import { ReactApplicationContext, ReactRouter } from "@symph/react";
+import { Component, CoreContainer, EntryType, Provider } from "@symph/core";
 import { JoyReactAppServerConfiguration } from "./joy-react-app-server.configuration";
 import { JoyReactApplicationContext } from "./joy-react-application-context";
 
@@ -14,15 +14,17 @@ export class ReactContextFactory {
     return JoyReactAppServerConfiguration;
   }
 
-  public async getReactAppContext(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery): Promise<ReactApplicationContext> {
-    const applicationConfig = new ApplicationConfig();
-    const joyContainer = new CoreContainer();
-    this.setInitComponent(joyContainer, req, res, pathname, query);
-    const reactApplicationContext = new JoyReactApplicationContext(this.getJoyReactAppServerConfig(), applicationConfig, joyContainer);
+  public async getReactAppContext(
+    req: IncomingMessage,
+    res: ServerResponse,
+    pathname: string,
+    query: ParsedUrlQuery
+  ): Promise<ReactApplicationContext> {
+    const reactApplicationContext = new JoyReactApplicationContext(this.getJoyReactAppServerConfig());
+    this.setInitComponent(reactApplicationContext.container, req, res, pathname, query);
     await reactApplicationContext.init();
 
     const reactRouter = reactApplicationContext.syncGet(ReactRouter);
-
     reactRouter.setCurrentLocation({
       pathname,
       search: encode(query),

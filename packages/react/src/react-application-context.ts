@@ -1,15 +1,15 @@
-import { ApplicationConfig } from "./application-config";
+import { ReactApplicationConfig } from "./react-application-config";
 import { renderComponent } from "./react-app-container";
 import { DOMElement, ReactElement } from "react";
 import reactDom from "react-dom";
 import { ReactReduxService } from "./redux/react-redux.service";
 import { IReactRoute } from "./interfaces/react-route.interface";
-import { ComponentWrapper, CoreContainer, CoreContext, EntryType, Logger } from "@symph/core";
+import { Autowire, ComponentWrapper, CoreContainer, CoreContext, EntryType, FactoryProvider, ICoreContext, Logger } from "@symph/core";
 import { IReactApplication } from "./interfaces";
 import { TReactAppComponent } from "./react-app-component";
 import { MountModule } from "./mount/mount-module";
 import { MountService } from "./mount/mount.service";
-import { ReactApplicationConfig } from "./react-application-config";
+import { ReactApplicationConfiguration } from "./react-application.configuration";
 import { ReactRouter } from "./router/react-router";
 
 /**
@@ -17,40 +17,46 @@ import { ReactRouter } from "./router/react-router";
  */
 export class ReactApplicationContext extends CoreContext implements IReactApplication {
   private readonly logger = new Logger(ReactApplicationContext.name, true);
-  protected readonly reduxStore: ReactReduxService;
+  protected reduxStore: ReactReduxService;
   protected routes: IReactRoute[];
   public mountService: MountService;
   public router: ReactRouter;
+  public reactApplicationConfig: ReactApplicationConfig;
 
   constructor(
-    // protected readonly entry: EntryType| EntryType[],
-    protected reactApplicationConfig: typeof ReactApplicationConfig,
-    protected readonly appConfig: ApplicationConfig,
-    container?: CoreContainer,
-    initState: Record<string, any> = {}
+    protected reactApplicationConfiguration: typeof ReactApplicationConfiguration,
+    protected initState: Record<string, any> = {},
+    public readonly parent?: ICoreContext
   ) {
-    super([], container);
-    this.reduxStore = new ReactReduxService(this.appConfig, initState);
+    super(undefined, parent);
+    // this.reduxStore = new ReactReduxService(this.appConfig, initState);
   }
 
   protected async initContext(): Promise<void> {
+    const initState = this.initState;
     await super.initContext();
     const coreComps = [
-      {
-        name: "applicationConfig",
-        type: ApplicationConfig,
-        useValue: this.appConfig,
-      },
+      // {
+      //   name: "applicationConfig",
+      //   type: ReactApplicationConfig,
+      //   useValue: this.appConfig,
+      // },
       {
         name: "reduxStore",
         type: ReactReduxService,
-        useValue: this.reduxStore,
-      },
-      ...this.dependenciesScanner.scan(this.reactApplicationConfig),
+        // useValue: this.reduxStore,
+        useFactory: function (applicationConfig: ReactApplicationConfig) {
+          return new ReactReduxService(applicationConfig, initState);
+        },
+        inject: [ReactApplicationConfig],
+      } as FactoryProvider,
+      ...this.dependenciesScanner.scan(this.reactApplicationConfiguration),
     ];
     const coreWrappers = this.container.addProviders(coreComps);
     await this.createInstancesOfDependencies(coreWrappers);
 
+    this.reduxStore = this.syncGet(ReactReduxService);
+    this.reactApplicationConfig = this.syncGet(ReactApplicationConfig);
     this.router = this.syncGet(ReactRouter);
     this.mountService = this.syncGet(MountService);
   }
@@ -118,7 +124,7 @@ export class ReactApplicationContext extends CoreContext implements IReactApplic
   }
 
   public setGlobalPrefix(prefix: string): this {
-    this.appConfig.setGlobalPrefix(prefix);
+    this.reactApplicationConfig.setGlobalPrefix(prefix);
     return this;
   }
 

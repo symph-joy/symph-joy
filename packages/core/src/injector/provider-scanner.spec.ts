@@ -3,18 +3,27 @@ import { ProviderScanner } from "./provider-scanner";
 import { Configuration } from "../decorators/core/configuration/configuration.decorator";
 import { Provider } from "../decorators/core/configuration/provider.decorator";
 import { Autowire, Component, Optional } from "../decorators/core";
-import { Scope } from "../interfaces";
+import { EntryType, ICoreContext, Scope } from "../interfaces";
 import { CoreContainer } from "./index";
 import { Injector } from "./injector";
 import { HookCenter } from "../hook/hook-center";
 import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
 import { object } from "prop-types";
+import { CoreContext } from "../core-context";
 
 function instanceContainer(): CoreContainer {
   const container = new CoreContainer();
   const hookCenter = new HookCenter();
   hookCenter.registerProviderHooks(container);
   return container;
+}
+
+function createTestAppContext(entry?: EntryType[], parent?: ICoreContext): [CoreContext, CoreContainer, Injector] {
+  const context = new CoreContext();
+  const container = context.container;
+  // @ts-ignore
+  const injector = context.injector;
+  return [context, container, injector];
 }
 
 describe("provider-scanner", () => {
@@ -427,10 +436,8 @@ describe("provider-scanner", () => {
   });
 
   describe("integrate container、 scanner and injector", () => {
-    const container = instanceContainer();
     const providerScanner = new ProviderScanner();
-    const pluginCenter = new HookCenter();
-    const injector = new Injector(pluginCenter);
+    const [context, container, injector] = createTestAppContext();
 
     @Component()
     class TestProvider {
@@ -451,7 +458,7 @@ describe("provider-scanner", () => {
       const providers = await providerScanner.scan(TestConfig);
       container.addProviders(providers);
       const testProviderWrapper = container.getProvider<TestProvider>("testProvider");
-      const testProviderInstance = await injector.loadProvider(testProviderWrapper!, container);
+      const testProviderInstance = await injector.loadProvider(testProviderWrapper!);
       expect(testProviderWrapper).not.toBeNull();
       expect(testProviderInstance.msg).not.toBeNull();
     });

@@ -37,55 +37,39 @@ import {
   FastifyStaticOptions,
   PointOfViewOptions,
 } from "../interfaces/external";
-import { AbstractHttpAdapter } from "../../../adapters";
-import { HttpStatus, RequestMethod } from "../../../enums";
-import { Logger } from "@symph/core";
+import {AbstractHttpAdapter} from "../../../adapters";
+import {HttpStatus, RequestMethod} from "../../../enums";
+import {Logger} from "@symph/core";
 import {
   CorsOptions,
   CorsOptionsDelegate,
 } from "../../../interfaces/external/cors-options.interface";
 
-type FastifyHttp2SecureOptions<
-  Server extends http2.Http2SecureServer,
-  Logger extends FastifyLoggerInstance = FastifyLoggerInstance
-> = FastifyServerOptions<Server, Logger> & {
+type FastifyHttp2SecureOptions<Server extends http2.Http2SecureServer,
+  Logger extends FastifyLoggerInstance = FastifyLoggerInstance> = FastifyServerOptions<Server, Logger> & {
   http2: true;
   https: http2.SecureServerOptions;
 };
 
-type FastifyHttp2Options<
-  Server extends http2.Http2Server,
-  Logger extends FastifyLoggerInstance = FastifyLoggerInstance
-> = FastifyServerOptions<Server, Logger> & {
+type FastifyHttp2Options<Server extends http2.Http2Server,
+  Logger extends FastifyLoggerInstance = FastifyLoggerInstance> = FastifyServerOptions<Server, Logger> & {
   http2: true;
   http2SessionTimeout?: number;
 };
 
-type FastifyHttpsOptions<
-  Server extends https.Server,
-  Logger extends FastifyLoggerInstance = FastifyLoggerInstance
-> = FastifyServerOptions<Server, Logger> & {
+type FastifyHttpsOptions<Server extends https.Server,
+  Logger extends FastifyLoggerInstance = FastifyLoggerInstance> = FastifyServerOptions<Server, Logger> & {
   https: https.ServerOptions;
 };
 
-export class FastifyAdapter<
-  TServer extends RawServerBase = RawServerDefault,
-  TRawRequest extends RawRequestDefaultExpression<
-    TServer
-  > = RawRequestDefaultExpression<TServer>,
-  TRawResponse extends RawReplyDefaultExpression<
-    TServer
-  > = RawReplyDefaultExpression<TServer>
-> extends AbstractHttpAdapter<
-  TServer,
+export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
+  TRawRequest extends RawRequestDefaultExpression<TServer> = RawRequestDefaultExpression<TServer>,
+  TRawResponse extends RawReplyDefaultExpression<TServer> = RawReplyDefaultExpression<TServer>> extends AbstractHttpAdapter<TServer,
   FastifyRequest<RequestGenericInterface, TServer, TRawRequest>,
-  FastifyReply<TServer, TRawRequest, TRawResponse>
-> {
-  protected readonly instance: FastifyInstance<
-    TServer,
+  FastifyReply<TServer, TRawRequest, TRawResponse>> {
+  protected readonly instance: FastifyInstance<TServer,
     TRawRequest,
-    TRawResponse
-  >;
+    TRawResponse>;
   private _isParserRegistered: boolean;
   private isMiddieRegistered: boolean;
 
@@ -134,18 +118,18 @@ export class FastifyAdapter<
   ) {
     const fastifyReply: FastifyReply = this.isNativeResponse(response)
       ? new Reply(
-          response,
-          {
-            context: {
-              preSerialization: null,
-              preValidation: [],
-              preHandler: [],
-              onSend: [],
-              onError: [],
-            },
+        response,
+        {
+          context: {
+            preSerialization: null,
+            preValidation: [],
+            preHandler: [],
+            onSend: [],
+            onError: [],
           },
-          {}
-        )
+        },
+        {}
+      )
       : response;
 
     if (statusCode) {
@@ -177,9 +161,7 @@ export class FastifyAdapter<
   }
 
   public setErrorHandler(
-    handler: Parameters<
-      FastifyInstance<TServer, TRawRequest, TRawResponse>["setErrorHandler"]
-    >[0]
+    handler: Parameters<FastifyInstance<TServer, TRawRequest, TRawResponse>["setErrorHandler"]>[0]
   ) {
     return this.instance.setErrorHandler(handler);
   }
@@ -192,9 +174,7 @@ export class FastifyAdapter<
     return (this.instance.server as unknown) as T;
   }
 
-  public getInstance<
-    T = FastifyInstance<TServer, TRawRequest, TRawResponse>
-  >(): T {
+  public getInstance<T = FastifyInstance<TServer, TRawRequest, TRawResponse>>(): T {
     return (this.instance as unknown) as T;
   }
 
@@ -219,7 +199,7 @@ export class FastifyAdapter<
 
   public async close() {
     try {
-      return await this.instance.close();
+      await this.instance.close();
     } catch (err) {
       // Check if server is still running
       if (err.code !== "ERR_SERVER_NOT_RUNNING") {
@@ -280,9 +260,7 @@ export class FastifyAdapter<
   public enableCors(
     options:
       | CorsOptions
-      | CorsOptionsDelegate<
-          FastifyRequest<RequestGenericInterface, TServer, TRawRequest>
-        >
+      | CorsOptionsDelegate<FastifyRequest<RequestGenericInterface, TServer, TRawRequest>>
   ) {
     if (typeof options === "function") {
       this.register(require("fastify-cors"), () => options);
@@ -354,7 +332,7 @@ export class FastifyAdapter<
       | Promise<{ default: FastifyPluginAsync<any> }>,
     prefix = "/"
   ) {
-    return this.instance.register(factory, { prefix });
+    return this.instance.register(factory, {prefix});
   }
 
   private isNativeResponse(

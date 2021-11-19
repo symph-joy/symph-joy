@@ -768,6 +768,7 @@ export default async function getBaseWebpackConfig(
     },
     watchOptions: {
       ignored: ["**/.git/**", "**/node_modules/**", "**/.joy/out/**", "**/.joy/dist/**"],
+      aggregateTimeout : 500,
     },
     output: {
       // fixme

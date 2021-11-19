@@ -1,19 +1,23 @@
-import { Component, RegisterTap } from "@symph/core";
-import { IScanOutModule } from "../../build/scanner/file-scanner";
-import { handlebars } from "../../lib/handlebars";
-import { readFileSync } from "fs";
-import { join } from "path";
-import { FileGenerator, IGenerateFiles } from "../../build/file-generator";
-import { isReactComponent } from "@symph/react/dist/react-component.decorator";
-import { ModuleContextTypeEnum } from "../../lib/constants";
+import {Component, RegisterTap} from "@symph/core";
+import {IScanOutModule} from "../../build/scanner/file-scanner";
+import {handlebars} from "../../lib/handlebars";
+import {readFileSync} from "fs";
+import {join} from "path";
+import {FileGenerator, IGenerateFiles} from "../../build/file-generator";
+import {isReactComponent} from "@symph/react/dist/react-component.decorator";
+import {ModuleContextTypeEnum} from "../../lib/constants";
 
 @Component()
 export class JoyAppProvidersExplorerService {
+
   protected moduleTemplate = handlebars.compile(readFileSync(join(__dirname, "./joy-app-providers-explorer.handlebars"), "utf-8"));
+
+  protected lastGenerateContent: string | undefined;
 
   protected providerModules: IScanOutModule[] = [];
 
-  constructor(protected fileGenerator: FileGenerator) {}
+  constructor(protected fileGenerator: FileGenerator) {
+  }
 
   public getModules(): IScanOutModule[] {
     return this.providerModules;
@@ -93,35 +97,40 @@ export class JoyAppProvidersExplorerService {
     }
   }
 
-  @RegisterTap()
-  public async onGenerateFiles(genFiles: IGenerateFiles) {
-    const modules = this.providerModules.map((mod) => {
-      return {
-        ...mod,
-        path: mod.resource || mod.path,
-        providerKeys: mod.providerDefines?.keys(),
-      };
-    });
-
-    // const importModules = this.providerModules.reduce((pre , mod) => {
-    //   // return {
-    //   //   path: mod.resource,
-    //   //   providerKeys: mod.providerDefines?.keys()
-    //   // }
-    //   if(!mod.resource) {
-    //     return pre
-    //   }
-    //   pre[mod.resource] = `require("${mod.resource}")`
-    //   return pre;
-    // }, {} as Record<string, unknown>)
-
-    const moduleFileContent = this.moduleTemplate({ modules });
-    // await this.fileGenerator.writeClientFile("./routes.js", clientFileContent);
-    // await this.fileGenerator.writeJoyFile(
-    //   "./app-providers.config.js",
-    //   moduleFileContent
-    // );
-    genFiles["./joy/server-providers.config.js"] = moduleFileContent;
-    return genFiles;
-  }
+  // @RegisterTap()
+  // public async onGenerateFiles(genFiles: IGenerateFiles) {
+  //   const modules = this.providerModules.map((mod) => {
+  //     return {
+  //       ...mod,
+  //       path: mod.resource || mod.path,
+  //       providerKeys: mod.providerDefines?.keys(),
+  //     };
+  //   });
+  //
+  //   // const importModules = this.providerModules.reduce((pre , mod) => {
+  //   //   // return {
+  //   //   //   path: mod.resource,
+  //   //   //   providerKeys: mod.providerDefines?.keys()
+  //   //   // }
+  //   //   if(!mod.resource) {
+  //   //     return pre
+  //   //   }
+  //   //   pre[mod.resource] = `require("${mod.resource}")`
+  //   //   return pre;
+  //   // }, {} as Record<string, unknown>)
+  //
+  //   const moduleFileContent = this.moduleTemplate({modules});
+  //   if (this.lastGenerateContent?.length === moduleFileContent.length && this.lastGenerateContent === moduleFileContent) {
+  //     // Module has not changed， so should not update.
+  //     return genFiles
+  //   }
+  //   this.lastGenerateContent = moduleFileContent
+  //   // await this.fileGenerator.writeClientFile("./routes.js", clientFileContent);
+  //   // await this.fileGenerator.writeJoyFile(
+  //   //   "./app-providers.config.js",
+  //   //   moduleFileContent
+  //   // );
+  //   genFiles["./joy/server-providers.config.js"] = moduleFileContent;
+  //   return genFiles;
+  // }
 }

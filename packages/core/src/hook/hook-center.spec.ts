@@ -42,8 +42,7 @@ describe("hook", () => {
       public bPlugin!: BPlugin;
     }
 
-    const container = new CoreContainer();
-    const app = new CoreContext(AppConfig, container);
+    const app = new CoreContext(AppConfig);
     await app.init();
 
     const helloProvider = await app.get<APlugin>(APlugin)!;
@@ -95,8 +94,7 @@ describe("hook", () => {
       public cPlugin: CPlugin;
     }
 
-    const container = new CoreContainer();
-    const app = new CoreContext(AppConfig, container);
+    const app = new CoreContext(AppConfig);
     await app.init();
 
     const helloProvider = await app.get<APlugin>(APlugin)!;

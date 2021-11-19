@@ -1,5 +1,5 @@
 import { Action, applyMiddleware, combineReducers, compose, createStore as _createStore, Middleware, Reducer, ReducersMapObject, Store } from "./index";
-import { ApplicationConfig } from "../application-config";
+import { ReactApplicationConfig } from "../react-application-config";
 // @ts-ignore
 import flatten from "flatten";
 import { IModel } from "../interfaces/model.interface";
@@ -44,7 +44,7 @@ export class ReactReduxService {
 
   private stateListenerIdCounter = 1;
 
-  constructor(public appConfig: ApplicationConfig, initState: Record<string, any>) {
+  constructor(public appConfig: ReactApplicationConfig, initState: Record<string, any>) {
     // const modelMiddleware = createModelMiddleware(app)
 
     this.store = this.createStore({

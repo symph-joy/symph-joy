@@ -1,17 +1,24 @@
 import webpack, { RuleSetRule, RuleSetUseItem } from "webpack";
 import { stringify } from "querystring";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import { EmitSrcPlugin } from "./webpack/plugins/emit-src-plugin/emit-src-plugin";
+import { EmitSrcWebpackPlugin } from "./webpack/plugins/emit-src-plugin/emit-src-webpack-plugin";
 import path from "path";
 import { resolveRequest } from "../lib/resolve-request";
 import { webpack5 } from "../types/webpack5";
 import Loader = webpack5.loader.Loader;
+import { existsSync } from "fs-extra";
 
 export async function getWebpackConfigForSrc(serverConfig: webpack.Configuration, joyConfig: JoyAppConfig): Promise<webpack.Configuration> {
   const srcConfig = { ...serverConfig };
   const distDir = joyConfig.resolveAppDir(joyConfig.distDir);
 
-  const srcDir = joyConfig.resolveAppDir("src");
+  let srcDir = joyConfig.resolveAppDir("src/client");
+  if (!existsSync(srcDir)) {
+    srcDir = joyConfig.resolveAppDir("src/pages");
+  }
+  if (!existsSync(srcDir)) {
+    srcDir = joyConfig.resolveAppDir("src");
+  }
   srcConfig.entry = {
     "src-bundle": [`joy-require-context-loader?${stringify({ absolutePath: srcDir })}!`],
   };
@@ -63,7 +70,7 @@ export async function getWebpackConfigForSrc(serverConfig: webpack.Configuration
   };
 
   // srcConfig.plugins = [...(serverConfig.plugins || []), new EmitSrcPlugin({ path: path.join(distDir, "dist") })];
-  srcConfig.plugins = [...(serverConfig.plugins || []), new EmitSrcPlugin({ path: "dist" })];
+  srcConfig.plugins = [...(serverConfig.plugins || []), new EmitSrcWebpackPlugin({ path: "dist" })];
 
   const cache: any = { ...(srcConfig.cache as any) };
   cache.cacheDirectory = path.join(cache.cacheDirectory, "../", "webpack-src");

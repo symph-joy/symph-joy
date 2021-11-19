@@ -1,6 +1,5 @@
-import { AutowireHook, ClassProvider, Component, CoreContainer, CoreContext, HookType, IHook, RegisterTap, TProviderName } from "@symph/core";
+import { AutowireHook, ClassProvider, Component, CoreContext, HookType, IHook, RegisterTap, TProviderName } from "@symph/core";
 import { getPrerenderMeta, PrerenderMeta } from "./prerender.decorator";
-import { ApplicationConfig, ReactApplicationContext } from "@symph/react";
 import { JoyPrerenderInterface } from "./prerender.interface";
 import { IScanOutModule } from "../scanner/file-scanner";
 import { JoyReactAppServerConfiguration } from "../../react/joy-react-app-server.configuration";
@@ -110,16 +109,16 @@ export class JoyPrerenderService {
       ids = ids.concat(it.ids);
     });
 
-    const applicationConfig = new ApplicationConfig();
-    const joyContainer = new CoreContainer();
-    joyContainer.addProviders([
+    // const applicationConfig = new ApplicationConfig();
+    // const joyContainer = new CoreContainer();
+    const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppServerConfiguration, {});
+    reactApplicationContext.container.addProviders([
       {
         name: "joyAppConfig",
         type: JoyAppConfig,
         useValue: this.joyAppConfig,
       },
     ]);
-    const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppServerConfiguration, applicationConfig, joyContainer);
     await reactApplicationContext.init();
     reactApplicationContext.scannedModules.push(...modules); // 防止再次注册再编译时的模块，或导致路由等重复注册。
     reactApplicationContext.registerModule(modules);

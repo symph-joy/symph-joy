@@ -7,7 +7,7 @@ export class ProviderScanner {
   private ctxRegistry: EntryType[] = [];
 
   public scan(
-    config: EntryType | EntryType[]
+    config: EntryType | Provider | (EntryType | Provider)[]
     // ctxRegistry: EntryType[] = []
   ): Provider[] {
     let providers: Provider[] = [];

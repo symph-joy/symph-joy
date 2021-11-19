@@ -3024,6 +3024,11 @@
   resolved "https://registry.nlark.com/@types/lru-cache/download/@types/lru-cache-5.1.0.tgz?cache=0&sync_timestamp=1625611516823&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Flru-cache%2Fdownload%2F%40types%2Flru-cache-5.1.0.tgz#57f228f2b80c046b4a1bd5cac031f81f207f4f03"
   integrity sha1-V/Io8rgMBGtKG9XKwDH4HyB/TwM=
 
+"@types/marked@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.npmmirror.com/@types/marked/download/@types/marked-4.0.1.tgz?cache=0&sync_timestamp=1637197369789&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2F%40types%2Fmarked%2Fdownload%2F%40types%2Fmarked-4.0.1.tgz#d588a7bbc4d6551c5e75249bc106ffda96ae33c5"
+  integrity sha512-ZigEmCWdNUU7IjZEuQ/iaimYdDHWHfTe3kg8ORfKjyGYd9RWumPoOJRQXB0bO+XLkNwzCthW3wUIQtANaEZ1ag==
+
 "@types/mime@*":
   version "2.0.3"
   resolved "https://registry.nlark.com/@types/mime/download/@types/mime-2.0.3.tgz#c893b73721db73699943bfc3653b1deb7faa4a3a"
@@ -3302,10 +3307,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/watchpack@1.1.5":
-  version "1.1.5"
-  resolved "https://registry.nlark.com/@types/watchpack/download/@types/watchpack-1.1.5.tgz?cache=0&sync_timestamp=1625268651029&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Fwatchpack%2Fdownload%2F%40types%2Fwatchpack-1.1.5.tgz#e5622eb2a49e2239d94d8882275fbc7893147e97"
-  integrity sha1-5WIusqSeIjnZTYiCJ1+8eJMUfpc=
+"@types/watchpack@^1.1.7":
+  version "1.1.7"
+  resolved "https://registry.nlark.com/@types/watchpack/download/@types/watchpack-1.1.7.tgz?cache=0&sync_timestamp=1629709754518&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Fwatchpack%2Fdownload%2F%40types%2Fwatchpack-1.1.7.tgz#9e680b223294cdfc10cb5a04da0543a97023cdd7"
+  integrity sha1-nmgLIjKUzfwQy1oE2gVDqXAjzdc=
   dependencies:
     "@types/graceful-fs" "*"
     "@types/node" "*"
@@ -7544,7 +7549,7 @@ fast-safe-stringify@^2.0.8:
   resolved "https://registry.nlark.com/fast-safe-stringify/download/fast-safe-stringify-2.0.8.tgz#dc2af48c46cf712b683e849b2bbd446b32de936f"
   integrity sha1-3Cr0jEbPcStoPoSbK71EazLek28=
 
-fastify-cors@^6.0.1:
+fastify-cors@^6.0.2:
   version "6.0.2"
   resolved "https://registry.nlark.com/fastify-cors/download/fastify-cors-6.0.2.tgz#4fd5102549659e9b34d252fd7ee607b63d021390"
   integrity sha1-T9UQJUllnps00lL9fuYHtj0CE5A=
@@ -7565,34 +7570,28 @@ fastify-express@^0.3.3:
     express "^4.17.1"
     fastify-plugin "^3.0.0"
 
-fastify-formbody@5.0.0:
-  version "5.0.0"
-  resolved "https://registry.nlark.com/fastify-formbody/download/fastify-formbody-5.0.0.tgz#dcac930e8fe5c83eb56a6917672bc4b7d2b4b5c4"
-  integrity sha1-3KyTDo/lyD61amkXZyvEt9K0tcQ=
+fastify-formbody@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.npmmirror.com/fastify-formbody/download/fastify-formbody-5.2.0.tgz#942f0847f106888cad419812590cfff7ffb61f92"
+  integrity sha512-d8Y5hCL82akPyoFiXh2wYOm3es0pV9jqoPo3pO9OV2cNF0cQx39J5WAVXzCh4MSt9Z2qF4Fy5gHlvlyESwjtvg==
   dependencies:
-    fastify-plugin "^2.3.2"
-
-fastify-plugin@^2.3.2:
-  version "2.3.4"
-  resolved "https://registry.nlark.com/fastify-plugin/download/fastify-plugin-2.3.4.tgz#b17abdc36a97877d88101fb86ad8a07f2c07de87"
-  integrity sha1-sXq9w2qXh32IEB+4atigfywH3oc=
-  dependencies:
-    semver "^7.3.2"
+    fastify-plugin "^3.0.0"
 
 fastify-plugin@^3.0.0:
   version "3.0.0"
   resolved "https://registry.nlark.com/fastify-plugin/download/fastify-plugin-3.0.0.tgz#cf1b8c8098e3b5a7c8c30e6aeb06903370c054ca"
   integrity sha1-zxuMgJjjtafIww5q6waQM3DAVMo=
 
-fastify-static@^4.2.2:
-  version "4.2.3"
-  resolved "https://registry.nlark.com/fastify-static/download/fastify-static-4.2.3.tgz#dc1876f3f876bbc78afd68ef8edae08752ed3e28"
-  integrity sha1-3Bh28/h2u8eK/Wjvjtrgh1LtPig=
+fastify-static@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.npmmirror.com/fastify-static/download/fastify-static-4.5.0.tgz#0d3feff5373f5ed9c4e4cf31a2b84c2f70c35bb2"
+  integrity sha1-DT/v9Tc/XtnE5M8xorhML3DDW7I=
   dependencies:
     content-disposition "^0.5.3"
     encoding-negotiator "^2.0.1"
     fastify-plugin "^3.0.0"
     glob "^7.1.4"
+    p-limit "^3.1.0"
     readable-stream "^3.4.0"
     send "^0.17.1"
 
@@ -7601,10 +7600,10 @@ fastify-warning@^0.2.0:
   resolved "https://registry.nlark.com/fastify-warning/download/fastify-warning-0.2.0.tgz#e717776026a4493dc9a2befa44db6d17f618008f"
   integrity sha1-5xd3YCakST3Jor76RNttF/YYAI8=
 
-fastify@^3.14.0:
-  version "3.20.1"
-  resolved "https://registry.nlark.com/fastify/download/fastify-3.20.1.tgz?cache=0&sync_timestamp=1627983830953&other_urls=https%3A%2F%2Fregistry.nlark.com%2Ffastify%2Fdownload%2Ffastify-3.20.1.tgz#8ca19b1da6e5e09b552b412168b1923a0eea9f9f"
-  integrity sha1-jKGbHabl4JtVK0EhaLGSOg7qn58=
+fastify@^3.24.0:
+  version "3.24.0"
+  resolved "https://registry.npmmirror.com/fastify/download/fastify-3.24.0.tgz?cache=0&sync_timestamp=1636972842488&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Ffastify%2Fdownload%2Ffastify-3.24.0.tgz#38b64e6a2f459dacda4a8342306b0882de534b58"
+  integrity sha512-fmRyrI25rzLGHDQ1FME02NsbP658mVa0EaSqfYUFwx2UOF+4/GcyNrsdWILSDOEiUbOsRYCD3sRCE9v7mvRLRQ==
   dependencies:
     "@fastify/ajv-compiler" "^1.0.0"
     abstract-logging "^2.0.0"
@@ -7617,7 +7616,6 @@ fastify@^3.14.0:
     light-my-request "^4.2.0"
     pino "^6.13.0"
     proxy-addr "^2.0.7"
-    readable-stream "^3.4.0"
     rfdc "^1.1.4"
     secure-json-parse "^2.0.0"
     semver "^7.3.2"
@@ -8783,6 +8781,11 @@ hasha@^5.0.0:
   dependencies:
     is-stream "^2.0.0"
     type-fest "^0.8.0"
+
+hashlru@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.nlark.com/hashlru/download/hashlru-2.3.0.tgz#5dc15928b3f6961a2056416bb3a4910216fdfb51"
+  integrity sha1-XcFZKLP2lhogVkFrs6SRAhb9+1E=
 
 he@1.2.0:
   version "1.2.0"
@@ -13095,6 +13098,14 @@ pnp-webpack-plugin@^1.7.0:
   dependencies:
     ts-pnp "^1.1.6"
 
+point-of-view@^4.15.2:
+  version "4.15.2"
+  resolved "https://registry.nlark.com/point-of-view/download/point-of-view-4.15.2.tgz?cache=0&sync_timestamp=1629876329010&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fpoint-of-view%2Fdownload%2Fpoint-of-view-4.15.2.tgz#edeb78a0dea71bb263238f5de70b8e8823392714"
+  integrity sha1-7et4oN6nG7JjI49d5wuOiCM5JxQ=
+  dependencies:
+    fastify-plugin "^3.0.0"
+    hashlru "^2.3.0"
+
 posix-character-classes@^0.1.0:
   version "0.1.1"
   resolved "https://registry.nlark.com/posix-character-classes/download/posix-character-classes-0.1.1.tgz#01eac0fe3b5af71a2a6c02feabb8c1fef7e00eab"
@@ -16950,14 +16961,6 @@ warning@4.0.3, warning@^4.0.1:
   dependencies:
     loose-envify "^1.0.0"
 
-watchpack@2.0.0-beta.13:
-  version "2.0.0-beta.13"
-  resolved "https://registry.nlark.com/watchpack/download/watchpack-2.0.0-beta.13.tgz#9d9b0c094b8402139333e04eb6194643c8384f55"
-  integrity sha1-nZsMCUuEAhOTM+BOthlGQ8g4T1U=
-  dependencies:
-    glob-to-regexp "^0.4.1"
-    graceful-fs "^4.1.2"
-
 watchpack@^2.2.0:
   version "2.2.0"
   resolved "https://registry.nlark.com/watchpack/download/watchpack-2.2.0.tgz#47d78f5415fe550ecd740f99fe2882323a58b1ce"
@@ -16993,20 +16996,25 @@ webidl-conversions@^6.1.0:
   resolved "https://registry.npm.taobao.org/webidl-conversions/download/webidl-conversions-6.1.0.tgz?cache=0&sync_timestamp=1587140219948&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fwebidl-conversions%2Fdownload%2Fwebidl-conversions-6.1.0.tgz#9111b4d7ea80acd40f5270d666621afa78b69514"
   integrity sha1-kRG01+qArNQPUnDWZmIa+ni2lRQ=
 
-webpack-sources@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.nlark.com/webpack-sources/download/webpack-sources-3.2.0.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fwebpack-sources%2Fdownload%2Fwebpack-sources-3.2.0.tgz#b16973bcf844ebcdb3afde32eda1c04d0b90f89d"
-  integrity sha1-sWlzvPhE682zr94y7aHATQuQ+J0=
+webpack-node-externals@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.nlark.com/webpack-node-externals/download/webpack-node-externals-3.0.0.tgz?cache=0&sync_timestamp=1618999751438&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fwebpack-node-externals%2Fdownload%2Fwebpack-node-externals-3.0.0.tgz#1a3407c158d547a9feb4229a9e3385b7b60c9917"
+  integrity sha1-GjQHwVjVR6n+tCKanjOFt7YMmRc=
 
 webpack-sources@^3.2.1:
   version "3.2.1"
   resolved "https://registry.nlark.com/webpack-sources/download/webpack-sources-3.2.1.tgz?cache=0&sync_timestamp=1631547640520&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fwebpack-sources%2Fdownload%2Fwebpack-sources-3.2.1.tgz#251a7d9720d75ada1469ca07dbb62f3641a05b6d"
   integrity sha1-JRp9lyDXWtoUacoH27YvNkGgW20=
 
-webpack@^5.61.0:
-  version "5.61.0"
-  resolved "https://registry.npmmirror.com/webpack/download/webpack-5.61.0.tgz#fa827f0ee9bdfd141dd73c3e891e955ebd52fe7f"
-  integrity sha1-+oJ/Dum9/RQd1zw+iR6VXr1S/n8=
+webpack-sources@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.npmmirror.com/webpack-sources/download/webpack-sources-3.2.2.tgz?cache=0&sync_timestamp=1636982763649&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fwebpack-sources%2Fdownload%2Fwebpack-sources-3.2.2.tgz#d88e3741833efec57c4c789b6010db9977545260"
+  integrity sha512-cp5qdmHnu5T8wRg2G3vZZHoJPN14aqQ89SyQ11NpGH5zEMDCclt49rzo+MaRazk7/UeILhAI+/sEtcM+7Fr0nw==
+
+webpack@^5.64.1:
+  version "5.64.1"
+  resolved "https://registry.npmmirror.com/webpack/download/webpack-5.64.1.tgz?cache=0&sync_timestamp=1636996758967&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fwebpack%2Fdownload%2Fwebpack-5.64.1.tgz#fd59840c16f04fe315f2b2598a85026f12dfa1bb"
+  integrity sha512-b4FHmRgaaAjP+aVOVz41a9Qa5SmkUPQ+u8FntTQ1roPHahSComB6rXnLwc976VhUY4CqTaLu5mCswuHiNhOfVw==
   dependencies:
     "@types/eslint-scope" "^3.7.0"
     "@types/estree" "^0.0.50"
@@ -17031,7 +17039,7 @@ webpack@^5.61.0:
     tapable "^2.1.1"
     terser-webpack-plugin "^5.1.3"
     watchpack "^2.2.0"
-    webpack-sources "^3.2.0"
+    webpack-sources "^3.2.2"
 
 whatwg-encoding@^1.0.5:
   version "1.0.5"

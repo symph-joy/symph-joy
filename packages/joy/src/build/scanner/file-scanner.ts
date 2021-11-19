@@ -6,6 +6,8 @@ import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
 import { ModuleContextTypeEnum } from "../../lib/constants";
 import { existsSync } from "fs";
 import * as Log from "../output/log";
+import {FSWatcher, watch} from "chokidar";
+import {JoyAppConfig} from "../../joy-server/server/joy-app-config";
 
 type TScanOutModuleProviders = Map<string, { type: "ClassProvider" | "Configuration"; providers: Provider[] }>;
 
@@ -34,10 +36,15 @@ interface ScanOptions {
  */
 @Component()
 export class FileScanner {
-  private container: CoreContainer;
 
-  constructor(private readonly coreContext: CoreContext, private providerScanner: ProviderScanner, private emitSrcService: EmitSrcService) {
-    this.container = coreContext.container;
+  private watchers: Map<string, FSWatcher> = new Map();
+  private aggregated = {
+    add: [] as string[],
+    delete: [] as string[],
+    change: [] as string[],
+  }
+
+  constructor(private readonly joyAppConfig: JoyAppConfig, private providerScanner: ProviderScanner, private emitSrcService: EmitSrcService) {
   }
 
   @AutowireHook({ type: HookType.Waterfall, parallel: false, async: true })
@@ -92,6 +99,27 @@ export class FileScanner {
     this.emitSrcService.updateEmitManifest(); // todo 移动到hot-reload中，统一在emit-all完成后，刷新数据。
     const existModuleKeys = Array.from(this.cachedModules.keys());
     const scanOutModuleKeys: string[] = [];
+
+    // let watcher = this.watchers.get(dir)
+    // if (!watcher) {
+    //   watcher = watch(dir)
+    //   this.watchers.set(dir, watcher)
+    //   watcher.on('add', (filePath) => {
+    //     console.log('>>>> add', filePath)
+    //     this.aggregated.add.push(filePath)
+    //   })
+    //   watcher.on('change', (filePath) => {
+    //     console.log('>>>> change', filePath)
+    //   })
+    //   watcher.on('unlink', (filePath) => {
+    //     console.log(`File ${filePath} has been removed`)
+    //
+    //   })
+    //   watcher.on('ready', () => {
+    //     console.log('Initial scan src directory complete. Ready for changes')
+    //   })
+    // }
+
     await new Promise<void>((resolve, reject) => {
       glob("**/*.{js,jsx,ts,tsx}", { cwd: dir }, async (err, files) => {
         if (err) {
@@ -110,6 +138,17 @@ export class FileScanner {
         resolve();
       });
     });
+
+    // const deleteModules = existModuleKeys.filter(
+    //   (it) => it.startsWith(dir) &&  !scanOutModuleKeys.includes(it)
+    // );
+    // for (const deleteModule of deleteModules) {
+    //   const cache = this.cachedModules.get(deleteModule);
+    //   if (cache) {
+    //     await this.afterScanOutModuleHook.call(cache);
+    //     this.cachedModules.delete(deleteModule);
+    //   }
+    // }
   }
 
   public async scanFile(fullFilePath: string, options: ScanOptions = {}): Promise<IScanOutModule | undefined> {

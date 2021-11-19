@@ -1,43 +1,46 @@
-import { getOverlayMiddleware } from "@next/react-dev-overlay/lib/middleware";
-import { NextHandleFunction } from "connect";
-import { IncomingMessage, ServerResponse } from "http";
-import { WebpackHotMiddleware } from "./hot-middleware";
-import { join, relative as relativePath } from "path";
-import { UrlObject } from "url";
-import webpack, { Compilation, MultiCompiler } from "webpack";
-import { createEntrypoints, createPagesMapping } from "../build/entries";
-import { watchCompilers } from "../build/output";
+import {getOverlayMiddleware} from "@next/react-dev-overlay/lib/middleware";
+import {NextHandleFunction} from "connect";
+import {IncomingMessage, ServerResponse} from "http";
+import {WebpackHotMiddleware} from "./hot-middleware";
+import {join, relative as relativePath} from "path";
+import {UrlObject} from "url";
+import webpack, {Compilation, Compiler, MultiCompiler} from "webpack";
+import {createEntrypoints, createPagesMapping} from "../build/entries";
+import {watchCompilers} from "../build/output";
 import getBaseWebpackConfig from "../build/webpack-config";
-import { API_ROUTE, JOY_PROJECT_ROOT_DIST_CLIENT } from "../lib/constants";
-import { recursiveDelete } from "../lib/recursive-delete";
-import { BLOCKED_PAGES, CLIENT_STATIC_FILES_RUNTIME_AMP, CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH } from "../joy-server/lib/constants";
-import { __ApiPreviewProps } from "../joy-server/server/api-utils";
-import { route } from "../joy-server/server/router";
-import { findPageFile } from "./lib/find-page-file";
-import { BUILDING, entries } from "./on-demand-entry-handler";
-import { normalizePathSep } from "../joy-server/server/normalize-page-path";
+import {API_ROUTE, JOY_PROJECT_ROOT_DIST_CLIENT} from "../lib/constants";
+import {recursiveDelete} from "../lib/recursive-delete";
+import {BLOCKED_PAGES, CLIENT_STATIC_FILES_RUNTIME_AMP, CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH} from "../joy-server/lib/constants";
+import {__ApiPreviewProps} from "../joy-server/server/api-utils";
+import {route} from "../joy-server/server/router";
+import {findPageFile} from "./lib/find-page-file";
+import {BUILDING, entries} from "./on-demand-entry-handler";
+import {normalizePathSep} from "../joy-server/server/normalize-page-path";
 import getRouteFromEntrypoint from "../joy-server/server/get-route-from-entrypoint";
-import { isWriteable } from "../build/is-writeable";
-import { ClientPagesLoaderOptions } from "../build/webpack/loaders/joy-client-pages-loader";
-import { stringify } from "querystring";
-import loadCustomRoutes, { Rewrite } from "../lib/load-custom-routes";
-import { FileScanner } from "../build/scanner/file-scanner";
-import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import { FileGenerator } from "../build/file-generator";
-import { EventEmitter } from "events";
+import {isWriteable} from "../build/is-writeable";
+import {ClientPagesLoaderOptions} from "../build/webpack/loaders/joy-client-pages-loader";
+import {stringify} from "querystring";
+import loadCustomRoutes, {Rewrite} from "../lib/load-custom-routes";
+import {FileScanner} from "../build/scanner/file-scanner";
+import {JoyAppConfig} from "../joy-server/server/joy-app-config";
+import {FileGenerator} from "../build/file-generator";
+import {EventEmitter} from "events";
 import OnDemandModuleHandler from "./on-demand-module-handler";
-import { getWebpackConfigForSrc } from "../build/webpack-config-for-src";
-import { Autowire, AutowireHook, Component, HookType, IHook } from "@symph/core";
-import { BuildDevConfig } from "./build-dev-config";
+import {getWebpackConfigForSrc} from "../build/webpack-config-for-src";
+import {Autowire, AutowireHook, Component, HookType, IHook} from "@symph/core";
+import {BuildDevConfig} from "./build-dev-config";
 import crypto from "crypto";
-import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
-import { ReactRouter } from "@symph/react";
-import { getWebpackConfigForApi } from "../build/webpack-config-for-api";
+import {JoyReactRouterPluginDev} from "../react/router/joy-react-router-plugin-dev";
+import {ReactRouter} from "@symph/react";
+import {getWebpackConfigForApi} from "../build/webpack-config-for-api";
 import chalk from "chalk";
-import { JoyBuildService } from "../build/joy-build.service";
+import {JoyBuildService} from "../build/joy-build.service";
 import * as Log from "../build/output/log";
+import {SrcEntryGenerator} from "../build/src-entry-generator";
+import {EmitSrcService} from "../build/webpack/plugins/emit-src-plugin/emit-src-service";
+import {ApiSrcEntryGenerator} from "../build/api-src-entry-generator";
 
-export async function renderScriptError(res: ServerResponse, error: Error, { verbose = true } = {}) {
+export async function renderScriptError(res: ServerResponse, error: Error, {verbose = true} = {}) {
   // Asks CDNs and others to not to cache the errored page
   res.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
 
@@ -58,11 +61,11 @@ function addCorsSupport(req: IncomingMessage, res: ServerResponse) {
   const isApiRoute = req.url!.match(API_ROUTE);
   // API routes handle their own CORS headers
   if (isApiRoute) {
-    return { preflight: false };
+    return {preflight: false};
   }
 
   if (!req.headers.origin) {
-    return { preflight: false };
+    return {preflight: false};
   }
 
   res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
@@ -75,10 +78,10 @@ function addCorsSupport(req: IncomingMessage, res: ServerResponse) {
   if (req.method === "OPTIONS") {
     res.writeHead(200);
     res.end();
-    return { preflight: true };
+    return {preflight: true};
   }
 
-  return { preflight: false };
+  return {preflight: false};
 }
 
 const matchJoyPageBundleRequest = route("/_joy/static/chunks/pages/:path*.js(\\.map|)");
@@ -101,7 +104,7 @@ function erroredPages(compilation: Compilation) {
     }
 
     const entryModule = findEntryModule(error.module);
-    const { name } = entryModule;
+    const {name} = entryModule;
     if (!name) {
       continue;
     }
@@ -129,8 +132,9 @@ function erroredPages(compilation: Compilation) {
 
 @Component()
 export default class HotReloader {
-  // @AutowireHook({type: HookType.Traverse, async: true})
-  // public onWillJoyBuild: IHook<{ dev: boolean }, void>;
+
+  @AutowireHook({type: HookType.Traverse, async: true})
+  public onWillJoyBuild: IHook<{ dev: boolean }, void>;
 
   private dir: string;
   private middlewares: any[];
@@ -152,8 +156,21 @@ export default class HotReloader {
   // private fileScanner: FileScanner;
   // private fileGenerator: FileGenerator;
   private doneCallbacks: EventEmitter = new EventEmitter();
+  private srcEntryGenerator: SrcEntryGenerator;
 
-  constructor(private joyAppConfig: JoyAppConfig, private fileGenerator: FileGenerator, private fileScanner: FileScanner, protected buildConfig: BuildDevConfig, private joyReactRouter: JoyReactRouterPluginDev, private buildService: JoyBuildService) {
+  public apiCompiler: Compiler;
+  public reactClientCompiler: Compiler;
+  public reactServerCompiler: Compiler;
+  public srcCompiler: Compiler;
+
+  constructor(
+    private joyAppConfig: JoyAppConfig,
+    private fileGenerator: FileGenerator,
+    private fileScanner: FileScanner,
+    protected buildConfig: BuildDevConfig,
+    private joyReactRouter: JoyReactRouterPluginDev,
+    // private apiSrcEntryGenerator: ApiSrcEntryGenerator
+  ) {
     this.dir = this.joyAppConfig.resolveAppDir();
     this.middlewares = [];
     this.pagesDir = this.joyAppConfig.resolvePagesDir();
@@ -161,6 +178,9 @@ export default class HotReloader {
     this.clientStats = null;
     this.serverStats = null;
     this.serverPrevDocumentHash = undefined;
+
+    // this.srcEntryGenerator = new SrcEntryGenerator(joyAppConfig, emitSrcService, fileScanner)
+    // this.srcEntryGenerator.getSrcFiles(true)
   }
 
   private _devCachedPreviewProps: __ApiPreviewProps | undefined;
@@ -181,7 +201,7 @@ export default class HotReloader {
     // With when the app runs for multi-zones support behind a proxy,
     // the current page is trying to access this URL via assetPrefix.
     // That's when the CORS support is needed.
-    const { preflight } = addCorsSupport(req, res);
+    const {preflight} = addCorsSupport(req, res);
     if (preflight) {
       return {};
     }
@@ -238,6 +258,7 @@ export default class HotReloader {
 
   private async clean(): Promise<void> {
     await recursiveDelete(this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir), /^cache/);
+    await this.fileGenerator.mkTempDirs()
   }
 
   private async getWebpackConfig() {
@@ -251,7 +272,7 @@ export default class HotReloader {
     const buildId = await this.buildConfig.getBuildId();
     const previewProps = this.getPreviewProps();
     const customRoutes = await loadCustomRoutes(this.joyAppConfig);
-    const { redirects, rewrites, headers } = customRoutes;
+    const {redirects, rewrites, headers} = customRoutes;
 
     const entrypoints = createEntrypoints(pages, "server", buildId, previewProps, this.joyAppConfig, []);
 
@@ -269,7 +290,7 @@ export default class HotReloader {
         pagesDir: this.pagesDir,
         rewrites: rewrites,
         routes,
-        entrypoints: { ...entrypoints.client, ...additionalClientEntrypoints },
+        entrypoints: {...entrypoints.client, ...additionalClientEntrypoints},
       }),
       getBaseWebpackConfig(this.dir, {
         dev: true,
@@ -279,7 +300,7 @@ export default class HotReloader {
         pagesDir: this.pagesDir,
         rewrites: rewrites,
         routes,
-        entrypoints: { ...entrypoints.server },
+        entrypoints: {...entrypoints.server},
       }),
     ]);
   }
@@ -293,13 +314,15 @@ export default class HotReloader {
     return this.startPromise;
   }
 
+  public async invalidateApi(): Promise<void> {
+    await this.fileGenerator.generate(false);
+    // this.apiCompiler.watching.invalidate()
+  }
+
   private async _start(): Promise<void> {
     await this.clean();
 
-    // this.onWillJoyBuild.call({dev: true})
-    await this.buildService.triggerOnWillJoyBuild();
-
-    await this.fileGenerator.mkTempDirs();
+    await this.onWillJoyBuild.call({dev: this.joyAppConfig.dev});
 
     const _configs = await this.getWebpackConfig();
 
@@ -320,7 +343,7 @@ export default class HotReloader {
             if (isClientCompilation && page.match(API_ROUTE)) {
               return;
             }
-            const { serverBundlePath, clientBundlePath, absolutePagePath } = entries[page];
+            const {serverBundlePath, clientBundlePath, absolutePagePath} = entries[page];
             const pageExists = await isWriteable(absolutePagePath);
             if (!pageExists) {
               // page was removed
@@ -348,14 +371,25 @@ export default class HotReloader {
     const configs = [clientConfig, serverConfig, joyAppModulesConfig, srcConfig];
     const multiCompiler = webpack(configs);
 
-    watchCompilers(multiCompiler.compilers[0], multiCompiler.compilers[1], multiCompiler.compilers[2], multiCompiler.compilers[3]);
+    this.reactClientCompiler = multiCompiler.compilers[0]
+    this.reactServerCompiler = multiCompiler.compilers[1]
+    this.apiCompiler = multiCompiler.compilers[2]
+    this.srcCompiler = multiCompiler.compilers[3]
+
+    this.apiCompiler.hooks.beforeCompile.tapPromise('MyPlugina',
+      async () => {
+          console.log('>>>> before beforeCompile', process.uptime())
+        // await this.fileGenerator.generate(false);
+    });
+
+    watchCompilers(this.reactClientCompiler, this.reactServerCompiler, this.apiCompiler, this.srcCompiler);
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
-    multiCompiler.compilers[3].hooks.failed.tap("JoyJSHotReloaderForSrc", (err: Error) => {
+    this.srcCompiler.hooks.failed.tap("JoyJSHotReloaderForSrc", (err: Error) => {
       this.srcError = err;
       this.srcStats = null;
       console.log(err);
     });
-    multiCompiler.compilers[3].hooks.done.tap("JoyJSHotReloaderForSrc", async (stats) => {
+    this.srcCompiler.hooks.done.tap("JoyJSHotReloaderForSrc", async (stats) => {
       //  ===== 扫描src目录
       // const distPagesDir = this.config.resolveDistPagesDir()
       // const distPagesDir = this.config.resolveAppDir(this.config.outDir, 'server', 'dist/src' )
@@ -374,28 +408,24 @@ export default class HotReloader {
       }
       this.srcStats = stats;
       this.srcError = null;
-      const distPagesDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, "dist/src");
-      await this.fileScanner.scanDist(distPagesDir);
+      const distDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, "dist/src");
+      await this.fileScanner.scanDist(distDir);
       // ===== 重新生成客户端需要的文件，比如路由和插件配置等。
       await this.fileGenerator.generate(false);
-      // if (this.watcher){
-      multiCompiler.compilers[0].watching.invalidate();
-      multiCompiler.compilers[1].watching.invalidate();
-      multiCompiler.compilers[2].watching.invalidate();
-      // this.watcher.watchings[0].invalidate()
-      // this.watcher.watchings[1].invalidate()
-      // }
+      this.reactClientCompiler.watching.invalidate();
+      this.reactServerCompiler.watching.invalidate();
+      console.log('>>>> reactClientCompiler.watching.invalidate()', process.uptime())
     });
 
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
-    multiCompiler.compilers[1].hooks.failed.tap("JoyjsHotReloaderForServer", (err: Error) => {
+    this.reactServerCompiler.hooks.failed.tap("JoyjsHotReloaderForServer", (err: Error) => {
       this.serverError = err;
       this.serverStats = null;
     });
-    multiCompiler.compilers[1].hooks.done.tap("JoyjsHotReloaderForServer", async (stats) => {
+    this.reactServerCompiler.hooks.done.tap("JoyjsHotReloaderForServer", async (stats) => {
       this.serverError = null;
       this.serverStats = stats;
-      const { compilation } = stats;
+      const {compilation} = stats;
 
       // We only watch `_document` for changes on the server compilation
       // the rest of the files will be triggered by the client compilation
@@ -419,15 +449,15 @@ export default class HotReloader {
       this.serverPrevDocumentHash = documentChunk.hash;
     });
 
-    multiCompiler.compilers[0].hooks.failed.tap("JoyjsHotReloaderForClient", (err: Error) => {
+    this.reactClientCompiler.hooks.failed.tap("JoyjsHotReloaderForClient", (err: Error) => {
       this.clientError = err;
       this.clientStats = null;
     });
-    multiCompiler.compilers[0].hooks.done.tap("JoyjsHotReloaderForClient", (stats) => {
+    this.reactClientCompiler.hooks.done.tap("JoyjsHotReloaderForClient", (stats) => {
       this.clientError = null;
       this.clientStats = stats;
 
-      const { compilation } = stats;
+      const {compilation} = stats;
       const chunkNames = new Set([...compilation.namedChunks.keys()].filter((name) => !!getRouteFromEntrypoint(name)));
 
       if (this.prevChunkNames) {
@@ -459,14 +489,19 @@ export default class HotReloader {
       this.doneCallbacks.emit("done", clientStats);
     });
 
-    this.webpackHotMiddleware = new WebpackHotMiddleware(multiCompiler.compilers[0]);
+    this.webpackHotMiddleware = new WebpackHotMiddleware(this.reactClientCompiler);
 
     let booted = false;
     this.onDemandModules = new OnDemandModuleHandler(multiCompiler);
     this.watcher = await new Promise((resolve) => {
       const watcher = multiCompiler.watch(
-        // @ts-ignore webpack supports an array of watchOptions when using a multiCompiler
-        configs.map((config) => config.watchOptions!),
+        configs.map((config,index) => {
+          // if (index === 2) {
+          //   // return {ignored: '**/server-providers.config.js'}
+          //   return {ignored: `${this.joyAppConfig.resolveAppDir('src/server')}`}
+          // }
+          return config.watchOptions!
+        }),
         // Errors are handled separately
         (_err: any) => {
           if (_err) {
@@ -479,6 +514,7 @@ export default class HotReloader {
         }
       );
     });
+
     this.onDemandModules.watch(this.watcher);
 
     // this.onDemandEntries = onDemandEntryHandler(this.watcher, multiCompiler, {
@@ -515,7 +551,7 @@ export default class HotReloader {
     if (this.srcError || this.clientError || this.serverError) {
       return [this.srcError || this.clientError || this.serverError];
     } else if (this.clientStats?.hasErrors()) {
-      const { compilation } = this.clientStats;
+      const {compilation} = this.clientStats;
       const failedPages = erroredPages(compilation);
 
       // If there is an error related to the requesting page we display it instead of the first error
@@ -536,7 +572,7 @@ export default class HotReloader {
   }
 
   public send(action?: string, ...args: any[]): void {
-    this.webpackHotMiddleware!.publish({ action, data: args });
+    this.webpackHotMiddleware!.publish({action, data: args});
   }
 
   // public async invalidateWatcher(srcPaths?: string[]): Promise<void> {

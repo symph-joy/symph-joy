@@ -1,4 +1,4 @@
-import { NodeConfigConfiguration } from "@symph/config";
+import { NodeConfigConfiguration } from "@symph/config/server";
 import { Configuration } from "@symph/core";
 
 @Configuration()

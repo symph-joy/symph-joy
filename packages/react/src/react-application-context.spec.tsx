@@ -1,5 +1,5 @@
 import React from "react";
-import { ApplicationConfig } from "./application-config";
+import { ReactApplicationConfig } from "./react-application-config";
 import { ReactApplicationContext } from "./react-application-context";
 import { ReactBaseModel } from "./react-base-model";
 import { ReactBaseController } from "./react-base-controller";
@@ -8,7 +8,7 @@ import { ReactModel } from "./react-model.decorator";
 import { ReactController } from "./react-controller.decorator";
 import { matchPath, MemoryRouter, useLocation } from "react-router-dom";
 import "reflect-metadata";
-import { ReactApplicationConfig } from "./react-application-config";
+import { ReactApplicationConfiguration } from "./react-application.configuration";
 import { Configuration, Autowire, CoreContainer } from "@symph/core";
 import { ReactApplicationFactory } from "./react-application-factory";
 import { ReactComponent } from "./react-component.decorator";
@@ -31,9 +31,7 @@ describe("react-application", () => {
         public helloProvider: HelloProvider;
       }
 
-      const applicationConfig = new ApplicationConfig();
-      const container = new CoreContainer();
-      const app = new ReactApplicationContext(ReactApplicationConfig, applicationConfig, container);
+      const app = new ReactApplicationContext(ReactApplicationConfiguration);
       await app.init();
       app.registerModule(AppConfig);
 
@@ -130,7 +128,15 @@ describe("react-application", () => {
           }, 50);
         }
 
-        renderView(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | string | number | React.ReactNodeArray | React.ReactPortal | boolean | null | undefined {
+        renderView():
+          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+          | string
+          | number
+          | React.ReactNodeArray
+          | React.ReactPortal
+          | boolean
+          | null
+          | undefined {
           const { message } = this.props;
           const { status } = this.helloModel.state;
           return (
@@ -152,7 +158,7 @@ describe("react-application", () => {
       }
 
       // const app = await SymphReactFactory.create(AppConfig)
-      const app = new ReactApplicationContext(ReactApplicationConfig, new ApplicationConfig());
+      const app = new ReactApplicationContext(ReactApplicationConfiguration, new ReactApplicationConfig());
       await app.init();
       // const helloModel = await app.get(HelloModel,)
       // expect(helloModel).not.toBeNull()
@@ -195,7 +201,15 @@ describe("react-application", () => {
           }, 500);
         }
 
-        renderView(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | string | number | React.ReactNodeArray | React.ReactPortal | boolean | null | undefined {
+        renderView():
+          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+          | string
+          | number
+          | React.ReactNodeArray
+          | React.ReactPortal
+          | boolean
+          | null
+          | undefined {
           const { message } = this.props;
           const { status } = this.helloModel.state;
 
@@ -247,7 +261,15 @@ describe("react-application", () => {
           this.helloModel1.say();
         }
 
-        renderView(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | string | number | React.ReactNodeArray | React.ReactPortal | boolean | null | undefined {
+        renderView():
+          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+          | string
+          | number
+          | React.ReactNodeArray
+          | React.ReactPortal
+          | boolean
+          | null
+          | undefined {
           const { status } = this.helloModel.state;
           const { status: status1 } = this.helloModel1.state;
           return (

@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "@testing-library/react";
 import "reflect-metadata";
 
-import { ReactApplicationConfig } from "../react-application-config";
+import { ReactApplicationConfiguration } from "../react-application.configuration";
 import { ReactRouter } from "./react-router";
 import DynamicRoutePath from "./fixtures/router/pages/dynamic-route-path";
 import { ReactApplicationFactory } from "../react-application-factory";
@@ -14,7 +14,7 @@ import NestChildAbc from "./fixtures/router/pages/nest/child/abc";
 
 describe("react-router", () => {
   test("should render the hello route", async () => {
-    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
+    const app = await ReactApplicationFactory.create(ReactApplicationConfiguration, undefined, [
       {
         name: "reactRouterProps",
         type: Object,
@@ -35,7 +35,7 @@ describe("react-router", () => {
   });
 
   test("should render the nesting route.", async () => {
-    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
+    const app = await ReactApplicationFactory.create(ReactApplicationConfiguration, undefined, [
       {
         name: "reactRouterProps",
         type: Object,
@@ -52,7 +52,7 @@ describe("react-router", () => {
   });
 
   test("should render the nesting default index route.", async () => {
-    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
+    const app = await ReactApplicationFactory.create(ReactApplicationConfiguration, undefined, [
       {
         name: "reactRouterProps",
         type: Object,
@@ -71,7 +71,7 @@ describe("react-router", () => {
   });
 
   test("should render the nesting route, and its all child route.", async () => {
-    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
+    const app = await ReactApplicationFactory.create(ReactApplicationConfiguration, undefined, [
       {
         name: "reactRouterProps",
         type: Object,
@@ -90,7 +90,7 @@ describe("react-router", () => {
   });
 
   test("should render the dynamic route, and bind the path param to prop", async () => {
-    const app = await ReactApplicationFactory.create(ReactApplicationConfig, undefined, [
+    const app = await ReactApplicationFactory.create(ReactApplicationConfiguration, undefined, [
       {
         name: "reactRouterProps",
         type: Object,

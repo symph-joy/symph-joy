@@ -12,7 +12,7 @@ export class CoreFactoryImplement {
   public async createApplicationContext(entry: EntryType | EntryType[], options?: JoyContextOptions): Promise<ICoreContext> {
     this.applyLogger(options);
     const container = new CoreContainer();
-    const applicationContext = new CoreContext(entry, container);
+    const applicationContext = new CoreContext(entry);
     return this.initContext(applicationContext);
   }
 

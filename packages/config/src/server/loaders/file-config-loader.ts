@@ -1,7 +1,7 @@
 import { RuntimeException } from "@symph/core";
 import fs from "fs";
-import { ConfigLoader } from "./config-loader";
-import { readConfigFile } from "./utils/read-config-file";
+import { ConfigLoader } from "../../loader/config-loader";
+import { readConfigFile } from "./read-config-file";
 import { ConfigNotExistException } from "../../errors/config-not-exist-exception";
 
 export class FileConfigLoader extends ConfigLoader {

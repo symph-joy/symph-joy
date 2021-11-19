@@ -1,15 +1,19 @@
 import { JoyApplicationOptions } from "./interfaces";
 import { CoreContainer, CoreFactoryImplement } from "@symph/core";
-import { ReactApplicationConfig } from "./react-application-config";
+import { ReactApplicationConfiguration } from "./react-application.configuration";
 import { ReactApplicationContext } from "./react-application-context";
-import { ApplicationConfig } from "./application-config";
+import { ReactApplicationConfig } from "./react-application-config";
 
 export class ReactApplicationFactoryImplement extends CoreFactoryImplement {
-  public async create(reactApplicationConfig: typeof ReactApplicationConfig = ReactApplicationConfig, options?: JoyApplicationOptions, entryModule?: Record<string, any>): Promise<ReactApplicationContext> {
+  public async create(
+    reactApplicationConfig: typeof ReactApplicationConfiguration = ReactApplicationConfiguration,
+    options?: JoyApplicationOptions,
+    entryModule?: Record<string, any>
+  ): Promise<ReactApplicationContext> {
     this.applyLogger(options);
-    const applicationConfig = new ApplicationConfig();
+    const applicationConfig = new ReactApplicationConfig();
     const container = new CoreContainer();
-    const application = new ReactApplicationContext(ReactApplicationConfig, applicationConfig, container);
+    const application = new ReactApplicationContext(ReactApplicationConfiguration, applicationConfig);
     await this.initContext(application);
     if (entryModule) {
       application.registerModule(entryModule);

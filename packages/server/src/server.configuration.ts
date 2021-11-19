@@ -1,9 +1,10 @@
-import { Configuration, Component } from "@symph/core";
-import { NodeConfigConfiguration, SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
+import { Configuration } from "@symph/core";
+import { NodeConfigConfiguration } from "@symph/config/server";
 import { AbstractHttpAdapter } from "./adapters";
 import { ApplicationConfig } from "./application-config";
+import { FastifyAdapter } from "./platform/fastify";
 
-const NAME_HTTP_SERVER_ADAPTER = Symbol("httpAdapter");
+export const COMPONENT_HTTP_ADAPTER = Symbol("httpAdapter");
 
 @Configuration()
 export class ServerConfiguration {
@@ -13,9 +14,8 @@ export class ServerConfiguration {
   @Configuration.Provider()
   public applicationConfig: ApplicationConfig;
 
-  @Configuration.Provider({ name: NAME_HTTP_SERVER_ADAPTER })
+  @Configuration.Provider({ name: COMPONENT_HTTP_ADAPTER })
   public httpAdapter(): AbstractHttpAdapter {
-    const { FastifyAdapter } = require("./platform/fastify");
     return new FastifyAdapter();
   }
 }

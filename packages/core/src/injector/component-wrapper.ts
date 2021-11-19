@@ -104,10 +104,6 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
   }
 
   public getInstanceByContextId(contextId: ContextId): InstancePerContext<T> {
-    if (!this.hasInstanced) {
-      this.hasInstanced = true;
-    }
-
     if (this.scope === Scope.TRANSIENT) {
       return this.cloneTransientInstance(contextId);
     }

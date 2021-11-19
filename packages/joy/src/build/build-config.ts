@@ -12,6 +12,7 @@ export class BuildConfig {
     if (this._buildId) {
       return this._buildId;
     }
-    return await generateBuildId(this.joyAppConfig.generateBuildId, nanoid);
+    this._buildId = await generateBuildId(this.joyAppConfig.generateBuildId, nanoid);
+    return this._buildId;
   }
 }

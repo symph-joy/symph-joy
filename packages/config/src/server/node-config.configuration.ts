@@ -1,7 +1,7 @@
 import { Configuration } from "@symph/core";
-import { ConfigConfiguration } from "./config.configuration";
-import { ServerConfigLoaderFactory } from "./loader/factories/server-config-loader-factory";
-import { ConfigLoaderFactory } from "./loader/factories/config-loader-factory";
+import { ConfigConfiguration } from "../config.configuration";
+import { ServerConfigLoaderFactory } from "./server-config-loader-factory";
+import { ConfigLoaderFactory } from "../loader/config-loader-factory";
 
 @Configuration()
 export class NodeConfigConfiguration extends ConfigConfiguration {

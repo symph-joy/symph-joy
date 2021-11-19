@@ -13,7 +13,18 @@ import mitt, { MittEmitter } from "../lib/mitt";
 import postProcess from "../lib/post-process";
 import { JoyRouter } from "../lib/router/router";
 import { isDynamicRoute } from "../lib/router/utils/is-dynamic";
-import { AppType, ComponentsEnhancer, DocumentInitialProps, DocumentProps, DocumentType, getDisplayName, isResSent, loadGetInitialProps, JoyComponentType, RenderPage } from "../lib/utils";
+import {
+  AppType,
+  ComponentsEnhancer,
+  DocumentInitialProps,
+  DocumentProps,
+  DocumentType,
+  getDisplayName,
+  isResSent,
+  JoyComponentType,
+  loadGetInitialProps,
+  RenderPage,
+} from "../lib/utils";
 import { __ApiPreviewProps } from "./api-utils";
 import { denormalizePagePath } from "./denormalize-page-path";
 import { FontManifest, getFontDefinitionFromManifest } from "./font-utils";
@@ -25,7 +36,8 @@ import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 
 function noRouter() {
-  const message = 'No router instance found. you should only use "next/router" inside the client side of your app. https://err.sh/vercel/next.js/no-router-instance';
+  const message =
+    'No router instance found. you should only use "next/router" inside the client side of your app. https://err.sh/vercel/next.js/no-router-instance';
   throw new Error(message);
 }
 
@@ -243,7 +255,13 @@ const invalidKeysMsg = (methodName: string, invalidKeys: string[]) => {
   );
 };
 
-export async function renderToHTML(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery, renderOpts: RenderOpts): Promise<string | null> {
+export async function renderToHTML(
+  req: IncomingMessage,
+  res: ServerResponse,
+  pathname: string,
+  query: ParsedUrlQuery,
+  renderOpts: RenderOpts
+): Promise<string | null> {
   // In dev we invalidate the cache by appending a timestamp to the resource URL.
   // TODO: remove this workaround when https://bugs.webkit.org/show_bug.cgi?id=187726 is fixed.
   renderOpts.devOnlyCacheBusterQueryString = renderOpts.dev ? renderOpts.devOnlyCacheBusterQueryString || `?ts=${Date.now()}` : "";
@@ -698,10 +716,10 @@ export async function renderToHTML(req: IncomingMessage, res: ServerResponse, pa
       const initRst = await initManager.waitAllFinished(pathname);
       revalidate = initRst.revalidate;
       let { initStatic, init } = initManager.getPathState(pathname);
-      if (initStatic === JoyRouteInitState.NONE || initStatic === JoyRouteInitState.LOADING) {
+      if (initStage >= EnumReactAppInitStage.STATIC && (initStatic === JoyRouteInitState.NONE || initStatic === JoyRouteInitState.LOADING)) {
         initStatic = JoyRouteInitState.SUCCESS;
       }
-      if (init === JoyRouteInitState.NONE || init === JoyRouteInitState.LOADING) {
+      if ((initStage >= EnumReactAppInitStage.DYNAMIC && init === JoyRouteInitState.NONE) || init === JoyRouteInitState.LOADING) {
         init = JoyRouteInitState.SUCCESS;
       }
       initManager.setInitState(pathname, { initStatic, init });
@@ -821,7 +839,12 @@ export async function renderToHTML(req: IncomingMessage, res: ServerResponse, pa
     const plural = nonRenderedComponents.length !== 1 ? "s" : "";
 
     if (nonRenderedComponents.length) {
-      console.warn(`Expected Document Component${plural} ${nonRenderedComponents.join(", ")} ${plural ? "were" : "was"} not rendered. Make sure you render them in your custom \`_document\`\n` + `See more info here https://err.sh/next.js/missing-document-component`);
+      console.warn(
+        `Expected Document Component${plural} ${nonRenderedComponents.join(", ")} ${
+          plural ? "were" : "was"
+        } not rendered. Make sure you render them in your custom \`_document\`\n` +
+          `See more info here https://err.sh/next.js/missing-document-component`
+      );
     }
   }
 

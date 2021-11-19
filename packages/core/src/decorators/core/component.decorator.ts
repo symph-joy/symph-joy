@@ -67,7 +67,6 @@ export function Component(options: ComponentOptions = {}): ClassDecorator {
       },
       options
     );
-
     Reflect.defineMetadata(INJECTABLE_METADATA, provider, target);
   };
 }

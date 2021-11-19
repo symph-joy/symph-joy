@@ -1,6 +1,7 @@
 import { Configuration, CoreContextFactory, ICoreContext } from "@symph/core";
 import { BasicConfig } from "../src/basic-config";
-import { ConfigConfiguration, ConfigService, FileConfigLoader, ConfigLoader, ConfigLoaderFactory } from "@symph/config";
+import { ConfigConfiguration, ConfigService, ConfigLoader, ConfigLoaderFactory } from "@symph/config";
+import { FileConfigLoader } from "@symph/config/server";
 
 class LoaderFactory extends ConfigLoaderFactory {
   getLoaders(configs: Record<string, any>): ConfigLoader[] {

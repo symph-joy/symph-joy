@@ -1,4 +1,4 @@
-import { ClassProvider, EntryType, ICoreContext, Scope, Type, TypeOrTokenType } from "./interfaces";
+import { Abstract, ClassProvider, EntryType, EnuInjectBy, ICoreContext, Provider, Scope, TProviderName, Type, TypeOrTokenType } from "./interfaces";
 import { Logger, LoggerService } from "./services/logger.service";
 import { isFunction, isNil } from "./utils/shared.utils";
 import { UnknownElementException } from "./errors/exceptions/unknown-element.exception";
@@ -15,7 +15,7 @@ import { HookCenter } from "./hook/hook-center";
 import { HookResolver } from "./hook/hook-resolver";
 import { getComponentMeta } from "./decorators/core";
 import { ComponentWrapper } from "./injector";
-import { HookType, IHook } from "./hook";
+import { AutowireHook, HookType, IHook } from "./hook";
 
 interface CoreContextEventListener {
   onContextInitialized(): Promise<void>;
@@ -31,79 +31,96 @@ interface CoreContextEventListener {
  * @publicApi
  */
 export class CoreContext implements ICoreContext {
-  protected isInitialized = false;
-
   protected instanceLoader: InstanceLoader;
   protected dependenciesScanner: ProviderScanner;
   protected readonly hookCenter: HookCenter;
   protected readonly hookResolver: HookResolver;
-  protected readonly injector;
+  public readonly injector;
+  protected isInitialized = false;
+
+  public readonly container: CoreContainer;
 
   public hasInitialized(): boolean {
     return this.isInitialized;
   }
 
-  constructor(protected readonly entry: EntryType | EntryType[], public readonly container: CoreContainer = new CoreContainer()) {
+  constructor(
+    protected readonly entry?: EntryType | EntryType[],
+    // public readonly container: CoreContainer = new CoreContainer(),
+    public readonly parent?: ICoreContext
+  ) {
     this.hookCenter = new HookCenter();
-    this.injector = new Injector(this.hookCenter);
+    this.container = this.instanceContainer();
+    this.hookCenter.registerProviderHooks(this.container);
+    this.injector = this.instanceInjector();
+    this.hookCenter.registerProviderHooks(this.injector);
+
     this.dependenciesScanner = new ProviderScanner();
-    this.instanceLoader = new InstanceLoader(container, this.injector);
-    this.registerHooks();
+    this.instanceLoader = new InstanceLoader(this.container, this.injector);
+    this.hookResolver = new HookResolver(this.hookCenter);
+    // this.registerHooks();
 
     this.registerCoreProviders();
-    this.hookResolver = new HookResolver(this.hookCenter);
   }
 
-  // @AutowireHook({type: HookType.Traverse, async: true})
-  public onDidProvidersRegister: IHook;
+  @AutowireHook({ type: HookType.Traverse, async: true })
+  public onModuleAfterLoad: IHook;
 
-  // @AutowireHook({type: HookType.Traverse, async: true})
+  @AutowireHook({ type: HookType.Traverse, async: true })
   public onContextInitialized: IHook;
 
-  // @AutowireHook({type: HookType.Traverse, async: true})
+  @AutowireHook({ type: HookType.Traverse, async: true })
   public onContextBeforeDispose: IHook;
 
-  // @AutowireHook({type: HookType.Traverse, async: true})
+  @AutowireHook({ type: HookType.Traverse, async: true })
   public onBeforeShutdownHook: IHook;
 
-  // @AutowireHook({type: HookType.Traverse, async: true})
+  @AutowireHook({ type: HookType.Traverse, async: true })
   public onShutdownHook: IHook;
 
-  private registerHooks() {
-    this.hookCenter.registerProviderHooks(this.container);
-
-    this.onDidProvidersRegister = this.hookCenter.registerHook({
-      id: "onDidProvidersRegister",
-      type: HookType.Traverse,
-      async: true,
-      parallel: false,
-    });
-
-    this.onContextInitialized = this.hookCenter.registerHook({
-      id: "onContextInitialized",
-      type: HookType.Traverse,
-      async: true,
-      parallel: false,
-    });
-    this.onContextBeforeDispose = this.hookCenter.registerHook({
-      id: "onContextBeforeDispose",
-      type: HookType.Traverse,
-      async: true,
-      parallel: false,
-    });
-    this.onBeforeShutdownHook = this.hookCenter.registerHook({
-      id: "onBeforeShutdownHook",
-      type: HookType.Traverse,
-      async: true,
-      parallel: false,
-    });
-    this.onShutdownHook = this.hookCenter.registerHook({
-      id: "onShutdownHook",
-      type: HookType.Traverse,
-      async: true,
-      parallel: false,
-    });
+  protected instanceContainer(): CoreContainer {
+    return new CoreContainer();
   }
+
+  protected instanceInjector(): Injector {
+    return new Injector(this.container, this.parent?.injector);
+  }
+
+  // private registerHooks() {
+  //   this.hookCenter.registerProviderHooks(this.container);
+  //
+  //   // this.onDidProvidersRegister = this.hookCenter.registerHook({
+  //   //   id: "onDidProvidersRegister",
+  //   //   type: HookType.Traverse,
+  //   //   async: true,
+  //   //   parallel: false,
+  //   // });
+  //   //
+  //   // this.onContextInitialized = this.hookCenter.registerHook({
+  //   //   id: "onContextInitialized",
+  //   //   type: HookType.Traverse,
+  //   //   async: true,
+  //   //   parallel: false,
+  //   // });
+  //   // this.onContextBeforeDispose = this.hookCenter.registerHook({
+  //   //   id: "onContextBeforeDispose",
+  //   //   type: HookType.Traverse,
+  //   //   async: true,
+  //   //   parallel: false,
+  //   // });
+  //   // this.onBeforeShutdownHook = this.hookCenter.registerHook({
+  //   //   id: "onBeforeShutdownHook",
+  //   //   type: HookType.Traverse,
+  //   //   async: true,
+  //   //   parallel: false,
+  //   // });
+  //   // this.onShutdownHook = this.hookCenter.registerHook({
+  //   //   id: "onShutdownHook",
+  //   //   type: HookType.Traverse,
+  //   //   async: true,
+  //   //   parallel: false,
+  //   // });
+  // }
 
   private registerCoreProviders() {
     this.container.addProviders([
@@ -131,12 +148,20 @@ export class CoreContext implements ICoreContext {
   }
 
   public tryGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined {
-    const instanceWrapper = this.container.getProvider(typeOrToken);
+    let injectBy: EnuInjectBy, name: string | undefined, type: Type<any> | undefined;
+    if (typeof typeOrToken === "function") {
+      injectBy = EnuInjectBy.TYPE;
+      type = typeOrToken as Type;
+    } else {
+      injectBy = EnuInjectBy.NAME;
+      name = typeOrToken as string;
+    }
+    const instanceWrapper = this.injector.getInstanceWrapper(injectBy, type, name);
     if (isNil(instanceWrapper)) {
       return undefined;
     }
 
-    const provider = this.injector.loadProvider(instanceWrapper, this.container);
+    const provider = this.injector.loadProvider(instanceWrapper);
     return provider as Promise<TInput> | TInput;
   }
 
@@ -181,22 +206,23 @@ export class CoreContext implements ICoreContext {
       };
       instanceWrapper = this.container.addProvider(provider);
     }
-    const injectedProps = this.injector.loadInstanceProperties(instance, instanceWrapper, this.container, STATIC_CONTEXT).getResult();
+    const injectedProps = this.injector.loadInstanceProperties(instance, instanceWrapper, STATIC_CONTEXT).getResult();
 
     return injectedProps;
   }
 
   protected async initContext(): Promise<void> {}
 
-  public registerModule(module: EntryType | EntryType[]): ComponentWrapper[] {
+  public registerModule(module: EntryType | Provider | (EntryType | Provider)[]): ComponentWrapper[] {
     const providers = this.dependenciesScanner.scan(module);
     const wrappers = this.container.addProviders(providers);
     return wrappers;
   }
 
-  public async loadModule(module: EntryType | EntryType[]): Promise<ComponentWrapper[]> {
+  public async loadModule(module: EntryType | Provider | (EntryType | Provider)[]): Promise<ComponentWrapper[]> {
     const providers = this.registerModule(module);
     await this.initProviders(providers);
+    await this.onModuleAfterLoad.call(module, providers);
     // await this.triggerInstanceOnModuleLoad(providerIds)
     return providers;
   }
@@ -212,8 +238,10 @@ export class CoreContext implements ICoreContext {
       return this;
     }
     await this.initContext();
-    let providers = this.registerModule(this.entry);
-    await this.initProviders(providers);
+    if (this.entry) {
+      let providers = this.registerModule(this.entry);
+      await this.initProviders(providers);
+    }
 
     this.isInitialized = true;
     await this.onContextInitialized.call();
@@ -224,7 +252,6 @@ export class CoreContext implements ICoreContext {
   protected async initProviders(instanceWrappers: ComponentWrapper[]): Promise<void> {
     // this.hookCenter.registerHooksFromWrappers(instanceWrappers);
     await this.createInstancesOfDependencies(instanceWrappers);
-    await this.onDidProvidersRegister.call(instanceWrappers);
   }
 
   protected createInstancesOfDependencies(instanceWrappers: ComponentWrapper[]): Promise<unknown[]> {
@@ -234,7 +261,7 @@ export class CoreContext implements ICoreContext {
   protected async dispose(): Promise<void> {
     // core application context has no application
     // to dispose, therefore just call a noop
-    return Promise.resolve();
+    // return Promise.resolve();
   }
 
   public async close(): Promise<void> {

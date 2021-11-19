@@ -9,37 +9,39 @@ import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyAppProvidersExplorerService } from "../joy-server/server/joy-app-providers-explorer.service";
 import { JoyImportService } from "../server/joy-import.service";
 import { GlobalCssPlugin } from "../plugin/global-css-plugin";
+import {BuildCommonConfiguration} from "./build-common.configuration";
 
 @Configuration()
-export class BuildConfiguration {
-  @Configuration.Provider()
-  public buildConfig: BuildDevConfig;
+export class BuildConfiguration extends BuildCommonConfiguration{
 
-  @Configuration.Provider()
-  public emitSrcService: EmitSrcService;
-
-  @Configuration.Provider()
-  public fileGenerator: FileGenerator;
-
-  @Configuration.Provider()
-  public fileScanner: FileScanner;
-
-  @Configuration.Provider()
-  public joyAppProvidersExplorerService: JoyAppProvidersExplorerService;
-
-  @Configuration.Provider()
-  public joyReactRouterPlugin: JoyReactRouterPlugin;
-
-  @Configuration.Provider()
-  public joyPrerenderService: JoyPrerenderService;
-
-  @Configuration.Provider()
-  public joyImportService: JoyImportService;
+  // @Configuration.Provider()
+  // public buildConfig: BuildDevConfig;
+  //
+  // @Configuration.Provider()
+  // public emitSrcService: EmitSrcService;
+  //
+  // @Configuration.Provider()
+  // public fileGenerator: FileGenerator;
+  //
+  // @Configuration.Provider()
+  // public fileScanner: FileScanner;
+  //
+  // @Configuration.Provider()
+  // public joyAppProvidersExplorerService: JoyAppProvidersExplorerService;
+  //
+  // @Configuration.Provider()
+  // public joyReactRouterPlugin: JoyReactRouterPlugin;
+  //
+  // @Configuration.Provider()
+  // public joyPrerenderService: JoyPrerenderService;
+  //
+  // @Configuration.Provider()
+  // public joyImportService: JoyImportService;
 
   @Configuration.Provider()
   public buildService: JoyBuildService;
 
-  // feature serviers
-  @Configuration.Provider()
-  public globalCssPlugin: GlobalCssPlugin;
+//   // feature serviers
+//   @Configuration.Provider()
+//   public globalCssPlugin: GlobalCssPlugin;
 }

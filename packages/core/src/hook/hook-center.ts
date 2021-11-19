@@ -1,12 +1,12 @@
-import { AsyncParallelHook, AsyncParallelBailHook, AsyncSeriesHook, AsyncSeriesWaterfallHook, AsyncSeriesBailHook, SyncHook, SyncBailHook, SyncWaterfallHook, AsyncHook } from "tapable";
-import { HookType, IHook } from "./interface/hook.interface";
-import { RuntimeException } from "../errors/exceptions/runtime.exception";
-import { ITap } from "./interface/tap.interface";
-import { Abstract, Provider, TProviderName, Type } from "../interfaces";
-import { getHooksMetadata, IHookMeta } from "./autowire-hook.decorator";
-import { getTapsMetadata } from "./register-tap.decorator";
-import { ComponentWrapper } from "../injector";
-import { Hook } from "./hook";
+import {AsyncParallelHook, AsyncParallelBailHook, AsyncSeriesHook, AsyncSeriesWaterfallHook, AsyncSeriesBailHook, SyncHook, SyncBailHook, SyncWaterfallHook, AsyncHook} from "tapable";
+import {HookType, IHook} from "./interface/hook.interface";
+import {RuntimeException} from "../errors/exceptions/runtime.exception";
+import {ITap} from "./interface/tap.interface";
+import {Abstract, Provider, TProviderName, Type} from "../interfaces";
+import {getHooksMetadata, IHookMeta} from "./autowire-hook.decorator";
+import {getTapsMetadata} from "./register-tap.decorator";
+import {ComponentWrapper} from "../injector";
+import {Hook} from "./hook";
 
 type RegisterHookOptions = {
   id: string;
@@ -31,7 +31,7 @@ export class HookCenter {
     return hooks;
   }
 
-  public registerHooksFromWrapper(wrapper: ComponentWrapper) {
+  public registerHooksFromWrapper(wrapper: ComponentWrapper): IHook[] | undefined {
     const type = wrapper.type;
     if (type === Object) {
       return;
@@ -62,7 +62,7 @@ export class HookCenter {
       throw new RuntimeException(`Error: Duplicate register hook(${hookInfo.id})`);
     }
 
-    const { id, type, async, parallel } = hookInfo;
+    const {id, type, async, parallel} = hookInfo;
     const hook = new Hook(id, type, async, parallel);
     this.hooks.set(id, hook);
     return hook;
@@ -77,12 +77,19 @@ export class HookCenter {
     const registeredHooks = new Array<IHook>();
     for (let i = 0; i < hookMetas.length; i++) {
       const hookMeta = hookMetas[i];
-      let hook = this.hooks.get(hookMeta.id);
+      const existHook = (provider as any)[hookMeta.propKey];
+      if (existHook) {
+        // 已经注册了hook实例，则继续使用已注册的hook。
+        if (existHook.id !== hookMeta.id) {
+          throw new RuntimeException(`Instance hook id(${existHook}) is not equal to @Hook() defines id(${hookMeta.id})`);
+        }
+      }
+      let hook = existHook || this.hooks.get(hookMeta.id);
       if (!hook) {
         hook = this.registerHook(hookMeta);
-        // throw new RuntimeException(`Can not register hook host instance, make sure the hook(id:${hookMeta.id}) has been registered.`)
       }
-      registeredHooks.push(hook);
+
+      registeredHooks.push(hook as Hook);
       (provider as any)[hookMeta.propKey] = hook;
     }
     return registeredHooks;

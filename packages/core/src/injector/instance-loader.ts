@@ -26,7 +26,7 @@ export class InstanceLoader {
       if (wrapper.scope !== Scope.DEFAULT) {
         continue;
       }
-      const provider = this.injector.loadProvider(wrapper, this.container);
+      const provider = this.injector.loadProvider(wrapper);
       promises.push(provider);
     }
     return Promise.all(promises);

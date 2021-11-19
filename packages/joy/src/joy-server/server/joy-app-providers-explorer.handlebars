@@ -1,26 +1,24 @@
-
 import { MountModule } from "@symph/server";
+
+{{#modules}}
+import * as m{{@index}} from {{json path}}
+{{/modules}}
 
 export const ___JOY_GEN_PROVIDERS = [
 {{#modules}}
   {
-    path: "{{path}}",
-    mount: {{json mount}},
-    module: require({{json path}}),
-    providerKeys: {{json exportKeys}},
+    path: {{json path}},
+    {{#if mount}}mount: {{json mount}},{{/if}}
+    module: m{{@index}},
+    //module: require({{json path}}),
   },
 {{/modules}}
 ]
 
+if (module.hot) {
+  module.hot.accept();
+}
 
-import { Configuration } from "@symph/core";
 
-//@Configuration({imports: {
-//{{#modules}}
-//  "{{path}}": require({{json path}}),
-//{{/modules}}
-//}})
-//export class ReactApplicationConfig {
-//
-//
-//}
+
+

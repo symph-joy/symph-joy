@@ -24,9 +24,9 @@ import { findPageFile } from "./lib/find-page-file";
 import { withCoalescedInvoke } from "../lib/coalesced-function";
 import { Autowire, Component, EntryType } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import { FileScanner } from "../build/scanner/file-scanner";
+// import { FileScanner } from "../build/scanner/file-scanner";
 import { BuildDevConfig } from "./build-dev-config";
-import { FileGenerator } from "../build/file-generator";
+// import { FileGenerator } from "../build/file-generator";
 import { JoyReactAppServerDevConfiguration } from "../react/joy-react-app-server-dev.configuration";
 import { ReactContextFactoryDev } from "./react-context-factory-dev";
 import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
@@ -42,11 +42,11 @@ export class JoyReactDevServer extends JoyReactServer {
   private setDevReady?: Function;
   private webpackWatcher?: Watchpack | null;
 
-  @Autowire()
-  private fileScanner: FileScanner;
+  // @Autowire()
+  // private fileScanner: FileScanner;
 
-  @Autowire("fileGenerator")
-  private fileGenerator: FileGenerator;
+  // @Autowire("fileGenerator")
+  // private fileGenerator: FileGenerator;
 
   // private hotReloader?: HotReloader;
   // private isCustomServer: boolean
@@ -269,7 +269,7 @@ export class JoyReactDevServer extends JoyReactServer {
     await super.prepare();
     await this.addExportPathMapRoutes();
     await this.hotReloader.start();
-    await this.startWatcher();
+    // await this.startWatcher();
     this.setDevReady!();
 
     // const telemetry = new Telemetry({ outDir: this.outDir })
@@ -284,11 +284,11 @@ export class JoyReactDevServer extends JoyReactServer {
   }
 
   public async close(): Promise<void> {
-    await this.stopWatcher();
+    // await this.stopWatcher();
     // await this.staticPathsWorker.end()
-    if (this.hotReloader) {
-      await this.hotReloader.stop();
-    }
+    // if (this.hotReloader) {
+    //   await this.hotReloader.stop();
+    // }
   }
 
   protected async hasPage(pathname: string): Promise<boolean> {

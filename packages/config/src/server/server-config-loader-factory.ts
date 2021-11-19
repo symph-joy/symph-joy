@@ -1,9 +1,9 @@
-import { ConfigLoader } from "../loaders/config-loader";
-import { DotenvConfigLoader } from "../loaders/dotenv-config-loader";
-import { DirConfigLoader } from "../loaders/dir-config-loader";
+import { ConfigLoader } from "../loader/config-loader";
+import { DotenvConfigLoader } from "./loaders/dotenv-config-loader";
+import { DirConfigLoader } from "./loaders/dir-config-loader";
 import { resolve } from "path";
-import { FileConfigLoader } from "../loaders/file-config-loader";
-import { ConfigLoaderFactory } from "./config-loader-factory";
+import { FileConfigLoader } from "./loaders/file-config-loader";
+import { ConfigLoaderFactory } from "../loader/config-loader-factory";
 
 export interface ServerConfigLoaderOptions {
   envFile?: string | string[];
@@ -36,7 +36,13 @@ export class ServerConfigLoaderFactory extends ConfigLoaderFactory {
 
   public getLoaders(configs: Record<string, any>): ConfigLoader[] {
     const dir = configs.dir;
-    const { envFile = [], envExpandVariables = true, ignoreEnvVars = false, fileName = "joy.config.js", configFilePath = [] }: ServerConfigLoaderOptions = this.options;
+    const {
+      envFile = [],
+      envExpandVariables = true,
+      ignoreEnvVars = false,
+      fileName = "joy.config.js",
+      configFilePath = [],
+    }: ServerConfigLoaderOptions = this.options;
 
     const fileNames = Array.isArray(fileName) ? fileName : [fileName];
     const configFilePaths = Array.isArray(configFilePath) ? configFilePath : [configFilePath];

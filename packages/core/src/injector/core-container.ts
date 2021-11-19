@@ -23,6 +23,7 @@ interface ProviderIndex {
 
 export class CoreContainer {
   // private readonly _providers = new Map<string, ComponentWrapper<Injectable>>()
+  constructor() {}
 
   @AutowireHook({ type: HookType.Traverse, async: false })
   public onComponentRegisterAfter: IHook;
@@ -70,7 +71,11 @@ export class CoreContainer {
     if (existOne) {
       if (existOne.hasInstanced) {
         if (!(existOne.type === type || isSubClass(existOne.type, type)) || existOne.scope !== scope) {
-          throw new RuntimeException(`Register provider failed, can not register duplicate name(${String(name)}), the previous register one has instanced, and the type and scope is not compatible。`);
+          throw new RuntimeException(
+            `Register provider failed, can not register duplicate name(${String(
+              name
+            )}), the previous register one has instanced, and the type or scope is not compatible.`
+          );
         } else {
           return existOne;
         }
@@ -82,7 +87,11 @@ export class CoreContainer {
 
     let componentWrapper = new ComponentWrapper({ ...wrapperMetaOptions });
     if (existOne) {
-      console.debug(`Overriding component (name: ${String(name)}, package: ${compPackage || ""}): replacing {type:${existOne.type?.name}} with {type:${componentWrapper.type?.name}}"`);
+      console.debug(
+        `Overriding component {name: ${String(name)}, package: ${compPackage || ""}, type: ${existOne.type?.name}} with {name: ${String(
+          name
+        )}, package: ${compPackage || ""}, type:${componentWrapper.type?.name}}"`
+      );
     }
     this._providerStore.set(componentWrapper.id, componentWrapper);
     this.addNameCache(componentWrapper);
@@ -92,7 +101,9 @@ export class CoreContainer {
         const existAlias = this._aliasMap.get(it);
         if (existAlias) {
           if (existAlias !== name) {
-            console.debug(`Overriding alias '${String(it)}' definition for registered name ${String(existAlias)} with new target name '${String(name)}'`);
+            console.debug(
+              `Overriding alias '${String(it)}' definition for registered name ${String(existAlias)} with new target name '${String(name)}'`
+            );
           } else {
             // has not changed
             continue;
@@ -306,16 +317,22 @@ export class CoreContainer {
     return provider;
   }
 
-  public hasModule(moduleName: string) {
-    return !isEmpty(this._providerStore.get(moduleName));
+  public hasComponent(componentId: string): boolean {
+    return this._providerStore.get(componentId) !== undefined;
   }
 
   public getProvider<T = unknown>(nameOrType: TProviderName | Type<T> | Abstract<T>, packageName?: string): ComponentWrapper<T> | undefined {
+    let wrapper: ComponentWrapper<T> | undefined;
     if (typeof nameOrType === "string" || typeof nameOrType === "symbol") {
-      return this.getProviderByName(nameOrType, packageName) as ComponentWrapper<T>;
+      wrapper = this.getProviderByName(nameOrType, packageName) as ComponentWrapper<T>;
     } else {
-      return this.getProviderByType(nameOrType);
+      wrapper = this.getProviderByType(nameOrType);
     }
+    // if (wrapper === undefined && this.parent) {
+    //   // try to get from parent container
+    //   wrapper = this.parent.getProvider(nameOrType);
+    // }
+    return wrapper;
   }
 
   public getProviderIds(): Iterable<string> {

@@ -28,7 +28,7 @@ async function transformSource(filePath: string, src: string): Promise<string> {
     return src;
   }
   const ext = path.extname(filePath);
-  src = src && src.replace(/require\("([^?]+)(\?[^"]*)"\)/, 'require("$1")');
+  src = src && src.replace(/require\("([^?]+)(\?[^"]*)"\)/g, 'require("$1")');
 
   if (!/js|jsx|ts|tsx|mjs|mjsx/.test(ext)) {
     const babel = require("@babel/core");
@@ -75,7 +75,7 @@ interface EmitAllPluginOptions {
 /**
  * todo 再次构建时读取上次构建的modules信息，如果未发生改变，不重新写入文件。
  */
-export class EmitSrcPlugin {
+export class EmitSrcWebpackPlugin {
   ignorePattern: RegExp;
   ignoreExternals: boolean;
   path?: string;

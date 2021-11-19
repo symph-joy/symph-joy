@@ -3,11 +3,11 @@ import { ConfigService } from "./config.service";
 import { ConfigConfiguration } from "./config.configuration";
 import path from "path";
 import { SYMPH_CONFIG_INIT_VALUE } from "./constants";
-import { FileConfigLoader } from "./loader/loaders/file-config-loader";
-import { ConfigLoader } from "./loader/loaders/config-loader";
-import { DirConfigLoader } from "./loader/loaders/dir-config-loader";
-import { DotenvConfigLoader } from "./loader/loaders/dotenv-config-loader";
-import { ConfigLoaderFactory } from "./loader/factories/config-loader-factory";
+import { FileConfigLoader } from "./server/loaders/file-config-loader";
+import { ConfigLoader } from "./loader/config-loader";
+import { DirConfigLoader } from "./server/loaders/dir-config-loader";
+import { DotenvConfigLoader } from "./server/loaders/dotenv-config-loader";
+import { ConfigLoaderFactory } from "./loader/config-loader-factory";
 
 async function createConfigService(configClazz: typeof ConfigConfiguration, entryModule: any = {}): Promise<ConfigService> {
   const context = await CoreContextFactory.createApplicationContext([configClazz, entryModule]);

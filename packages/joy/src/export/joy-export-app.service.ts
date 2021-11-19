@@ -1,26 +1,25 @@
 import chalk from "chalk";
-import { exists as existsOrig, existsSync, promises, readFileSync, writeFileSync } from "fs";
-import { Worker } from "jest-worker";
-import { dirname, join, resolve, sep } from "path";
-import { promisify } from "util";
-import { AmpPageStatus, formatAmpMessages } from "../build/output/index";
+import {exists as existsOrig, existsSync, promises, readFileSync, writeFileSync} from "fs";
+import {Worker} from "jest-worker";
+import {dirname, join, resolve, sep} from "path";
+import {promisify} from "util";
+import {AmpPageStatus, formatAmpMessages} from "../build/output/index";
 import * as Log from "../build/output/log";
 import createSpinner from "../build/spinner";
-import { API_ROUTE, SSG_FALLBACK_EXPORT_ERROR } from "../lib/constants";
-import { recursiveCopy } from "../lib/recursive-copy";
-import { recursiveDelete } from "../lib/recursive-delete";
-import { BUILD_ID_FILE, CLIENT_PUBLIC_FILES_PATH, CLIENT_STATIC_FILES_PATH, CONFIG_FILE, EXPORT_DETAIL, OUT_DIRECTORY, PAGES_MANIFEST, PRERENDER_MANIFEST, SERVER_DIRECTORY, SERVERLESS_DIRECTORY } from "../joy-server/lib/constants";
-import { isTargetLikeServerless } from "../joy-server/server/config";
-import { denormalizePagePath, normalizePagePath } from "../joy-server/server/normalize-page-path";
-import { PrerenderManifest } from "../build/joy-build.service";
+import {API_ROUTE, SSG_FALLBACK_EXPORT_ERROR} from "../lib/constants";
+import {recursiveCopy} from "../lib/recursive-copy";
+import {recursiveDelete} from "../lib/recursive-delete";
+import {BUILD_ID_FILE, CLIENT_PUBLIC_FILES_PATH, CLIENT_STATIC_FILES_PATH, CONFIG_FILE, EXPORT_DETAIL, OUT_DIRECTORY, PAGES_MANIFEST, PRERENDER_MANIFEST, SERVER_DIRECTORY, SERVERLESS_DIRECTORY} from "../joy-server/lib/constants";
+import {isTargetLikeServerless} from "../joy-server/server/config";
+import {denormalizePagePath, normalizePagePath} from "../joy-server/server/normalize-page-path";
+import {PrerenderManifest} from "../build/joy-build.service";
 import type exportPage from "./worker";
-import { ExportRenderOpts } from "./worker";
-import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
-import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import { Component } from "@symph/core";
-import { JoyServer } from "../joy-server/server/joy-server";
-import { ServerApplication } from "@symph/server";
+import {ExportRenderOpts} from "./worker";
+import {PagesManifest} from "../build/webpack/plugins/pages-manifest-plugin";
+import {JoyAppConfig} from "../joy-server/server/joy-app-config";
+import {Component} from "@symph/core";
 import getPort from "get-port";
+import {JoyServerApplication} from "../joy-server/server/joy-server-application";
 
 const exists = promisify(existsOrig);
 
@@ -71,7 +70,7 @@ interface ExportOptions {
 export class JoyExportAppService {
   private distDir: string;
 
-  constructor(private joyAppConfig: JoyAppConfig, private serverApplication: ServerApplication) {
+  constructor(private joyAppConfig: JoyAppConfig, private serverApplication: JoyServerApplication) {
     this.distDir = joyAppConfig.resolveAppDir(joyAppConfig.distDir);
   }
 
@@ -79,8 +78,9 @@ export class JoyExportAppService {
     dir = resolve(dir);
     // await this.serverApplication.loadModule(ExportServerConfiguration);
     const port = await getPort();
-    const joyServer = await this.serverApplication.get(JoyServer);
-    await joyServer.prepare();
+    // const joyServer = await this.serverApplication.get(JoyServer);
+    // await joyServer.prepare();
+    await this.serverApplication.prepare()
     try {
       await this.serverApplication.listenAsync(port, "127.0.0.1");
     } catch (err) {
