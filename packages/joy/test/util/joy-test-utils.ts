@@ -5,7 +5,7 @@ import path from "path";
 import spawn from "cross-spawn";
 import child_process from "child_process";
 import treeKill from "tree-kill";
-import {OptionsOfTextResponseBody} from "got/dist/source/types";
+import { OptionsOfTextResponseBody } from "got/dist/source/types";
 import got from "got";
 
 export async function renderViaAPI(app: JoyReactServer, pathname: string, query?: ParsedUrlQuery): Promise<string | null> {
@@ -42,36 +42,41 @@ export async function pollGetText(url: string, options: OptionsOfTextResponseBod
   return new Promise((resolve, reject) => {
     const pollFn = async () => {
       try {
-        const res = await got.get(url, Object.assign({
-          throwHttpErrors: false,
-          responseType: "text",
-        }, options));
-        const respText = res.body.trim()
+        const res = await got.get(
+          url,
+          Object.assign(
+            {
+              throwHttpErrors: false,
+              responseType: "text",
+            },
+            options
+          )
+        );
+        const respText = res.body.trim();
         if (waitingReg.test(respText)) {
-          pollTimer = undefined
+          pollTimer = undefined;
           if (timeoutTimer) {
-            clearTimeout(timeoutTimer)
-            timeoutTimer = undefined
+            clearTimeout(timeoutTimer);
+            timeoutTimer = undefined;
           }
-          return resolve(respText)
+          return resolve(respText);
         }
       } catch (e) {
         //do nothing, should continual waiting
       }
-      pollTimer = setTimeout(pollFn, 1000)
-    }
+      pollTimer = setTimeout(pollFn, 1000);
+    };
 
-    let pollTimer: NodeJS.Timeout | undefined = setTimeout(pollFn, 500)
+    let pollTimer: NodeJS.Timeout | undefined = setTimeout(pollFn, 500);
 
     let timeoutTimer: NodeJS.Timeout | undefined = setTimeout(() => {
       if (pollTimer) {
-        clearTimeout(pollTimer)
-        pollTimer = undefined
+        clearTimeout(pollTimer);
+        pollTimer = undefined;
       }
-      reject(new Error(`pollGet url:${url} timeout:${timeout}`))
-    }, timeout)
-  })
-
+      reject(new Error(`pollGet url:${url} timeout:${timeout}`));
+    }, timeout);
+  });
 }
 
 export interface RunOptions {
@@ -248,7 +253,11 @@ export async function killApp(instance: child_process.ChildProcess) {
   await new Promise<void>((resolve, reject) => {
     treeKill(instance.pid as number, (err) => {
       if (err) {
-        if (process.platform === "win32" && typeof err.message === "string" && (err.message.includes(`no running instance of the task`) || err.message.includes(`not found`))) {
+        if (
+          process.platform === "win32" &&
+          typeof err.message === "string" &&
+          (err.message.includes(`no running instance of the task`) || err.message.includes(`not found`))
+        ) {
           // Windows throws an error if the process is already dead
           //
           // Command failed: taskkill /pid 6924 /T /F

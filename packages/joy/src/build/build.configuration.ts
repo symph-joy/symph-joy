@@ -9,11 +9,10 @@ import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyAppProvidersExplorerService } from "../joy-server/server/joy-app-providers-explorer.service";
 import { JoyImportService } from "../server/joy-import.service";
 import { GlobalCssPlugin } from "../plugin/global-css-plugin";
-import {BuildCommonConfiguration} from "./build-common.configuration";
+import { BuildCommonConfiguration } from "./build-common.configuration";
 
 @Configuration()
-export class BuildConfiguration extends BuildCommonConfiguration{
-
+export class BuildConfiguration extends BuildCommonConfiguration {
   // @Configuration.Provider()
   // public buildConfig: BuildDevConfig;
   //
@@ -41,7 +40,7 @@ export class BuildConfiguration extends BuildCommonConfiguration{
   @Configuration.Provider()
   public buildService: JoyBuildService;
 
-//   // feature serviers
-//   @Configuration.Provider()
-//   public globalCssPlugin: GlobalCssPlugin;
+  //   // feature serviers
+  //   @Configuration.Provider()
+  //   public globalCssPlugin: GlobalCssPlugin;
 }

@@ -33,7 +33,9 @@ import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 
 if (typeof React.Suspense === "undefined") {
-  throw new Error(`The version of React you are using is lower than the minimum required version needed for Joy.js. Please upgrade "react" and "react-dom": "npm install react react-dom"`);
+  throw new Error(
+    `The version of React you are using is lower than the minimum required version needed for Joy.js. Please upgrade "react" and "react-dom": "npm install react react-dom"`
+  );
 }
 
 @Component()
@@ -57,7 +59,12 @@ export class JoyReactDevServer extends JoyReactServer {
   };
 
   // constructor(options: ServerConstructor & { isJoyDevCommand?: boolean }) {
-  constructor(protected joyAppConfig: JoyAppConfig, protected buildConfig: BuildDevConfig, protected hotReloader: HotReloader, protected reactContextFactory: ReactContextFactoryDev) {
+  constructor(
+    protected joyAppConfig: JoyAppConfig,
+    protected buildConfig: BuildDevConfig,
+    protected hotReloader: HotReloader,
+    protected reactContextFactory: ReactContextFactoryDev
+  ) {
     super(joyAppConfig, reactContextFactory);
     this.renderOpts.dev = true;
     (this.renderOpts as any).ErrorComponent = ReactDevOverlay;
@@ -580,7 +587,13 @@ export class JoyReactDevServer extends JoyReactServer {
     return html;
   }
 
-  async renderErrorToHTML(err: Error | null, req: IncomingMessage, res: ServerResponse, pathname: string, query: { [key: string]: string }): Promise<string | null> {
+  async renderErrorToHTML(
+    err: Error | null,
+    req: IncomingMessage,
+    res: ServerResponse,
+    pathname: string,
+    query: { [key: string]: string }
+  ): Promise<string | null> {
     await this.devReady;
     if (res.statusCode === 404 && (await this.hasPage("/404"))) {
       await this.hotReloader!.ensurePath("/404");
@@ -668,7 +681,12 @@ export class JoyReactDevServer extends JoyReactServer {
     // Checks for .joy/out/static, .joy/out/server, static and public.
     // Note that in development .joy/server is available for error reporting purposes.
     // see `packages/joy/joy-server/server/joy-react-server.ts` for more details.
-    if (untrustedFilePath.startsWith(pathJoin(this.outDir, "static") + sep) || untrustedFilePath.startsWith(pathJoin(this.outDir, "server") + sep) || untrustedFilePath.startsWith(pathJoin(this.dir, "static") + sep) || untrustedFilePath.startsWith(pathJoin(this.dir, "public") + sep)) {
+    if (
+      untrustedFilePath.startsWith(pathJoin(this.outDir, "static") + sep) ||
+      untrustedFilePath.startsWith(pathJoin(this.outDir, "server") + sep) ||
+      untrustedFilePath.startsWith(pathJoin(this.dir, "static") + sep) ||
+      untrustedFilePath.startsWith(pathJoin(this.dir, "public") + sep)
+    ) {
       return true;
     }
 

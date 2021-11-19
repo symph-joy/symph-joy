@@ -31,7 +31,13 @@ declare module "arg/index.js" {
     }
 
     export type Result<T extends Spec> = { _: string[] } & {
-      [K in keyof T]: T[K] extends string ? never : T[K] extends Handler ? ReturnType<T[K]> : T[K] extends [Handler] ? Array<ReturnType<T[K][0]>> : never;
+      [K in keyof T]: T[K] extends string
+        ? never
+        : T[K] extends Handler
+        ? ReturnType<T[K]>
+        : T[K] extends [Handler]
+        ? Array<ReturnType<T[K][0]>>
+        : never;
     };
   }
 

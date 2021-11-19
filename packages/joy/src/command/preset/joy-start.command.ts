@@ -1,10 +1,10 @@
-import {CommandProvider} from "../command-provider.decorator";
-import {JoyCommand, JoyCommandOptionType} from "../command";
-import {printAndExit} from "../../server/lib/utils";
-import {JoyAppConfig} from "../../joy-server/server/joy-app-config";
-import {JoyServerAppConfiguration} from "../../joy-server/server/joy-server-app.configuration";
-import {JoyServerFactory} from "../../joy-server/server/joy-server-factory";
-import {JoyServerApplication} from "../../joy-server/server/joy-server-application";
+import { CommandProvider } from "../command-provider.decorator";
+import { JoyCommand, JoyCommandOptionType } from "../command";
+import { printAndExit } from "../../server/lib/utils";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { JoyServerAppConfiguration } from "../../joy-server/server/joy-server-app.configuration";
+import { JoyServerFactory } from "../../joy-server/server/joy-server-factory";
+import { JoyServerApplication } from "../../joy-server/server/joy-server-application";
 
 @CommandProvider()
 export class JoyStartCommand extends JoyCommand {
@@ -22,7 +22,7 @@ export class JoyStartCommand extends JoyCommand {
   async startServer(appContext: JoyServerApplication): Promise<void> {
     const config = await appContext.get(JoyAppConfig);
     const { dir, hostname, port } = config;
-    await appContext.prepare()
+    await appContext.prepare();
 
     try {
       await appContext.listenAsync(port, hostname);

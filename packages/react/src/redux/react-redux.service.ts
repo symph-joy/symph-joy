@@ -1,4 +1,14 @@
-import { Action, applyMiddleware, combineReducers, compose, createStore as _createStore, Middleware, Reducer, ReducersMapObject, Store } from "./index";
+import {
+  Action,
+  applyMiddleware,
+  combineReducers,
+  compose,
+  createStore as _createStore,
+  Middleware,
+  Reducer,
+  ReducersMapObject,
+  Store,
+} from "./index";
 import { ReactApplicationConfig } from "../react-application-config";
 // @ts-ignore
 import flatten from "flatten";
@@ -69,7 +79,11 @@ export class ReactReduxService {
       devtools = window.__REDUX_DEVTOOLS_EXTENSION__;
     }
 
-    const enhancers = [applyMiddleware(...enhancedMiddlewares), typeof window !== "undefined" && devtools && devtools(window.__REDUX_DEVTOOLS_EXTENSION__OPTIONS), ...storeEnhancer].filter(Boolean);
+    const enhancers = [
+      applyMiddleware(...enhancedMiddlewares),
+      typeof window !== "undefined" && devtools && devtools(window.__REDUX_DEVTOOLS_EXTENSION__OPTIONS),
+      ...storeEnhancer,
+    ].filter(Boolean);
     return _createStore(reducers, initialState, compose(...enhancers));
   }
 

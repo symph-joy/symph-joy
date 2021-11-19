@@ -19,10 +19,22 @@ export class RoutesResolver implements Resolver {
   private readonly routerExceptionsFilter: RouterExceptionFilters;
   private readonly routerExplorer: RouterExplorer;
 
-  constructor(private readonly container: ServerContainer, private readonly config: ApplicationConfig, private readonly injector: Injector, private readonly mountService: MountService) {
+  constructor(
+    private readonly container: ServerContainer,
+    private readonly config: ApplicationConfig,
+    private readonly injector: Injector,
+    private readonly mountService: MountService
+  ) {
     this.routerExceptionsFilter = new RouterExceptionFilters(container, config, container.getHttpAdapterRef());
     const metadataScanner = new MetadataScanner();
-    this.routerExplorer = new RouterExplorer(metadataScanner, this.container, this.injector, this.routerProxy, this.routerExceptionsFilter, this.config);
+    this.routerExplorer = new RouterExplorer(
+      metadataScanner,
+      this.container,
+      this.injector,
+      this.routerProxy,
+      this.routerExceptionsFilter,
+      this.config
+    );
   }
 
   public resolve<T extends HttpServer>(applicationRef: T, basePath: string, wrappers?: ComponentWrapper[]) {

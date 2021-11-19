@@ -1,12 +1,22 @@
-import {AsyncParallelHook, AsyncParallelBailHook, AsyncSeriesHook, AsyncSeriesWaterfallHook, AsyncSeriesBailHook, SyncHook, SyncBailHook, SyncWaterfallHook, AsyncHook} from "tapable";
-import {HookType, IHook} from "./interface/hook.interface";
-import {RuntimeException} from "../errors/exceptions/runtime.exception";
-import {ITap} from "./interface/tap.interface";
-import {Abstract, Provider, TProviderName, Type} from "../interfaces";
-import {getHooksMetadata, IHookMeta} from "./autowire-hook.decorator";
-import {getTapsMetadata} from "./register-tap.decorator";
-import {ComponentWrapper} from "../injector";
-import {Hook} from "./hook";
+import {
+  AsyncParallelHook,
+  AsyncParallelBailHook,
+  AsyncSeriesHook,
+  AsyncSeriesWaterfallHook,
+  AsyncSeriesBailHook,
+  SyncHook,
+  SyncBailHook,
+  SyncWaterfallHook,
+  AsyncHook,
+} from "tapable";
+import { HookType, IHook } from "./interface/hook.interface";
+import { RuntimeException } from "../errors/exceptions/runtime.exception";
+import { ITap } from "./interface/tap.interface";
+import { Abstract, Provider, TProviderName, Type } from "../interfaces";
+import { getHooksMetadata, IHookMeta } from "./autowire-hook.decorator";
+import { getTapsMetadata } from "./register-tap.decorator";
+import { ComponentWrapper } from "../injector";
+import { Hook } from "./hook";
 
 type RegisterHookOptions = {
   id: string;
@@ -62,7 +72,7 @@ export class HookCenter {
       throw new RuntimeException(`Error: Duplicate register hook(${hookInfo.id})`);
     }
 
-    const {id, type, async, parallel} = hookInfo;
+    const { id, type, async, parallel } = hookInfo;
     const hook = new Hook(id, type, async, parallel);
     this.hooks.set(id, hook);
     return hook;
@@ -119,7 +129,9 @@ export class HookCenter {
   public registerTap(hookId: string, tap: ITap): void {
     const hook = this.hooks.get(hookId);
     if (hook === undefined) {
-      throw new RuntimeException(`Register provider's tap failed, the hook(${hookId}) is not found, the provider is : ${tap.provider?.constructor?.name}`);
+      throw new RuntimeException(
+        `Register provider's tap failed, the hook(${hookId}) is not found, the provider is : ${tap.provider?.constructor?.name}`
+      );
     }
     hook.registerTap(tap);
 

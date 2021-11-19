@@ -1,25 +1,36 @@
 import chalk from "chalk";
-import {exists as existsOrig, existsSync, promises, readFileSync, writeFileSync} from "fs";
-import {Worker} from "jest-worker";
-import {dirname, join, resolve, sep} from "path";
-import {promisify} from "util";
-import {AmpPageStatus, formatAmpMessages} from "../build/output/index";
+import { exists as existsOrig, existsSync, promises, readFileSync, writeFileSync } from "fs";
+import { Worker } from "jest-worker";
+import { dirname, join, resolve, sep } from "path";
+import { promisify } from "util";
+import { AmpPageStatus, formatAmpMessages } from "../build/output/index";
 import * as Log from "../build/output/log";
 import createSpinner from "../build/spinner";
-import {API_ROUTE, SSG_FALLBACK_EXPORT_ERROR} from "../lib/constants";
-import {recursiveCopy} from "../lib/recursive-copy";
-import {recursiveDelete} from "../lib/recursive-delete";
-import {BUILD_ID_FILE, CLIENT_PUBLIC_FILES_PATH, CLIENT_STATIC_FILES_PATH, CONFIG_FILE, EXPORT_DETAIL, OUT_DIRECTORY, PAGES_MANIFEST, PRERENDER_MANIFEST, SERVER_DIRECTORY, SERVERLESS_DIRECTORY} from "../joy-server/lib/constants";
-import {isTargetLikeServerless} from "../joy-server/server/config";
-import {denormalizePagePath, normalizePagePath} from "../joy-server/server/normalize-page-path";
-import {PrerenderManifest} from "../build/joy-build.service";
+import { API_ROUTE, SSG_FALLBACK_EXPORT_ERROR } from "../lib/constants";
+import { recursiveCopy } from "../lib/recursive-copy";
+import { recursiveDelete } from "../lib/recursive-delete";
+import {
+  BUILD_ID_FILE,
+  CLIENT_PUBLIC_FILES_PATH,
+  CLIENT_STATIC_FILES_PATH,
+  CONFIG_FILE,
+  EXPORT_DETAIL,
+  OUT_DIRECTORY,
+  PAGES_MANIFEST,
+  PRERENDER_MANIFEST,
+  SERVER_DIRECTORY,
+  SERVERLESS_DIRECTORY,
+} from "../joy-server/lib/constants";
+import { isTargetLikeServerless } from "../joy-server/server/config";
+import { denormalizePagePath, normalizePagePath } from "../joy-server/server/normalize-page-path";
+import { PrerenderManifest } from "../build/joy-build.service";
 import type exportPage from "./worker";
-import {ExportRenderOpts} from "./worker";
-import {PagesManifest} from "../build/webpack/plugins/pages-manifest-plugin";
-import {JoyAppConfig} from "../joy-server/server/joy-app-config";
-import {Component} from "@symph/core";
+import { ExportRenderOpts } from "./worker";
+import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
+import { JoyAppConfig } from "../joy-server/server/joy-app-config";
+import { Component } from "@symph/core";
 import getPort from "get-port";
-import {JoyServerApplication} from "../joy-server/server/joy-server-application";
+import { JoyServerApplication } from "../joy-server/server/joy-server-application";
 
 const exists = promisify(existsOrig);
 
@@ -27,7 +38,23 @@ const createProgress = (total: number, label = "Exporting") => {
   let curProgress = 0;
   let progressSpinner = createSpinner(`${label} (${curProgress}/${total})`, {
     spinner: {
-      frames: ["[    ]", "[=   ]", "[==  ]", "[=== ]", "[ ===]", "[  ==]", "[   =]", "[    ]", "[   =]", "[  ==]", "[ ===]", "[====]", "[=== ]", "[==  ]", "[=   ]"],
+      frames: [
+        "[    ]",
+        "[=   ]",
+        "[==  ]",
+        "[=== ]",
+        "[ ===]",
+        "[  ==]",
+        "[   =]",
+        "[    ]",
+        "[   =]",
+        "[  ==]",
+        "[ ===]",
+        "[====]",
+        "[=== ]",
+        "[==  ]",
+        "[=   ]",
+      ],
       interval: 80,
     },
   });
@@ -80,7 +107,7 @@ export class JoyExportAppService {
     const port = await getPort();
     // const joyServer = await this.serverApplication.get(JoyServer);
     // await joyServer.prepare();
-    await this.serverApplication.prepare()
+    await this.serverApplication.prepare();
     try {
       await this.serverApplication.listenAsync(port, "127.0.0.1");
     } catch (err) {
@@ -147,7 +174,8 @@ export class JoyExportAppService {
     }
 
     const buildId = readFileSync(join(distDir, BUILD_ID_FILE), "utf8");
-    const pagesManifest = !options.pages && (require(join(distDir, isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY, PAGES_MANIFEST)) as PagesManifest);
+    const pagesManifest =
+      !options.pages && (require(join(distDir, isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY, PAGES_MANIFEST)) as PagesManifest);
 
     let prerenderManifest: PrerenderManifest | undefined = undefined;
     try {
@@ -337,7 +365,9 @@ export class JoyExportAppService {
             `\n` +
             chalk.yellow(`This command is meant for static-only hosts, and is` + " " + chalk.bold(`not necessary to make your application static.`)) +
             `\n` +
-            chalk.yellow(`Pages in your application without server-side data dependencies will be automatically statically exported by \`joy build\`, including pages powered by \`getStaticProps\`.`)
+            chalk.yellow(
+              `Pages in your application without server-side data dependencies will be automatically statically exported by \`joy build\`, including pages powered by \`getStaticProps\`.`
+            )
         );
       }
     }

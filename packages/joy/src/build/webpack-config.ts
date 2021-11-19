@@ -11,7 +11,14 @@ import { DOT_JOY_ALIAS, JOY_PROJECT_ROOT, JOY_PROJECT_ROOT_DIST_CLIENT, PAGES_DI
 import { fileExists } from "../lib/file-exists";
 import { resolveRequest } from "../lib/resolve-request";
 import { getTypeScriptConfiguration } from "../lib/typescript/getTypeScriptConfiguration";
-import { CLIENT_STATIC_FILES_RUNTIME_MAIN, CLIENT_STATIC_FILES_RUNTIME_POLYFILLS, CLIENT_STATIC_FILES_RUNTIME_WEBPACK, REACT_LOADABLE_MANIFEST, SERVERLESS_DIRECTORY, SERVER_DIRECTORY } from "../joy-server/lib/constants";
+import {
+  CLIENT_STATIC_FILES_RUNTIME_MAIN,
+  CLIENT_STATIC_FILES_RUNTIME_POLYFILLS,
+  CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
+  REACT_LOADABLE_MANIFEST,
+  SERVERLESS_DIRECTORY,
+  SERVER_DIRECTORY,
+} from "../joy-server/lib/constants";
 import { execOnce } from "../joy-server/lib/utils";
 import { findPageFile } from "../server/lib/find-page-file";
 import { WebpackEntrypoints } from "./entries";
@@ -31,7 +38,12 @@ import PagesManifestPlugin from "./webpack/plugins/pages-manifest-plugin";
 import { ProfilingPlugin } from "./webpack/plugins/profiling-plugin";
 import { ReactLoadablePlugin } from "./webpack/plugins/react-loadable-plugin";
 import { ServerlessPlugin } from "./webpack/plugins/serverless-plugin";
-import WebpackConformancePlugin, { DuplicatePolyfillsConformanceCheck, GranularChunksConformanceCheck, MinificationConformanceCheck, ReactSyncScriptsConformanceCheck } from "./webpack/plugins/webpack-conformance-plugin";
+import WebpackConformancePlugin, {
+  DuplicatePolyfillsConformanceCheck,
+  GranularChunksConformanceCheck,
+  MinificationConformanceCheck,
+  ReactSyncScriptsConformanceCheck,
+} from "./webpack/plugins/webpack-conformance-plugin";
 import { WellKnownErrorsPlugin } from "./webpack/plugins/wellknown-errors-plugin";
 import { Rewrite } from "../lib/load-custom-routes";
 import { webpack5 } from "../types/webpack5";
@@ -51,7 +63,11 @@ const escapePathVariables = (value: any) => {
 };
 
 const devtoolRevertWarning = execOnce((devtool: Configuration["devtool"]) => {
-  console.warn(chalk.yellow.bold("Warning: ") + chalk.bold(`Reverting webpack devtool to '${devtool}'.\n`) + "Changing the webpack devtool in development mode will cause severe performance regressions.");
+  console.warn(
+    chalk.yellow.bold("Warning: ") +
+      chalk.bold(`Reverting webpack devtool to '${devtool}'.\n`) +
+      "Changing the webpack devtool in development mode will cause severe performance regressions."
+  );
 });
 
 function parseJsonFile(filePath: string) {
@@ -66,7 +82,11 @@ function parseJsonFile(filePath: string) {
   try {
     return JSON5.parse(contents);
   } catch (err) {
-    const codeFrame = codeFrameColumns(String(contents), { start: { line: err.lineNumber, column: err.columnNumber } }, { message: err.message, highlightCode: true });
+    const codeFrame = codeFrameColumns(
+      String(contents),
+      { start: { line: err.lineNumber, column: err.columnNumber } },
+      { message: err.message, highlightCode: true }
+    );
     throw new Error(`Failed to parse "${filePath}":\n${codeFrame}`);
   }
 }
@@ -325,7 +345,9 @@ export default async function getBaseWebpackConfig(
 
   const resolveConfig = {
     // Disable .mjs for node_modules bundling
-    extensions: isServer ? [".js", ".mjs", ...(useTypeScript ? [".tsx", ".ts"] : []), ".jsx", ".json", ".wasm"] : [".mjs", ".js", ...(useTypeScript ? [".tsx", ".ts"] : []), ".jsx", ".json", ".wasm"],
+    extensions: isServer
+      ? [".js", ".mjs", ...(useTypeScript ? [".tsx", ".ts"] : []), ".jsx", ".json", ".wasm"]
+      : [".mjs", ".js", ...(useTypeScript ? [".tsx", ".ts"] : []), ".jsx", ".json", ".wasm"],
     modules: [
       "node_modules",
       ...nodePathList, // Support for NODE_PATH environment variable
@@ -502,7 +524,11 @@ export default async function getBaseWebpackConfig(
       },
       DuplicatePolyfillsConformanceCheck: {
         enabled: true,
-        BlockedAPIToBePolyfilled: Object.assign([], ["fetch"], config.conformance?.DuplicatePolyfillsConformanceCheck?.BlockedAPIToBePolyfilled || []),
+        BlockedAPIToBePolyfilled: Object.assign(
+          [],
+          ["fetch"],
+          config.conformance?.DuplicatePolyfillsConformanceCheck?.BlockedAPIToBePolyfilled || []
+        ),
       },
       GranularChunksConformanceCheck: {
         enabled: true,
@@ -539,7 +565,14 @@ export default async function getBaseWebpackConfig(
 
     // Anything else that is standard JavaScript within `node_modules`
     // can be externalized.
-    if (res.match(/@symph[/\\].*\.js$/) || res.match(/packages[/\\]joy[/\\]dist[/\\]/) || res.match(/packages[/\\]core[/\\]dist[/\\]/) || res.match(/packages[/\\]react[/\\]dist[/\\]/) || res.match(/packages[/\\]server[/\\]dist[/\\]/) || res.match(/packages[/\\]config[/\\]dist[/\\]/)) {
+    if (
+      res.match(/@symph[/\\].*\.js$/) ||
+      res.match(/packages[/\\]joy[/\\]dist[/\\]/) ||
+      res.match(/packages[/\\]core[/\\]dist[/\\]/) ||
+      res.match(/packages[/\\]react[/\\]dist[/\\]/) ||
+      res.match(/packages[/\\]server[/\\]dist[/\\]/) ||
+      res.match(/packages[/\\]config[/\\]dist[/\\]/)
+    ) {
       return callback(undefined, `commonjs ${request}`);
     }
 
@@ -723,7 +756,11 @@ export default async function getBaseWebpackConfig(
       // checkWasmTypes: false,
       nodeEnv: false,
       splitChunks: isServer ? false : splitChunksConfig,
-      runtimeChunk: isServer ? (isWebpack5 && !isLikeServerless ? { name: "webpack-runtime" } : undefined) : { name: CLIENT_STATIC_FILES_RUNTIME_WEBPACK },
+      runtimeChunk: isServer
+        ? isWebpack5 && !isLikeServerless
+          ? { name: "webpack-runtime" }
+          : undefined
+        : { name: CLIENT_STATIC_FILES_RUNTIME_WEBPACK },
       minimize: !(dev || isServer),
       minimizer: [
         // Minify JavaScript
@@ -768,7 +805,7 @@ export default async function getBaseWebpackConfig(
     },
     watchOptions: {
       ignored: ["**/.git/**", "**/node_modules/**", "**/.joy/out/**", "**/.joy/dist/**"],
-      aggregateTimeout : 500,
+      aggregateTimeout: 500,
     },
     output: {
       // fixme
@@ -793,10 +830,26 @@ export default async function getBaseWebpackConfig(
     resolve: resolveConfig,
     resolveLoader: {
       // The loaders Joy provides
-      alias: ["joy-client-generate-file-loader", "emit-file-loader", "error-loader", "joy-babel-loader", "joy-client-pages-loader", "joy-data-loader", "joy-serverless-loader", "noop-loader", "joy-plugin-loader", "joy-require-context-loader"].reduce((alias, loader) => {
+      alias: [
+        "joy-client-generate-file-loader",
+        "emit-file-loader",
+        "error-loader",
+        "joy-babel-loader",
+        "joy-client-pages-loader",
+        "joy-data-loader",
+        "joy-serverless-loader",
+        "noop-loader",
+        "joy-plugin-loader",
+        "joy-require-context-loader",
+      ].reduce((alias, loader) => {
         // using multiple aliases to replace `resolveLoader.modules`
         if (process.env.NODE_ENV === "test") {
-          alias[loader] = path.join(__dirname, "webpack", "loaders", ["joy-babel-loader", "emit-file-loader"].includes(loader) ? loader + ".js" : loader + ".ts");
+          alias[loader] = path.join(
+            __dirname,
+            "webpack",
+            "loaders",
+            ["joy-babel-loader", "emit-file-loader"].includes(loader) ? loader + ".js" : loader + ".ts"
+          );
         } else {
           alias[loader] = path.join(__dirname, "webpack", "loaders", loader + ".js");
         }
@@ -981,7 +1034,9 @@ export default async function getBaseWebpackConfig(
             filename: (getFileName: Function | string) => (...args: any[]) => {
               const name = typeof getFileName === "function" ? getFileName(...args) : getFileName;
 
-              return name.includes(".js") ? name.replace(/\.js$/, ".module.js") : escapePathVariables(args[0].chunk.name.replace(/\.js$/, ".module.js"));
+              return name.includes(".js")
+                ? name.replace(/\.js$/, ".module.js")
+                : escapePathVariables(args[0].chunk.name.replace(/\.js$/, ".module.js"));
             },
             chunkFilename: (inputChunkName: string) => inputChunkName.replace(/\.js$/, ".module.js"),
           });
@@ -1008,7 +1063,9 @@ export default async function getBaseWebpackConfig(
               new DuplicatePolyfillsConformanceCheck({
                 BlockedAPIToBePolyfilled: conformanceConfig.DuplicatePolyfillsConformanceCheck.BlockedAPIToBePolyfilled,
               }),
-            !isServer && conformanceConfig.GranularChunksConformanceCheck.enabled && new GranularChunksConformanceCheck(splitChunksConfigs.prodGranular),
+            !isServer &&
+              conformanceConfig.GranularChunksConformanceCheck.enabled &&
+              new GranularChunksConformanceCheck(splitChunksConfigs.prodGranular),
           ].filter(Boolean),
         }),
       new WellKnownErrorsPlugin(),
@@ -1174,17 +1231,22 @@ export default async function getBaseWebpackConfig(
     return false;
   }
 
-  const hasUserCssConfig = (webpackConfig.module?.rules as RuleSetRule[]).some((rule) => canMatchCss(rule.test) || canMatchCss(rule.include)) ?? false;
+  const hasUserCssConfig =
+    (webpackConfig.module?.rules as RuleSetRule[]).some((rule) => canMatchCss(rule.test) || canMatchCss(rule.include)) ?? false;
 
   if (hasUserCssConfig) {
     // only show warning for one build
     if (isServer) {
-      console.warn(chalk.yellow.bold("Warning: ") + chalk.bold("Built-in CSS support is being disabled due to custom CSS configuration being detected."));
+      console.warn(
+        chalk.yellow.bold("Warning: ") + chalk.bold("Built-in CSS support is being disabled due to custom CSS configuration being detected.")
+      );
     }
 
     if ((webpackConfig.module?.rules as RuleSetRule[]).length) {
       // Remove default CSS Loader
-      webpackConfig.module!.rules = (webpackConfig.module?.rules as RuleSetRule[]).filter((r) => !(typeof r.oneOf?.[0]?.options === "object" && r.oneOf[0].options.__joy_css_remove === true));
+      webpackConfig.module!.rules = (webpackConfig.module?.rules as RuleSetRule[]).filter(
+        (r) => !(typeof r.oneOf?.[0]?.options === "object" && r.oneOf[0].options.__joy_css_remove === true)
+      );
     }
     if (webpackConfig.plugins?.length) {
       // Disable CSS Extraction Plugin
@@ -1216,7 +1278,9 @@ export default async function getBaseWebpackConfig(
     });
 
     if (foundTsRule) {
-      console.warn("\n@zeit/joy-typescript is no longer needed since Joy.js has built-in support for TypeScript now. Please remove it from your joy.config.js and your .babelrc\n");
+      console.warn(
+        "\n@zeit/joy-typescript is no longer needed since Joy.js has built-in support for TypeScript now. Please remove it from your joy.config.js and your .babelrc\n"
+      );
     }
   }
 

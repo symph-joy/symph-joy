@@ -27,49 +27,47 @@ import {
 import * as Reply from "fastify/lib/reply";
 import * as http2 from "http2";
 import * as https from "https";
-import {
-  Chain as LightMyRequestChain,
-  InjectOptions,
-  Response as LightMyRequestResponse,
-} from "light-my-request";
+import { Chain as LightMyRequestChain, InjectOptions, Response as LightMyRequestResponse } from "light-my-request";
 import * as pathToRegexp from "path-to-regexp";
-import {
-  FastifyStaticOptions,
-  PointOfViewOptions,
-} from "../interfaces/external";
-import {AbstractHttpAdapter} from "../../../adapters";
-import {HttpStatus, RequestMethod} from "../../../enums";
-import {Logger} from "@symph/core";
-import {
-  CorsOptions,
-  CorsOptionsDelegate,
-} from "../../../interfaces/external/cors-options.interface";
+import { FastifyStaticOptions, PointOfViewOptions } from "../interfaces/external";
+import { AbstractHttpAdapter } from "../../../adapters";
+import { HttpStatus, RequestMethod } from "../../../enums";
+import { Logger } from "@symph/core";
+import { CorsOptions, CorsOptionsDelegate } from "../../../interfaces/external/cors-options.interface";
 
-type FastifyHttp2SecureOptions<Server extends http2.Http2SecureServer,
-  Logger extends FastifyLoggerInstance = FastifyLoggerInstance> = FastifyServerOptions<Server, Logger> & {
+type FastifyHttp2SecureOptions<
+  Server extends http2.Http2SecureServer,
+  Logger extends FastifyLoggerInstance = FastifyLoggerInstance
+> = FastifyServerOptions<Server, Logger> & {
   http2: true;
   https: http2.SecureServerOptions;
 };
 
-type FastifyHttp2Options<Server extends http2.Http2Server,
-  Logger extends FastifyLoggerInstance = FastifyLoggerInstance> = FastifyServerOptions<Server, Logger> & {
+type FastifyHttp2Options<Server extends http2.Http2Server, Logger extends FastifyLoggerInstance = FastifyLoggerInstance> = FastifyServerOptions<
+  Server,
+  Logger
+> & {
   http2: true;
   http2SessionTimeout?: number;
 };
 
-type FastifyHttpsOptions<Server extends https.Server,
-  Logger extends FastifyLoggerInstance = FastifyLoggerInstance> = FastifyServerOptions<Server, Logger> & {
+type FastifyHttpsOptions<Server extends https.Server, Logger extends FastifyLoggerInstance = FastifyLoggerInstance> = FastifyServerOptions<
+  Server,
+  Logger
+> & {
   https: https.ServerOptions;
 };
 
-export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
+export class FastifyAdapter<
+  TServer extends RawServerBase = RawServerDefault,
   TRawRequest extends RawRequestDefaultExpression<TServer> = RawRequestDefaultExpression<TServer>,
-  TRawResponse extends RawReplyDefaultExpression<TServer> = RawReplyDefaultExpression<TServer>> extends AbstractHttpAdapter<TServer,
+  TRawResponse extends RawReplyDefaultExpression<TServer> = RawReplyDefaultExpression<TServer>
+> extends AbstractHttpAdapter<
+  TServer,
   FastifyRequest<RequestGenericInterface, TServer, TRawRequest>,
-  FastifyReply<TServer, TRawRequest, TRawResponse>> {
-  protected readonly instance: FastifyInstance<TServer,
-    TRawRequest,
-    TRawResponse>;
+  FastifyReply<TServer, TRawRequest, TRawResponse>
+> {
+  protected readonly instance: FastifyInstance<TServer, TRawRequest, TRawResponse>;
   private _isParserRegistered: boolean;
   private isMiddieRegistered: boolean;
 
@@ -86,8 +84,7 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
       | FastifyServerOptions<TServer> = fastify() as any
   ) {
     const instance =
-      instanceOrOptions &&
-      (instanceOrOptions as FastifyInstance<TServer>).server
+      instanceOrOptions && (instanceOrOptions as FastifyInstance<TServer>).server
         ? instanceOrOptions
         : fastify(instanceOrOptions as FastifyServerOptions);
 
@@ -102,34 +99,26 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
   }
 
   public listen(port: string | number, callback?: () => void): void;
-  public listen(
-    port: string | number,
-    hostname: string,
-    callback?: () => void
-  ): void;
+  public listen(port: string | number, hostname: string, callback?: () => void): void;
   public listen(port: string | number, ...args: any[]): Promise<string> {
     return this.instance.listen(port, ...args);
   }
 
-  public reply(
-    response: TRawResponse | FastifyReply,
-    body: any,
-    statusCode?: number
-  ) {
+  public reply(response: TRawResponse | FastifyReply, body: any, statusCode?: number) {
     const fastifyReply: FastifyReply = this.isNativeResponse(response)
       ? new Reply(
-        response,
-        {
-          context: {
-            preSerialization: null,
-            preValidation: [],
-            preHandler: [],
-            onSend: [],
-            onError: [],
+          response,
+          {
+            context: {
+              preSerialization: null,
+              preValidation: [],
+              preHandler: [],
+              onSend: [],
+              onError: [],
+            },
           },
-        },
-        {}
-      )
+          {}
+        )
       : response;
 
     if (statusCode) {
@@ -147,11 +136,7 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
     return response.code(statusCode);
   }
 
-  public render(
-    response: FastifyReply & { view: Function },
-    view: string,
-    options: any
-  ) {
+  public render(response: FastifyReply & { view: Function }, view: string, options: any) {
     return response && response.view(view, options);
   }
 
@@ -160,9 +145,7 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
     return response.status(code).redirect(url);
   }
 
-  public setErrorHandler(
-    handler: Parameters<FastifyInstance<TServer, TRawRequest, TRawResponse>["setErrorHandler"]>[0]
-  ) {
+  public setErrorHandler(handler: Parameters<FastifyInstance<TServer, TRawRequest, TRawResponse>["setErrorHandler"]>[0]) {
     return this.instance.setErrorHandler(handler);
   }
 
@@ -191,9 +174,7 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
 
   public inject(): LightMyRequestChain;
   public inject(opts: InjectOptions | string): Promise<LightMyRequestResponse>;
-  public inject(
-    opts?: InjectOptions | string
-  ): LightMyRequestChain | Promise<LightMyRequestResponse> {
+  public inject(opts?: InjectOptions | string): LightMyRequestChain | Promise<LightMyRequestResponse> {
     return this.instance.inject(opts!);
   }
 
@@ -223,9 +204,7 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
 
   public setViewEngine(options: PointOfViewOptions | string) {
     if (typeof options === "string") {
-      new Logger("FastifyAdapter").error(
-        "setViewEngine() doesn't support a string argument."
-      );
+      new Logger("FastifyAdapter").error("setViewEngine() doesn't support a string argument.");
       process.exit(1);
     }
     // return this.register(
@@ -239,29 +218,19 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
     return response.header(name, value);
   }
 
-  public getRequestHostname(
-    request: FastifyRequest<RequestGenericInterface, TServer, TRawRequest>
-  ): string {
+  public getRequestHostname(request: FastifyRequest<RequestGenericInterface, TServer, TRawRequest>): string {
     return request.hostname;
   }
 
-  public getRequestMethod(
-    request: FastifyRequest<RequestGenericInterface, TServer, TRawRequest>
-  ): string {
+  public getRequestMethod(request: FastifyRequest<RequestGenericInterface, TServer, TRawRequest>): string {
     return (request.raw ? request.raw.method : request.method) as string;
   }
 
-  public getRequestUrl(
-    request: FastifyRequest<RequestGenericInterface, TServer, TRawRequest>
-  ): string {
+  public getRequestUrl(request: FastifyRequest<RequestGenericInterface, TServer, TRawRequest>): string {
     return (request.raw ? request.raw.url : request.url) as string;
   }
 
-  public enableCors(
-    options:
-      | CorsOptions
-      | CorsOptionsDelegate<FastifyRequest<RequestGenericInterface, TServer, TRawRequest>>
-  ) {
+  public enableCors(options: CorsOptions | CorsOptionsDelegate<FastifyRequest<RequestGenericInterface, TServer, TRawRequest>>) {
     if (typeof options === "function") {
       this.register(require("fastify-cors"), () => options);
     } else {
@@ -277,9 +246,7 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
     this._isParserRegistered = true;
   }
 
-  public async createMiddlewareFactory(
-    requestMethod: RequestMethod
-  ): Promise<(path: string, callback: Function) => any> {
+  public async createMiddlewareFactory(requestMethod: RequestMethod): Promise<(path: string, callback: Function) => any> {
     if (!this.isMiddieRegistered) {
       await this.registerMiddie();
     }
@@ -291,32 +258,22 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
       // The following type assertion is valid as we enforce "middie" plugin registration
       // which enhances the FastifyInstance with the "use()" method.
       // ref https://github.com/fastify/middie/pull/55
-      const instanceWithUseFn = (this
-        .instance as unknown) as FastifyInstance & {
+      const instanceWithUseFn = (this.instance as unknown) as FastifyInstance & {
         use: Function;
       };
 
-      instanceWithUseFn.use(
-        normalizedPath,
-        (req: any, res: any, next: Function) => {
-          const queryParamsIndex = req.originalUrl.indexOf("?");
-          const pathname =
-            queryParamsIndex >= 0
-              ? req.originalUrl.slice(0, queryParamsIndex)
-              : req.originalUrl;
+      instanceWithUseFn.use(normalizedPath, (req: any, res: any, next: Function) => {
+        const queryParamsIndex = req.originalUrl.indexOf("?");
+        const pathname = queryParamsIndex >= 0 ? req.originalUrl.slice(0, queryParamsIndex) : req.originalUrl;
 
-          if (!re.exec(pathname + "/") && normalizedPath) {
-            return next();
-          }
-          if (
-            requestMethod === RequestMethod.ALL ||
-            req.method === RequestMethod[requestMethod]
-          ) {
-            return callback(req, res, next);
-          }
-          next();
+        if (!re.exec(pathname + "/") && normalizedPath) {
+          return next();
         }
-      );
+        if (requestMethod === RequestMethod.ALL || req.method === RequestMethod[requestMethod]) {
+          return callback(req, res, next);
+        }
+        next();
+      });
     };
   }
 
@@ -332,12 +289,10 @@ export class FastifyAdapter<TServer extends RawServerBase = RawServerDefault,
       | Promise<{ default: FastifyPluginAsync<any> }>,
     prefix = "/"
   ) {
-    return this.instance.register(factory, {prefix});
+    return this.instance.register(factory, { prefix });
   }
 
-  private isNativeResponse(
-    response: TRawResponse | FastifyReply
-  ): response is TRawResponse {
+  private isNativeResponse(response: TRawResponse | FastifyReply): response is TRawResponse {
     return !("status" in response);
   }
 

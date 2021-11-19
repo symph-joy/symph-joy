@@ -1,13 +1,25 @@
 import glob from "glob";
 import path from "path";
-import { AutowireHook, Component, CoreContext, getConfigurationMeta, getComponentMeta, HookType, IHook, CoreContainer, Provider, ProviderScanner, TProviderName } from "@symph/core";
+import {
+  AutowireHook,
+  Component,
+  CoreContext,
+  getConfigurationMeta,
+  getComponentMeta,
+  HookType,
+  IHook,
+  CoreContainer,
+  Provider,
+  ProviderScanner,
+  TProviderName,
+} from "@symph/core";
 import { EmitSrcService } from "../webpack/plugins/emit-src-plugin/emit-src-service";
 import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
 import { ModuleContextTypeEnum } from "../../lib/constants";
 import { existsSync } from "fs";
 import * as Log from "../output/log";
-import {FSWatcher, watch} from "chokidar";
-import {JoyAppConfig} from "../../joy-server/server/joy-app-config";
+import { FSWatcher, watch } from "chokidar";
+import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 
 type TScanOutModuleProviders = Map<string, { type: "ClassProvider" | "Configuration"; providers: Provider[] }>;
 
@@ -36,16 +48,14 @@ interface ScanOptions {
  */
 @Component()
 export class FileScanner {
-
   private watchers: Map<string, FSWatcher> = new Map();
   private aggregated = {
     add: [] as string[],
     delete: [] as string[],
     change: [] as string[],
-  }
+  };
 
-  constructor(private readonly joyAppConfig: JoyAppConfig, private providerScanner: ProviderScanner, private emitSrcService: EmitSrcService) {
-  }
+  constructor(private readonly joyAppConfig: JoyAppConfig, private providerScanner: ProviderScanner, private emitSrcService: EmitSrcService) {}
 
   @AutowireHook({ type: HookType.Waterfall, parallel: false, async: true })
   private afterScanOutModuleHook: IHook;

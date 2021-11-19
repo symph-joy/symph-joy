@@ -1,23 +1,21 @@
-import {Component, RegisterTap} from "@symph/core";
-import {IScanOutModule} from "../../build/scanner/file-scanner";
-import {handlebars} from "../../lib/handlebars";
-import {readFileSync} from "fs";
-import {join} from "path";
-import {FileGenerator, IGenerateFiles} from "../../build/file-generator";
-import {isReactComponent} from "@symph/react/dist/react-component.decorator";
-import {ModuleContextTypeEnum} from "../../lib/constants";
+import { Component, RegisterTap } from "@symph/core";
+import { IScanOutModule } from "../../build/scanner/file-scanner";
+import { handlebars } from "../../lib/handlebars";
+import { readFileSync } from "fs";
+import { join } from "path";
+import { FileGenerator, IGenerateFiles } from "../../build/file-generator";
+import { isReactComponent } from "@symph/react/dist/react-component.decorator";
+import { ModuleContextTypeEnum } from "../../lib/constants";
 
 @Component()
 export class JoyAppProvidersExplorerService {
-
   protected moduleTemplate = handlebars.compile(readFileSync(join(__dirname, "./joy-app-providers-explorer.handlebars"), "utf-8"));
 
   protected lastGenerateContent: string | undefined;
 
   protected providerModules: IScanOutModule[] = [];
 
-  constructor(protected fileGenerator: FileGenerator) {
-  }
+  constructor(protected fileGenerator: FileGenerator) {}
 
   public getModules(): IScanOutModule[] {
     return this.providerModules;
