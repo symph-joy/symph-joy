@@ -5,7 +5,12 @@ import { getClientStyleLoader } from "./client";
 import { cssFileResolve } from "./file-resolve";
 import { getCssModuleLocalIdent } from "./getCssModuleLocalIdent";
 
-export function getCssLoader(ctx: ConfigurationContext, postCssPlugins: AcceptedPlugin[], preProcessors: readonly webpack.RuleSetUseItem[] = [], modules: boolean): webpack.RuleSetUseItem[] {
+export function getCssLoader(
+  ctx: ConfigurationContext,
+  postCssPlugins: AcceptedPlugin[],
+  preProcessors: readonly webpack.RuleSetUseItem[] = [],
+  modules: boolean
+): webpack.RuleSetUseItem[] {
   const loaders: webpack.RuleSetUseItem[] = [];
 
   if (ctx.isClient) {

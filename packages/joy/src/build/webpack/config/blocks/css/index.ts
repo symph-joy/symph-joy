@@ -407,7 +407,7 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
       loader({
         oneOf: [
           {
-            test: [regexCss, regexSass],
+            test: regexLikeCss,
             use: require.resolve("ignore-loader"),
           },
         ],

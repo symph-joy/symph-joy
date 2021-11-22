@@ -27,8 +27,11 @@ async function transformSource(filePath: string, src: string): Promise<string> {
     // 测试环境，会有jest的loader进行转换，所以不需要babel处理。
     return src;
   }
+  // todo 换成babel来转换业务代码，然后扫描。
   const ext = path.extname(filePath);
-  src = src && src.replace(/require\("([^?]+)(\?[^"]*)"\)/g, 'require("$1")');
+
+  src = src && src.replace(/(require\("[^\n]*\.(css|less|scss|sass|stylus|styl)[^\n]*"\);[^\n]*)/g, "// $1");
+  src = src.replace(/require\("([^?]+)(\?[^"]*)"\)/g, 'require("$1")');
 
   if (!/js|jsx|ts|tsx|mjs|mjsx/.test(ext)) {
     const babel = require("@babel/core");

@@ -3,16 +3,16 @@ import { resizeImage, getImageSize } from "../../../server/image-optimizer";
 
 const BLUR_IMG_SIZE = 8;
 const BLUR_QUALITY = 70;
-const VALID_BLUR_EXT = ["jpeg", "png", "webp", "avif"]; // should match next/client/image.tsx
+const VALID_BLUR_EXT = ["jpeg", "png", "webp", "avif"]; // should match joy/client/image.tsx
 
 function nextImageLoader(content) {
-  const imageLoaderSpan = this.currentTraceSpan.traceChild("next-image-loader");
+  const imageLoaderSpan = this.currentTraceSpan.traceChild("joy-image-loader");
   return imageLoaderSpan.traceAsyncFn(async () => {
     const { isServer, isDev, assetPrefix, basePath } = loaderUtils.getOptions(this);
     const context = this.rootContext;
     const opts = { context, content };
     const interpolatedName = loaderUtils.interpolateName(this, "/static/media/[name].[hash:8].[ext]", opts);
-    const outputPath = assetPrefix + "/_next" + interpolatedName;
+    const outputPath = assetPrefix + "/_joy" + interpolatedName;
 
     let extension = loaderUtils.interpolateName(this, "[ext]", opts);
     if (extension === "jpg") {
@@ -26,7 +26,7 @@ function nextImageLoader(content) {
     if (VALID_BLUR_EXT.includes(extension)) {
       if (isDev) {
         const prefix = "http://localhost";
-        const url = new URL(`${basePath || ""}/_next/image`, prefix);
+        const url = new URL(`${basePath || ""}/_joy/image`, prefix);
         url.searchParams.set("url", outputPath);
         url.searchParams.set("w", BLUR_IMG_SIZE);
         url.searchParams.set("q", BLUR_QUALITY);
