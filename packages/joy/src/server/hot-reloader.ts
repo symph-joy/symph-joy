@@ -371,8 +371,16 @@ export default class HotReloader {
 
     const [clientConfig, serverConfig] = _configs;
     const srcConfig = await getWebpackConfigForSrc(serverConfig, this.joyAppConfig);
-    const joyAppModulesConfig = await getWebpackConfigForApi(serverConfig, this.joyAppConfig);
-    const configs = [clientConfig, serverConfig, joyAppModulesConfig, srcConfig];
+    const apiModulesConfig = await getWebpackConfigForApi(serverConfig, this.joyAppConfig);
+    const configs = [clientConfig, serverConfig, apiModulesConfig, srcConfig];
+
+    // const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+    // clientConfig.plugins?.push(new BundleAnalyzerPlugin());
+
+    // const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
+    // const smp = new SpeedMeasurePlugin();
+    // smp.wrap(clientConfig);
+
     const multiCompiler = webpack(configs);
 
     this.reactClientCompiler = multiCompiler.compilers[0];

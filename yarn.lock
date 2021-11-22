@@ -2451,6 +2451,11 @@
   dependencies:
     "@octokit/openapi-types" "^9.4.0"
 
+"@polka/url@^1.0.0-next.20":
+  version "1.0.0-next.21"
+  resolved "https://registry.npmmirror.com/@polka/url/download/@polka/url-1.0.0-next.21.tgz#5de5a2385a35309427f6011992b544514d559aa1"
+  integrity sha1-XeWiOFo1MJQn9gEZkrVEUU1VmqE=
+
 "@redux-saga/core@^1.1.1":
   version "1.1.3"
   resolved "https://registry.npm.taobao.org/@redux-saga/core/download/@redux-saga/core-1.1.3.tgz#3085097b57a4ea8db5528d58673f20ce0950f6a4"
@@ -3615,6 +3620,11 @@ acorn-walk@^7.1.1:
   resolved "https://registry.nlark.com/acorn-walk/download/acorn-walk-7.2.0.tgz#0de889a601203909b0fbe07b8938dc21d2e967bc"
   integrity sha1-DeiJpgEgOQmw++B7iTjcIdLpZ7w=
 
+acorn-walk@^8.0.0:
+  version "8.2.0"
+  resolved "https://registry.nlark.com/acorn-walk/download/acorn-walk-8.2.0.tgz?cache=0&sync_timestamp=1630916588767&other_urls=https%3A%2F%2Fregistry.nlark.com%2Facorn-walk%2Fdownload%2Facorn-walk-8.2.0.tgz#741210f2e2426454508853a2f44d0ab83b7f69c1"
+  integrity sha1-dBIQ8uJCZFRQiFOi9E0KuDt/acE=
+
 acorn-walk@^8.1.1:
   version "8.1.1"
   resolved "https://registry.nlark.com/acorn-walk/download/acorn-walk-8.1.1.tgz#3ddab7f84e4a7e2313f6c414c5b7dac85f4e3ebc"
@@ -3634,6 +3644,11 @@ acorn@^7.1.1, acorn@^7.4.0:
   version "7.4.1"
   resolved "https://registry.nlark.com/acorn/download/acorn-7.4.1.tgz#feaed255973d2e77555b83dbc08851a6c63520fa"
   integrity sha1-/q7SVZc9LndVW4PbwIhRpsY1IPo=
+
+acorn@^8.0.4:
+  version "8.6.0"
+  resolved "https://registry.npmmirror.com/acorn/download/acorn-8.6.0.tgz?cache=0&sync_timestamp=1637225522161&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Facorn%2Fdownload%2Facorn-8.6.0.tgz#e3692ba0eb1a0c83eaa4f37f5fa7368dd7142895"
+  integrity sha512-U1riIR+lBSNi3IbxtaHOIKdH8sLFv3NYfNv8sg7ZsNhcfl4HF2++BfqqrNAxoCLQW1iiylOj76ecnaUxz+z9yw==
 
 acorn@^8.2.4, acorn@^8.4.1:
   version "8.4.1"
@@ -5375,6 +5390,11 @@ commander@^6.1.0:
   resolved "https://registry.nlark.com/commander/download/commander-6.2.1.tgz#0792eb682dfbc325999bb2b84fddddba110ac73c"
   integrity sha1-B5LraC37wyWZm7K4T93duhEKxzw=
 
+commander@^7.2.0:
+  version "7.2.0"
+  resolved "https://registry.npmmirror.com/commander/download/commander-7.2.0.tgz?cache=0&sync_timestamp=1634886396986&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fcommander%2Fdownload%2Fcommander-7.2.0.tgz#a36cb57d0b501ce108e4d20559a150a391d97ab7"
+  integrity sha1-o2y1fQtQHOEI5NIFWaFQo5HZerc=
+
 comment-json@3.0.2:
   version "3.0.2"
   resolved "https://registry.nlark.com/comment-json/download/comment-json-3.0.2.tgz#a5652a491910e338080bcbf98fc9a37cbd7f3733"
@@ -6538,7 +6558,7 @@ dotenv@8.2.0:
   resolved "https://registry.nlark.com/dotenv/download/dotenv-8.2.0.tgz#97e619259ada750eea3e4ea3e26bceea5424b16a"
   integrity sha1-l+YZJZradQ7qPk6j4mvO6lQksWo=
 
-duplexer@^0.1.1:
+duplexer@^0.1.1, duplexer@^0.1.2:
   version "0.1.2"
   resolved "https://registry.npm.taobao.org/duplexer/download/duplexer-0.1.2.tgz#3abe43aef3835f8ae077d136ddce0f276b0400e6"
   integrity sha1-Or5DrvODX4rgd9E23c4PJ2sEAOY=
@@ -8637,6 +8657,13 @@ gzip-size@5.1.1:
   dependencies:
     duplexer "^0.1.1"
     pify "^4.0.1"
+
+gzip-size@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.nlark.com/gzip-size/download/gzip-size-6.0.0.tgz#065367fd50c239c0671cbcbad5be3e2eeb10e462"
+  integrity sha1-BlNn/VDCOcBnHLy61b4+LusQ5GI=
+  dependencies:
+    duplexer "^0.1.2"
 
 handlebars@^4.7.6:
   version "4.7.7"
@@ -11470,6 +11497,11 @@ mime@1.6.0, mime@^1.4.1:
   resolved "https://registry.npm.taobao.org/mime/download/mime-1.6.0.tgz#32cd9e5c64553bd58d19a568af452acff04981b1"
   integrity sha1-Ms2eXGRVO9WNGaVor0Uqz/BJgbE=
 
+mime@^2.3.1:
+  version "2.6.0"
+  resolved "https://registry.npmmirror.com/mime/download/mime-2.6.0.tgz#a2a682a95cd4d0cb1d6257e28f83da7e35800367"
+  integrity sha1-oqaCqVzU0MsdYlfij4PafjWAA2c=
+
 mime@^2.4.6:
   version "2.5.2"
   resolved "https://registry.npm.taobao.org/mime/download/mime-2.5.2.tgz#6e3dc6cc2b9510643830e5f19d5cb753da5eeabe"
@@ -12378,6 +12410,11 @@ opencollective-postinstall@^2.0.2:
   version "2.0.3"
   resolved "https://registry.npm.taobao.org/opencollective-postinstall/download/opencollective-postinstall-2.0.3.tgz#7a0fff978f6dbfa4d006238fbac98ed4198c3259"
   integrity sha1-eg//l49tv6TQBiOPusmO1BmMMlk=
+
+opener@^1.5.2:
+  version "1.5.2"
+  resolved "https://registry.nlark.com/opener/download/opener-1.5.2.tgz#5d37e1f35077b9dcac4301372271afdeb2a13598"
+  integrity sha1-XTfh81B3udysQwE3InGv3rKhNZg=
 
 optionator@^0.8.1, optionator@^0.8.3:
   version "0.8.3"
@@ -15221,6 +15258,15 @@ sinon@^9.2.4:
     nise "^4.0.4"
     supports-color "^7.1.0"
 
+sirv@^1.0.7:
+  version "1.0.18"
+  resolved "https://registry.npmmirror.com/sirv/download/sirv-1.0.18.tgz?cache=0&sync_timestamp=1634320242028&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fsirv%2Fdownload%2Fsirv-1.0.18.tgz#105fab52fb656ce8a2bebbf36b11052005952899"
+  integrity sha1-EF+rUvtlbOiivrvzaxEFIAWVKJk=
+  dependencies:
+    "@polka/url" "^1.0.0-next.20"
+    mime "^2.3.1"
+    totalist "^1.0.0"
+
 sisteransi@^1.0.5:
   version "1.0.5"
   resolved "https://registry.npm.taobao.org/sisteransi/download/sisteransi-1.0.5.tgz#134d681297756437cc05ca01370d3a7a571075ed"
@@ -15479,6 +15525,13 @@ spdx-license-ids@^3.0.0:
   version "3.0.10"
   resolved "https://registry.nlark.com/spdx-license-ids/download/spdx-license-ids-3.0.10.tgz#0d9becccde7003d6c658d487dd48a32f0bf3014b"
   integrity sha1-DZvszN5wA9bGWNSH3UijLwvzAUs=
+
+speed-measure-webpack-plugin@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.npm.taobao.org/speed-measure-webpack-plugin/download/speed-measure-webpack-plugin-1.5.0.tgz?cache=0&sync_timestamp=1616943640455&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fspeed-measure-webpack-plugin%2Fdownload%2Fspeed-measure-webpack-plugin-1.5.0.tgz#caf2c5bee24ab66c1c7c30e8daa7910497f7681a"
+  integrity sha1-yvLFvuJKtmwcfDDo2qeRBJf3aBo=
+  dependencies:
+    chalk "^4.1.0"
 
 split-on-first@^1.0.0:
   version "1.1.0"
@@ -16279,6 +16332,11 @@ toidentifier@1.0.0:
   resolved "https://registry.npm.taobao.org/toidentifier/download/toidentifier-1.0.0.tgz#7e1be3470f1e77948bc43d94a3c8f4d7752ba553"
   integrity sha1-fhvjRw8ed5SLxD2Uo8j013UrpVM=
 
+totalist@^1.0.0:
+  version "1.1.0"
+  resolved "https://registry.npm.taobao.org/totalist/download/totalist-1.1.0.tgz#a4d65a3e546517701e3e5c37a47a70ac97fe56df"
+  integrity sha1-pNZaPlRlF3AePlw3pHpwrJf+Vt8=
+
 tough-cookie@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npm.taobao.org/tough-cookie/download/tough-cookie-4.0.0.tgz#d822234eeca882f991f0f908824ad2622ddbece4"
@@ -16996,6 +17054,21 @@ webidl-conversions@^6.1.0:
   resolved "https://registry.npm.taobao.org/webidl-conversions/download/webidl-conversions-6.1.0.tgz?cache=0&sync_timestamp=1587140219948&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fwebidl-conversions%2Fdownload%2Fwebidl-conversions-6.1.0.tgz#9111b4d7ea80acd40f5270d666621afa78b69514"
   integrity sha1-kRG01+qArNQPUnDWZmIa+ni2lRQ=
 
+webpack-bundle-analyzer@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.npmmirror.com/webpack-bundle-analyzer/download/webpack-bundle-analyzer-4.5.0.tgz?cache=0&sync_timestamp=1634019948189&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fwebpack-bundle-analyzer%2Fdownload%2Fwebpack-bundle-analyzer-4.5.0.tgz#1b0eea2947e73528754a6f9af3e91b2b6e0f79d5"
+  integrity sha1-Gw7qKUfnNSh1Sm+a8+kbK24PedU=
+  dependencies:
+    acorn "^8.0.4"
+    acorn-walk "^8.0.0"
+    chalk "^4.1.0"
+    commander "^7.2.0"
+    gzip-size "^6.0.0"
+    lodash "^4.17.20"
+    opener "^1.5.2"
+    sirv "^1.0.7"
+    ws "^7.3.1"
+
 webpack-node-externals@^3.0.0:
   version "3.0.0"
   resolved "https://registry.nlark.com/webpack-node-externals/download/webpack-node-externals-3.0.0.tgz?cache=0&sync_timestamp=1618999751438&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fwebpack-node-externals%2Fdownload%2Fwebpack-node-externals-3.0.0.tgz#1a3407c158d547a9feb4229a9e3385b7b60c9917"
@@ -17229,6 +17302,11 @@ write@1.0.3:
   integrity sha1-CADhRSO5I6OH5BUSPIZWFqrg9cM=
   dependencies:
     mkdirp "^0.5.1"
+
+ws@^7.3.1:
+  version "7.5.5"
+  resolved "https://registry.npmmirror.com/ws/download/ws-7.5.5.tgz#8b4bc4af518cfabd0473ae4f99144287b33eb881"
+  integrity sha1-i0vEr1GM+r0Ec65PmRRCh7M+uIE=
 
 ws@^7.4.6:
   version "7.5.3"

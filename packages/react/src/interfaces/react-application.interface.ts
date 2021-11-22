@@ -1,6 +1,7 @@
 import { DOMElement, ReactElement } from "react";
-import { ICoreContext } from "@symph/core";
+import { ComponentWrapper, EntryType, ICoreContext, Provider } from "@symph/core";
 import { TReactAppComponent } from "../react-app-component";
+import { MountModule } from "../mount/mount-module";
 
 /**
  * Interface defining the core Joy ReactApplication object.
@@ -14,6 +15,8 @@ export interface IReactApplication extends ICoreContext {
   dispatch(action: any): Promise<any> | null | undefined;
 
   getState(): any;
+
+  registerModule(module: EntryType | Provider | MountModule | (EntryType | MountModule | Provider)[]): ComponentWrapper[];
 
   /**
    * Registers a prefix for every HTTP route path.

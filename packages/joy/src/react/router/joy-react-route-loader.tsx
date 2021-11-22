@@ -48,11 +48,7 @@ export function JoyReactRouteLoader({
         let info = joyAppContext.getProviderDefinition(providerName, providerPackage);
         if (info === undefined) {
           try {
-            if (pModule instanceof MountModule) {
-              joyAppContext.registerModule(pModule.module);
-            } else {
-              joyAppContext.registerModule(pModule);
-            }
+            joyAppContext.registerModule(pModule);
           } catch (e) {
             console.log(e);
           }

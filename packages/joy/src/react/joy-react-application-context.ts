@@ -32,11 +32,11 @@ export class JoyReactApplicationContext extends ReactApplicationContext {
     findRouteModule(joyReactAutoGenRoutes);
   }
 
-  protected registerModuleRouter(md: EntryType, compWrappers: ComponentWrapper[]): IReactRoute[] | undefined {
+  protected registerModuleRouter(mount: string, md: EntryType, compWrappers: ComponentWrapper[]): IReactRoute[] | undefined {
     if (this.scannedModules.includes(md as Record<string, any>)) {
-      // 如果没有在打包的时候扫描过路由，则运行时扫描和识别路由组件。
+      // 如果没有在打包的时候预先扫描过模块，则在运行时重新扫描和加载路由组件。
       return undefined;
     }
-    return super.registerModuleRouter(md, compWrappers);
+    return super.registerModuleRouter(mount, md, compWrappers);
   }
 }

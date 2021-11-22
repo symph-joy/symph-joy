@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { FileScanner, IScanOutModule } from "../build/scanner/file-scanner";
 import { ModuleContextTypeEnum } from "../lib/constants";
+import { ApiSrcEntryGenerator } from "../build/api-src-entry-generator";
 
 type TImportModule = {
   module: string;
@@ -35,7 +36,13 @@ export class JoyImportService {
 
   private hasInit = false;
 
-  constructor(public joyReactRouterPlugin: JoyReactRouterPlugin, public providerScanner: ProviderScanner, public fileScanner: FileScanner, public joyAppConfig: JoyAppConfig) {}
+  constructor(
+    public joyReactRouterPlugin: JoyReactRouterPlugin,
+    public providerScanner: ProviderScanner,
+    public fileScanner: FileScanner,
+    public joyAppConfig: JoyAppConfig,
+    public apiSrcEntryGenerator: ApiSrcEntryGenerator
+  ) {}
 
   @RegisterTap()
   // onContextInitialized(): Promise<void> | void {
@@ -81,7 +88,12 @@ export class JoyImportService {
       } else if (/\.json$/i.test(extname)) {
         let packageInfo: Record<string, unknown> = require(fromFile);
         const joyExports = packageInfo.joyExports;
-        const { serverModule: pkgServerModule, reactModule: pkgReactModule, imports: pkgImports, mount: pkgMount } = joyExports as { serverModule?: string | boolean; reactModule?: string | boolean; imports?: ImportConfigSchema[]; mount?: string };
+        const { serverModule: pkgServerModule, reactModule: pkgReactModule, imports: pkgImports, mount: pkgMount } = joyExports as {
+          serverModule?: string | boolean;
+          reactModule?: string | boolean;
+          imports?: ImportConfigSchema[];
+          mount?: string;
+        };
         if (!mount && pkgMount) {
           mount = pkgMount;
         }
@@ -104,7 +116,10 @@ export class JoyImportService {
           }
         }
 
-        function importModuleConfig(contextType: ModuleContextTypeEnum, importModule: string | boolean | ImportModuleSchema | (ImportModuleSchema | string)[]) {
+        function importModuleConfig(
+          contextType: ModuleContextTypeEnum,
+          importModule: string | boolean | ImportModuleSchema | (ImportModuleSchema | string)[]
+        ) {
           if (!importModule) {
             return;
           }
@@ -146,6 +161,9 @@ export class JoyImportService {
   public async importModule(importModules: TImportModule[]): Promise<void> {
     for (const importModule of importModules) {
       const { contextType, mount, module } = importModule;
+      if (contextType === ModuleContextTypeEnum.Server) {
+        this.apiSrcEntryGenerator.registerModule(mount, module);
+      }
       await this.fileScanner.scanFile(module, {
         contextType: contextType,
         mount: mount,

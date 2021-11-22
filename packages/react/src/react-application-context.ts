@@ -4,13 +4,15 @@ import { DOMElement, ReactElement } from "react";
 import reactDom from "react-dom";
 import { ReactReduxService } from "./redux/react-redux.service";
 import { IReactRoute } from "./interfaces/react-route.interface";
-import { Autowire, ComponentWrapper, CoreContainer, CoreContext, EntryType, FactoryProvider, ICoreContext, Logger } from "@symph/core";
+import { ComponentWrapper, CoreContext, EntryType, FactoryProvider, ICoreContext, Logger, Provider } from "@symph/core";
 import { IReactApplication } from "./interfaces";
 import { TReactAppComponent } from "./react-app-component";
 import { MountModule } from "./mount/mount-module";
 import { MountService } from "./mount/mount.service";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
 import { ReactRouter } from "./router/react-router";
+
+type ReactAPPEntryType = EntryType | Provider | MountModule | (EntryType | MountModule | Provider)[];
 
 /**
  * @publicApi
@@ -75,36 +77,35 @@ export class ReactApplicationContext extends CoreContext implements IReactApplic
     return this;
   }
 
-  public registerModule(module: EntryType | EntryType[]): ComponentWrapper[] {
+  public registerModule(module: ReactAPPEntryType): ComponentWrapper[] {
     const modules = Array.isArray(module) ? module : [module];
     let wrappers = [] as ComponentWrapper[];
     for (const md of modules) {
       let compWrappers: ComponentWrapper[];
       let mount = "";
-      if (md instanceof MountModule) {
-        mount = md.mount;
-        compWrappers = super.registerModule(md.module);
+      let module: EntryType | Provider;
+      if ((md as MountModule).mount) {
+        mount = (md as MountModule).mount;
+        module = (md as MountModule).module;
+        compWrappers = super.registerModule(module);
         if (compWrappers && compWrappers.length > 0) {
           this.mountService.setMount(mount, compWrappers);
         }
       } else {
-        compWrappers = super.registerModule(md);
+        module = md as EntryType | Provider;
+        compWrappers = super.registerModule(module);
       }
       if (!compWrappers || compWrappers.length === 0) {
         continue;
       }
-      this.registerModuleRouter(md, compWrappers);
-      compWrappers = compWrappers.concat(compWrappers);
+      this.registerModuleRouter(mount, md, compWrappers);
+      wrappers = wrappers.concat(compWrappers);
     }
 
     return wrappers;
   }
 
-  protected registerModuleRouter(md: EntryType, compWrappers: ComponentWrapper[]): IReactRoute[] | undefined {
-    let mount = "";
-    if (md instanceof MountModule) {
-      mount = md.mount;
-    }
+  protected registerModuleRouter(mount: string, md: EntryType | Provider | MountModule, compWrappers: ComponentWrapper[]): IReactRoute[] | undefined {
     let addedRoutes: IReactRoute[] | undefined;
     compWrappers.forEach((wrapper) => {
       const routes = this.router.addRouteProvider(wrapper, mount);

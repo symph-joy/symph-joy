@@ -114,7 +114,7 @@ describe("prerender", () => {
 
     test("should fetch data.json file when go into a ssg route, and then merge data into browser store， instead of invoke initStaticModelState method.", async () => {
       await page.goto(testContext.getUrl("/links"));
-      await page.click("#stateful");
+      page.click("#stateful"); // 不用等待click执行完成，否则无法捕获的响应事件。
       const res = await page.waitForResponse((response) => response.url().includes("/stateful.json"));
       const data = (await res.json()) as Array<any>;
       // 是否正常返回了数据
@@ -174,7 +174,7 @@ describe("prerender", () => {
     });
 
     test("should has Cache-Control in http response header", async () => {
-      await page.goto(testContext.getUrl("/revalidate"));
+      page.goto(testContext.getUrl("/revalidate"));
       const res = await page.waitForResponse((response) => response.url().includes("/revalidate"));
       const header = await res.headers();
       // 是否正常返回了数据

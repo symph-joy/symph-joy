@@ -1,4 +1,4 @@
-import { Autowire, Component, IComponentLifecycle, Optional, RegisterTap } from "@symph/core";
+import { Autowire, Component, EntryType, IComponentLifecycle, Optional, Provider, RegisterTap } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import glob from "glob";
 import path, { join, sep } from "path";
@@ -10,8 +10,13 @@ import { IGenerateFiles } from "./file-generator";
 import { handlebars } from "../lib/handlebars";
 import HotReloader from "../server/hot-reloader";
 
+interface RegisteredModule {
+  mount: string;
+  filePath: string;
+}
+
 class AggregateChange {
-  constructor(public add: string[] = [], public remove: string[] = [], public change: string[] = []) {}
+  constructor(public add: RegisteredModule[] = [], public remove: RegisteredModule[] = [], public change: RegisteredModule[] = []) {}
 }
 
 interface ServerModule {
@@ -27,7 +32,7 @@ export class ApiSrcEntryGenerator {
 
   public watcher: FSWatcher | undefined;
 
-  public srcFiles: string[] = [];
+  public modules: RegisteredModule[] = [];
 
   private aggregateTimeout = 200;
   public aggregateChange: AggregateChange = new AggregateChange();
@@ -90,7 +95,8 @@ export class ApiSrcEntryGenerator {
 
   public getApiSrcFiles(isWatch = false): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      this.watcher = watch([`${this.srcDir}${sep}**${sep}*.ts`], {
+      this.watcher = watch([`${this.srcDir}${sep}**${sep}*.{js,jsx,ts,tsx}`], {
+        ignored: "**/*.{spec,test}.{js,jsx,ts,tsx}",
         followSymlinks: false,
         awaitWriteFinish: true,
         ignoreInitial: false,
@@ -98,15 +104,15 @@ export class ApiSrcEntryGenerator {
       });
       this.watcher.on("add", (filePath) => {
         console.log(">>>> add", filePath, process.uptime());
-        this.applyChange(filePath, "add");
+        this.applyChange(undefined, filePath, "add");
       });
       this.watcher.on("change", (filePath) => {
         console.log(">>>> change", filePath, process.uptime());
-        this.applyChange(filePath, "change");
+        this.applyChange(undefined, filePath, "change");
       });
       this.watcher.on("unlink", (filePath) => {
         console.log(">>>> remove", filePath, process.uptime());
-        this.applyChange(filePath, "remove");
+        this.applyChange(undefined, filePath, "remove");
       });
       this.watcher.on("error", (error) => {
         console.log(`Watcher error: ${error}`);
@@ -123,16 +129,26 @@ export class ApiSrcEntryGenerator {
   private applyAggregatedChanges() {
     const aggregateChange = this.aggregateChange;
     this.aggregateChange = new AggregateChange();
-    for (const f of aggregateChange.add) {
-      this.srcFiles.push(f);
-    }
 
     for (const f of aggregateChange.remove) {
-      const index = this.srcFiles.indexOf(f);
+      const index = this.modules.findIndex((it) => it.mount === f.mount && it.filePath === f.filePath);
       if (index > 0) {
-        this.srcFiles.splice(index, 1);
+        this.modules.splice(index, 1);
       }
     }
+
+    for (const f of aggregateChange.add) {
+      this.modules.push(f);
+    }
+  }
+
+  /**
+   * 注册外部模块
+   * @param mount
+   * @param path
+   */
+  public registerModule(mount: string, path: string) {
+    this.applyChange(mount, path, "add");
   }
 
   triggerAggregatedChange = lodash.debounce(
@@ -145,8 +161,8 @@ export class ApiSrcEntryGenerator {
     { trailing: true, leading: false }
   );
 
-  applyChange(filePath: string, changeType: keyof AggregateChange) {
-    this.aggregateChange[changeType].push(filePath);
+  private applyChange(mount = "", filePath: string, changeType: keyof AggregateChange) {
+    this.aggregateChange[changeType].push({ mount, filePath: filePath });
     if (this.watch) {
       this.triggerAggregatedChange();
     }
@@ -155,7 +171,7 @@ export class ApiSrcEntryGenerator {
   @RegisterTap()
   public async onGenerateFiles(genFiles: IGenerateFiles) {
     console.log(">>>>> api gen files", process.uptime());
-    const modules = this.srcFiles.map((f) => ({ path: f } as ServerModule));
+    const modules = this.modules.map((f) => ({ path: f.filePath, mount: f.mount } as ServerModule));
 
     const moduleFileContent = this.moduleTemplate({ modules });
     if (this.lastGenerateContent?.length === moduleFileContent.length && this.lastGenerateContent === moduleFileContent) {

@@ -12,7 +12,7 @@ import {MountModule} from "@symph/react/dist/mount/mount-module";
     dynamic: {{json dynamic}},
     providerName: "{{providerName}}",
     {{#if providerPackage}}providerPackage: "{{providerPackage}}",{{/if}}
-    providerModule: {{#if mount}}new MountModule("{{mount}}", require({{json srcPath}})){{else}}require({{json srcPath}}){{/if}},
+    providerModule: {{#if mount}}{mount:"{{mount}}", module:require({{json srcPath}})}{{else}}require({{json srcPath}}){{/if}},
     routes: {{> renderRoutes this}}
     },
   {{/routes}}

@@ -28,10 +28,11 @@ describe("import-module", () => {
   }, 999999);
 
   test("main module page", async () => {
+    // await waitForMoment();
     await page.goto(testContext.getUrl("/"));
     const message = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(message).toBe("Hello main");
-  });
+  }, 999999);
 
   test("third module api", async () => {
     const response = await got.get(testContext.getUrl("/api/third/third-hello"), {
@@ -41,7 +42,7 @@ describe("import-module", () => {
     expect(response.body.trim()).toBe("Hello third module");
   });
 
-  test("main module page", async () => {
+  test("third module page", async () => {
     await page.goto(testContext.getUrl("/third"));
     const message = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(message).toBe("Hello third module");

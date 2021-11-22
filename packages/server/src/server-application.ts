@@ -1,7 +1,7 @@
 /**
  * @publicApi
  */
-import { Abstract, ComponentWrapper, ContextId, CoreContext, EntryType, ICoreContext, Logger, Type, ValueProvider } from "@symph/core";
+import { Abstract, ComponentWrapper, ContextId, CoreContext, EntryType, ICoreContext, Logger, Provider, Type, ValueProvider } from "@symph/core";
 import { ServerContainer } from "./server-container";
 import { Resolver } from "./router/interfaces/resolver.interface";
 import { RoutesResolver } from "./router/routes-resolver";
@@ -28,6 +28,8 @@ import { SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
 import { ServerConfiguration } from "./server.configuration";
 import { MountService } from "./mount/mount.service";
 import { MountModule } from "./mount/mount-module";
+
+type ServerAPPEntryType = EntryType | Provider | MountModule | (EntryType | MountModule | Provider)[];
 
 export class ServerApplication extends CoreContext implements INestApplication {
   private readonly logger = new Logger(ServerApplication.name, true);
@@ -94,18 +96,20 @@ export class ServerApplication extends CoreContext implements INestApplication {
     return this.httpAdapter.getHttpServer() as T;
   }
 
-  public registerModule(module: EntryType | EntryType[]): ComponentWrapper[] {
+  public registerModule(module: ServerAPPEntryType): ComponentWrapper[] {
     const modules = Array.isArray(module) ? module : [module];
     let wrappers = [] as ComponentWrapper[];
     for (const md of modules) {
       let providers: ComponentWrapper[];
-      if (md instanceof MountModule) {
-        providers = super.registerModule(md.module);
+      if ((md as MountModule).mount) {
+        const mount = (md as MountModule).mount;
+        const module = (md as MountModule).module;
+        providers = super.registerModule(module);
         if (providers && providers.length > 0) {
-          this.mountService.setMount(md.mount, providers);
+          this.mountService.setMount(mount, providers);
         }
       } else {
-        providers = super.registerModule(md);
+        providers = super.registerModule(md as EntryType | Provider);
       }
       if (!providers || providers.length === 0) {
         continue;

@@ -77,7 +77,7 @@ export class JoyServerApplication extends ServerApplication {
         components.forEach((component) => {
           const { mount, module } = component;
           if (mount) {
-            joyGenComponents.push(new MountModule(mount, module));
+            joyGenComponents.push({ mount, module } as MountModule);
           } else {
             joyGenComponents.push(module);
           }

@@ -29,13 +29,14 @@ export class GlobalCssPlugin {
       // 'global.stylus',
     ];
     const globalCSSFiles = this.getGlobalFiles(clientRoot, files);
+    if (!globalCSSFiles?.length) {
+      return genFiles;
+    }
 
     const content = `
     ${globalCSSFiles.map((file) => `import ${JSON.stringify(file)};\n`)}
     `;
-
     genFiles["./react/client/joyGlobalCss.js"] = content;
-
     return genFiles;
   }
 }
