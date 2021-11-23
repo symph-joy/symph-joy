@@ -1,7 +1,7 @@
 import { Configuration } from "@symph/core";
 import { JoyAppConfig } from "./joy-app-config";
 import { ServerConfiguration } from "@symph/server/dist/server.configuration";
-import { JoyConfigConfiguration } from "../../joy-config.configuration";
+import { JoyConfigConfiguration } from "./joy-config.configuration";
 import { BuildConfig } from "../../build/build-config";
 
 @Configuration()

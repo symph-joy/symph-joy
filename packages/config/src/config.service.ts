@@ -19,8 +19,6 @@ import merge from "lodash.merge";
 import { NoInferType } from "./types";
 import { ConfigLoaderFactory } from "./loader/config-loader-factory";
 
-const CONFIG_FILE = "joy.config.js";
-
 export interface ConfigServiceOptions {
   isAutoLoadConfig: boolean;
 }
@@ -64,13 +62,11 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
     private configOptions: ConfigServiceOptions = { isAutoLoadConfig: true },
     @Optional()
     @Autowire(SYMPH_CONFIG_DEFAULT_VALUE)
-    defaultConfig: Record<string, unknown> = {},
+    private defaultConfig: Record<string, unknown> = {},
     @Optional()
     @Autowire(SYMPH_CONFIG_INIT_VALUE)
-    initConfig: Record<string, unknown> = {}
-  ) {
-    this.internalConfig = merge({}, defaultConfig, initConfig);
-  }
+    private initConfig: Record<string, unknown> = {}
+  ) {}
 
   private _isCacheEnabled = false;
   get isCacheEnabled(): boolean {
@@ -84,6 +80,8 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
   private readonly cache: Partial<K> = {} as any;
 
   async initialize(): Promise<void> {
+    this.internalConfig = merge({}, this.defaultConfig, this.initConfig);
+
     if (this.configOptions.isAutoLoadConfig) {
       await this.loadConfig();
     }

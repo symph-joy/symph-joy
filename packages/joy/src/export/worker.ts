@@ -17,8 +17,8 @@ import { Configuration, CoreContext, ValueProvider } from "@symph/core";
 import { ReactContextFactory } from "../react/react-context-factory";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
-import { JoyConfigConfiguration } from "../joy-config.configuration";
 import { ConfigService, SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
+import { JoyConfigConfiguration } from "../joy-server/server/joy-config.configuration";
 
 const envConfig = require("../joy-server/lib/runtime-config");
 
@@ -117,7 +117,25 @@ export default async function start(options: ExportPageInput): Promise<ExportPag
   return exportPage(joyContext, options);
 }
 
-export async function exportPage(joyContext: CoreContext, { dir, path, pathMap, distDir, outDir, pagesDataDir, renderOpts, buildExport, prerenderOut, serverRuntimeConfig, subFolders, serverless, optimizeFonts, optimizeImages }: ExportPageInput): Promise<ExportPageResults> {
+export async function exportPage(
+  joyContext: CoreContext,
+  {
+    dir,
+    path,
+    pathMap,
+    distDir,
+    outDir,
+    pagesDataDir,
+    renderOpts,
+    buildExport,
+    prerenderOut,
+    serverRuntimeConfig,
+    subFolders,
+    serverless,
+    optimizeFonts,
+    optimizeImages,
+  }: ExportPageInput
+): Promise<ExportPageResults> {
   // eslint-disable-next-line prefer-rest-params
   let results: ExportPageResults = {
     ampValidations: [],
@@ -136,7 +154,9 @@ export async function exportPage(joyContext: CoreContext, { dir, path, pathMap, 
     const hasOrigQueryValues = Object.keys(originalQuery).length > 0;
     const queryWithAutoExportWarn = () => {
       if (hasOrigQueryValues) {
-        throw new Error(`\nError: you provided query values for ${path} which is an auto-exported page. These can not be applied since the page can no longer be re-rendered on the server. To disable auto-export for this page add \`getInitialProps\`\n`);
+        throw new Error(
+          `\nError: you provided query values for ${path} which is an auto-exported page. These can not be applied since the page can no longer be re-rendered on the server. To disable auto-export for this page add \`getInitialProps\`\n`
+        );
       }
     };
 

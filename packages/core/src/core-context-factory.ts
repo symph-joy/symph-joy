@@ -9,10 +9,9 @@ import { CoreContext } from "./core-context";
 export class CoreFactoryImplement {
   private readonly logger = new Logger("JoyFactory", true);
 
-  public async createApplicationContext(entry: EntryType | EntryType[], options?: JoyContextOptions): Promise<ICoreContext> {
+  public async createApplicationContext(entry: EntryType | EntryType[], parent?: ICoreContext, options?: JoyContextOptions): Promise<ICoreContext> {
     this.applyLogger(options);
-    const container = new CoreContainer();
-    const applicationContext = new CoreContext(entry);
+    const applicationContext = new CoreContext(entry, parent);
     return this.initContext(applicationContext);
   }
 

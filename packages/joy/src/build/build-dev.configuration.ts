@@ -2,7 +2,7 @@ import { Configuration } from "@symph/core";
 import { BuildDevConfig } from "../server/build-dev-config";
 import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
 import HotReloader from "../server/hot-reloader";
-import { JoyConfigConfiguration } from "../joy-config.configuration";
+import { JoyConfigConfiguration } from "../joy-server/server/joy-config.configuration";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { BuildCommonConfiguration } from "./build-common.configuration";
 
