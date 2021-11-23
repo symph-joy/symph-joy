@@ -1,4 +1,4 @@
-import { Autowire, Component } from "@symph/core";
+import { Autowire, Component, RuntimeException } from "@symph/core";
 import { IReactRoute, ReactRouter } from "@symph/react";
 
 @Component()
@@ -10,14 +10,21 @@ export class ReactRouterServer extends ReactRouter {
     private joyReactAutoGenRoutes: IReactRoute[]
   ) {
     super();
-    this.routes = joyReactAutoGenRoutes.map((it: any) => {
+    const routeTrees = joyReactAutoGenRoutes.map((it: any) => {
       return {
         ...it,
         component: it.component?.default,
       };
     });
 
-    this.scannedModules = Array.from(new Set(joyReactAutoGenRoutes.map((r) => r.providerModule).filter(Boolean))) as Record<string, unknown>[];
+    this.traverseTree(routeTrees, (route) => {
+      this.routesMap.set(route.path, route);
+      if (route.providerModule) {
+        this.scannedModules.push(route.providerModule);
+      }
+      return false;
+    });
+    this.routeTrees = routeTrees;
   }
 
   public hasModuleScanned(mod: Record<string, unknown>): boolean {

@@ -6,20 +6,22 @@ import * as H from "history";
 import { RoutePathNode } from "./route-sorter";
 
 export class ReactRouter<T extends IReactRoute = IReactRoute> {
-  protected routes: T[] = [];
+  protected routesMap: Map<string, T> = new Map<string, T>(); // store all routes
+  protected routeTrees: T[] = []; // routes as be formatted as tree
 
   private rootRouteNode = new RoutePathNode<T>();
 
   public getRoutes(): T[] {
-    return this.routes;
+    return this.routeTrees;
   }
 
   public setRoutes(routes: T[]): void {
-    this.routes = routes;
-    this.rootRouteNode = new RoutePathNode<T>();
-    if (routes && routes.length) {
-      this.rootRouteNode.insertRoutes(routes);
-    }
+    this.routesMap = new Map();
+    this.traverseTree(routes, (r) => {
+      this.routesMap.set(r.path, r);
+      return false;
+    });
+    this.refreshTree();
   }
 
   private curLocation: H.Location;
@@ -32,26 +34,64 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     this.curLocation = location;
   }
 
-  public getPageRoutes(): T[] {
-    return this.routes;
-  }
-
   public hasRouteByPath(path: string): T | undefined {
-    return this.routes.find((v) => v.path === path);
+    return this.routesMap.get(path);
   }
 
   public addRoute(route: T) {
     const existRoute = this.hasRouteByPath(route.path);
     if (existRoute) {
-      console.debug(`Overriding route {path:${existRoute.path}}, replacing {providerName: ${String(existRoute.providerName)} with {providerName: ${String(route.providerName)}`);
+      console.debug(
+        `Overriding route {path:${existRoute.path}}, replacing {providerName: ${String(existRoute.providerName)} with {providerName: ${String(
+          route.providerName
+        )}`
+      );
     }
+
+    this.routesMap.set(route.path, route);
     this.rootRouteNode.insertRoute(route);
-    this.routes = this.rootRouteNode.smooth();
-    // this.routes.push(route);
+    this.routeTrees = this.rootRouteNode.smooth();
+  }
+
+  /**
+   * 删除路由
+   * @param routePath 匹配的路由路径，和注册的路由路径对比。
+   * @param rmChildren 是否同时删除其子路由
+   */
+  public removeRoute(routePath: string, rmChildren = false): T[] | undefined {
+    let removedRoutes = [] as T[];
+    for (const route of this.routesMap.values()) {
+      if (rmChildren) {
+        if (route.path.startsWith(routePath)) {
+          removedRoutes.push(route);
+        }
+      } else {
+        if (route.path === routePath) {
+          removedRoutes.push(route);
+          break;
+        }
+      }
+    }
+
+    if (!removedRoutes?.length) {
+      return undefined;
+    }
+    for (const route of removedRoutes) {
+      this.routesMap.delete(route.path);
+    }
+    // 重建整个routeTree, 可以优化为：只摘除PathNode中的节点，然后生成树。
+    this.refreshTree();
+    return removedRoutes;
+  }
+
+  protected refreshTree(): void {
+    this.rootRouteNode = new RoutePathNode<T>();
+    this.rootRouteNode.insertRoutes(Array.from(this.routesMap.values()));
+    this.routeTrees = this.rootRouteNode.smooth();
   }
 
   public filterRoutes(predicate: (route: T) => boolean): T[] {
-    return this._filterRoute(this.routes, predicate);
+    return this._filterRoute(this.routeTrees, predicate);
   }
 
   private _filterRoute(routes: T[], predicate: (route: T) => boolean, previousValue: T[] = []): T[] {
@@ -79,34 +119,23 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     return previousValue;
   }
 
-  public traverse(visitor: (route: T) => boolean): void {
-    this._traverse(this.routes, visitor);
+  public traverse(visitor: (route: T) => boolean | undefined): void {
+    this.traverseTree(this.routeTrees, visitor);
   }
 
-  private _traverse(routes: T[], visitor: (route: T) => boolean): boolean {
+  protected traverseTree(routes: T[], visitor: (route: T) => boolean | undefined): boolean | undefined {
     for (const route of routes) {
       if (visitor(route)) {
         return true;
       }
       if (route.routes) {
-        if (this._traverse(route.routes as T[], visitor)) {
+        if (this.traverseTree(route.routes as T[], visitor)) {
           return true;
         }
       }
       return false;
     }
     return false;
-  }
-
-  // todo 未实现递归移除，以及从排序树上移除。
-  public removeRoute(routePath: string): T | undefined {
-    for (let i = 0; i < this.routes.length; i++) {
-      const route = this.routes[i];
-      if (route.path === routePath) {
-        this.routes.splice(i, 1);
-        return route;
-      }
-    }
   }
 
   /**
@@ -193,7 +222,13 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     return { added, removed, modified };
   }
 
-  protected createFromMeta(path: string, providerName: TProviderName, providerPackage: string | undefined, meta: IRouteMeta, useClass: Type | Function): T {
+  protected createFromMeta(
+    path: string,
+    providerName: TProviderName,
+    providerPackage: string | undefined,
+    meta: IRouteMeta,
+    useClass: Type | Function
+  ): T {
     const hasStaticState = !!useClass.prototype.initialModelStaticState;
     const hasState = !!useClass.prototype.initialModelState;
     return {

@@ -1,6 +1,7 @@
 import { Component, RegisterTap, TProviderName, Type } from "@symph/core";
 import { IReactRoute, IRouteMeta } from "@symph/react";
 import { IJoyReactRouteBuild, JoyReactRouterPlugin } from "./joy-react-router-plugin";
+import { IScanOutModule } from "../../build/scanner/file-scanner";
 
 interface IReactRouteBuildDev extends IJoyReactRouteBuild {
   // srcPath?: string;
@@ -19,7 +20,22 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
   //   super(fileGenerator);
   // }
 
-  protected createFromMeta(path: string, providerName: TProviderName, providerPackage: string | undefined, meta: IRouteMeta, useClass: Type): IReactRouteBuildDev {
+  public replaceModule(module: IScanOutModule): void {
+    const removed = this.removeModule(module.resource || module.path);
+    const hasAdd = removed?.find((it) => it.isAdd);
+    const added = this.addFromScanOutModule(module);
+    if (added?.length && hasAdd) {
+      added.forEach((it) => (it.isAdd = true));
+    }
+  }
+
+  protected createFromMeta(
+    path: string,
+    providerName: TProviderName,
+    providerPackage: string | undefined,
+    meta: IRouteMeta,
+    useClass: Type
+  ): IReactRouteBuildDev {
     const route = super.createFromMeta(path, providerName, providerPackage, meta, useClass);
     return {
       ...route,

@@ -204,7 +204,19 @@ export class FileGenerator implements IComponentLifecycle {
     await promises.writeFile(absPath, content, "utf-8");
   }
 
+  private writeFileCaches = new Map<string, string | Stream>();
+
   public async writeFile(outPath: string, content: string | Stream, options: TWriteFileOptions = { skipTSCheck: false }) {
+    const lastWriteCache = this.writeFileCaches.get(outPath);
+    if (lastWriteCache) {
+      if (typeof content === "string" && typeof lastWriteCache === "string" && lastWriteCache.length !== content.length) {
+        return;
+      } else if (lastWriteCache === content) {
+        return;
+      }
+    }
+    this.writeFileCaches.set(outPath, content);
+
     const isLocal: boolean = outPath.startsWith(".");
     const commonPath = isLocal ? this.getGenPath(outPath) : outPath;
     return this.writeTmpFile(commonPath, content, options);

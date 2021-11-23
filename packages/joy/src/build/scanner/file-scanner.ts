@@ -171,7 +171,12 @@ export class FileScanner {
       return cached;
     }
 
-    const requiredModule = require(fullFilePath);
+    let requiredModule: any;
+    try {
+      requiredModule = require(fullFilePath);
+    } catch (e) {
+      console.debug("Load file error:", e);
+    }
     if (!requiredModule) {
       return undefined;
     }

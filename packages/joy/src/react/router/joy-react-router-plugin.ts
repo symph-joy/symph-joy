@@ -25,6 +25,9 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
 
   protected routesServerTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes-server.handlebars"), "utf-8"));
 
+  private lastClientRoutesContent = "";
+  private lastServerRoutesContent = "";
+
   constructor(
     protected joyAppConfig: JoyAppConfig // protected fileGenerator: FileGenerator, // protected fileScanner: FileScanner
   ) {
@@ -62,11 +65,12 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
   //   return route as T;
   // }
 
-  protected addFromScanOutModule(scanOutModule: IScanOutModule): boolean {
+  protected addFromScanOutModule(scanOutModule: IScanOutModule): T[] | undefined {
     if (scanOutModule.contextType !== ModuleContextTypeEnum.React || !scanOutModule.providerDefines || scanOutModule.providerDefines.size === 0) {
-      return false;
+      return;
     }
     let hasRoute = false;
+    const scanOutRoutes = [] as T[];
     scanOutModule.providerDefines.forEach((providerDefine, exportKey) => {
       providerDefine.providers.forEach((provider) => {
         let routes = this.addRouteProvider(provider, scanOutModule.mount);
@@ -82,28 +86,32 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
           for (const route of routes) {
             route.srcPath = scanOutModule.resource;
             route.mount = scanOutModule.mount;
+            scanOutRoutes.push(route);
           }
         }
 
         hasRoute = hasRoute || !!(routes && routes.length);
       });
     });
-    return hasRoute;
+    return scanOutRoutes;
   }
 
   public removeModule(modulePath: string): T[] | undefined {
-    const rmProviders = [];
-    for (let i = 0; i < this.routes.length; i++) {
-      const provider = this.routes[i];
-      if (provider.srcPath === modulePath) {
-        // this.routes.splice(i, 1);
-        rmProviders.push(provider);
+    let rmRoutes: T[] = [];
+    for (const key of this.routesMap.keys()) {
+      const route = this.routesMap.get(key);
+      if (route && route.srcPath === modulePath) {
+        rmRoutes.push(route);
       }
     }
-    if (rmProviders.length > 0) {
-      rmProviders.forEach((r) => this.removeRoute(r.path));
+    if (!rmRoutes.length) {
+      return undefined;
     }
-    return rmProviders;
+    for (const rmRoute of rmRoutes) {
+      this.routesMap.delete(rmRoute.path);
+    }
+    this.refreshTree();
+    return rmRoutes;
   }
 
   @RegisterTap()
@@ -111,11 +119,15 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     if (module.isAdd) {
       this.addFromScanOutModule(module);
     } else if (module.isModify) {
-      this.removeModule(module.path);
-      this.addFromScanOutModule(module);
+      this.replaceModule(module);
     } else if (module.isRemove) {
       this.removeModule(module.path);
     }
+  }
+
+  public replaceModule(module: IScanOutModule): void {
+    this.removeModule(module.path);
+    this.addFromScanOutModule(module);
   }
 
   private addFSRoute(scanOutModule: IScanOutModule, exportKey: string, provider: Provider, basePath?: string): T | undefined {
@@ -164,16 +176,19 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
   protected async onGenerateFiles(genFiles: IGenerateFiles) {
     const clientRoutes = this.getClientRoutes();
     const clientFileContent = this.routesTemplate({ routes: clientRoutes });
-    // await this.fileGenerator.writeClientFile("./routes.js", clientFileContent);
-    // await this.fileGenerator.writeFile("./react/client/routes.js", clientFileContent);
-    genFiles["./react/client/routes.js"] = clientFileContent;
+    if (this.lastClientRoutesContent.length !== clientFileContent.length || this.lastClientRoutesContent !== clientFileContent) {
+      genFiles["./react/client/routes.js"] = clientFileContent;
+      this.lastClientRoutesContent = clientFileContent;
+    }
 
     const serverFileContent = this.routesServerTemplate({
       routes: clientRoutes,
     });
-    // await this.fileGenerator.writeServerFile("./routes.js", serverFileContent);
-    // await this.fileGenerator.writeFile("./react/server/routes.js", serverFileContent);
-    genFiles["./react/server/routes.js"] = serverFileContent;
+    if (this.lastServerRoutesContent.length !== serverFileContent.length || this.lastServerRoutesContent !== serverFileContent) {
+      genFiles["./react/server/routes.js"] = serverFileContent;
+      this.lastServerRoutesContent = serverFileContent;
+    }
+
     return genFiles;
   }
 }

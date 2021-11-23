@@ -80,7 +80,14 @@ export class RouterExplorer {
   private readonly logger = new Logger(RouterExplorer.name, true);
   private readonly exceptionFiltersCache = new WeakMap();
 
-  constructor(private readonly metadataScanner: MetadataScanner, private readonly container: ServerContainer, private readonly injector?: Injector, private readonly routerProxy?: RouterProxy, private readonly exceptionsFilter?: ExceptionsFilter, config?: ApplicationConfig) {
+  constructor(
+    private readonly metadataScanner: MetadataScanner,
+    private readonly container: ServerContainer,
+    private readonly injector?: Injector,
+    private readonly routerProxy?: RouterProxy,
+    private readonly exceptionsFilter?: ExceptionsFilter,
+    config?: ApplicationConfig
+  ) {
     this.executionContextCreator = new RouterExecutionContext(
       new RouteParamsFactory(),
       new PipesContextCreator(container, config),
@@ -132,7 +139,9 @@ export class RouterExplorer {
   public scanForPaths(instance: Controller, prototype?: object): RoutePathProperties[] {
     const instancePrototype = isUndefined(prototype) ? Object.getPrototypeOf(instance) : prototype;
 
-    return this.metadataScanner.scanFromPrototype<Controller, RoutePathProperties>(instance, instancePrototype, (method) => this.exploreMethodMetadata(instance, instancePrototype, method));
+    return this.metadataScanner.scanFromPrototype<Controller, RoutePathProperties>(instance, instancePrototype, (method) =>
+      this.exploreMethodMetadata(instance, instancePrototype, method)
+    );
   }
 
   public exploreMethodMetadata(instance: Controller, prototype: object, methodName: string): RoutePathProperties {
@@ -235,7 +244,9 @@ export class RouterExplorer {
       return { regexp, keys };
     });
 
-    const unsupportedFilteringErrorMessage = Array.isArray(host) ? `HTTP adapter does not support filtering on hosts: ["${host.join('", "')}"]` : `HTTP adapter does not support filtering on host: "${host}"`;
+    const unsupportedFilteringErrorMessage = Array.isArray(host)
+      ? `HTTP adapter does not support filtering on hosts: ["${host.join('", "')}"]`
+      : `HTTP adapter does not support filtering on host: "${host}"`;
 
     return <TRequest extends Record<string, any> = any, TResponse = any>(req: TRequest, res: TResponse, next: () => void) => {
       (req as Record<string, any>).hosts = {};
@@ -303,7 +314,7 @@ export class RouterExplorer {
         //   collection,
         //   contextId,
         // );
-        const contextInstance = await this.injector?.loadInstance(instanceWrapper, moduleRef, contextId);
+        const contextInstance = await this.injector?.loadInstance(instanceWrapper, contextId);
         await this.createCallbackProxy(
           contextInstance,
           contextInstance[methodName],

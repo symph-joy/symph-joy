@@ -33,12 +33,25 @@ export class ReactRouterClient extends ReactRouter {
     private reactAppInitManager: ReactAppInitManager
   ) {
     super();
-    this.routes = joyReactAutoGenRoutes.map((it: any) => {
+    this.routeTrees = joyReactAutoGenRoutes.map((it: any) => {
       return {
         ...it,
         component: it.component?.default,
       };
     });
+
+    const routeTrees = joyReactAutoGenRoutes.map((it: any) => {
+      return {
+        ...it,
+        component: it.component?.default,
+      };
+    });
+
+    this.traverseTree(routeTrees, (route) => {
+      this.routesMap.set(route.path, route);
+      return false;
+    });
+    this.routeTrees = routeTrees;
   }
 
   public getSSGManifest(path: string): Promise<boolean> | boolean {
