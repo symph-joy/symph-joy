@@ -18,7 +18,7 @@ const tsProject = createProject("tsconfig.json", {
 
 function watchAsset() {
   log.info("Watching asset files..");
-  gulp.watch([`src/**/*.{handlebars,json}`], { ignoreInitial: false }, gulp.series([copyAsset]));
+  gulp.watch([`src/**/*.{handlebars,json}`, "src/server/dev/**/*"], { ignoreInitial: false }, gulp.series([copyAsset]));
 }
 
 /**
@@ -56,7 +56,7 @@ function watchTsc() {
 }
 
 function copyAsset() {
-  return gulp.src([`src/**/*.{handlebars,json}`]).pipe(gulp.dest(DIST_DIR));
+  return gulp.src([`src/**/*.{handlebars,json}`, "src/**/server/dev/*.*"]).pipe(gulp.dest(DIST_DIR));
 }
 
 // gulp.task('build', buildPackage);

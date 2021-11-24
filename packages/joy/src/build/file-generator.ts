@@ -209,7 +209,13 @@ export class FileGenerator implements IComponentLifecycle {
   public async writeFile(outPath: string, content: string | Stream, options: TWriteFileOptions = { skipTSCheck: false }) {
     const lastWriteCache = this.writeFileCaches.get(outPath);
     if (lastWriteCache) {
-      if (typeof content === "string" && typeof lastWriteCache === "string" && lastWriteCache.length !== content.length) {
+      if (
+        typeof content === "string" &&
+        typeof lastWriteCache === "string" &&
+        lastWriteCache.length === content.length &&
+        lastWriteCache === content
+      ) {
+        // 先判断类型和长度，提高比较效率。
         return;
       } else if (lastWriteCache === content) {
         return;

@@ -7,13 +7,11 @@ import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { JoyDevConfiguration } from "../../server/joy-dev.configuration";
 import { JoyServerApplicationDev } from "../../server/joy-server-application-dev";
 import { JoyServerFactoryDev } from "../../server/joy-server-factory-dev";
-import { Configuration, CoreContext, ValueProvider } from "@symph/core";
+import { CoreContext, ValueProvider } from "@symph/core";
 import HotReloader from "../../server/hot-reloader";
 import { BuildDevConfiguration } from "../../build/build-dev.configuration";
-import { JoyServerConfiguration } from "../../joy-server/server/joy-server.configuration";
 
 import hmrEventEmitter from "../../server/dev/emitter";
-import { EVENT_COMPONENT_CHANGE } from "../../server/dev/constant";
 import { SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
 import { debounce } from "lodash";
 
@@ -182,7 +180,7 @@ export class JoyDevCommand extends JoyCommand {
     this.hotReloader = hotReloader;
 
     this.joyDevConfiguration = JoyDevConfiguration;
-    hmrEventEmitter.on(EVENT_COMPONENT_CHANGE, async (updatedModules: string[]) => {
+    hmrEventEmitter.on("EVENT_COMPONENT_CHANGE", async (updatedModules: string[]) => {
       if (!updatedModules?.length) {
         return;
       }
