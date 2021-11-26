@@ -130,7 +130,8 @@
     "@symph/core": "^2.0.0",
     "@symph/server": "^2.0.0",
     "@symph/react": "^2.0.0",
-    "mini-css-extract-plugin": "^2.4.3"
+    "mini-css-extract-plugin": "^2.4.3",
+    "source-map-loader": "^3.0.0"
   },
   "peerDependencies": {
     "react": "^17.0.1",

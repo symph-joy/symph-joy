@@ -2,11 +2,11 @@ import "jest-playwright-preset";
 import * as path from "path";
 import { JoyTestContext } from "../../../util/joy-test-context";
 
-describe("react-hello", () => {
+describe("react-dev-hello", () => {
   let testContext: JoyTestContext;
   beforeAll(async () => {
     const curPath = path.resolve(__dirname, "../");
-    testContext = await JoyTestContext.createServerContext(curPath);
+    testContext = await JoyTestContext.createDevServerContext(curPath);
   }, 999999);
 
   afterAll(async () => {

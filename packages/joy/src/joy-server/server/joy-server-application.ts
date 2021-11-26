@@ -72,8 +72,8 @@ export class JoyServerApplication extends ServerApplication {
     const joyServerModules = require(joyServerModulesPath).default as any[];
     let joyGenComponents = [] as any[];
     for (let i = 0; i < joyServerModules.length; i++) {
-      if (joyServerModules[i]["___JOY_GEN_PROVIDERS"]) {
-        let components = (joyServerModules[i]["___JOY_GEN_PROVIDERS"] as any[]) || [];
+      if (joyServerModules[i]["___JOY_GEN_COMPONENTS"]) {
+        let components = (joyServerModules[i]["___JOY_GEN_COMPONENTS"] as any[]) || [];
         components.forEach((component) => {
           const { mount, module } = component;
           if (mount) {

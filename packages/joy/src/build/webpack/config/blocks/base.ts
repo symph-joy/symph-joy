@@ -1,6 +1,6 @@
 import isWslBoolean from "is-wsl";
 import curry from "lodash.curry";
-import { Configuration } from "webpack";
+import webpack, { Configuration } from "webpack";
 import { ConfigurationContext } from "../utils";
 
 const isWindows = process.platform === "win32" || isWslBoolean;
@@ -31,7 +31,23 @@ export const base = curry(function base(ctx: ConfigurationContext, config: Confi
       // original source, including columns and original variable names.
       // This is desirable so the in-browser debugger can correctly pause
       // and show scoped variables with their original names.
-      config.devtool = "eval-source-map";
+      // config.devtool = "eval-source-map";
+      if (ctx.isClient) {
+        config.plugins?.push(
+          new webpack.SourceMapDevToolPlugin({
+            test: [/\.jsx$/, /\.tsx?$/],
+            // exclude: ["node_modules", "@symph/joy/dist", "@symph/react/dist", "@symph/core/dist"],
+          })
+        );
+      } else {
+        config.devtool = "eval-source-map";
+      }
+
+      // config.module?.rules?.unshift({
+      //   test: [/\.jsx$/, /\.tsx?$/],
+      //   enforce: "pre",
+      //   use: ["source-map-loader"],
+      // });
     }
   } else {
     // Enable browser sourcemaps:

@@ -34,7 +34,7 @@ export class ApiSrcEntryGenerator {
   private aggregateTimeout = 100;
   public aggregateChange: AggregateChange = new AggregateChange();
 
-  protected moduleTemplate = handlebars.compile(readFileSync(join(__dirname, "../joy-server/server/joy-app-providers-explorer.handlebars"), "utf-8"));
+  protected moduleTemplate = handlebars.compile(readFileSync(join(__dirname, "./api-src-entry-generator.handlebars"), "utf-8"));
   protected lastGenerateContent: string | undefined;
 
   public isWatch = false;

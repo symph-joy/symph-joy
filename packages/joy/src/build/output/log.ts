@@ -10,28 +10,35 @@ export const prefixes = {
   trace: chalk.magenta("trace") + " -",
 };
 
+function getCurDateTime(): string {
+  const date = new Date();
+  return `${date.getFullYear()}-${
+    date.getMonth() + 1
+  }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}.${date.getMilliseconds()} `;
+}
+
 export function wait(...message: string[]) {
-  console.log(prefixes.wait, ...message);
+  console.log(getCurDateTime(), prefixes.wait, ...message);
 }
 
 export function error(...message: string[]) {
-  console.error(prefixes.error, ...message);
+  console.error(getCurDateTime(), prefixes.error, ...message);
 }
 
 export function warn(...message: string[]) {
-  console.warn(prefixes.warn, ...message);
+  console.warn(getCurDateTime(), prefixes.warn, ...message);
 }
 
 export function ready(...message: string[]) {
-  console.log(prefixes.ready, ...message);
+  console.log(getCurDateTime(), prefixes.ready, ...message);
 }
 
 export function info(...message: string[]) {
-  console.log(prefixes.info, ...message);
+  console.log(getCurDateTime(), prefixes.info, ...message);
 }
 
 export function event(...message: string[]) {
-  console.log(prefixes.event, ...message);
+  console.log(getCurDateTime(), prefixes.event, ...message);
 }
 
 export function trace(...message: string[]) {
