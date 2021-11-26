@@ -123,7 +123,7 @@ export class SrcBuilder {
   private presetItem = babel.createConfigItem(joySrcBabelPreset, { type: "preset" });
 
   private getDescPath(filePath: string): string {
-    let dest = path.join(this.distPath, filePath.replace(this.joyAppConfig.dir, ""));
+    let dest = path.join(this.distPath, filePath.replace(this.joyAppConfig.resolveAppDir("./"), ""));
     dest = dest.replace(/\.ts$/, ".js").replace(/\.tsx$/, ".js");
     return dest;
   }
