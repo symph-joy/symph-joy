@@ -8,7 +8,7 @@ export interface ILayoutModelState {
 
 @ReactModel()
 export class LayoutModel extends ReactBaseModel<ILayoutModelState> {
-  getInitState() {
+  getInitState(): ILayoutModelState {
     let theme = "light";
     if (typeof window !== "undefined") {
       theme = localStorage.getItem("theme") || "light";
@@ -19,7 +19,7 @@ export class LayoutModel extends ReactBaseModel<ILayoutModelState> {
     };
   }
 
-  changeTheme(theme) {
+  changeTheme(theme: ThemeTypes): void {
     console.log("model theme: ", theme);
     localStorage.setItem("theme", theme);
 
