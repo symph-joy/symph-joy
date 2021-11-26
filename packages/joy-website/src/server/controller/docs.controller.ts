@@ -19,4 +19,18 @@ export class DocsController {
       data: await this.docsService.getDoc(path),
     };
   }
+
+  @Get("/titleTree")
+  public async getTree(@Query("path") path: any) {
+    return {
+      data: await this.docsService.getTitleTree(path),
+    };
+  }
+
+  @Get("/titleArray")
+  public async getTitleArray() {
+    return {
+      data: await this.docsService.getTitleArray(),
+    };
+  }
 }

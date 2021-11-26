@@ -1,12 +1,16 @@
 import React, { ReactNode } from "react";
+import { Layout, Menu, Breadcrumb, Row, Col, AutoComplete } from "antd";
+import { Autowire } from "@symph/core";
+import { UserOutlined, LaptopOutlined, NotificationOutlined } from "@ant-design/icons";
+import { DocsModel } from "../model/docs.model";
+import _ from "lodash";
 import { ReactBaseController, ReactController, RouteSwitch } from "@symph/react";
-import { Layout, Menu } from "antd";
 import Icon, { SearchOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
-import { Autowire } from "@symph/core";
 import { LayoutModel } from "../model/layout.model";
-
-const { Content } = Layout;
+const { SubMenu } = Menu;
+const { Header, Content, Sider } = Layout;
+const { Option } = AutoComplete;
 const { Item: MenuItem } = Menu;
 const SunSvg = () => (
   <svg viewBox="0 0 1024 1024" fill="currentColor" width="1em" height="1em">
@@ -30,9 +34,23 @@ export default class MainLayout extends ReactBaseController<any> {
   @Autowire()
   public layoutModel: LayoutModel;
 
+  @Autowire()
+  public docsModel: DocsModel;
+
   componentDidMount() {
     this.appendLink();
   }
+
+  onChange = async (value) => {
+    const result = await this.docsModel.getSearch(value);
+  };
+  jump = (value) => {
+    if (value.children) {
+      this.props.history.push(`/docs${value.path}${value.children[0].id}`);
+    } else {
+      this.props.history.push(`/docs${value.path}`);
+    }
+  };
 
   appendLink = () => {
     const { theme } = this.layoutModel.state;
@@ -61,7 +79,7 @@ export default class MainLayout extends ReactBaseController<any> {
   renderView(): ReactNode {
     const { route } = this.props;
     const { theme } = this.layoutModel.state;
-
+    const { result } = this.docsModel.state;
     console.log("theme: ", theme);
 
     return (
@@ -88,7 +106,21 @@ export default class MainLayout extends ReactBaseController<any> {
                   </a>
                 </MenuItem>
                 <MenuItem key="7">
-                  <SearchOutlined className={styles.search} />
+                  <AutoComplete className={styles.search} onChange={_.debounce(this.onChange, 100)} style={{ width: 200 }}>
+                    {result.map((value, key) => (
+                      <Option key={key} value={value.text}>
+                        {value.children ? (
+                          <a onClick={() => this.jump(value)} className={styles.selectOption}>
+                            {value.text} &gt; {value.children[0].text}
+                          </a>
+                        ) : (
+                          <a onClick={() => this.jump(value)} className={styles.selectOption}>
+                            {value.text}
+                          </a>
+                        )}
+                      </Option>
+                    ))}
+                  </AutoComplete>
                 </MenuItem>
               </Menu>
             </div>

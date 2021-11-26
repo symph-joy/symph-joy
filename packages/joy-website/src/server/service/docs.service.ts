@@ -1,4 +1,4 @@
-import { Component } from "@symph/core";
+import { Component, IComponentLifecycle } from "@symph/core";
 import * as fs from "fs";
 import * as path from "path";
 import { join, sep } from "path";
@@ -24,9 +24,21 @@ export class DocJoyConfig {
   dir: string | string[];
 }
 
+export interface TreeItem {
+  children?: TreeItem[];
+  type?: string;
+  raw?: string;
+  depth?: number;
+  text?: string;
+  tokens?: [];
+  id?: string;
+  path?: string;
+  file?: string;
+}
+
 @Configurable()
 @Component()
-export class DocsService {
+export class DocsService implements IComponentLifecycle {
   @ConfigValue({ configKey: "docs" })
   public configDocs: DocJoyConfig;
 
@@ -34,8 +46,46 @@ export class DocsService {
 
   public menusCache: Map<string, Doc> = new Map<string, Doc>();
 
+  public titleArray: TreeItem[];
+
+  async initialize() {
+    await this.getAllDocs();
+  }
+
+  public async getAllDocs() {
+    this.getMenus();
+    const res = [];
+    for (const menu of this.menus) {
+      for (const child of menu.children) {
+        const doc = await this.getTree(child.path, 2, 0);
+        const obj = {
+          ...doc[0],
+          path: child.path,
+          file: child.file,
+        };
+        res.push(obj);
+        const doc2 = await this.getTree(child.path, 3, 2);
+        const obj1 = {
+          path: child.path,
+          file: child.file,
+          text: child.title,
+          depth: 1,
+          children: doc2,
+        };
+        res.push(obj1);
+      }
+    }
+    this.titleArray = res;
+  }
+
+  public getTitleArray() {
+    return this.titleArray;
+  }
+
   public async getMenus(): Promise<DocMenu[]> {
-    const { dir } = this.configDocs;
+    const { dir } = {
+      dir: "./docs",
+    };
     if (!dir) {
       console.warn("Warning: Doc dir is not config.");
       return [];
@@ -59,6 +109,63 @@ export class DocsService {
     }
     return doc;
   }
+
+  public async getTree(docPath: string, max: number, min: number): Promise<TreeItem[] | []> {
+    const doc = this.getDoc(docPath);
+    const mdContent = fs.readFileSync((await doc).file, { encoding: "utf-8" });
+    const trees = marked.lexer(mdContent);
+    const titleTree = [];
+    for (const tree of trees) {
+      if (tree.type === "heading" && tree.depth <= max && tree.depth > min) {
+        let id = "#" + tree.text.replace(new RegExp(/( )/g), "-").toLowerCase();
+        titleTree.push({
+          ...tree,
+          id,
+        });
+      }
+    }
+    if (titleTree.length !== 0) {
+      const renderTree = { children: [] };
+      const res = this.getMarkdownTree(0, renderTree, renderTree, titleTree);
+      return res.children;
+    } else {
+      return [];
+    }
+  }
+
+  public async getTitleTree(docPath: string): Promise<TreeItem[] | []> {
+    return await this.getTree(docPath, 3, 1);
+  }
+
+  public getParent = (index: number, res: TreeItem, markdown: TreeItem[]): TreeItem => {
+    const i = index;
+    if (markdown[i].depth - 1 === 1) {
+      return res;
+    } else {
+      while (markdown[i].depth - 1 != markdown[index].depth) {
+        index--;
+      }
+      return markdown[index];
+    }
+  };
+
+  public getMarkdownTree = (index: number, ele: TreeItem, res: TreeItem, markdown: TreeItem[]): TreeItem => {
+    ele.children = ele.children || [];
+    if (index === markdown.length - 1) {
+      ele.children.unshift(markdown[index]);
+      return ele;
+    }
+    if (markdown[index].depth === markdown[index + 1].depth) {
+      ele = this.getMarkdownTree(index + 1, ele, res, markdown);
+      ele.children.unshift(markdown[index]);
+    } else if (markdown[index].depth < markdown[index + 1].depth) {
+      ele.children.unshift(this.getMarkdownTree(index + 1, markdown[index], res, markdown));
+    } else {
+      ele.children.unshift(markdown[index]);
+      this.getMarkdownTree(index + 1, this.getParent(index + 1, res, markdown), res, markdown);
+    }
+    return ele;
+  };
 
   private markdownToHtml(mdContent: string): string {
     marked.setOptions({
