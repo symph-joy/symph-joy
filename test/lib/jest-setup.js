@@ -1,31 +1,29 @@
-const JestRuntime = require('jest-runtime')
-const gfs = require('graceful-fs')
+const JestRuntime = require("jest-runtime").default;
+const gfs = require("graceful-fs");
 
 module.exports = async function () {
-  patchJestRuntimeRequire()
-}
+  patchJestRuntimeRequire();
+};
 
-function patchJestRuntimeRequire () {
+function patchJestRuntimeRequire() {
   // /**
   //  * when source file changed, should delete cache
   //  */
-  // const moduleStats = new Map()
-  // const oRequireModule = JestRuntime.prototype.requireModule
+  // const moduleStats = new Map();
+  // const oRequireModule = JestRuntime.prototype.requireModule;
   // JestRuntime.prototype.requireModule = function (from, moduleName, options, isRequireActual) {
-  //   const modulePath = this._resolveModule(from, moduleName)
-  //   let cacheStat = moduleStats.get(modulePath)
-  //   let fileStat = gfs.existsSync(modulePath) && gfs.statSync(modulePath).mtime.getTime()
+  //   const modulePath = this._resolveModule(from, moduleName);
+  //   let cacheStat = moduleStats.get(modulePath);
+  //   let fileStat = gfs.existsSync(modulePath) && gfs.statSync(modulePath).mtime.getTime();
   //   if (!cacheStat) {
-  //     moduleStats.set(modulePath, fileStat)
+  //     moduleStats.set(modulePath, fileStat);
   //   } else {
   //     if (cacheStat !== fileStat) {
-  //       this._moduleRegistry.set(modulePath, undefined)
+  //       this._moduleRegistry.set(modulePath, undefined);
   //     }
   //   }
-  //   return oRequireModule.apply(this, arguments)
-  // }
-
-
+  //   return oRequireModule.apply(this, arguments);
+  // };
   // /**
   //  *  in jest-runtime/build/index.js. always using cached file content, so we can not get new data.
   //  *  if this issue is fixed, we should replace origin require method, rather than read file directly.
@@ -46,4 +44,3 @@ function patchJestRuntimeRequire () {
   //   return source
   // }
 }
-

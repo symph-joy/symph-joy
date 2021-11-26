@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "dev": "joy dev",
+    "build": "joy build",
+    "export": "joy export",
+    "start": "joy start"
+  }
+}

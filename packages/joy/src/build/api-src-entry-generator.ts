@@ -1,14 +1,11 @@
-import { Autowire, Component, EntryType, IComponentLifecycle, Optional, Provider, RegisterTap } from "@symph/core";
+import { Autowire, Component, RegisterTap } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import glob from "glob";
-import path, { join, sep } from "path";
-import fs, { readFileSync } from "fs";
+import { join, sep } from "path";
+import { readFileSync } from "fs";
 import { FSWatcher, watch } from "chokidar";
-import { EmitSrcService } from "./webpack/plugins/emit-src-plugin/emit-src-service";
-import lodash, { pull } from "lodash";
-import { IGenerateFiles } from "./file-generator";
+import lodash from "lodash";
+import { FileGenerator, IGenerateFiles } from "./file-generator";
 import { handlebars } from "../lib/handlebars";
-import HotReloader from "../server/hot-reloader";
 
 interface RegisteredModule {
   mount: string;
@@ -34,64 +31,23 @@ export class ApiSrcEntryGenerator {
 
   public modules: RegisteredModule[] = [];
 
-  private aggregateTimeout = 200;
+  private aggregateTimeout = 100;
   public aggregateChange: AggregateChange = new AggregateChange();
 
   protected moduleTemplate = handlebars.compile(readFileSync(join(__dirname, "../joy-server/server/joy-app-providers-explorer.handlebars"), "utf-8"));
   protected lastGenerateContent: string | undefined;
 
-  public watch = false;
+  public isWatch = false;
 
-  constructor(@Autowire() private joyAppConfig: JoyAppConfig, @Optional() private hotReloader: HotReloader) {
+  constructor(@Autowire() private joyAppConfig: JoyAppConfig, private fileGenerator: FileGenerator) {
     this.srcDir = this.joyAppConfig.resolveAppDir("src/server");
-    this.watch = this.joyAppConfig.dev;
+    this.isWatch = this.joyAppConfig.dev;
   }
 
   @RegisterTap()
   public async onWillJoyBuild() {
     await this.getApiSrcFiles(this.joyAppConfig.dev);
   }
-
-  // async getApiSrcFiles(isWatch = false): Promise<string[]> {
-  //   return new Promise((resolve, reject) => {
-  //     // this.watcher = watch([`${this.srcDir}/`], {followSymlinks: false, awaitWriteFinish: true})
-  //     // this.watcher
-  //     //   .on('add', (path) => {
-  //     //     console.log('>>>> add', path)
-  //     //   })
-  //     //   .on('change', (path) => {
-  //     //     console.log('>>>> change', path)
-  //     //   })
-  //     //   .on('ready', () => {
-  //     //     console.log('Initial scan complete. Ready for changes')
-  //     //   })
-  //     //
-  //     // if (isWatch){
-  //     //   this.watcher.close();
-  //     //   this.watcher = undefined;
-  //     // }
-  //
-  //     glob(`**/*.{${this.sourceFileExts.join(',')}}`, {cwd: this.srcDir}, async (err, files) => {
-  //       if (err) {
-  //         reject(err)
-  //       }
-  //       const sourceFiles: string[] = [];
-  //       for (let i = 0; i < files.length; i++) {
-  //         const filePath = files[i];
-  //         let fullPath = path.resolve(this.srcDir, filePath);
-  //         fullPath = path.normalize(fullPath);
-  //         fullPath = fullPath.replace(/\\/g, "/");
-  //         sourceFiles.push(fullPath);
-  //       }
-  //       if (isWatch) {
-  //         this.startWatch()
-  //       }
-  //       this.srcFiles = sourceFiles;
-  //
-  //       resolve(sourceFiles)
-  //     });
-  //   })
-  // }
 
   public getApiSrcFiles(isWatch = false): Promise<void> {
     return new Promise<void>((resolve, reject) => {
@@ -103,43 +59,42 @@ export class ApiSrcEntryGenerator {
         persistent: isWatch,
       });
       this.watcher.on("add", (filePath) => {
-        console.log(">>>> add", filePath, process.uptime());
         this.applyChange(undefined, filePath, "add");
       });
       this.watcher.on("change", (filePath) => {
-        console.log(">>>> change", filePath, process.uptime());
         this.applyChange(undefined, filePath, "change");
       });
       this.watcher.on("unlink", (filePath) => {
-        console.log(">>>> remove", filePath, process.uptime());
         this.applyChange(undefined, filePath, "remove");
       });
       this.watcher.on("error", (error) => {
-        console.log(`Watcher error: ${error}`);
         reject(error);
       });
-      this.watcher.on("ready", () => {
-        this.applyAggregatedChanges();
-        console.log("Initial scan src directory complete. Ready for changes", process.uptime());
+      this.watcher.on("ready", async () => {
+        await this.applyAggregatedChanges();
+        console.log(`Scan server directory (${this.srcDir}) success. ${this.isWatch ? "Ready for changes..." : ""}`);
         resolve();
       });
     });
   }
 
-  private applyAggregatedChanges() {
+  private async applyAggregatedChanges() {
+    if (!this.aggregateChange.add.length && !this.aggregateChange.change.length && !this.aggregateChange.remove.length) {
+      return;
+    }
     const aggregateChange = this.aggregateChange;
     this.aggregateChange = new AggregateChange();
-
     for (const f of aggregateChange.remove) {
       const index = this.modules.findIndex((it) => it.mount === f.mount && it.filePath === f.filePath);
       if (index > 0) {
         this.modules.splice(index, 1);
       }
     }
-
     for (const f of aggregateChange.add) {
       this.modules.push(f);
     }
+
+    await this.fileGenerator.generate();
   }
 
   /**
@@ -152,10 +107,8 @@ export class ApiSrcEntryGenerator {
   }
 
   triggerAggregatedChange = lodash.debounce(
-    () => {
-      console.log(">>>>> apply changes, this.aggregateChange", this.aggregateChange, process.uptime());
-      this.applyAggregatedChanges();
-      this.hotReloader.invalidateApi();
+    async () => {
+      await this.applyAggregatedChanges();
     },
     this.aggregateTimeout,
     { trailing: true, leading: false }
@@ -163,14 +116,13 @@ export class ApiSrcEntryGenerator {
 
   private applyChange(mount = "", filePath: string, changeType: keyof AggregateChange) {
     this.aggregateChange[changeType].push({ mount, filePath: filePath });
-    if (this.watch) {
+    if (this.isWatch) {
       this.triggerAggregatedChange();
     }
   }
 
   @RegisterTap()
   public async onGenerateFiles(genFiles: IGenerateFiles) {
-    console.log(">>>>> api gen files", process.uptime());
     const modules = this.modules.map((f) => ({ path: f.filePath, mount: f.mount } as ServerModule));
 
     const moduleFileContent = this.moduleTemplate({ modules });

@@ -1,25 +1,24 @@
-import glob from "glob";
 import path from "path";
 import {
   AutowireHook,
   Component,
-  CoreContext,
-  getConfigurationMeta,
   getComponentMeta,
+  getConfigurationMeta,
   HookType,
   IHook,
-  CoreContainer,
   Provider,
   ProviderScanner,
   TProviderName,
 } from "@symph/core";
-import { EmitSrcService } from "../webpack/plugins/emit-src-plugin/emit-src-service";
 import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
 import { ModuleContextTypeEnum } from "../../lib/constants";
 import { existsSync } from "fs";
 import * as Log from "../output/log";
 import { FSWatcher, watch } from "chokidar";
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
+import { SrcBuilder } from "../src-builder";
+import lodash from "lodash";
+import { FileGenerator } from "../file-generator";
 
 type TScanOutModuleProviders = Map<string, { type: "ClassProvider" | "Configuration"; providers: Provider[] }>;
 
@@ -42,6 +41,15 @@ interface ScanOptions {
   onScanOutModule?(scanOutModule: IScanOutModule): void | boolean;
 }
 
+interface IScanModule {
+  filePath: string;
+  scanOptions: ScanOptions;
+}
+
+class AggregateChange {
+  constructor(public add: IScanModule[] = [], public remove: IScanModule[] = [], public change: IScanModule[] = []) {}
+}
+
 /**
  * todo 通过emit-manifest.json的hash值，判断是否需要扫描或者更新模块。
  * todo 如果判断是被删除了的模块。
@@ -49,13 +57,19 @@ interface ScanOptions {
 @Component()
 export class FileScanner {
   private watchers: Map<string, FSWatcher> = new Map();
-  private aggregated = {
-    add: [] as string[],
-    delete: [] as string[],
-    change: [] as string[],
-  };
 
-  constructor(private readonly joyAppConfig: JoyAppConfig, private providerScanner: ProviderScanner, private emitSrcService: EmitSrcService) {}
+  public isWatch = false;
+  private aggregateTimeout = 100;
+  public aggregateChange: AggregateChange = new AggregateChange();
+
+  constructor(
+    private readonly joyAppConfig: JoyAppConfig,
+    private providerScanner: ProviderScanner,
+    private srcBuilder: SrcBuilder,
+    private fileGenerator: FileGenerator
+  ) {
+    this.isWatch = this.joyAppConfig.dev;
+  }
 
   @AutowireHook({ type: HookType.Waterfall, parallel: false, async: true })
   private afterScanOutModuleHook: IHook;
@@ -106,64 +120,103 @@ export class FileScanner {
   }
 
   public async scan(dir: string, options: ScanOptions = {}): Promise<void> {
-    this.emitSrcService.updateEmitManifest(); // todo 移动到hot-reload中，统一在emit-all完成后，刷新数据。
-    const existModuleKeys = Array.from(this.cachedModules.keys());
-    const scanOutModuleKeys: string[] = [];
-
-    // let watcher = this.watchers.get(dir)
-    // if (!watcher) {
-    //   watcher = watch(dir)
-    //   this.watchers.set(dir, watcher)
-    //   watcher.on('add', (filePath) => {
-    //     console.log('>>>> add', filePath)
-    //     this.aggregated.add.push(filePath)
-    //   })
-    //   watcher.on('change', (filePath) => {
-    //     console.log('>>>> change', filePath)
-    //   })
-    //   watcher.on('unlink', (filePath) => {
-    //     console.log(`File ${filePath} has been removed`)
-    //
-    //   })
-    //   watcher.on('ready', () => {
-    //     console.log('Initial scan src directory complete. Ready for changes')
-    //   })
-    // }
-
-    await new Promise<void>((resolve, reject) => {
-      glob("**/*.{js,jsx,ts,tsx}", { cwd: dir }, async (err, files) => {
-        if (err) {
-          reject(err);
-        }
-        if (files.length === 0) {
-          resolve();
-        }
-
-        for (let i = 0; i < files.length; i++) {
-          const filePath = files[i];
-          const fullPath = path.resolve(dir, filePath);
-          scanOutModuleKeys.push(fullPath);
-          await this.scanFile(fullPath, options);
-        }
+    // this.emitSrcService.updateEmitManifest();
+    let watcher = this.watchers.get(dir);
+    if (watcher) {
+      return;
+    }
+    return new Promise<void>((resolve, reject) => {
+      watcher = watch(dir);
+      this.watchers.set(dir, watcher);
+      watcher.on("add", (filePath) => {
+        this.applyChange("", filePath, "add", options);
+      });
+      watcher.on("change", (filePath) => {
+        this.applyChange("", filePath, "change", options);
+      });
+      watcher.on("unlink", (filePath) => {
+        this.applyChange("", filePath, "remove", options);
+      });
+      watcher.on("ready", async () => {
+        console.log(`Scan react components success. ${this.isWatch ? "Ready for changes..." : ""}`);
+        await this.applyAggregatedChanges();
         resolve();
+      });
+      watcher.on("error", (error) => {
+        reject(error);
       });
     });
 
-    // const deleteModules = existModuleKeys.filter(
-    //   (it) => it.startsWith(dir) &&  !scanOutModuleKeys.includes(it)
-    // );
-    // for (const deleteModule of deleteModules) {
-    //   const cache = this.cachedModules.get(deleteModule);
-    //   if (cache) {
-    //     await this.afterScanOutModuleHook.call(cache);
-    //     this.cachedModules.delete(deleteModule);
-    //   }
-    // }
+    // const existModuleKeys = Array.from(this.cachedModules.keys());
+    // const scanOutModuleKeys: string[] = [];
+    //
+    // await new Promise<void>((resolve, reject) => {
+    //   glob("**/*.{js,jsx,ts,tsx}", { cwd: dir }, async (err, files) => {
+    //     if (err) {
+    //       reject(err);
+    //     }
+    //     if (files.length === 0) {
+    //       resolve();
+    //     }
+    //
+    //     for (let i = 0; i < files.length; i++) {
+    //       const filePath = files[i];
+    //       const fullPath = path.resolve(dir, filePath);
+    //       scanOutModuleKeys.push(fullPath);
+    //       await this.scanFile(fullPath, options);
+    //     }
+    //     resolve();
+    //   });
+    // });
+    //
+  }
+
+  private applyChange(mount = "", filePath: string, changeType: keyof AggregateChange, scanOptions: ScanOptions) {
+    this.aggregateChange[changeType].push({ filePath, scanOptions });
+    if (this.isWatch) {
+      this.triggerAggregatedChange();
+    }
+  }
+
+  triggerAggregatedChange = lodash.debounce(
+    async () => {
+      await this.applyAggregatedChanges();
+    },
+    this.aggregateTimeout,
+    { trailing: true, leading: false }
+  );
+
+  private async applyAggregatedChanges() {
+    if (!this.aggregateChange.add.length && !this.aggregateChange.change.length && !this.aggregateChange.remove.length) {
+      return;
+    }
+    const aggregateChange = this.aggregateChange;
+    this.aggregateChange = new AggregateChange();
+
+    for (const f of aggregateChange.remove) {
+      await this.triggerModuleRemoved(f.filePath);
+    }
+    const buildList = [...aggregateChange.add, ...aggregateChange.change];
+    for (const f of buildList) {
+      await this.scanFile(f.filePath, f.scanOptions);
+    }
+    await this.fileGenerator.generate();
+  }
+
+  public async triggerModuleRemoved(fullFilePath: string) {
+    const cached = this.cachedModules.get(fullFilePath);
+    if (cached === undefined || cached.isRemove) {
+      return cached;
+    }
+    cached.isAdd = cached.isModify = false;
+    cached.isRemove = true;
+    await this.afterScanOutModuleHook.call(cached);
+    this.cachedModules.delete(fullFilePath);
   }
 
   public async scanFile(fullFilePath: string, options: ScanOptions = {}): Promise<IScanOutModule | undefined> {
     const { mount, contextType = ModuleContextTypeEnum.Server } = options;
-    const emit = this.emitSrcService.getEmitInfo(fullFilePath);
+    const emit = this.srcBuilder.getBuildModule(fullFilePath);
     const emitHash = emit?.hash;
     const cached = this.cachedModules.get(fullFilePath);
     if (emitHash !== undefined && cached !== undefined && emitHash === cached.hash) {
@@ -173,6 +226,8 @@ export class FileScanner {
 
     let requiredModule: any;
     try {
+      // fixme 如果是修改文件后重新扫描，则会在provider-scanner中遗留旧的模块引用，导致内存溢出。
+      delete require.cache[fullFilePath];
       requiredModule = require(fullFilePath);
     } catch (e) {
       console.debug("Load file error:", e);
@@ -199,6 +254,8 @@ export class FileScanner {
     // const providers = await this.providerScanner.scan(moduleLoaded.module);
     scanOutModule.providerDefines = this.scanModule(scanOutModule.module);
 
+    // todo 优化: 和cache比较，component没有变化则不用继续处理。
+
     if (options?.onScanOutModule && options.onScanOutModule(scanOutModule)) {
       return undefined;
     }
@@ -207,19 +264,6 @@ export class FileScanner {
 
     scanOutModule = await this.afterScanOutModuleHook.call(scanOutModule);
 
-    // if (providers && providers.length > 0) {
-    //   if (isAdd) {
-    //     this.container.addProviders(providers);
-    //   } else if (isModify) {
-    //     providers.forEach((provider) => {
-    //       this.container.replace(provider.id, provider);
-    //     });
-    //   } else if (isRemove) {
-    //     providers.forEach((provider) => {
-    //       this.container.delete(provider.id);
-    //     });
-    //   }
-    // }
     return scanOutModule;
   }
 

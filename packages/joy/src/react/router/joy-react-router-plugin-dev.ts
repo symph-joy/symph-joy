@@ -13,13 +13,6 @@ interface IReactRouteBuildDev extends IJoyReactRouteBuild {
  */
 @Component()
 export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBuildDev> {
-  // constructor(
-  //   protected fileGenerator: FileGenerator,
-  //   // protected fileScanner: FileScanner
-  // ) {
-  //   super(fileGenerator);
-  // }
-
   public replaceModule(module: IScanOutModule): void {
     const removed = this.removeModule(module.resource || module.path);
     const hasAdd = removed?.find((it) => it.isAdd);
@@ -43,13 +36,6 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
     };
   }
 
-  // protected extendBuildRoute(route: IJoyReactRouteBuild): IReactRouteBuildDev {
-  //   return {
-  //     ...route,
-  //     isAdd: false,
-  //   };
-  // }
-
   protected mergeRouteExtendState(to: IReactRouteBuildDev, from: IReactRouteBuildDev) {
     to.isAdd = from.isAdd;
   }
@@ -70,54 +56,6 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
     getFromRoutes(routes);
     return plainRoutes;
   }
-
-  public async getRouteFiles(pathname: string): Promise<string[] | undefined> {
-    const matchedRoutes = this.getMatchedRoutes(pathname);
-    if (!matchedRoutes || matchedRoutes.length === 0) {
-      return;
-    }
-
-    const usedRoutes = matchedRoutes;
-    const waitingRoutes: IReactRouteBuildDev[] = [];
-    usedRoutes.forEach((route) => {
-      waitingRoutes.push(route);
-      if (!route.isAdd) {
-        route.isAdd = true;
-      }
-    });
-    if (waitingRoutes.length == 0) {
-      return;
-    }
-    const routeFiles = waitingRoutes.map((r) => r.srcPath).filter(Boolean) as string[];
-
-    return routeFiles;
-  }
-
-  // @RegisterTap()
-  // async onBeforeRender({
-  //   req,
-  //   res,
-  //   pathname,
-  //   query,
-  // }: {
-  //   req: IncomingMessage;
-  //   res: ServerResponse;
-  //   pathname: string;
-  //   query: ParsedUrlQuery;
-  // }): Promise<void> {
-  //
-  // }
-
-  // @RegisterTap()
-  // protected async onGenerateFiles() {
-  //   console.log(">>>> IReactRouteDev. onGenerateFiles");
-  //   const clientRoutes = this.filterRoutes((route) => !!route.isAdd);
-  //   const clientFileContent = this.routesTemplate({ routes: clientRoutes });
-  //   await this.fileGenerator.writeClientFile("./routes.js", clientFileContent);
-  //
-  //   const serverFileContent = this.routesServerTemplate({ routes: clientRoutes });
-  //   await this.fileGenerator.writeServerFile("./routes.js", serverFileContent);
-  // }
 
   protected getClientRoutes(): IReactRouteBuildDev[] {
     function addedFilter(routes: IReactRouteBuildDev[]): IReactRouteBuildDev[] {

@@ -6,10 +6,10 @@ import {MountModule} from "@symph/react/dist/mount/mount-module";
   {{#routes}}
     {
     path: "{{path}}",
-    {{#if exact}}exact: {{exact}},{{/if}}
-    {{#if sensitive}}sensitive: {{exact}},{{/if}}
-    {{#if strict}}strict: {{exact}},{{/if}}
-    dynamic: {{json dynamic}},
+    {{#if exact}}exact: {{json exact}},{{/if}}
+    {{#if sensitive}}sensitive: {{json sensitive}},{{/if}}
+    {{#if strict}}strict: {{json strict}},{{/if}}
+    {{#if dynamic}}dynamic: {{json dynamic}},{{/if}}
     providerName: "{{providerName}}",
     {{#if providerPackage}}providerPackage: "{{providerPackage}}",{{/if}}
     providerModule: {{#if mount}}{mount:"{{mount}}", module:require({{json srcPath}})}{{else}}require({{json srcPath}}){{/if}},

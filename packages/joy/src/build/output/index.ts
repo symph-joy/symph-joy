@@ -9,7 +9,6 @@ export function startedDevelopmentServer(appUrl: string) {
   consoleStore.setState({ appUrl });
 }
 
-let previousSrc: import("webpack").Compiler | null = null;
 let previousClient: import("webpack").Compiler | null = null;
 let previousServer: import("webpack").Compiler | null = null;
 let previousApi: import("webpack").Compiler | null = null;
@@ -192,7 +191,7 @@ export function ampValidation(page: string, errors: AmpStatus[], warnings: AmpSt
   });
 }
 
-export function watchCompilers(client: import("webpack").Compiler, server: import("webpack").Compiler, api: import("webpack").Compiler, src: import("webpack").Compiler) {
+export function watchCompilers(client: import("webpack").Compiler, server: import("webpack").Compiler, api: import("webpack").Compiler) {
   if (previousClient === client && previousServer === server && previousApi === api) {
     return;
   }
@@ -233,5 +232,4 @@ export function watchCompilers(client: import("webpack").Compiler, server: impor
   previousClient = client;
   previousServer = server;
   previousApi = api;
-  previousSrc = src;
 }

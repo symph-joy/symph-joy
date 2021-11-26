@@ -67,10 +67,10 @@ export class FileGenerator implements IComponentLifecycle {
   }
 
   @AutowireHook({ type: HookType.Waterfall, async: true })
-  public onGenerateFiles: IHook;
+  private onGenerateFiles: IHook;
 
   @AutowireHook({ type: HookType.Waterfall, async: true })
-  public addTmpGenerateWatcherPaths: IHook;
+  private addTmpGenerateWatcherPaths: IHook;
 
   public watchers: FSWatcher[] = [];
 
@@ -112,7 +112,7 @@ export class FileGenerator implements IComponentLifecycle {
     }
   }
 
-  public async generate(watch: boolean) {
+  public async generate() {
     await this.generateFiles();
     // if (watch) {
     //   const watchPaths = await this.addTmpGenerateWatcherPaths.call([]);

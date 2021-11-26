@@ -24,7 +24,6 @@ describe("hello joy dev", () => {
   }, 999999);
 
   test("react: should render hello message", async () => {
-    // await waitForMoment()
     await page.goto(testContext.getUrl("/"));
     const browser = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(browser).toContain("Hello world!");

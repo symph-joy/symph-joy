@@ -6,6 +6,7 @@ import { existsSync } from "fs";
 import mkdirp from "mkdirp";
 import OutputFileSystem = webpack5.OutputFileSystem;
 import { RawSource } from "webpack-sources";
+import { IEmitBuildModule } from "./emit-src-service";
 
 function isNormalModule(mod: Module): mod is NormalModule {
   return !!(mod as any).resource;
@@ -61,13 +62,7 @@ async function transformSource(filePath: string, src: string): Promise<string> {
   return src;
 }
 
-export interface IWebpackEmitModule {
-  resource: string;
-  dest: string;
-  hash: string;
-}
-
-export type TWebpackEmitModuleManifest = Map<string, IWebpackEmitModule>;
+export type TWebpackEmitModuleManifest = Map<string, IEmitBuildModule>;
 
 interface EmitAllPluginOptions {
   path?: string;
@@ -82,7 +77,7 @@ export class EmitSrcWebpackPlugin {
   ignorePattern: RegExp;
   ignoreExternals: boolean;
   path?: string;
-  modules: TWebpackEmitModuleManifest = new Map<string, IWebpackEmitModule>();
+  modules: TWebpackEmitModuleManifest = new Map<string, IEmitBuildModule>();
 
   constructor(opts: EmitAllPluginOptions = {}) {
     this.ignorePattern = opts.ignorePattern || /([\\/]node_modules)|([\\/]joy[\\/](src|dist))|([\\/]core[\\/](src|dist))|([\\/]react[\\/](src|dist))/;
@@ -195,7 +190,7 @@ export class EmitSrcWebpackPlugin {
 
         const emitManifestPath = path.join(out, "emit-manifest.json");
         //JSON.stringify 不能直接序列化Map对象，需求先转换为对象。
-        const objModules: Record<string, IWebpackEmitModule> = Object.create(null);
+        const objModules: Record<string, IEmitBuildModule> = Object.create(null);
         for (const [k, v] of this.modules) {
           objModules[k] = v;
         }

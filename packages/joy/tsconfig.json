@@ -29,6 +29,7 @@
     "src/server/dev/*",
     "node_modules",
     "./dist/**/*",
+    "**/fixtures/**",
     ".joy",
     "examples",
     "test",

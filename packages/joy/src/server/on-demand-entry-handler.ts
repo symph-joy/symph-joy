@@ -4,10 +4,7 @@ import { join, posix } from "path";
 import { parse } from "url";
 import webpack, { Compilation, Module, NormalModule } from "webpack";
 import * as Log from "../build/output/log";
-import {
-  normalizePagePath,
-  normalizePathSep,
-} from "../joy-server/server/normalize-page-path";
+import { normalizePagePath, normalizePathSep } from "../joy-server/server/normalize-page-path";
 import { pageNotFoundError } from "../joy-server/server/require";
 import { findPageFile } from "./lib/find-page-file";
 import getRouteFromEntrypoint from "../joy-server/server/get-route-from-entrypoint";
@@ -52,12 +49,9 @@ export default function onDemandEntryHandler(
   const doneCallbacks: EventEmitter | null = new EventEmitter();
 
   for (const compiler of compilers) {
-    compiler.hooks.make.tap(
-      "JoyJsOnDemandEntries",
-      (_compilation: Compilation) => {
-        invalidator.startBuilding();
-      }
-    );
+    compiler.hooks.make.tap("JoyJsOnDemandEntries", (_compilation: Compilation) => {
+      invalidator.startBuilding();
+    });
   }
 
   function getPagePathsFromEntrypoints(entrypoints: any): string[] {
@@ -71,21 +65,6 @@ export default function onDemandEntryHandler(
 
     return pagePaths;
   }
-
-  // >>> poc 验证是否可以在这里，获取客户端相关的路由组件已经编译完成
-  multiCompiler.compilers[0].hooks.done.tap(
-    "JoyOnRouteComponents",
-    (clientStats) => {
-      const { compilation } = clientStats;
-      compilation.modules.forEach((m) => {
-        if (!isNormalModule(m)) {
-          return;
-        }
-        // console.log(m.resource)
-      });
-    }
-  );
-  // <<<< poc
 
   multiCompiler.hooks.done.tap("JoyJsOnDemandEntries", (multiStats) => {
     const [clientStats, serverStats] = multiStats.stats;
@@ -163,11 +142,7 @@ export default function onDemandEntryHandler(
       }
 
       let absolutePagePath: string | null = null;
-      let pagePath = await findPageFile(
-        pagesDir,
-        normalizedPagePath,
-        pageExtensions
-      );
+      let pagePath = await findPageFile(pagesDir, normalizedPagePath, pageExtensions);
 
       // Default the /_error route to the Joy.js provided default page
       if (pagePath === null) {
@@ -191,9 +166,7 @@ export default function onDemandEntryHandler(
 
       let pageUrl = pagePath.replace(/\\/g, "/");
 
-      pageUrl = `${pageUrl[0] !== "/" ? "/" : ""}${pageUrl
-        .replace(new RegExp(`\\.+(?:${pageExtensions.join("|")})$`), "")
-        .replace(/\/index$/, "")}`;
+      pageUrl = `${pageUrl[0] !== "/" ? "/" : ""}${pageUrl.replace(new RegExp(`\\.+(?:${pageExtensions.join("|")})$`), "").replace(/\/index$/, "")}`;
 
       pageUrl = pageUrl === "" ? "/" : pageUrl;
 
@@ -264,11 +237,7 @@ export default function onDemandEntryHandler(
   };
 }
 
-function disposeInactiveEntries(
-  watcher: any,
-  lastAccessPages: any,
-  maxInactiveAge: number
-) {
+function disposeInactiveEntries(watcher: any, lastAccessPages: any, maxInactiveAge: number) {
   const disposingPages: any = [];
 
   Object.keys(entries).forEach((page) => {

@@ -9,6 +9,7 @@ import { JoyAppProvidersExplorerService } from "../joy-server/server/joy-app-pro
 import { JoyImportService } from "../server/joy-import.service";
 import { GlobalCssPlugin } from "../plugin/global-css-plugin";
 import { ApiSrcEntryGenerator } from "./api-src-entry-generator";
+import { SrcBuilder } from "./src-builder";
 import { BuildConfig } from "./build-config";
 
 @Configuration()
@@ -18,6 +19,9 @@ export class BuildCommonConfiguration {
 
   @Configuration.Provider()
   public apiSrcEntryGenerator: ApiSrcEntryGenerator;
+
+  @Configuration.Provider()
+  public srcBuilder: SrcBuilder;
 
   @Configuration.Provider()
   public emitSrcService: EmitSrcService;

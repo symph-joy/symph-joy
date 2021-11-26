@@ -51,6 +51,7 @@ import { JoyExportAppService } from "../export/joy-export-app.service";
 import { getWebpackConfigForApi } from "./webpack-config-for-api";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 import { trace } from "../trace";
+import { SrcBuilder } from "./src-builder";
 
 export type SsgRoute = {
   initialRevalidateSeconds: number | false;
@@ -94,7 +95,8 @@ export class JoyBuildService {
     private fileScanner: FileScanner,
     private joyReactRoute: ReactRouter,
     private prerenderService: JoyPrerenderService,
-    public joyExportAppService: JoyExportAppService
+    public joyExportAppService: JoyExportAppService,
+    private srcBuilder: SrcBuilder
   ) {
     this.dir = joyConfig.resolveAppDir();
     this.distDir = joyConfig.resolveAppDir(joyConfig.distDir);
@@ -106,29 +108,30 @@ export class JoyBuildService {
     const buildId = await this.buildConfig.getBuildId();
     const target = this.joyConfig.target;
     const pagesDir = this.joyConfig.resolvePagesDir();
-    const serverWebpackConfig = await getBaseWebpackConfig(this.dir, {
-      // tracer,
-      buildId,
-      // reactProductionProfiling,
-      isServer: true,
-      config: this.joyConfig,
-      target,
-      pagesDir,
-      entrypoints: {},
-      rewrites: [],
-    });
-
-    const srcWebpackConfig = await getWebpackConfigForSrc(serverWebpackConfig, this.joyConfig);
-    const srcResult = await runCompiler(srcWebpackConfig);
-    if (!srcResult.errors) {
-      return srcResult;
-    }
-
+    // const serverWebpackConfig = await getBaseWebpackConfig(this.dir, {
+    //   // tracer,
+    //   buildId,
+    //   // reactProductionProfiling,
+    //   isServer: true,
+    //   config: this.joyConfig,
+    //   target,
+    //   pagesDir,
+    //   entrypoints: {},
+    //   rewrites: [],
+    // });
+    //
+    // const srcWebpackConfig = await getWebpackConfigForSrc(serverWebpackConfig, this.joyConfig);
+    // const srcResult = await runCompiler(srcWebpackConfig);
+    // if (!srcResult.errors) {
+    //   return srcResult;
+    // }
+    //
+    await this.srcBuilder.buildSrcFiles();
     const distSrcDir = this.joyConfig.resolveAppDir(this.joyConfig.distDir, "dist/src");
     await this.fileScanner.scanDist(distSrcDir);
-    await this.fileGenerator.generate(false);
+    await this.fileGenerator.generate();
 
-    return srcResult;
+    return { warnings: [], errors: [] };
   }
 
   public async analysisBuild(): Promise<Map<string, PageInfo>> {

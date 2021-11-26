@@ -69,7 +69,6 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     if (scanOutModule.contextType !== ModuleContextTypeEnum.React || !scanOutModule.providerDefines || scanOutModule.providerDefines.size === 0) {
       return;
     }
-    let hasRoute = false;
     const scanOutRoutes = [] as T[];
     scanOutModule.providerDefines.forEach((providerDefine, exportKey) => {
       providerDefine.providers.forEach((provider) => {
@@ -89,8 +88,6 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
             scanOutRoutes.push(route);
           }
         }
-
-        hasRoute = hasRoute || !!(routes && routes.length);
       });
     });
     return scanOutRoutes;
@@ -121,12 +118,12 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     } else if (module.isModify) {
       this.replaceModule(module);
     } else if (module.isRemove) {
-      this.removeModule(module.path);
+      this.removeModule(module.resource || module.path);
     }
   }
 
   public replaceModule(module: IScanOutModule): void {
-    this.removeModule(module.path);
+    this.removeModule(module.resource || module.path);
     this.addFromScanOutModule(module);
   }
 

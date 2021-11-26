@@ -150,7 +150,10 @@ export function joyBabelPreset(api: any, options: JoyBabelPresetOptions = {}): B
           ...options["transform-runtime"],
         },
       ],
-      [isTest && options["styled-jsx"] && options["styled-jsx"]["babel-test"] ? require("styled-jsx/babel-test") : require("styled-jsx/babel"), styledJsxOptions(options["styled-jsx"])],
+      [
+        isTest && options["styled-jsx"] && options["styled-jsx"]["babel-test"] ? require("styled-jsx/babel-test") : require("styled-jsx/babel"),
+        styledJsxOptions(options["styled-jsx"]),
+      ],
       require("./plugins/amp-attributes"),
       isProduction && [
         require("babel-plugin-transform-react-remove-prop-types"),
@@ -158,12 +161,12 @@ export function joyBabelPreset(api: any, options: JoyBabelPresetOptions = {}): B
           removeImport: true,
         },
       ],
-      require("@babel/plugin-proposal-optional-chaining"),
-      require("@babel/plugin-proposal-nullish-coalescing-operator"),
+      require("@babel/plugin-proposal-optional-chaining"), // parse: a?.b?.c
+      require("@babel/plugin-proposal-nullish-coalescing-operator"), //parse:  a = foo ?? bar()
       isServer && require("@babel/plugin-syntax-bigint"),
-      [require("@babel/plugin-proposal-numeric-separator").default, false],
-      require("@babel/plugin-proposal-export-namespace-from"),
-      ["@babel/plugin-proposal-private-methods", { loose: true }],
+      [require("@babel/plugin-proposal-numeric-separator").default, false], // const bigReadableumber = 1_999_999_999_999;
+      require("@babel/plugin-proposal-export-namespace-from"), // export * as ns from "mod";
+      ["@babel/plugin-proposal-private-methods", { loose: true }], //  #xValue = 0;
       isSrc && require("@babel/plugin-transform-modules-commonjs"),
     ].filter(Boolean),
     overrides: [

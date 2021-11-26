@@ -20,25 +20,18 @@ import getRouteFromEntrypoint from "../joy-server/server/get-route-from-entrypoi
 import { isWriteable } from "../build/is-writeable";
 import { ClientPagesLoaderOptions } from "../build/webpack/loaders/joy-client-pages-loader";
 import { stringify } from "querystring";
-import loadCustomRoutes, { Rewrite } from "../lib/load-custom-routes";
+import loadCustomRoutes from "../lib/load-custom-routes";
 import { FileScanner } from "../build/scanner/file-scanner";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { FileGenerator } from "../build/file-generator";
 import { EventEmitter } from "events";
 import OnDemandModuleHandler from "./on-demand-module-handler";
-import { getWebpackConfigForSrc } from "../build/webpack-config-for-src";
-import { Autowire, AutowireHook, Component, HookType, IHook } from "@symph/core";
+import { AutowireHook, Component, HookType, IHook } from "@symph/core";
 import { BuildDevConfig } from "./build-dev-config";
 import crypto from "crypto";
 import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
-import { ReactRouter } from "@symph/react";
 import { getWebpackConfigForApi } from "../build/webpack-config-for-api";
-import chalk from "chalk";
-import { JoyBuildService } from "../build/joy-build.service";
-import * as Log from "../build/output/log";
-import { SrcEntryGenerator } from "../build/src-entry-generator";
-import { EmitSrcService } from "../build/webpack/plugins/emit-src-plugin/emit-src-service";
-import { ApiSrcEntryGenerator } from "../build/api-src-entry-generator";
+import { SrcBuilder } from "../build/src-builder";
 
 export async function renderScriptError(res: ServerResponse, error: Error, { verbose = true } = {}) {
   // Asks CDNs and others to not to cache the errored page
@@ -155,19 +148,19 @@ export default class HotReloader {
   // private fileScanner: FileScanner;
   // private fileGenerator: FileGenerator;
   private doneCallbacks: EventEmitter = new EventEmitter();
-  private srcEntryGenerator: SrcEntryGenerator;
 
   public apiCompiler: Compiler;
   public reactClientCompiler: Compiler;
   public reactServerCompiler: Compiler;
-  public srcCompiler: Compiler;
+  // public srcCompiler: Compiler;
 
   constructor(
     private joyAppConfig: JoyAppConfig,
     private fileGenerator: FileGenerator,
     private fileScanner: FileScanner,
     protected buildConfig: BuildDevConfig,
-    private joyReactRouter: JoyReactRouterPluginDev // private apiSrcEntryGenerator: ApiSrcEntryGenerator
+    private joyReactRouter: JoyReactRouterPluginDev,
+    private srcBuilder: SrcBuilder
   ) {
     this.dir = this.joyAppConfig.resolveAppDir();
     this.middlewares = [];
@@ -317,7 +310,7 @@ export default class HotReloader {
   }
 
   public async invalidateApi(): Promise<void> {
-    await this.fileGenerator.generate(false);
+    await this.fileGenerator.generate();
     // this.apiCompiler.watching.invalidate()
   }
 
@@ -325,6 +318,10 @@ export default class HotReloader {
     await this.clean();
 
     await this.onWillJoyBuild.call({ dev: this.joyAppConfig.dev });
+
+    await this.srcBuilder.buildSrcFiles();
+    const distDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, "dist/src");
+    await this.fileScanner.scanDist(distDir);
 
     const _configs = await this.getWebpackConfig();
 
@@ -370,9 +367,8 @@ export default class HotReloader {
     }
 
     const [clientConfig, serverConfig] = _configs;
-    const srcConfig = await getWebpackConfigForSrc(serverConfig, this.joyAppConfig);
     const apiModulesConfig = await getWebpackConfigForApi(serverConfig, this.joyAppConfig);
-    const configs = [clientConfig, serverConfig, apiModulesConfig, srcConfig];
+    const configs = [clientConfig, serverConfig, apiModulesConfig];
 
     // const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
     // clientConfig.plugins?.push(new BundleAnalyzerPlugin());
@@ -386,47 +382,42 @@ export default class HotReloader {
     this.reactClientCompiler = multiCompiler.compilers[0];
     this.reactServerCompiler = multiCompiler.compilers[1];
     this.apiCompiler = multiCompiler.compilers[2];
-    this.srcCompiler = multiCompiler.compilers[3];
+    // this.srcCompiler = multiCompiler.compilers[3];
 
-    this.apiCompiler.hooks.beforeCompile.tapPromise("MyPlugina", async () => {
-      console.log(">>>> before beforeCompile", process.uptime());
-      // await this.fileGenerator.generate(false);
-    });
-
-    watchCompilers(this.reactClientCompiler, this.reactServerCompiler, this.apiCompiler, this.srcCompiler);
-    // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
-    this.srcCompiler.hooks.failed.tap("JoyJSHotReloaderForSrc", (err: Error) => {
-      this.srcError = err;
-      this.srcStats = null;
-      console.log(err);
-    });
-    this.srcCompiler.hooks.done.tap("JoyJSHotReloaderForSrc", async (stats) => {
-      //  ===== 扫描src目录
-      // const distPagesDir = this.config.resolveDistPagesDir()
-      // const distPagesDir = this.config.resolveAppDir(this.config.outDir, 'server', 'dist/src' )
-      if (stats.hasErrors()) {
-        // Deprecated: 错误信息在webpack.WellKnownErrorsPlugin得到更好的处理，保留以下逻辑，只做兜底处理。
-        for (let i = 0; i < stats.compilation.errors.length; i++) {
-          const message = stats.compilation.errors[i].message;
-          const coloredMessage = chalk`${message}`;
-          const plainMsg = stripAnsiColor(coloredMessage);
-          stats.compilation.errors[i].message = plainMsg;
-          // 默认最多只展示2两条，防止太多干扰console输出。
-          if (i < 2) {
-            console.error(coloredMessage);
-          }
-        }
-      }
-      this.srcStats = stats;
-      this.srcError = null;
-      const distDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, "dist/src");
-      await this.fileScanner.scanDist(distDir);
-      // ===== 重新生成客户端需要的文件，比如路由和插件配置等。
-      await this.fileGenerator.generate(false);
-      this.reactClientCompiler.watching.invalidate();
-      this.reactServerCompiler.watching.invalidate();
-      console.log(">>>> reactClientCompiler.watching.invalidate()", process.uptime());
-    });
+    watchCompilers(this.reactClientCompiler, this.reactServerCompiler, this.apiCompiler);
+    // // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
+    // this.srcCompiler.hooks.failed.tap("JoyJSHotReloaderForSrc", (err: Error) => {
+    //   this.srcError = err;
+    //   this.srcStats = null;
+    //   console.log(err);
+    // });
+    // this.srcCompiler.hooks.done.tap("JoyJSHotReloaderForSrc", async (stats) => {
+    //   //  ===== 扫描src目录
+    //   // const distPagesDir = this.config.resolveDistPagesDir()
+    //   // const distPagesDir = this.config.resolveAppDir(this.config.outDir, 'server', 'dist/src' )
+    //   if (stats.hasErrors()) {
+    //     // Deprecated: 错误信息在webpack.WellKnownErrorsPlugin得到更好的处理，保留以下逻辑，只做兜底处理。
+    //     for (let i = 0; i < stats.compilation.errors.length; i++) {
+    //       const message = stats.compilation.errors[i].message;
+    //       const coloredMessage = chalk`${message}`;
+    //       const plainMsg = stripAnsiColor(coloredMessage);
+    //       stats.compilation.errors[i].message = plainMsg;
+    //       // 默认最多只展示2两条，防止太多干扰console输出。
+    //       if (i < 2) {
+    //         console.error(coloredMessage);
+    //       }
+    //     }
+    //   }
+    //   this.srcStats = stats;
+    //   this.srcError = null;
+    //   // const distDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, "dist/src");
+    //   // await this.fileScanner.scanDist(distDir);
+    //   // ===== 重新生成客户端需要的文件，比如路由和插件配置等。
+    //   await this.fileGenerator.generate();
+    //   this.reactClientCompiler.watching.invalidate();
+    //   this.reactServerCompiler.watching.invalidate();
+    //   console.log(">>>> reactClientCompiler.watching.invalidate()", process.uptime());
+    // });
 
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
     this.reactServerCompiler.hooks.failed.tap("JoyjsHotReloaderForServer", (err: Error) => {
@@ -636,11 +627,22 @@ export default class HotReloader {
       return Promise.reject(this.serverError || this.clientError);
     }
 
-    const ensureFiles = await this.joyReactRouter.getRouteFiles(page);
-    if (!ensureFiles || ensureFiles.length === 0) {
+    const routes = await this.joyReactRouter.getMatchedRoutes(page);
+    if (!routes || routes.length === 0) {
       return;
     }
-    await this.ensureModules(ensureFiles);
+    let hasNewAdd = false;
+    for (const route of routes) {
+      if (!route.isAdd) {
+        hasNewAdd = true;
+        route.isAdd = true;
+      }
+    }
+    if (hasNewAdd) {
+      await this.fileGenerator.generate();
+    }
+    const routeFiles = routes.map((r) => r.srcPath).filter(Boolean) as string[];
+    await this.ensureModules(routeFiles);
   }
 
   public async ensureCompilerDone(): Promise<void> {
