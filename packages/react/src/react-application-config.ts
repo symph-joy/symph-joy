@@ -1,22 +1,21 @@
 import { Reducer, ReducersMapObject } from "redux";
-import { ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 
 export class ReactApplicationConfig {
   // === redux
-  @ConfigValue()
-  @ConfigValue()
+  @Value()
   private reducers = {};
 
-  @ConfigValue()
+  @Value()
   private reducerEnhancer: ((reducer: Reducer) => Reducer) | null | undefined;
 
-  @ConfigValue()
+  @Value()
   private reduxMiddlewares: any[] = [];
 
-  @ConfigValue()
+  @Value()
   private reduxMiddlewaresEnhancer: (middlerwares: any[]) => any[];
 
-  @ConfigValue()
+  @Value()
   private storeEnhancer: any[] = [];
 
   private globalPrefix = "";

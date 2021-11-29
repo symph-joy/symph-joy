@@ -2,7 +2,7 @@ import { Component, IComponentLifecycle } from "@symph/core";
 import * as fs from "fs";
 import * as path from "path";
 import { join, sep } from "path";
-import { Configurable, ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 import { NotFoundException } from "@symph/server/dist/exceptions-common";
 import { marked } from "marked";
 
@@ -36,10 +36,9 @@ export interface TreeItem {
   file?: string;
 }
 
-@Configurable()
 @Component()
 export class DocsService implements IComponentLifecycle {
-  @ConfigValue({ configKey: "docs" })
+  @Value({ configKey: "docs" })
   public configDocs: DocJoyConfig;
 
   public menus: Doc[];

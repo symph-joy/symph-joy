@@ -1,4 +1,3 @@
-import os from "os";
 import chalk from "chalk";
 import { execOnce } from "../lib/utils";
 import * as Log from "../../build/output/log";
@@ -8,15 +7,19 @@ import { CONFIG_FILE, OUT_DIRECTORY } from "../lib/constants";
 import * as path from "path";
 import { basename, extname, resolve } from "path";
 import fs from "fs";
-import { Configurable, ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 import { Integer } from "@tsed/schema";
 import { ApplicationConfig } from "@symph/server";
+import { Component } from "@symph/core";
 
 const targets = ["server", "serverless", "experimental-serverless-trace"];
 const reactModes = ["legacy", "blocking", "concurrent"];
 
 const experimentalWarning = execOnce(() => {
-  Log.warn(chalk.bold(`You have enabled experimental feature(s).`), `Experimental features are not covered by semver, and may cause unexpected or broken application behavior. ` + `Use them at your own risk.`);
+  Log.warn(
+    chalk.bold(`You have enabled experimental feature(s).`),
+    `Experimental features are not covered by semver, and may cause unexpected or broken application behavior. ` + `Use them at your own risk.`
+  );
 });
 
 function isNil(v: any): v is undefined | null {
@@ -103,8 +106,7 @@ export interface IJoyConfig {
   resolveAppDir(...pathSegments: string[]): string;
 }
 
-@Configurable()
-// @Component()
+@Component()
 export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   // @Hook({
   //   id: "addJoyConfigSchema",
@@ -131,7 +133,7 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   //   args: { instanceWrapper: IComponentWrapper }
   // ): T {
   //   const { instanceWrapper } = args;
-  //   // const config = getConfigMetadata(instanceWrapper.type)
+  //   // const config = getConfigValuesMetadata(instanceWrapper.type)
   //   // if(!config || !config.length) {
   //   //   return instance
   //   // }
@@ -146,44 +148,52 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
 
   // [configKey: string]: any;
 
-  @ConfigValue({ default: "/api", configKey: "apiPrefix" })
+  @Value({ default: "/api", configKey: "apiPrefix" })
   protected globalPrefix: string;
 
-  @ConfigValue()
+  // public setGlobalPrefix(prefix: string) {
+  //   this.apiPrefix = prefix;
+  // }
+  //
+  // public getGlobalPrefix() {
+  //   return this.apiPrefix;
+  // }
+
+  @Value()
   pagesDir?: string;
 
-  @ConfigValue()
+  @Value()
   dir: string;
 
-  @ConfigValue({ default: 3000 })
+  @Value({ default: 3000 })
   @Integer()
   port: number;
 
-  @ConfigValue()
+  @Value()
   hostname: string;
 
-  @ConfigValue({ default: false })
+  @Value({ default: false })
   dev: boolean;
 
-  @ConfigValue({ default: false })
+  @Value({ default: false })
   quiet: boolean;
 
-  @ConfigValue({ default: false })
+  @Value({ default: false })
   customServer: boolean;
 
   env: string[] = [];
   webpack: any = null;
   webpackDevMiddleware = null;
 
-  @ConfigValue({ default: ".joy" })
+  @Value({ default: ".joy" })
   distDir: string;
 
   autoGenOutputDir = "gen-files";
 
-  @ConfigValue({ default: "" })
+  @Value({ default: "" })
   assetPrefix: string;
 
-  @ConfigValue({ default: true })
+  @Value({ default: true })
   fileSystemRouter: boolean;
 
   configOrigin = "default";
@@ -191,7 +201,7 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   generateBuildId = () => null;
   generateEtags = true;
 
-  @ConfigValue({ default: ["tsx", "ts", "jsx", "js"] })
+  @Value({ default: ["tsx", "ts", "jsx", "js"] })
   pageExtensions: string[];
 
   target = "server";
@@ -209,7 +219,7 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
     canonicalBase: "",
   };
 
-  @ConfigValue({ default: "" })
+  @Value({ default: "" })
   basePath: string;
 
   // @ConfigValue({ default: "/api" })
@@ -235,7 +245,7 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
     scrollRestoration: false,
   };
 
-  @ConfigValue()
+  @Value()
   exportPathMap: any;
 
   future = {
@@ -354,7 +364,9 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
 
     if (!isNil(this.pageExtensions)) {
       if (!Array.isArray(this.pageExtensions)) {
-        throw new Error(`Specified pageExtensions is not an array of strings, found "${this.pageExtensions}". Please update this config or remove it.`);
+        throw new Error(
+          `Specified pageExtensions is not an array of strings, found "${this.pageExtensions}". Please update this config or remove it.`
+        );
       }
 
       if (!this.pageExtensions.length) {
@@ -363,7 +375,9 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
 
       this.pageExtensions.forEach((ext) => {
         if (typeof ext !== "string") {
-          throw new Error(`Specified pageExtensions is not an array of strings, found "${ext}" of type "${typeof ext}". Please update this config or remove it.`);
+          throw new Error(
+            `Specified pageExtensions is not an array of strings, found "${ext}" of type "${typeof ext}". Please update this config or remove it.`
+          );
         }
       });
     }
@@ -447,7 +461,9 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
       });
     } else {
       const configBaseName = basename(CONFIG_FILE, extname(CONFIG_FILE));
-      const nonJsPath = findUp.sync([`${configBaseName}.jsx`, `${configBaseName}.ts`, `${configBaseName}.tsx`, `${configBaseName}.json`], { cwd: dir });
+      const nonJsPath = findUp.sync([`${configBaseName}.jsx`, `${configBaseName}.ts`, `${configBaseName}.tsx`, `${configBaseName}.json`], {
+        cwd: dir,
+      });
       if (nonJsPath?.length) {
         throw new Error(`Configuring Joy via '${basename(nonJsPath)}' is not supported. Please replace the file with 'joy.config.js'.`);
       }

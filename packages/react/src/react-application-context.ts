@@ -4,7 +4,7 @@ import { DOMElement, ReactElement } from "react";
 import reactDom from "react-dom";
 import { ReactReduxService } from "./redux/react-redux.service";
 import { IReactRoute } from "./interfaces/react-route.interface";
-import { ComponentWrapper, CoreContext, EntryType, FactoryProvider, ICoreContext, Logger, Provider } from "@symph/core";
+import { ComponentWrapper, ApplicationContext, EntryType, FactoryProvider, IApplicationContext, Logger, Provider } from "@symph/core";
 import { IReactApplication } from "./interfaces";
 import { TReactAppComponent } from "./react-app-component";
 import { MountModule } from "./mount/mount-module";
@@ -17,7 +17,7 @@ type ReactAPPEntryType = EntryType | Provider | MountModule | (EntryType | Mount
 /**
  * @publicApi
  */
-export class ReactApplicationContext extends CoreContext implements IReactApplication {
+export class ReactApplicationContext extends ApplicationContext implements IReactApplication {
   private readonly logger = new Logger(ReactApplicationContext.name, true);
   protected reduxStore: ReactReduxService;
   protected routes: IReactRoute[];
@@ -28,7 +28,7 @@ export class ReactApplicationContext extends CoreContext implements IReactApplic
   constructor(
     protected reactApplicationConfiguration: typeof ReactApplicationConfiguration,
     protected initState: Record<string, any> = {},
-    public readonly parent?: ICoreContext
+    public readonly parent?: IApplicationContext
   ) {
     super(undefined, parent);
     // this.reduxStore = new ReactReduxService(this.appConfig, initState);

@@ -1,4 +1,4 @@
-import { EntryType, ICoreContext, JoyContextOptions, Logger, Type } from "@symph/core";
+import { EntryType, IApplicationContext, JoyContextOptions, Logger, Type } from "@symph/core";
 import { MESSAGES } from "@symph/core/dist/constants";
 import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
 import { ServerApplication } from "./server-application";
@@ -26,7 +26,7 @@ export class ServerFactoryProtoClass<T extends ServerApplication, OPT extends Re
     entry: EntryType,
     configurationClass: typeof ServerConfiguration = ServerConfiguration,
     options: NestApplicationOptions | OPT = {},
-    parent?: ICoreContext
+    parent?: IApplicationContext
   ): Promise<T> {
     this.applyLogger(options);
     // const httpServer = options.httpServer || this.createHttpAdapter();

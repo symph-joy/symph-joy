@@ -1,4 +1,4 @@
-import { ReactBaseModel } from "./react-base-model";
+import { BaseReactModel } from "./base-react-model";
 import { EnumReactAppInitStage } from "./react-app-init-stage.enum";
 
 export enum JoyRouteInitState {
@@ -8,7 +8,7 @@ export enum JoyRouteInitState {
   ERROR,
 }
 
-export class ReactAppInitManager extends ReactBaseModel<
+export class ReactAppInitManager extends BaseReactModel<
   Record<
     string,
     {

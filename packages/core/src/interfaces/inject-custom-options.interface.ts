@@ -1,7 +1,7 @@
 import { Type } from "./type.interface";
 
 export interface InjectCustomOptionsInterface {
-  name?: string | undefined;
+  name?: string | symbol | undefined;
   type?: Type | undefined;
   isOptional?: boolean;
 }

@@ -1,13 +1,13 @@
 import { NodeConfigConfiguration } from "@symph/config/server";
-import { Configuration, CoreContext } from "@symph/core";
+import { Configuration, ApplicationContext } from "@symph/core";
 import { ConfigLoaderFactory, ConfigService } from "@symph/config";
 import merge from "lodash.merge";
 
 @Configuration()
 export class JoyConfigDevConfiguration extends NodeConfigConfiguration {
-  private appContext: CoreContext;
+  private appContext: ApplicationContext;
 
-  setApplicationContext(coreContext: CoreContext) {
+  setApplicationContext(coreContext: ApplicationContext) {
     this.appContext = coreContext;
   }
   getConfigLoaderFactory(): ConfigLoaderFactory {

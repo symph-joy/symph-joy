@@ -15,14 +15,14 @@ import { NestHybridApplicationOptions } from "./microservices/nest-hybrid-applic
 import { ExceptionFilter } from "./exceptions";
 import { PipeTransform } from "./features/pipe-transform.interface";
 import { ShutdownSignal } from "../enums";
-import { ICoreContext } from "@symph/core";
+import { IApplicationContext } from "@symph/core";
 
 /**
  * Interface defining the core NestApplication object.
  *
  * @publicApi
  */
-export interface INestApplication extends ICoreContext {
+export interface INestApplication extends IApplicationContext {
   /**
    * Registers the request/context object for a given context ID (DI container sub-tree).
    * @returns {void}

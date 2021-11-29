@@ -1,9 +1,8 @@
-import { Configurable, ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 import { Component } from "@symph/core";
 
 @Component()
-@Configurable()
 export class BasicConfig {
-  @ConfigValue()
+  @Value()
   public msg: string;
 }

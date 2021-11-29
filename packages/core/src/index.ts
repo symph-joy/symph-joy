@@ -7,7 +7,7 @@ export * from "./injector";
 export * from "./services";
 // export * from "./utils";
 export * from "./hook";
-export * from "./core-context";
+export * from "./application-context";
 export * from "./injector/provider-scanner";
 
-export * from "./core-context-factory";
+export * from "./application-context-factory";

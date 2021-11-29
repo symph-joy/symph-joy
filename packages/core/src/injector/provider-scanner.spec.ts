@@ -3,23 +3,23 @@ import { ProviderScanner } from "./provider-scanner";
 import { Configuration } from "../decorators/core/configuration/configuration.decorator";
 import { Provider } from "../decorators/core/configuration/provider.decorator";
 import { Autowire, Component, Optional } from "../decorators/core";
-import { EntryType, ICoreContext, Scope } from "../interfaces";
-import { CoreContainer } from "./index";
+import { EntryType, IApplicationContext, Scope } from "../interfaces";
+import { ApplicationContainer } from "./index";
 import { Injector } from "./injector";
 import { HookCenter } from "../hook/hook-center";
 import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
 import { object } from "prop-types";
-import { CoreContext } from "../core-context";
+import { ApplicationContext } from "../application-context";
 
-function instanceContainer(): CoreContainer {
-  const container = new CoreContainer();
+function instanceContainer(): ApplicationContainer {
+  const container = new ApplicationContainer();
   const hookCenter = new HookCenter();
   hookCenter.registerProviderHooks(container);
   return container;
 }
 
-function createTestAppContext(entry?: EntryType[], parent?: ICoreContext): [CoreContext, CoreContainer, Injector] {
-  const context = new CoreContext();
+function createTestAppContext(entry?: EntryType[], parent?: IApplicationContext): [ApplicationContext, ApplicationContainer, Injector] {
+  const context = new ApplicationContext();
   const container = context.container;
   // @ts-ignore
   const injector = context.injector;
@@ -28,7 +28,7 @@ function createTestAppContext(entry?: EntryType[], parent?: ICoreContext): [Core
 
 describe("provider-scanner", () => {
   describe("scan configuration class", () => {
-    const container = new CoreContainer();
+    const container = new ApplicationContainer();
     const providerScanner = new ProviderScanner();
 
     @Component()
@@ -160,7 +160,7 @@ describe("provider-scanner", () => {
       class TestConfig {
         @Provider({
           name: "testProvider1",
-          scope: Scope.TRANSIENT,
+          scope: Scope.PROTOTYPE,
         })
         public testProvider: TestProvider;
       }
@@ -171,7 +171,7 @@ describe("provider-scanner", () => {
       expect(testProvider1).toMatchObject({
         name: "testProvider1",
         useClass: TestProvider,
-        scope: Scope.TRANSIENT,
+        scope: Scope.PROTOTYPE,
         type: TestProvider,
       });
     });
@@ -250,7 +250,7 @@ describe("provider-scanner", () => {
     const container1 = instanceContainer();
     const providerScanner = new ProviderScanner();
 
-    @Component({ scope: Scope.TRANSIENT })
+    @Component({ scope: Scope.PROTOTYPE })
     class TestProvider {
       public msg: string;
     }
@@ -267,7 +267,7 @@ describe("provider-scanner", () => {
         name: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
-        scope: Scope.TRANSIENT,
+        scope: Scope.PROTOTYPE,
         lazyRegister: false,
       });
     });
@@ -292,7 +292,7 @@ describe("provider-scanner", () => {
         name: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
-        scope: Scope.TRANSIENT,
+        scope: Scope.PROTOTYPE,
         lazyRegister: false,
       });
       expect(testProvider1).toMatchObject({
@@ -305,7 +305,7 @@ describe("provider-scanner", () => {
   });
 
   describe("scan imports", () => {
-    const container = new CoreContainer();
+    const container = new ApplicationContainer();
     const providerScanner = new ProviderScanner();
 
     test("should scan cover the imports modules", async () => {
@@ -330,7 +330,7 @@ describe("provider-scanner", () => {
   });
 
   describe("scan an array entry", () => {
-    const container = new CoreContainer();
+    const container = new ApplicationContainer();
     const providerScanner = new ProviderScanner();
 
     test("should scan out providers in all array items", async () => {
@@ -352,7 +352,7 @@ describe("provider-scanner", () => {
   });
 
   describe("scan nest config", () => {
-    const container = new CoreContainer();
+    const container = new ApplicationContainer();
     const providerScanner = new ProviderScanner();
 
     test("should scan out providers, when config class is nested in object", async () => {

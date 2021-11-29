@@ -2,7 +2,7 @@ import { ReactReduxService } from "./redux/react-redux.service";
 import { Autowire, IComponentInfoAware, ComponentAwareInfo, IComponentLifecycle, RuntimeException, TProviderName } from "@symph/core";
 import { Action } from "redux";
 
-export abstract class ReactBaseModel<TState> implements IComponentLifecycle, IComponentInfoAware {
+export abstract class BaseReactModel<TState> implements IComponentLifecycle, IComponentInfoAware {
   public getNamespace(): string {
     return this._namespace;
   }
@@ -47,7 +47,7 @@ export abstract class ReactBaseModel<TState> implements IComponentLifecycle, ICo
     this.reduxStore.store.dispatch(action);
   }
 
-  static isModel(obj: unknown): obj is ReactBaseModel<unknown> {
-    return obj instanceof ReactBaseModel;
+  static isModel(obj: unknown): obj is BaseReactModel<unknown> {
+    return obj instanceof BaseReactModel;
   }
 }

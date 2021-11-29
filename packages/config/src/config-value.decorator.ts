@@ -1,9 +1,10 @@
 import { getJsonSchema, JsonSchema, Property } from "@tsed/schema";
-import { Type } from "@symph/core";
+import { Autowire, Type } from "@symph/core";
+import { ConfigService } from "./config.service";
 
 const REFLECT_KEY_CONFIG = "__joy_config_item";
 
-interface IJoyPluginConfigMeta {
+export interface IConfigValueMeta {
   propKey: string;
   configKey: string;
   // schema?: T extends any ? any : JSONSchemaType<T, true>, // 为空表示不需要校验
@@ -14,12 +15,14 @@ interface IJoyPluginConfigMeta {
 
 let cacheHashId = 1;
 
+const JoyConfigProp = Symbol("__joy_config_service");
+
 /**
  * 声明一个配置项，当实例在初始化时，绑定joyConfig中的值到当前provider中
  * @param options
  * @constructor
  */
-export function ConfigValue<T extends any>(options: Partial<Omit<IJoyPluginConfigMeta, "propKey">> = {}): PropertyDecorator {
+export function Value(options: Partial<Omit<IConfigValueMeta, "propKey">> = {}): PropertyDecorator {
   return (target, propKey) => {
     if (typeof propKey === "symbol") {
       throw new Error(`${target}, @ConfigValue() decorate property(${propKey.toString()}) should only to be string\'`);
@@ -29,7 +32,14 @@ export function ConfigValue<T extends any>(options: Partial<Omit<IJoyPluginConfi
     const curConfigSchema = plainJsonSchema(classSchema.definitions, classSchema.properties[propKey]);
 
     const configKey = options?.configKey || propKey;
-    const existConfigs: IJoyPluginConfigMeta[] = getConfigMetadata(target) || [];
+    let existConfigs: IConfigValueMeta[];
+    let ownConfigs = getConfigValuesMetadata(target, true);
+    if (ownConfigs === undefined) {
+      const superConfigs = getConfigValuesMetadata(target);
+      existConfigs = superConfigs ? [...superConfigs] : [];
+    } else {
+      existConfigs = ownConfigs;
+    }
 
     const configValueMeta = Object.assign(
       {
@@ -39,11 +49,18 @@ export function ConfigValue<T extends any>(options: Partial<Omit<IJoyPluginConfi
         // 如果是空的object，则在赋值的时候不校验。
         schema: curConfigSchema?.type === "object" && !curConfigSchema.properties ? undefined : curConfigSchema,
         default: undefined,
-      } as IJoyPluginConfigMeta,
+      } as IConfigValueMeta,
       options
     );
-    existConfigs.push(configValueMeta);
+    const existOneIndex = existConfigs.findIndex((it) => it.propKey === propKey);
+    if (existOneIndex >= 0) {
+      existConfigs[existOneIndex] = configValueMeta;
+    } else {
+      existConfigs.push(configValueMeta);
+    }
 
+    // 声明一个隐藏的私有依赖属性，确保在ConfigService实例化后，才实例化被装饰的类。
+    Autowire(ConfigService)(target, JoyConfigProp);
     Reflect.defineMetadata(REFLECT_KEY_CONFIG, existConfigs, target);
   };
 }
@@ -86,6 +103,9 @@ function plainJsonSchema(definitions: any, schema: any): any {
   return schema;
 }
 
-export function getConfigMetadata(targetType: Object | Type): IJoyPluginConfigMeta[] {
-  return Reflect.getMetadata(REFLECT_KEY_CONFIG, typeof targetType === "function" ? targetType.prototype : targetType) as IJoyPluginConfigMeta[];
+export function getConfigValuesMetadata(targetType: Object | Type, isOwn = false): IConfigValueMeta[] | undefined {
+  if (isOwn) {
+    return Reflect.getOwnMetadata(REFLECT_KEY_CONFIG, typeof targetType === "function" ? targetType.prototype : targetType) as IConfigValueMeta[];
+  }
+  return Reflect.getMetadata(REFLECT_KEY_CONFIG, typeof targetType === "function" ? targetType.prototype : targetType) as IConfigValueMeta[];
 }

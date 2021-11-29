@@ -1,41 +1,36 @@
-import { Component, CoreContextFactory } from "@symph/core";
-import { ConfigValue } from "./config-value.decorator";
+import { Component, ApplicationContextFactory } from "@symph/core";
+import { Value } from "./config-value.decorator";
 import { ConfigService } from "./config.service";
-import { Configurable } from "./configurable.decorator";
 import { Max, MaxLength } from "@tsed/schema";
 import { SYMPH_CONFIG_INIT_VALUE } from "./constants";
 
 describe("config.service", () => {
-  test(`Should inject config value to the prop of the configurable provider`, async () => {
-    @Configurable()
+  test(`Should inject config value to the prop of the configurable component`, async () => {
+    @Component()
     class BasicConfig {
-      @ConfigValue()
+      @Value()
       public msg: string;
-
-      @ConfigValue({ default: false })
-      public isOk: boolean;
     }
 
     @Component()
     class CustomConfigService extends ConfigService {
       async initialize(): Promise<void> {
         await super.initialize();
-        this.mergeConfig({ msg: "From afterPropertiesSet", isOk: true });
+        this.mergeConfig({ msg: "From afterPropertiesSet" });
       }
     }
 
-    const context = await CoreContextFactory.createApplicationContext([CustomConfigService, BasicConfig]);
+    const context = await ApplicationContextFactory.createApplicationContext([CustomConfigService, BasicConfig]);
     const configService = await context.get(ConfigService);
     const basicConfig = await context.get(BasicConfig);
     expect(configService).toBeInstanceOf(CustomConfigService);
     expect(basicConfig.msg).toBe("From afterPropertiesSet");
-    expect(basicConfig.isOk).toBe(true);
   });
 
-  test(`Should inject a function config value to the prop of the configurable provider`, async () => {
-    @Configurable()
+  test(`Should inject a function config value to the prop of the configurable component`, async () => {
+    @Component()
     class BasicConfig {
-      @ConfigValue()
+      @Value()
       public funProp: () => any;
     }
 
@@ -49,24 +44,24 @@ describe("config.service", () => {
       }
     }
 
-    const context = await CoreContextFactory.createApplicationContext([CustomConfigService, BasicConfig]);
+    const context = await ApplicationContextFactory.createApplicationContext([CustomConfigService, BasicConfig]);
     const configService = await context.get(ConfigService);
     const basicConfig = await context.get(BasicConfig);
     expect(configService).toBeInstanceOf(CustomConfigService);
     expect(basicConfig.funProp).toBe(funValue);
   });
 
-  test(`Should inject multi config value to prop of a configurable provider.`, async () => {
-    @Configurable()
+  test(`Should inject multi config value to prop of a configurable component.`, async () => {
+    @Component()
     class BasicConfig {
-      @ConfigValue()
+      @Value()
       public msg: string;
 
-      @ConfigValue()
+      @Value()
       public count: number;
     }
 
-    const context = await CoreContextFactory.createApplicationContext([
+    const context = await ApplicationContextFactory.createApplicationContext([
       {
         initValue: {
           name: SYMPH_CONFIG_INIT_VALUE,
@@ -84,35 +79,65 @@ describe("config.service", () => {
     expect(basicConfig.count).toBe(1);
   });
 
-  test(`should use default value.`, async () => {
-    @Configurable()
+  test(`Should override super class config definition.`, async () => {
     @Component()
-    class BasicConfig {
-      @ConfigValue({ default: "hello" })
+    class Super {
+      @Value({ default: "super" })
       public msg: string;
     }
 
-    const context = await CoreContextFactory.createApplicationContext([ConfigService, BasicConfig]);
+    @Component()
+    class Child extends Super {
+      @Value({ default: "child" })
+      public msg: string;
+    }
+    const context = await ApplicationContextFactory.createApplicationContext([ConfigService, Super, Child]);
+    const superObj = await context.get(Super);
+    const childObj = await context.get(Child);
+    expect(superObj.msg).toBe("super");
+    expect(childObj.msg).toBe("child");
+  });
+
+  test(`should use default value.`, async () => {
+    @Component()
+    class BasicConfig {
+      @Value({ default: "hello" })
+      public msg: string;
+    }
+
+    const context = await ApplicationContextFactory.createApplicationContext([ConfigService, BasicConfig]);
+    const basicConfig = await context.get(BasicConfig);
+    expect(basicConfig.msg).toContain("hello");
+  });
+
+  test(`should use preset set value.`, async () => {
+    @Component()
+    class BasicConfig {
+      @Value()
+      public msg = "hello";
+    }
+
+    const context = await ApplicationContextFactory.createApplicationContext([ConfigService, BasicConfig]);
     const basicConfig = await context.get(BasicConfig);
     expect(basicConfig.msg).toContain("hello");
   });
 
   describe("validate", () => {
     test(`should validate the config value, when type is a basic value type.`, async () => {
-      @Configurable()
+      @Component()
       class BasicConfig {
-        @ConfigValue()
+        @Value()
         @MaxLength(3)
         public msg: string;
 
-        @ConfigValue()
+        @Value()
         @Max(2)
         public count: number;
       }
 
       let error: any;
       try {
-        await CoreContextFactory.createApplicationContext([
+        await ApplicationContextFactory.createApplicationContext([
           {
             initValue: {
               name: SYMPH_CONFIG_INIT_VALUE,
@@ -138,16 +163,15 @@ describe("config.service", () => {
         public value: string;
       }
 
-      @Configurable()
       @Component()
       class BasicConfig {
-        @ConfigValue()
+        @Value()
         public msg: ConfigMsg;
       }
 
       let error: any;
       try {
-        const context = await CoreContextFactory.createApplicationContext([
+        const context = await ApplicationContextFactory.createApplicationContext([
           {
             initValue: {
               name: SYMPH_CONFIG_INIT_VALUE,

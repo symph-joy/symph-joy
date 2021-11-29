@@ -1,6 +1,6 @@
 import { MountService, ReactApplicationContext } from "@symph/react";
 import { ReactFetchService } from "./react-fetch.service";
-import { CoreContext, IComponentInfoAware, ComponentAwareInfo, IComponentLifecycle } from "@symph/core";
+import { ApplicationContext, IComponentInfoAware, ComponentAwareInfo, IComponentLifecycle } from "@symph/core";
 
 export class ReactModuleFetchService implements IComponentInfoAware, IComponentLifecycle {
   public context: ReactApplicationContext;
@@ -8,7 +8,7 @@ export class ReactModuleFetchService implements IComponentInfoAware, IComponentL
   public joyFetchService: ReactFetchService;
   public mountService: MountService;
 
-  setApplicationContext(coreContext: CoreContext): void {
+  setApplicationContext(coreContext: ApplicationContext): void {
     this.context = coreContext as ReactApplicationContext;
   }
 

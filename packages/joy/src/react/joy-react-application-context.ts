@@ -1,5 +1,5 @@
 import { IReactRoute, ReactApplicationConfiguration, ReactApplicationContext } from "@symph/react";
-import { ComponentWrapper, EntryType, ICoreContext } from "@symph/core";
+import { ComponentWrapper, EntryType, IApplicationContext } from "@symph/core";
 
 export class JoyReactApplicationContext extends ReactApplicationContext {
   public scannedModules: Record<string, unknown>[];
@@ -8,9 +8,9 @@ export class JoyReactApplicationContext extends ReactApplicationContext {
     // protected readonly entry: EntryType | EntryType[],
     protected reactApplicationConfiguration: typeof ReactApplicationConfiguration,
     // protected readonly appConfig: ApplicationConfig,
-    // container?: CoreContainer,
+    // container?: ApplicationContainer,
     initState: Record<string, any> = {},
-    public readonly parent?: ICoreContext
+    public readonly parent?: IApplicationContext
   ) {
     super(reactApplicationConfiguration, initState, parent);
   }

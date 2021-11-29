@@ -1,4 +1,4 @@
-import { AutowireHook, Component, EntryType, HookType, ICoreContext, IHook, RuntimeException } from "@symph/core";
+import { AutowireHook, Component, EntryType, HookType, IApplicationContext, IHook, RuntimeException } from "@symph/core";
 import { MountModule, NestApplicationOptions, ServerApplication } from "@symph/server";
 import { pathToRegexp } from "path-to-regexp";
 import { IncomingMessage } from "http";
@@ -22,7 +22,7 @@ export class JoyServerApplication extends ServerApplication {
     protected readonly entry: EntryType,
     public readonly configurationClass: typeof ServerConfiguration = ServerConfiguration,
     protected readonly appOptions: NestApplicationOptions = {}, // public container: ServerContainer = new ServerContainer()
-    public readonly parent: ICoreContext | undefined
+    public readonly parent: IApplicationContext | undefined
   ) {
     super(entry, configurationClass, appOptions, parent);
   }

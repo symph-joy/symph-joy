@@ -7,7 +7,7 @@ import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { JoyDevConfiguration } from "../../server/joy-dev.configuration";
 import { JoyServerApplicationDev } from "../../server/joy-server-application-dev";
 import { JoyServerFactoryDev } from "../../server/joy-server-factory-dev";
-import { CoreContext, ValueProvider } from "@symph/core";
+import { ApplicationContext, ValueProvider } from "@symph/core";
 import HotReloader from "../../server/hot-reloader";
 import { BuildDevConfiguration } from "../../build/build-dev.configuration";
 
@@ -26,7 +26,7 @@ export class JoyDevCommand extends JoyCommand {
   private isReloading = false;
   private isInvalidate = false;
 
-  private buildContext: CoreContext;
+  private buildContext: ApplicationContext;
   private hotReloader: HotReloader;
 
   getName(): string {
@@ -161,7 +161,7 @@ export class JoyDevCommand extends JoyCommand {
     this.dir = dir;
     this.argOpts = argOpts;
 
-    this.buildContext = new CoreContext([
+    this.buildContext = new ApplicationContext([
       // JoyServerConfiguration,
       BuildDevConfiguration,
       {

@@ -1,11 +1,11 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, Route } from "@symph/react";
 import { Autowire } from "@symph/core";
 import { EntityModel } from "../model/entity.model";
 
 @Route({ path: "/entities" })
 @ReactController()
-export default class HelloController extends ReactBaseController {
+export default class HelloController extends BaseReactController {
   @Autowire()
   public entityModel: EntityModel;
 

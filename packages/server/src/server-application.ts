@@ -1,7 +1,18 @@
 /**
  * @publicApi
  */
-import { Abstract, ComponentWrapper, ContextId, CoreContext, EntryType, ICoreContext, Logger, Provider, Type, ValueProvider } from "@symph/core";
+import {
+  Abstract,
+  ComponentWrapper,
+  ContextId,
+  ApplicationContext,
+  EntryType,
+  IApplicationContext,
+  Logger,
+  Provider,
+  Type,
+  ValueProvider,
+} from "@symph/core";
 import { ServerContainer } from "./server-container";
 import { Resolver } from "./router/interfaces/resolver.interface";
 import { RoutesResolver } from "./router/routes-resolver";
@@ -31,7 +42,7 @@ import { MountModule } from "./mount/mount-module";
 
 type ServerAPPEntryType = EntryType | Provider | MountModule | (EntryType | MountModule | Provider)[];
 
-export class ServerApplication extends CoreContext implements INestApplication {
+export class ServerApplication extends ApplicationContext implements INestApplication {
   private readonly logger = new Logger(ServerApplication.name, true);
   private routesResolver: Resolver;
   protected httpServer: any;
@@ -48,7 +59,7 @@ export class ServerApplication extends CoreContext implements INestApplication {
     // public readonly httpAdapter: HttpServer,
     // protected readonly config: ApplicationConfig,
     protected readonly appOptions: NestApplicationOptions = {}, // public container: ServerContainer = new ServerContainer()
-    public readonly parent: ICoreContext | undefined
+    public readonly parent: IApplicationContext | undefined
   ) {
     super(entry, parent);
     this.mountService = new MountService();

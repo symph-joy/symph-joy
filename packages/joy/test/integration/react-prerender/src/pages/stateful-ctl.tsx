@@ -1,10 +1,10 @@
 import React, { ReactNode } from "react";
-import { ReactModel, ReactBaseController, ReactController, ReactBaseModel, Route } from "@symph/react";
+import { ReactModel, BaseReactController, ReactController, BaseReactModel, Route } from "@symph/react";
 import { Autowire } from "@symph/core";
 import { Prerender } from "@symph/joy/react";
 
 @ReactModel()
-export class StatefulModel extends ReactBaseModel<{
+export class StatefulModel extends BaseReactModel<{
   staticMessage: string;
   staticUpdateTime: number;
   dynamicMessage: string;
@@ -52,7 +52,7 @@ export class StatefulModel extends ReactBaseModel<{
 @Prerender()
 @Route({ path: "/stateful" })
 @ReactController()
-export default class StatefulCtl extends ReactBaseController {
+export default class StatefulCtl extends BaseReactController {
   @Autowire()
   public statefulModel: StatefulModel;
 

@@ -1,4 +1,4 @@
-import { Configuration, CoreContextFactory, ICoreContext } from "@symph/core";
+import { Configuration, ApplicationContextFactory, IApplicationContext } from "@symph/core";
 import { BasicConfig } from "../src/basic-config";
 import { ConfigConfiguration, ConfigService, ConfigLoader, ConfigLoaderFactory } from "@symph/config";
 import { FileConfigLoader } from "@symph/config/server";
@@ -17,12 +17,12 @@ class CustomConfig extends ConfigConfiguration {
 }
 
 describe("config basic", () => {
-  let context: ICoreContext;
+  let context: IApplicationContext;
   let configService: ConfigService;
   let configuration: ConfigConfiguration;
 
   beforeAll(async () => {
-    context = await CoreContextFactory.createApplicationContext([CustomConfig, BasicConfig]);
+    context = await ApplicationContextFactory.createApplicationContext([CustomConfig, BasicConfig]);
     configuration = await context.get(ConfigConfiguration);
     configService = await context.get(ConfigService);
   });

@@ -13,7 +13,7 @@ import { ReactApplicationConfig } from "../react-application-config";
 // @ts-ignore
 import flatten from "flatten";
 import { IModel } from "../interfaces/model.interface";
-import { ICoreContext, RuntimeException } from "@symph/core";
+import { IApplicationContext, RuntimeException } from "@symph/core";
 
 declare global {
   interface Window {
@@ -45,7 +45,7 @@ interface ActionSetState extends Action<any> {
 const noopReduxMiddleware = (store: any) => (next: any) => (action: any) => next();
 
 export class ReactReduxService {
-  public app: ICoreContext;
+  public app: IApplicationContext;
   public store: Store;
   public models: { [namespace: string]: RegisteredModel } = {};
   public asyncReducers: ReducersMapObject = {};

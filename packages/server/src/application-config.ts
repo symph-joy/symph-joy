@@ -2,13 +2,13 @@ import { CanActivate } from "./interfaces/features/can-activate.interface";
 import { NestInterceptor } from "./interfaces/features/nest-interceptor.interface";
 import { ExceptionFilter } from "./interfaces/exceptions";
 import { PipeTransform } from "./interfaces/features/pipe-transform.interface";
-import { ComponentWrapper } from "@symph/core";
+import { Component, ComponentWrapper } from "@symph/core";
 import { WebSocketAdapter } from "./interfaces/websockets/web-socket-adapter.interface";
-import { Configurable, ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 
-@Configurable()
+@Component()
 export class ApplicationConfig {
-  @ConfigValue({ default: "" })
+  @Value({ default: "" })
   protected globalPrefix: string;
 
   private globalPipes: PipeTransform[] = [];

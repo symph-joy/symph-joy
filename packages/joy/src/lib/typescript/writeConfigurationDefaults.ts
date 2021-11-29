@@ -16,9 +16,7 @@ type DesiredCompilerOptionsShape = {
       };
 };
 
-function getDesiredCompilerOptions(
-  ts: typeof import("typescript")
-): DesiredCompilerOptionsShape {
+function getDesiredCompilerOptions(ts: typeof import("typescript")): DesiredCompilerOptionsShape {
   const o: DesiredCompilerOptionsShape = {
     // These are suggested values and will be set when not present in the
     // tsconfig.json
@@ -42,12 +40,7 @@ function getDesiredCompilerOptions(
     module: {
       parsedValue: ts.ModuleKind.ESNext,
       // All of these values work:
-      parsedValues: [
-        ts.ModuleKind.ES2020,
-        ts.ModuleKind.ESNext,
-        ts.ModuleKind.CommonJS,
-        ts.ModuleKind.AMD,
-      ],
+      parsedValues: [ts.ModuleKind.ES2020, ts.ModuleKind.ESNext, ts.ModuleKind.CommonJS, ts.ModuleKind.AMD],
       value: "esnext",
       reason: "for dynamic import() support",
     },
@@ -71,9 +64,7 @@ function getDesiredCompilerOptions(
   return o;
 }
 
-export function getRequiredConfiguration(
-  ts: typeof import("typescript")
-): Partial<import("typescript").CompilerOptions> {
+export function getRequiredConfiguration(ts: typeof import("typescript")): Partial<import("typescript").CompilerOptions> {
   const res: Partial<import("typescript").CompilerOptions> = {};
 
   const desiredCompilerOptions = getDesiredCompilerOptions(ts);
@@ -88,20 +79,13 @@ export function getRequiredConfiguration(
   return res;
 }
 
-export async function writeConfigurationDefaults(
-  ts: typeof import("typescript"),
-  tsConfigPath: string,
-  isFirstTimeSetup: boolean
-): Promise<void> {
+export async function writeConfigurationDefaults(ts: typeof import("typescript"), tsConfigPath: string, isFirstTimeSetup: boolean): Promise<void> {
   if (isFirstTimeSetup) {
     await fs.writeFile(tsConfigPath, "{}" + os.EOL);
   }
 
   const desiredCompilerOptions = getDesiredCompilerOptions(ts);
-  const effectiveConfiguration = await getTypeScriptConfiguration(
-    ts,
-    tsConfigPath
-  );
+  const effectiveConfiguration = await getTypeScriptConfiguration(ts, tsConfigPath);
 
   const userTsConfigContent = await fs.readFile(tsConfigPath, {
     encoding: "utf8",
@@ -119,26 +103,13 @@ export async function writeConfigurationDefaults(
     if ("suggested" in check) {
       if (!(optionKey in effectiveConfiguration.options)) {
         userTsConfig.compilerOptions[optionKey] = check.suggested;
-        suggestedActions.push(
-          chalk.cyan(optionKey) + " was set to " + chalk.bold(check.suggested)
-        );
+        suggestedActions.push(chalk.cyan(optionKey) + " was set to " + chalk.bold(check.suggested));
       }
     } else if ("value" in check) {
       const ev = effectiveConfiguration.options[optionKey];
-      if (
-        !("parsedValues" in check
-          ? check.parsedValues?.includes(ev)
-          : "parsedValue" in check
-          ? check.parsedValue === ev
-          : check.value === ev)
-      ) {
+      if (!("parsedValues" in check ? check.parsedValues?.includes(ev) : "parsedValue" in check ? check.parsedValue === ev : check.value === ev)) {
         userTsConfig.compilerOptions[optionKey] = check.value;
-        requiredActions.push(
-          chalk.cyan(optionKey) +
-            " was set to " +
-            chalk.bold(check.value) +
-            ` (${check.reason})`
-        );
+        requiredActions.push(chalk.cyan(optionKey) + " was set to " + chalk.bold(check.value) + ` (${check.reason})`);
       }
     } else {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -147,53 +118,30 @@ export async function writeConfigurationDefaults(
   }
 
   if (userTsConfig.include == null) {
-    userTsConfig.include = ["next-env.d.ts", "**/*.ts", "**/*.tsx"];
-    suggestedActions.push(
-      chalk.cyan("include") +
-        " was set to " +
-        chalk.bold(`['next-env.d.ts', '**/*.ts', '**/*.tsx']`)
-    );
+    userTsConfig.include = ["joy-env.d.ts", "**/*.ts", "**/*.tsx"];
+    suggestedActions.push(chalk.cyan("include") + " was set to " + chalk.bold(`['joy-env.d.ts', '**/*.ts', '**/*.tsx']`));
   }
 
   if (userTsConfig.exclude == null) {
     userTsConfig.exclude = ["node_modules"];
-    suggestedActions.push(
-      chalk.cyan("exclude") + " was set to " + chalk.bold(`['node_modules']`)
-    );
+    suggestedActions.push(chalk.cyan("exclude") + " was set to " + chalk.bold(`['node_modules']`));
   }
 
   if (suggestedActions.length < 1 && requiredActions.length < 1) {
     return;
   }
 
-  await fs.writeFile(
-    tsConfigPath,
-    CommentJson.stringify(userTsConfig, null, 2) + os.EOL
-  );
+  await fs.writeFile(tsConfigPath, CommentJson.stringify(userTsConfig, null, 2) + os.EOL);
 
   if (isFirstTimeSetup) {
-    console.log(
-      chalk.green(
-        `We detected TypeScript in your project and created a ${chalk.bold(
-          "tsconfig.json"
-        )} file for you.`
-      ) + "\n"
-    );
+    console.log(chalk.green(`We detected TypeScript in your project and created a ${chalk.bold("tsconfig.json")} file for you.`) + "\n");
     return;
   }
 
-  console.log(
-    chalk.green(
-      `We detected TypeScript in your project and reconfigured your ${chalk.bold(
-        "tsconfig.json"
-      )} file for you.`
-    ) + "\n"
-  );
+  console.log(chalk.green(`We detected TypeScript in your project and reconfigured your ${chalk.bold("tsconfig.json")} file for you.`) + "\n");
   if (suggestedActions.length) {
     console.log(
-      `The following suggested values were added to your ${chalk.cyan(
-        "tsconfig.json"
-      )}. These values ${chalk.bold(
+      `The following suggested values were added to your ${chalk.cyan("tsconfig.json")}. These values ${chalk.bold(
         "can be changed"
       )} to fit your project's needs:\n`
     );
@@ -204,11 +152,7 @@ export async function writeConfigurationDefaults(
   }
 
   if (requiredActions.length) {
-    console.log(
-      `The following ${chalk.bold(
-        "mandatory changes"
-      )} were made to your ${chalk.cyan("tsconfig.json")}:\n`
-    );
+    console.log(`The following ${chalk.bold("mandatory changes")} were made to your ${chalk.cyan("tsconfig.json")}:\n`);
 
     requiredActions.forEach((action) => console.log(`\t- ${action}`));
 

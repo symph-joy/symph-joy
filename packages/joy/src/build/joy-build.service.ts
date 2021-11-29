@@ -40,7 +40,7 @@ import { writeBuildId } from "./write-build-id";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
-import { AutowireHook, Component, CoreContext, HookType, IHook } from "@symph/core";
+import { AutowireHook, Component, ApplicationContext, HookType, IHook } from "@symph/core";
 import { getWebpackConfigForSrc } from "./webpack-config-for-src";
 import { FileGenerator } from "./file-generator";
 import { FileScanner } from "./scanner/file-scanner";
@@ -88,7 +88,7 @@ export class JoyBuildService {
   private buildManifestPath: string;
 
   constructor(
-    private readonly coreContext: CoreContext,
+    private readonly coreContext: ApplicationContext,
     private joyConfig: JoyAppConfig,
     private buildConfig: BuildConfig,
     private fileGenerator: FileGenerator,
@@ -183,7 +183,7 @@ export class JoyBuildService {
         // const routeModule = this.coreContext.getProviderDefinition<
         //   ClassProvider
         // >(providerId);
-        // const routeClass = (routeModule?.useClass as any) as typeof ReactBaseController;
+        // const routeClass = (routeModule?.useClass as any) as typeof BaseReactController;
         const pathIsDynamic = isDynamicRoute(path);
         // const parentRoutes = this.joyReactRoute.getParentRoutes(reactRoute.path);
 

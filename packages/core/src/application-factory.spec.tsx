@@ -1,4 +1,4 @@
-import { CoreContextFactory } from "./core-context-factory";
+import { ApplicationContextFactory } from "./application-context-factory";
 import { Component } from "../src/decorators/core";
 import React from "react";
 import { Configuration } from "./decorators/core/configuration/configuration.decorator";
@@ -20,7 +20,7 @@ describe("temp-factory", () => {
       public helloProvider: HelloProvider;
     }
 
-    const app = await CoreContextFactory.createApplicationContext(AppConfig);
+    const app = await ApplicationContextFactory.createApplicationContext(AppConfig);
     const helloProvider = await app.get(HelloProvider);
     expect(helloProvider!.hello()).toBe("hello world");
   });

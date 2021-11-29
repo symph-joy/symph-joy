@@ -1,9 +1,9 @@
 import React, { Component, ReactNode } from "react";
 import { JoyReactContext } from "./react-app-container";
 import { ModelStateChangeHandler, ReactReduxService } from "./redux/react-redux.service";
-import { ReactBaseModel } from "./react-base-model";
+import { BaseReactModel } from "./base-react-model";
 import { bindRouteFromCompProps, getRouteMeta, IRouteMeta } from "./router/react-route.decorator";
-import { ICoreContext, IInjectableDependency, Autowire } from "@symph/core";
+import { IApplicationContext, IInjectableDependency, Autowire } from "@symph/core";
 import { JoyRouteInitState, ReactAppInitManager } from "./react-app-init-manager";
 import { ReactRouter } from "./router/react-router";
 import type { Location } from "history";
@@ -17,7 +17,7 @@ export type ControllerBaseStateType = {
   [keys: string]: unknown;
 };
 
-export interface ReactBaseController {
+export interface BaseReactController {
   /**
    * 获取预渲染的状态
    */
@@ -40,10 +40,10 @@ interface ControllerProps {
 /**
  * todo model 状态发生改变后，如何精细的判断是否有必要刷新组件？
  */
-export abstract class ReactBaseController<
+export abstract class BaseReactController<
   TProps = Record<string, unknown>,
   TState = Record<string, unknown>,
-  TContext extends ICoreContext = ICoreContext
+  TContext extends IApplicationContext = IApplicationContext
 > extends Component<TProps & ControllerProps, TState, TContext> {
   __proto__: typeof React.Component;
 
@@ -56,12 +56,12 @@ export abstract class ReactBaseController<
 
   static contextType = JoyReactContext;
 
-  protected appContext: ICoreContext;
+  protected appContext: IApplicationContext;
   protected reduxStore: ReactReduxService;
   protected isCtlMounted: boolean;
   protected routeMeta?: IRouteMeta;
 
-  protected _models: Array<ReactBaseModel<unknown>>;
+  protected _models: Array<BaseReactModel<unknown>>;
 
   private hasInitInvoked = false;
   private hasInjectProps = false;
@@ -191,10 +191,10 @@ export abstract class ReactBaseController<
   }
 
   private registersModel(propDeps: IInjectableDependency[]) {
-    this._models = new Array<ReactBaseModel<unknown>>();
+    this._models = new Array<BaseReactModel<unknown>>();
     for (let i = 0; i < propDeps.length; i++) {
       const model = propDeps[i].instance;
-      if (ReactBaseModel.isModel(model)) {
+      if (BaseReactModel.isModel(model)) {
         this._models.push(model);
       }
     }

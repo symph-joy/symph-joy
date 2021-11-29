@@ -4,7 +4,7 @@ import { Autowire } from "@symph/core";
 import { UserOutlined, LaptopOutlined, NotificationOutlined } from "@ant-design/icons";
 import { DocsModel } from "../model/docs.model";
 import _ from "lodash";
-import { ReactBaseController, ReactController, RouteSwitch } from "@symph/react";
+import { BaseReactController, ReactController, RouteSwitch } from "@symph/react";
 import Icon, { SearchOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
@@ -30,7 +30,7 @@ const MoonSvg = () => (
 );
 
 @ReactController()
-export default class MainLayout extends ReactBaseController<any> {
+export default class MainLayout extends BaseReactController<any> {
   @Autowire()
   public layoutModel: LayoutModel;
 

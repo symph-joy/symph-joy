@@ -13,7 +13,7 @@ import { UnknownDependenciesException } from "../errors/exceptions/unknown-depen
 import { STATIC_CONTEXT } from "./constants";
 import { ComponentWrapper, ContextId, IComponentWrapper, InstancePerContext, PropertyMetadata } from "./component-wrapper";
 import { TaskThenable, ThenableResult } from "../utils/task-thenable";
-import { CoreContainer } from "./core-container";
+import { ApplicationContainer } from "./application-container";
 import { providerNameGenerate } from "./provider-name-generate";
 import { getComponentMeta } from "../decorators/core";
 import { isComponentInfoAwareComp } from "../interfaces/context/component-info-aware.interface";
@@ -22,7 +22,7 @@ import { HookType, IHook } from "../hook/interface/hook.interface";
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
 import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
 import { isApplicationContextAwareComp } from "../interfaces/context/application-context-ware.interface";
-import { CoreContext } from "../core-context";
+import { ApplicationContext } from "../application-context";
 import { AutowireHook } from "../hook";
 // const SyncThenable = Promise
 // type SyncThenable<T> = Promise<T>
@@ -51,7 +51,7 @@ export interface InjectorDependencyContext {
   /**
    * The name of the function or injection token
    */
-  name?: string;
+  name?: string | symbol;
   /**
    * The index of the dependency which gets injected
    * from the dependencies array
@@ -71,7 +71,7 @@ export class Injector {
   @AutowireHook({ async: false, parallel: false, type: HookType.Waterfall })
   private componentAfterInitialize: IHook;
 
-  constructor(public container: CoreContainer, protected parentInjector?: Injector) {
+  constructor(public container: ApplicationContainer, protected parentInjector?: Injector) {
     // this.container = appContent.container;
     // this.parentInjector = appContent.parent.injector
     // this.componentAfterInitialize = this.pluginCenter.registerHook({
@@ -143,7 +143,7 @@ export class Injector {
           });
         }
         if (isApplicationContextAwareComp(instance)) {
-          const contextWrapper = this.container.getProviderByType(CoreContext)!;
+          const contextWrapper = this.container.getProviderByType(ApplicationContext)!;
           const context = contextWrapper && this.loadProvider(contextWrapper);
           if (!context || context.then) {
             throw new RuntimeException(
@@ -245,7 +245,7 @@ export class Injector {
       paramDeps = params.map(
         (param, index): IInjectableDependency => {
           let type: Type | undefined;
-          let name: string | undefined;
+          let name: string | symbol | undefined;
           let injectBy: EnuInjectBy | undefined;
           let isOptional: boolean | undefined;
           if (typeof param === "object") {
@@ -358,33 +358,26 @@ export class Injector {
     return this.resolveInstance(paramWrapper, contextId);
   }
 
-  public getInstanceWrapper(
-    // container: CoreContainer,
-    injectBy: EnuInjectBy.TYPE,
-    type: Type
-  ): ComponentWrapper | undefined;
+  public getInstanceWrapper(injectBy: EnuInjectBy.TYPE, type: Type): ComponentWrapper | undefined;
 
   public getInstanceWrapper(
-    // container: CoreContainer,
     injectBy: EnuInjectBy.NAME,
     type: undefined,
-    name: string,
+    name: string | symbol,
     packageName: string | undefined
   ): ComponentWrapper | undefined;
 
   public getInstanceWrapper(
-    // container: CoreContainer,
     injectBy: EnuInjectBy | undefined,
     type: Type | undefined,
-    name: string | undefined,
+    name: string | symbol | undefined,
     packageName?: string | undefined
   ): ComponentWrapper | undefined;
 
   public getInstanceWrapper(
-    // container: CoreContainer,
     injectBy: EnuInjectBy | undefined,
     type: Type | undefined,
-    name?: string,
+    name?: string | symbol,
     packageName?: string | undefined
   ): ComponentWrapper | undefined {
     const container = this.container;
@@ -436,7 +429,7 @@ export class Injector {
     return instanceWrapper;
   }
 
-  private dynamicAddWrapper(type: Type, name?: string): ComponentWrapper | undefined {
+  private dynamicAddWrapper(type: Type, name?: string | symbol): ComponentWrapper | undefined {
     const meta = getComponentMeta(type);
     if (!meta || !meta.lazyRegister) {
       return undefined;
@@ -549,7 +542,7 @@ export class Injector {
     }
   }
 
-  public async loadEnhancersPerContext(wrapper: ComponentWrapper, container: CoreContainer, ctx: ContextId) {
+  public async loadEnhancersPerContext(wrapper: ComponentWrapper, container: ApplicationContainer, ctx: ContextId) {
     const enhancers = wrapper.getEnhancersMetadata() || [];
     const loadEnhancer = (item: ComponentWrapper) => {
       return this.loadInstance(item, ctx);

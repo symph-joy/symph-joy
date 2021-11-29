@@ -1,9 +1,9 @@
 import { HookType, IHook } from "./interface/hook.interface";
 import { AutowireHook } from "./autowire-hook.decorator";
 import { Configuration, Component } from "../decorators/core";
-import { CoreContext } from "../core-context";
+import { ApplicationContext } from "../application-context";
 import { RegisterTap } from "./register-tap.decorator";
-import { CoreContainer } from "../injector";
+import { ApplicationContainer } from "../injector";
 
 describe("hook", () => {
   test("basic usage", async () => {
@@ -42,7 +42,7 @@ describe("hook", () => {
       public bPlugin!: BPlugin;
     }
 
-    const app = new CoreContext(AppConfig);
+    const app = new ApplicationContext(AppConfig);
     await app.init();
 
     const helloProvider = await app.get<APlugin>(APlugin)!;
@@ -94,7 +94,7 @@ describe("hook", () => {
       public cPlugin: CPlugin;
     }
 
-    const app = new CoreContext(AppConfig);
+    const app = new ApplicationContext(AppConfig);
     await app.init();
 
     const helloProvider = await app.get<APlugin>(APlugin)!;

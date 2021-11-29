@@ -38,7 +38,7 @@
 import * as pathToRegexp from "path-to-regexp";
 import { STATIC_CONTEXT } from "@symph/core/dist/injector/constants";
 import { ContextIdFactory } from "../helpers";
-import { ContextId, Injector, ComponentWrapper, CoreContainer, Logger, Type } from "@symph/core";
+import { ContextId, Injector, ComponentWrapper, ApplicationContainer, Logger, Type } from "@symph/core";
 import { GuardsContextCreator } from "../guards/guards-context-creator";
 import { HttpServer } from "../interfaces/http";
 import { GuardsConsumer } from "../guards/guards-consumer";
@@ -299,7 +299,7 @@ export class RouterExplorer {
   public createRequestScopedHandler(
     instanceWrapper: ComponentWrapper,
     requestMethod: RequestMethod,
-    moduleRef: CoreContainer,
+    moduleRef: ApplicationContainer,
     // moduleKey: string,
     methodName: string
   ) {

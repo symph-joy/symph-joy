@@ -1,9 +1,9 @@
 import React from "react";
-import { ReactController, ReactBaseController, Route, RouteContainer, RouteSwitch } from "../../../../../index";
+import { ReactController, BaseReactController, Route, RouteContainer, RouteSwitch } from "../../../../../index";
 
 @RouteContainer({ path: "/nest" })
 @ReactController()
-export default class NestLayout extends ReactBaseController {
+export default class NestLayout extends BaseReactController {
   renderView() {
     const { route, match } = this.props;
     return (

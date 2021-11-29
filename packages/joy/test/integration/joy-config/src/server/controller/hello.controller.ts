@@ -1,10 +1,9 @@
 import { Controller, Get } from "@symph/server";
-import { Configurable, ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 
-@Configurable()
 @Controller()
 export class HelloController {
-  @ConfigValue()
+  @Value()
   public msg: string;
 
   @Get("/hello")

@@ -1,8 +1,8 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
 
 @ReactController()
-export default class GlobalController extends ReactBaseController {
+export default class GlobalController extends BaseReactController {
   renderView(): ReactNode {
     return (
       <div>

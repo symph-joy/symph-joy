@@ -1,10 +1,10 @@
 import React, { ReactNode } from "react";
-import { ReactModel, ReactBaseController, ReactController, ReactBaseModel, Route } from "@symph/react";
+import { ReactModel, BaseReactController, ReactController, BaseReactModel, Route } from "@symph/react";
 import { Autowire } from "@symph/core";
 import { Prerender } from "@symph/joy/react";
 
 @ReactModel()
-export class RevalidateModel extends ReactBaseModel<{
+export class RevalidateModel extends BaseReactModel<{
   msg: string;
   updateTime: number;
 }> {
@@ -34,7 +34,7 @@ export class RevalidateModel extends ReactBaseModel<{
 @Prerender()
 @Route({ path: "/revalidate" })
 @ReactController()
-export default class RevalidateCtl extends ReactBaseController {
+export default class RevalidateCtl extends BaseReactController {
   @Autowire()
   public revalidateModel: RevalidateModel;
 

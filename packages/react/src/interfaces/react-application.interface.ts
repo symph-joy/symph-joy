@@ -1,5 +1,5 @@
 import { DOMElement, ReactElement } from "react";
-import { ComponentWrapper, EntryType, ICoreContext, Provider } from "@symph/core";
+import { ComponentWrapper, EntryType, IApplicationContext, Provider } from "@symph/core";
 import { TReactAppComponent } from "../react-app-component";
 import { MountModule } from "../mount/mount-module";
 
@@ -8,7 +8,7 @@ import { MountModule } from "../mount/mount-module";
  *
  * @publicApi
  */
-export interface IReactApplication extends ICoreContext {
+export interface IReactApplication extends IApplicationContext {
   start(rootComponent?: TReactAppComponent): ReactElement;
   start(rootComponent: TReactAppComponent, domContainer?: DOMElement<any, any> | string): ReactElement;
 

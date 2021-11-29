@@ -1,10 +1,10 @@
 import { Autowire, Component, Optional } from "../decorators/core";
-import { EntryType, IComponentLifecycle, ICoreContext, Scope } from "../interfaces";
-import { CoreContainer } from "../injector";
+import { EntryType, IComponentLifecycle, IApplicationContext, Scope } from "../interfaces";
+import { ApplicationContainer } from "../injector";
 import { ComponentWrapper } from "./component-wrapper";
 import { Injector } from "../injector/injector";
 import { HookCenter } from "../hook/hook-center";
-import { CoreContext } from "../core-context";
+import { ApplicationContext } from "../application-context";
 import { registerComponents } from "../../test/injector/helper";
 import sinon from "sinon";
 import { UnknownDependenciesException } from "../errors/exceptions/unknown-dependencies.exception";
@@ -12,15 +12,15 @@ import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dep
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
 import { createPackage } from "../package/package";
 
-function instanceTestContainer(): CoreContainer {
-  const container = new CoreContainer();
+function instanceTestContainer(): ApplicationContainer {
+  const container = new ApplicationContainer();
   const hookCenter = new HookCenter();
   hookCenter.registerProviderHooks(container);
   return container;
 }
 
-function createTestAppContext(entry?: EntryType[], parent?: ICoreContext): [CoreContext, CoreContainer, Injector] {
-  const context = new CoreContext();
+function createTestAppContext(entry?: EntryType[], parent?: IApplicationContext): [ApplicationContext, ApplicationContainer, Injector] {
+  const context = new ApplicationContext();
   const container = context.container;
   // @ts-ignore
   const injector = context.injector;
@@ -33,7 +33,7 @@ describe("injector", () => {
       @Component({ scope: Scope.DEFAULT })
       class SingProvider {}
 
-      let singProviderWrapper: ComponentWrapper<SingProvider>, context: CoreContext, container: CoreContainer, injector: Injector;
+      let singProviderWrapper: ComponentWrapper<SingProvider>, context: ApplicationContext, container: ApplicationContainer, injector: Injector;
 
       beforeAll(async () => {
         [context, container, injector] = createTestAppContext();
@@ -62,10 +62,10 @@ describe("injector", () => {
     });
 
     describe("Load class prototype component", () => {
-      @Component({ scope: Scope.TRANSIENT })
+      @Component({ scope: Scope.PROTOTYPE })
       class TransProvider {}
 
-      let transProviderWrapper: ComponentWrapper<TransProvider>, context: CoreContext, container: CoreContainer, injector: Injector;
+      let transProviderWrapper: ComponentWrapper<TransProvider>, context: ApplicationContext, container: ApplicationContainer, injector: Injector;
 
       beforeAll(async () => {
         [context, container, injector] = createTestAppContext();
@@ -73,7 +73,7 @@ describe("injector", () => {
           name: "transProvider",
           type: TransProvider,
           instance: Object.create(TransProvider.prototype),
-          scope: Scope.TRANSIENT,
+          scope: Scope.PROTOTYPE,
           isResolved: false,
         });
         container.addWrapper(transProviderWrapper);
@@ -148,7 +148,7 @@ describe("injector", () => {
     });
 
     test("Should inject prototype dependency components into the host component", async () => {
-      @Component({ scope: Scope.TRANSIENT })
+      @Component({ scope: Scope.PROTOTYPE })
       class TransProvider {}
 
       @Component()
@@ -552,7 +552,7 @@ describe("injector", () => {
       @Component()
       class Dep2 {}
 
-      @Component({ scope: Scope.TRANSIENT })
+      @Component({ scope: Scope.PROTOTYPE })
       class Main {
         constructor(public dep1: Dep1, public dep2: Dep2) {}
       }
@@ -585,7 +585,7 @@ describe("injector", () => {
       @Component()
       class Dep2 {}
 
-      @Component({ scope: Scope.TRANSIENT })
+      @Component({ scope: Scope.PROTOTYPE })
       class Main {
         @Autowire()
         public dep1: Dep1;

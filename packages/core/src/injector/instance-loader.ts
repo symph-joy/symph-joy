@@ -1,6 +1,6 @@
 import { Logger } from "../services/logger.service";
 import { Scope } from "../interfaces";
-import { CoreContainer } from "./core-container";
+import { ApplicationContainer } from "./application-container";
 import { Injector } from "./injector";
 import { STATIC_CONTEXT } from "./constants";
 import { ComponentWrapper } from "./component-wrapper";
@@ -8,7 +8,7 @@ import { ComponentWrapper } from "./component-wrapper";
 export class InstanceLoader {
   private readonly logger = new Logger(InstanceLoader.name, true);
 
-  constructor(private readonly container: CoreContainer, private readonly injector: Injector) {}
+  constructor(private readonly container: ApplicationContainer, private readonly injector: Injector) {}
 
   public async createInstancesOfDependencies(instanceWrappers: ComponentWrapper[]): Promise<unknown[]> {
     // const wrappers = [] as ComponentWrapper[]

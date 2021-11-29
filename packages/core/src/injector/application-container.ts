@@ -21,7 +21,7 @@ interface ProviderIndex {
   remove(indexKey: string, providerId: TProviderName): void;
 }
 
-export class CoreContainer {
+export class ApplicationContainer {
   // private readonly _providers = new Map<string, ComponentWrapper<Injectable>>()
   constructor() {}
 

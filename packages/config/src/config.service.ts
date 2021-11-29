@@ -10,7 +10,7 @@ import {
   Optional,
   RegisterTap,
 } from "@symph/core";
-import { PROP_KEY_JOY_CONFIG_SET_VALUE, SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_INIT_VALUE, SYMPH_CONFIG_OPTIONS } from "./constants";
+import { SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_INIT_VALUE, SYMPH_CONFIG_OPTIONS } from "./constants";
 import { VALIDATED_ENV_PROPNAME } from "./config.constants";
 import get from "lodash.get";
 import has from "lodash.has";
@@ -18,6 +18,9 @@ import set from "lodash.set";
 import merge from "lodash.merge";
 import { NoInferType } from "./types";
 import { ConfigLoaderFactory } from "./loader/config-loader-factory";
+import { getConfigValuesMetadata, IConfigValueMeta } from "./config-value.decorator";
+import { getJsonSchema, JsonSchema } from "@tsed/schema";
+import Ajv from "ajv";
 
 export interface ConfigServiceOptions {
   isAutoLoadConfig: boolean;
@@ -45,15 +48,6 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
   })
   private onJoyConfigChanged: IHook;
 
-  @RegisterTap()
-  componentAfterInitialize<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
-    const setConfigValue = (instance as any)[PROP_KEY_JOY_CONFIG_SET_VALUE];
-    if (setConfigValue) {
-      setConfigValue.call(instance, this.internalConfig);
-    }
-    return instance;
-  }
-
   private internalConfig: Record<string, unknown>;
 
   constructor(
@@ -78,6 +72,85 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
   }
 
   private readonly cache: Partial<K> = {} as any;
+
+  @RegisterTap()
+  componentAfterInitialize<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
+    // custom implement setConfigValue
+    const onSetConfigValue = (instance as any).onSetConfigValue;
+    if (onSetConfigValue && typeof onSetConfigValue === "function") {
+      onSetConfigValue.call(instance, this.internalConfig);
+      return instance;
+    }
+
+    const configMetas = getConfigValuesMetadata(instance);
+    if (configMetas && configMetas.length > 0) {
+      this.setConfigValueByMeta(instance, configMetas);
+    }
+
+    return instance;
+  }
+
+  private setConfigValueByMeta(instance: any, configValues: IConfigValueMeta[]) {
+    if (!configValues || !configValues.length) {
+      return;
+    }
+    const configData = this.internalConfig;
+    // const propKeys: string[] = new Array(configMetas.length);
+    const configKeys: string[] = new Array(configValues.length);
+    const configJsonSchema: JsonSchema = new JsonSchema();
+
+    for (let i = 0; i < configValues.length; i++) {
+      const { configKey, propKey, schema } = configValues[i];
+      if (schema === undefined) {
+        continue;
+      }
+      // propKeys[i] = propKey;
+      configKeys[i] = configKey;
+      configJsonSchema.addProperty(configKey, new JsonSchema(schema));
+    }
+
+    const ajv = new Ajv();
+
+    const isValid = ajv.validate(configJsonSchema.toObject(), configData);
+    if (!isValid) {
+      const errMsg = ajv.errorsText(ajv.errors);
+      throw new Error(errMsg);
+    }
+
+    for (let i = 0; i < configValues.length; i++) {
+      const configMeta = configValues[i];
+      const value = configData[configMeta.configKey];
+      const presetValue = instance[configMeta.propKey];
+      if (typeof value === "undefined") {
+        if (configMeta.default !== undefined) {
+          if (presetValue === undefined) {
+            instance[configMeta.propKey] = configMeta.default;
+          } else {
+            // use preset value
+          }
+        } else {
+          // noop
+        }
+      } else {
+        instance[configMeta.propKey] = value;
+      }
+    }
+
+    // function onConfigChanged(configInstance: any): any {
+    //   // @ts-ignore
+    //   const instance = this as any;
+    //   // 执行用户自定义的赋值行为
+    //   if (instance.onConfigChanged) {
+    //     instance.onConfigChanged(configInstance, configKeys);
+    //     return;
+    //   }
+    //   instance[PROP_KEY_JOY_CONFIG_SET_VALUE](configInstance);
+    // }
+    // // 注册config的值变化
+    // const onConfigChangedPropKey = Symbol(`__joy_config_changed`);
+    // instance.prototype[onConfigChangedPropKey] = onConfigChanged;
+    // RegisterTap({ hookId: "onJoyConfigChanged" })(instance, onConfigChangedPropKey);
+  }
 
   async initialize(): Promise<void> {
     this.internalConfig = merge({}, this.defaultConfig, this.initConfig);

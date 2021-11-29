@@ -1,11 +1,11 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, Route } from "@symph/react";
 import { Prerender } from "@symph/joy/react";
 
 @Prerender()
 @Route({ path: "/links", exact: true })
 @ReactController()
-export default class LinksCtl extends ReactBaseController {
+export default class LinksCtl extends BaseReactController {
   onClickLink = (link: string) => {
     // @ts-ignore
     this.props.history.push(link);

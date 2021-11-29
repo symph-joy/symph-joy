@@ -1,12 +1,12 @@
-import { ReactBaseModel, ReactModel } from "@symph/react";
-import { JoyFetchService } from "@symph/joy/dist/index-client";
+import { BaseReactModel, ReactModel } from "@symph/react";
+import { ReactFetchService } from "@symph/joy/dist/index-client";
 import { Autowire } from "@symph/core";
 
 @ReactModel()
-export class IndexModel extends ReactBaseModel<{
+export class IndexModel extends BaseReactModel<{
   message: string;
 }> {
-  constructor(@Autowire("joyFetchService") private joyFetchService: JoyFetchService) {
+  constructor(@Autowire("joyFetchService") private joyFetchService: ReactFetchService) {
     super();
   }
 

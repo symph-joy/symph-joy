@@ -3,7 +3,7 @@ import joySrcBabelPreset from "./preset-src";
 import path from "path";
 import { ClassSimple } from "./fixtures/class-simple";
 import { getComponentMeta } from "@symph/core";
-import { getConfigMetadata } from "@symph/config";
+import { getConfigValuesMetadata } from "@symph/config";
 
 function evalModuleCode(code: string): Record<string, any> {
   const exports = {};
@@ -39,7 +39,7 @@ describe("babel src", () => {
     const classMete = getComponentMeta(clazz);
     expect(classMete?.name).toBe("aTestClass");
 
-    const propMeta = getConfigMetadata(clazz);
+    const propMeta = getConfigValuesMetadata(clazz);
     expect(propMeta.length).toBe(1);
     expect(propMeta[0]).toMatchObject({ propKey: "configValue" });
   });

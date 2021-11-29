@@ -1,6 +1,6 @@
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { CollectionOf, MinLength } from "@tsed/schema";
-import { ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 import { IJoyPlugin } from "../../plugin/joy-plugin.interface";
 import { JoyPlugin } from "../../plugin/joy-plugin.decorator";
 // import {ReactRouteInterface} from "../router/react-route.interface";
@@ -23,7 +23,7 @@ import { JoyPlugin } from "../../plugin/joy-plugin.decorator";
 //       schema: undefined
 //     }, configOptions)
 //
-//     const existConfigs = getConfigMetadata(target) || []
+//     const existConfigs = getConfigValuesMetadata(target) || []
 //     existConfigs.push(configMeta)
 //
 //     Reflect.defineMetadata(REFLECT_KEY_CONFIG, existConfigs, target)
@@ -43,7 +43,7 @@ export class RouterPlugin implements IJoyPlugin {
 
   constructor(private config: JoyAppConfig) {}
 
-  @ConfigValue({ configKey: "routes", onChange: "reload" })
+  @Value({ configKey: "routes", onChange: "reload" })
   @CollectionOf(RouteConfig)
   public routesConfig: RouteConfig[];
 

@@ -1,10 +1,10 @@
 import { Autowire, Component, Configuration } from "../decorators/core";
-import { EntryType, ICoreContext, Scope } from "../interfaces";
-import { CoreContainer } from "../injector";
+import { EntryType, IApplicationContext, Scope } from "../interfaces";
+import { ApplicationContainer } from "../injector";
 import { ComponentWrapper } from "./component-wrapper";
 import { Injector } from "../injector/injector";
 import { HookCenter } from "../hook/hook-center";
-import { CoreContext } from "../core-context";
+import { ApplicationContext } from "../application-context";
 import { registerComponents } from "../../test/injector/helper";
 import sinon from "sinon";
 import { UnknownDependenciesException } from "../errors/exceptions/unknown-dependencies.exception";
@@ -12,8 +12,8 @@ import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dep
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
 import { createPackage } from "../package/package";
 
-function createTestAppContext(entry?: EntryType[], parent?: ICoreContext): [CoreContext, CoreContainer, Injector] {
-  const context = new CoreContext(entry, parent);
+function createTestAppContext(entry?: EntryType[], parent?: IApplicationContext): [ApplicationContext, ApplicationContainer, Injector] {
+  const context = new ApplicationContext(entry, parent);
   const container = context.container;
   // @ts-ignore
   const injector = context.injector;
@@ -66,8 +66,8 @@ describe("Inject hierarchy", () => {
       public dep: DepC;
     }
 
-    let contextP: CoreContext, containerP: CoreContainer, injectorP: Injector;
-    let contextC: CoreContext, containerC: CoreContainer, injectorC: Injector;
+    let contextP: ApplicationContext, containerP: ApplicationContainer, injectorP: Injector;
+    let contextC: ApplicationContext, containerC: ApplicationContainer, injectorC: Injector;
     beforeAll(async () => {
       [contextP, containerP, injectorP] = createTestAppContext();
       [contextC, containerC, injectorC] = createTestAppContext([], contextP);
@@ -119,8 +119,8 @@ describe("Inject hierarchy", () => {
       public mainC: MainC;
     }
 
-    let contextP: CoreContext, containerP: CoreContainer, injectorP: Injector;
-    let contextC: CoreContext, containerC: CoreContainer, injectorC: Injector;
+    let contextP: ApplicationContext, containerP: ApplicationContainer, injectorP: Injector;
+    let contextC: ApplicationContext, containerC: ApplicationContainer, injectorC: Injector;
 
     [contextP, containerP, injectorP] = createTestAppContext();
     [contextC, containerC, injectorC] = createTestAppContext([], contextP);

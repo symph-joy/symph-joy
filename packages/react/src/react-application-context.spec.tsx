@@ -1,15 +1,15 @@
 import React from "react";
 import { ReactApplicationConfig } from "./react-application-config";
 import { ReactApplicationContext } from "./react-application-context";
-import { ReactBaseModel } from "./react-base-model";
-import { ReactBaseController } from "./react-base-controller";
+import { BaseReactModel } from "./base-react-model";
+import { BaseReactController } from "./base-react-controller";
 import { render } from "@testing-library/react";
 import { ReactModel } from "./react-model.decorator";
 import { ReactController } from "./react-controller.decorator";
 import { matchPath, MemoryRouter, useLocation } from "react-router-dom";
 import "reflect-metadata";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
-import { Configuration, Autowire, CoreContainer } from "@symph/core";
+import { Configuration, Autowire, ApplicationContainer } from "@symph/core";
 import { ReactApplicationFactory } from "./react-application-factory";
 import { ReactComponent } from "./react-component.decorator";
 
@@ -43,7 +43,7 @@ describe("react-application", () => {
   describe("react-mvc", () => {
     test("define a react controller", async () => {
       @ReactController()
-      class HelloController extends ReactBaseController<{ propMsg: string }, { stateMsg: string }> {
+      class HelloController extends BaseReactController<{ propMsg: string }, { stateMsg: string }> {
         constructor(props: any, context: any) {
           super(props, context);
           this.state = {
@@ -72,14 +72,14 @@ describe("react-application", () => {
 
     test("should bind model and controller ", async () => {
       @ReactModel()
-      class HelloModel extends ReactBaseModel<{ status: string }> {
+      class HelloModel extends BaseReactModel<{ status: string }> {
         getInitState(): { status: string } {
           return { status: "init" };
         }
       }
 
       @ReactController()
-      class HelloController extends ReactBaseController {
+      class HelloController extends BaseReactController {
         @Autowire()
         private helloModel: HelloModel;
 
@@ -102,7 +102,7 @@ describe("react-application", () => {
 
     test("should load model instance in controller, when model is pre registered", async () => {
       @ReactModel()
-      class HelloModel extends ReactBaseModel<{ status: string }> {
+      class HelloModel extends BaseReactModel<{ status: string }> {
         getInitState(): { status: string } {
           return { status: "init" };
         }
@@ -115,7 +115,7 @@ describe("react-application", () => {
       }
 
       @ReactController()
-      class HelloController extends ReactBaseController<{
+      class HelloController extends BaseReactController<{
         message: string;
       }> {
         @Autowire()
@@ -175,7 +175,7 @@ describe("react-application", () => {
 
     test("should dynamic load the model instance at run time", async () => {
       @ReactModel()
-      class HelloModel extends ReactBaseModel<{ status: string }> {
+      class HelloModel extends BaseReactModel<{ status: string }> {
         getInitState(): { status: string } {
           return { status: "init" };
         }
@@ -188,7 +188,7 @@ describe("react-application", () => {
       }
 
       @ReactController()
-      class HelloController extends ReactBaseController<{
+      class HelloController extends BaseReactController<{
         message: string;
       }> {
         @Autowire()
@@ -236,7 +236,7 @@ describe("react-application", () => {
 
     test("should use provider.id as model's namespace", async () => {
       @ReactModel()
-      class HelloModel extends ReactBaseModel<{ status: string }> {
+      class HelloModel extends BaseReactModel<{ status: string }> {
         getInitState(): { status: string } {
           return { status: "init" };
         }
@@ -249,7 +249,7 @@ describe("react-application", () => {
       }
 
       @ReactController()
-      class HelloController extends ReactBaseController {
+      class HelloController extends BaseReactController {
         @Autowire()
         private helloModel: HelloModel;
 
@@ -355,7 +355,7 @@ describe("react-application", () => {
 
       @ReactController({ path: "/post" })
       // @Controller()
-      class PostController extends ReactBaseController {
+      class PostController extends BaseReactController {
         // @Controller.BindPathVariable({key: 'postId'})
         // private postId: string
 

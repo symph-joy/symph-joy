@@ -1,8 +1,8 @@
 import React from "react";
-import { ReactBaseController, ReactController, RouteSwitch } from "@symph/react";
+import { BaseReactController, ReactController, RouteSwitch } from "@symph/react";
 
 @ReactController()
-export default class Layout extends ReactBaseController {
+export default class Layout extends BaseReactController {
   renderView() {
     const { location, route } = this.props;
     return (

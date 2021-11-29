@@ -1,5 +1,5 @@
-import { ProviderScanner, RegisterTap } from "@symph/core";
-import { Configurable, ConfigValue } from "@symph/config";
+import { Component, ProviderScanner, RegisterTap } from "@symph/core";
+import { Value } from "@symph/config";
 import { JoyReactRouterPlugin } from "../react/router/joy-react-router-plugin";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import fs from "fs";
@@ -29,9 +29,9 @@ class ImportConfigSchema {
   dynamic?: boolean;
 }
 
-@Configurable()
+@Component()
 export class JoyImportService {
-  @ConfigValue()
+  @Value()
   public imports: ImportConfigSchema[];
 
   private hasInit = false;

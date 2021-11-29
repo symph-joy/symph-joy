@@ -2,7 +2,7 @@ import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { IncomingMessage, ServerResponse } from "http";
 import { encode, ParsedUrlQuery } from "querystring";
 import { ReactApplicationContext, ReactRouter } from "@symph/react";
-import { Component, CoreContainer, EntryType, Provider } from "@symph/core";
+import { Component, ApplicationContainer, EntryType, Provider } from "@symph/core";
 import { JoyReactAppServerConfiguration } from "./joy-react-app-server.configuration";
 import { JoyReactApplicationContext } from "./joy-react-application-context";
 
@@ -36,7 +36,13 @@ export class ReactContextFactory {
     return reactApplicationContext;
   }
 
-  protected setInitComponent(container: CoreContainer, req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery): void {
+  protected setInitComponent(
+    container: ApplicationContainer,
+    req: IncomingMessage,
+    res: ServerResponse,
+    pathname: string,
+    query: ParsedUrlQuery
+  ): void {
     const components = [
       {
         name: "joyAppConfig",

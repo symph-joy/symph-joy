@@ -1,8 +1,8 @@
-import { ICoreContext } from "@symph/core";
+import { IApplicationContext } from "@symph/core";
 
 export const NAMESPACE_SEP = "/";
 
-export default function createModelMiddleware(app: ICoreContext) {
+export default function createModelMiddleware(app: IApplicationContext) {
   return (store: any) => (next: any) => (action: any) => {
     const { type } = action;
     if (type.indexOf("/") <= 0) {

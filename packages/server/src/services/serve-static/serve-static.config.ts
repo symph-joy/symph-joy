@@ -2,18 +2,17 @@ import { Configuration, Autowire, Component, IComponentLifecycle } from "@symph/
 import { AbstractHttpAdapter } from "../../adapters";
 import { ServeStaticService } from "./serve-static.service";
 import { ServeStaticOptions } from "./interfaces/serve-static-options.interface";
-import { ConfigValue, Configurable } from "@symph/config";
+import { Value } from "@symph/config";
 import { FastifyLoader } from "./loaders/fastify.loader";
 import { AbstractLoader } from "./loaders/abstract.loader";
 
-@Configurable()
 @Configuration()
 @Component()
 export class ServeStaticConfig implements IComponentLifecycle {
   @Autowire()
   private httpAdapter: AbstractHttpAdapter;
 
-  @ConfigValue()
+  @Value()
   private static: ServeStaticOptions[];
 
   @Configuration.Provider()

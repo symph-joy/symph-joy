@@ -1,8 +1,8 @@
 import React from "react";
-import { ReactBaseController, ReactController } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
 
 @ReactController()
-export default class About extends ReactBaseController {
+export default class About extends BaseReactController {
   renderView() {
     return <div id="about">Blog About</div>;
   }

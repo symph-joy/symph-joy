@@ -2,12 +2,7 @@ import { RuntimeException } from "./runtime.exception";
 import { isNil } from "../../utils/shared.utils";
 
 export class InvalidDependencyTypeException extends RuntimeException {
-  constructor(
-    providerName: string,
-    constructorIndex: number | undefined,
-    prpKey: string | undefined,
-    msgWhy: string
-  ) {
+  constructor(providerName: string, constructorIndex: number | undefined, prpKey: string | symbol | undefined, msgWhy: string) {
     let message = `Can't resolve dependencies of the ${providerName}`;
 
     if (isNil(constructorIndex)) {

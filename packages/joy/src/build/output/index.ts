@@ -200,7 +200,7 @@ export function watchCompilers(client: import("webpack").Compiler, server: impor
     client: { loading: true },
     server: { loading: true },
     api: { loading: true },
-    src: { loading: true },
+    src: { loading: false, errors: null, warnings: null },
   });
 
   function tapCompiler(key: string, compiler: any, onEvent: (status: WebpackStatus) => void) {
@@ -227,7 +227,6 @@ export function watchCompilers(client: import("webpack").Compiler, server: impor
   tapCompiler("client", client, (status) => buildStore.setState({ client: status }));
   tapCompiler("server", server, (status) => buildStore.setState({ server: status }));
   tapCompiler("api", api, (status) => buildStore.setState({ api: status }));
-  tapCompiler("src", api, (status) => buildStore.setState({ src: status }));
 
   previousClient = client;
   previousServer = server;

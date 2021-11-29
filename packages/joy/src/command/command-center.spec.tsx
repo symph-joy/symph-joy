@@ -1,4 +1,4 @@
-import { CoreContext, CoreContainer } from "@symph/core";
+import { ApplicationContext, ApplicationContainer } from "@symph/core";
 import yargs from "yargs";
 import { CommandProvider } from "./command-provider.decorator";
 import { CommandCenter } from "./command-center";
@@ -46,7 +46,7 @@ describe("command-center", () => {
         return `hello ${message}`;
       }
     }
-    const app = new CoreContext({ CommandCenter, HelloCommand });
+    const app = new ApplicationContext({ CommandCenter, HelloCommand });
     await app.init();
     const commandCenter = await app.get(CommandCenter);
     // const helloCommand = await app.get(HelloCommand)

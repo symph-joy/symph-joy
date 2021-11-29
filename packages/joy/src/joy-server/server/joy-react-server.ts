@@ -9,7 +9,19 @@ import { format as formatUrl, parse as parseUrl, UrlWithParsedQuery } from "url"
 import { PrerenderManifest } from "../../build/joy-build.service";
 import { CustomRoutes, getRedirectStatus, Header, Redirect, Rewrite, RouteType } from "../../lib/load-custom-routes";
 import { withCoalescedInvoke } from "../../lib/coalesced-function";
-import { BUILD_ID_FILE, CLIENT_PUBLIC_FILES_PATH, CLIENT_STATIC_FILES_PATH, CLIENT_STATIC_FILES_RUNTIME, OUT_DIRECTORY, PAGES_MANIFEST, PHASE_PRODUCTION_SERVER, PRERENDER_MANIFEST, ROUTES_MANIFEST, SERVER_DIRECTORY, SERVERLESS_DIRECTORY } from "../lib/constants";
+import {
+  BUILD_ID_FILE,
+  CLIENT_PUBLIC_FILES_PATH,
+  CLIENT_STATIC_FILES_PATH,
+  CLIENT_STATIC_FILES_RUNTIME,
+  OUT_DIRECTORY,
+  PAGES_MANIFEST,
+  PHASE_PRODUCTION_SERVER,
+  PRERENDER_MANIFEST,
+  ROUTES_MANIFEST,
+  SERVER_DIRECTORY,
+  SERVERLESS_DIRECTORY,
+} from "../lib/constants";
 import { getRouteMatcher, getRouteRegex, isDynamicRoute } from "../lib/router/utils";
 import * as envConfig from "../lib/runtime-config";
 import { execOnce, isResSent, JoyApiRequest, JoyApiResponse } from "../lib/utils";
@@ -353,7 +365,15 @@ export class JoyReactServer implements IComponentLifecycle {
             };
           }
 
-          if (params.path[0] === CLIENT_STATIC_FILES_RUNTIME || params.path[0] === "chunks" || params.path[0] === "css" || params.path[0] === "media" || params.path[0] === this.buildId || params.path[0] === "pages" || params.path[1] === "pages") {
+          if (
+            params.path[0] === CLIENT_STATIC_FILES_RUNTIME ||
+            params.path[0] === "chunks" ||
+            params.path[0] === "css" ||
+            params.path[0] === "media" ||
+            params.path[0] === this.buildId ||
+            params.path[0] === "pages" ||
+            params.path[1] === "pages"
+          ) {
             this.setImmutableAssetCacheControl(res);
           }
           const p = join(this.outDir, CLIENT_STATIC_FILES_PATH, ...(params.path || []));
@@ -491,7 +511,13 @@ export class JoyReactServer implements IComponentLifecycle {
         statusCode: redirectRoute.statusCode,
         name: `Redirect route`,
         fn: async (_req, res, params, parsedUrl) => {
-          const { parsedDestination } = prepareDestination(redirectRoute.destination, params, parsedUrl.query, false, getCustomRouteBasePath(redirectRoute));
+          const { parsedDestination } = prepareDestination(
+            redirectRoute.destination,
+            params,
+            parsedUrl.query,
+            false,
+            getCustomRouteBasePath(redirectRoute)
+          );
           const updatedDestination = formatUrl(parsedDestination);
 
           res.setHeader("Location", updatedDestination);
@@ -520,7 +546,13 @@ export class JoyReactServer implements IComponentLifecycle {
         name: `Rewrite route`,
         match: rewriteRoute.match,
         fn: async (req, res, params, parsedUrl) => {
-          const { newUrl, parsedDestination } = prepareDestination(rewriteRoute.destination, params, parsedUrl.query, true, getCustomRouteBasePath(rewriteRoute));
+          const { newUrl, parsedDestination } = prepareDestination(
+            rewriteRoute.destination,
+            params,
+            parsedUrl.query,
+            true,
+            getCustomRouteBasePath(rewriteRoute)
+          );
 
           // external rewrite, proxy it
           if (parsedDestination.protocol) {
@@ -616,7 +648,12 @@ export class JoyReactServer implements IComponentLifecycle {
     return found;
   }
 
-  protected async _beforeCatchAllRender(_req: IncomingMessage, _res: ServerResponse, _params: Params, _parsedUrl: UrlWithParsedQuery): Promise<boolean> {
+  protected async _beforeCatchAllRender(
+    _req: IncomingMessage,
+    _res: ServerResponse,
+    _params: Params,
+    _parsedUrl: UrlWithParsedQuery
+  ): Promise<boolean> {
     return false;
   }
 
@@ -766,7 +803,13 @@ export class JoyReactServer implements IComponentLifecycle {
     });
   }
 
-  public async render(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery = {}, parsedUrl?: UrlWithParsedQuery): Promise<void> {
+  public async render(
+    req: IncomingMessage,
+    res: ServerResponse,
+    pathname: string,
+    query: ParsedUrlQuery = {},
+    parsedUrl?: UrlWithParsedQuery
+  ): Promise<void> {
     if (!pathname.startsWith("/")) {
       console.warn(`Cannot render page with path "${pathname}", did you mean "/${pathname}"?. #render-no-starting-slash`);
     }
@@ -941,7 +984,10 @@ export class JoyReactServer implements IComponentLifecycle {
           ? {
               private: false,
               stateful: false, // GSP response
-              revalidate: cachedData.curRevalidate !== undefined ? cachedData.curRevalidate : /* default to minimum revalidate (this should be an invariant) */ 1,
+              revalidate:
+                cachedData.curRevalidate !== undefined
+                  ? cachedData.curRevalidate
+                  : /* default to minimum revalidate (this should be an invariant) */ 1,
             }
           : undefined
       );
@@ -987,7 +1033,7 @@ export class JoyReactServer implements IComponentLifecycle {
         //   sprRevalidate = renderResult.renderOpts.revalidate
         // } else {
         // const applicationConfig = new ApplicationConfig();
-        // const joyContainer = new CoreContainer();
+        // const joyContainer = new ApplicationContainer();
         // const reactApplicationContext = new ReactApplicationContext(
         //   {},
         //   applicationConfig,
@@ -1150,7 +1196,7 @@ export class JoyReactServer implements IComponentLifecycle {
   //   query: ParsedUrlQuery
   // ): Promise<ReactApplicationContext> {
   //   const applicationConfig = new ApplicationConfig();
-  //   const joyContainer = new CoreContainer();
+  //   const joyContainer = new ApplicationContainer();
   //   const reactApplicationContext = new ReactApplicationContext(
   //     {},
   //     applicationConfig,
@@ -1199,7 +1245,10 @@ export class JoyReactServer implements IComponentLifecycle {
           const dynamicRouteResult = await this.findPageComponents(dynamicRoute.page, query, params);
           if (dynamicRouteResult) {
             try {
-              return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, { ...this.renderOpts, params });
+              return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, {
+                ...this.renderOpts,
+                params,
+              });
             } catch (err) {
               if (!(err instanceof NoFallbackError)) {
                 throw err;
@@ -1218,7 +1267,13 @@ export class JoyReactServer implements IComponentLifecycle {
     return await this.renderErrorToHTML(null, req, res, pathname, query);
   }
 
-  public async renderError(err: Error | null, req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery = {}): Promise<void> {
+  public async renderError(
+    err: Error | null,
+    req: IncomingMessage,
+    res: ServerResponse,
+    pathname: string,
+    query: ParsedUrlQuery = {}
+  ): Promise<void> {
     res.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
     const html = await this.renderErrorToHTML(err, req, res, pathname, query);
     if (html === null) {
@@ -1228,7 +1283,12 @@ export class JoyReactServer implements IComponentLifecycle {
   }
 
   private customErrorNo404Warn = execOnce(() => {
-    console.warn(chalk.bold.yellow(`Warning: `) + chalk.yellow(`You have added a custom /_error page without a custom /404 page. This prevents the 404 page from being auto statically optimized. #custom-error-no-custom-404`));
+    console.warn(
+      chalk.bold.yellow(`Warning: `) +
+        chalk.yellow(
+          `You have added a custom /_error page without a custom /404 page. This prevents the 404 page from being auto statically optimized. #custom-error-no-custom-404`
+        )
+    );
   });
 
   public async renderErrorToHTML(err: Error | null, req: IncomingMessage, res: ServerResponse, _pathname: string, query: ParsedUrlQuery = {}) {
@@ -1367,7 +1427,11 @@ export class JoyReactServer implements IComponentLifecycle {
 
     // Check if .joy/out/static, static and public are in the path.
     // If not the path is not available.
-    if ((untrustedFilePath.startsWith(join(this.outDir, "static") + sep) || untrustedFilePath.startsWith(join(this.dir, "static") + sep) || untrustedFilePath.startsWith(join(this.dir, "public") + sep)) === false) {
+    if (
+      (untrustedFilePath.startsWith(join(this.outDir, "static") + sep) ||
+        untrustedFilePath.startsWith(join(this.dir, "static") + sep) ||
+        untrustedFilePath.startsWith(join(this.dir, "public") + sep)) === false
+    ) {
       return false;
     }
 
@@ -1383,7 +1447,9 @@ export class JoyReactServer implements IComponentLifecycle {
       return readFileSync(buildIdFile, "utf8").trim();
     } catch (err) {
       if (!existsSync(buildIdFile)) {
-        throw new Error(`Could not find a valid build in the '${this.outDir}' directory! Try building your app with 'joy build' before starting the server.`);
+        throw new Error(
+          `Could not find a valid build in the '${this.outDir}' directory! Try building your app with 'joy build' before starting the server.`
+        );
       }
       throw err;
     }

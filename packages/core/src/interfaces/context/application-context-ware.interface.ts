@@ -2,12 +2,12 @@ import { Scope } from "./scope-options.interface";
 import { Type } from "../type.interface";
 import { TProviderName } from "./provider.interface";
 import { Abstract } from "../abstract.interface";
-import { CoreContext } from "../../core-context";
+import { ApplicationContext } from "../../application-context";
 
 export type ProviderInfo = { name: TProviderName; type: Type | Abstract; scope: Scope };
 
 export interface IApplicationContextAware {
-  setApplicationContext(coreContext: CoreContext): void;
+  setApplicationContext(coreContext: ApplicationContext): void;
 }
 
 export function isApplicationContextAwareComp(comp: any): comp is IApplicationContextAware {

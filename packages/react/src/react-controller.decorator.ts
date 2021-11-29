@@ -11,7 +11,9 @@ export interface PathVariable {
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export function ReactController<T>(options: ComponentOptions & Partial<ControllerMeta> = {}): <TFunction extends Function>(target: TFunction) => TFunction | void {
+export function ReactController<T>(
+  options: ComponentOptions & Partial<ControllerMeta> = {}
+): <TFunction extends Function>(target: TFunction) => TFunction | void {
   return (constructor) => {
     class ExtReactControllerDeco extends (constructor as any) {
       public wrapperComponent: typeof constructor;
@@ -39,7 +41,7 @@ export function ReactController<T>(options: ComponentOptions & Partial<Controlle
       // { type: ExtReactControllerDeco, useClass: ExtReactControllerDeco },
       { name },
       options,
-      { scope: Scope.TRANSIENT, lazyRegister: false }
+      { scope: Scope.PROTOTYPE, lazyRegister: false }
     );
     ReactComponent(options)(ExtReactControllerDeco);
 

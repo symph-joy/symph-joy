@@ -11,9 +11,9 @@ export enum EnuInjectBy {
  */
 export interface IInjectableDependency {
   index?: number; // when constructor or usrFactory
-  key?: string; // when property-base
+  key?: string | symbol; // when property-base
   designType?: Type; // property type
-  name?: string; // dependency provider name
+  name?: string | symbol; // dependency provider name
   type?: Type; // dependency provider type
   injectBy?: EnuInjectBy;
   isOptional?: boolean;

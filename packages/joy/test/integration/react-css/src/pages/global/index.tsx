@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
 
 import "./index-css.global.css";
 import "./index-less.global.less";
@@ -7,7 +7,7 @@ import "./index-scss.global.scss";
 import "./index-sass.global.sass";
 
 @ReactController()
-export default class GlobalController extends ReactBaseController {
+export default class GlobalController extends BaseReactController {
   renderView(): ReactNode {
     return (
       <div>

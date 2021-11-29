@@ -1,11 +1,11 @@
-import { ContextId, CoreContainer, ComponentWrapper } from "@symph/core";
+import { ContextId, ApplicationContainer, ComponentWrapper } from "@symph/core";
 import { REQUEST } from "./router";
 import { HttpServer } from "./interfaces/http";
 import { Controller } from "./interfaces/controllers";
 import { CONTROLLER_METADATA } from "./constants";
 import { ApplicationConfig } from "./application-config";
 
-export class ServerContainer extends CoreContainer {
+export class ServerContainer extends ApplicationContainer {
   private _httpAdapter: HttpServer;
   public applicationConfig: ApplicationConfig;
 

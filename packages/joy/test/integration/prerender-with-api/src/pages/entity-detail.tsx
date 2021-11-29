@@ -1,12 +1,12 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController, Route, RouteParam } from "@symph/react";
+import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
 import { EntityModel } from "../model/entity.model";
-import { Autowire, ICoreContext } from "@symph/core";
+import { Autowire, IApplicationContext } from "@symph/core";
 import { Prerender, JoyPrerenderInterface } from "@symph/joy/react";
 
 @Prerender()
 export class EntityPrerenderGenerator implements JoyPrerenderInterface {
-  getRoute(): string | ReactBaseController<Record<string, unknown>, Record<string, unknown>, ICoreContext> {
+  getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
     return "/entity/:id";
   }
 
@@ -21,7 +21,7 @@ export class EntityPrerenderGenerator implements JoyPrerenderInterface {
 
 @Route({ path: "/entity/:id" })
 @ReactController()
-export default class EntityDetail extends ReactBaseController {
+export default class EntityDetail extends BaseReactController {
   @RouteParam()
   private id: number;
 

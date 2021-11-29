@@ -1,12 +1,12 @@
 import React, { ReactNode } from "react";
-import { ReactController, ReactBaseController, Route } from "@symph/react";
+import { ReactController, BaseReactController, Route } from "@symph/react";
 import { Autowire } from "@symph/core";
 import { BasicReactView } from "./basic-react-view";
 import { BasicReactModel } from "./basic-react.model";
 
 @Route({ path: "/react-mvc" })
 @ReactController()
-export default class BasicReactController extends ReactBaseController {
+export default class BasicReactController extends BaseReactController {
   @Autowire()
   private helloModel: BasicReactModel;
 

@@ -1,11 +1,11 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, Route } from "@symph/react";
 import { Prerender } from "@symph/joy/react";
 
 @Prerender()
 @Route({ path: "/static" })
 @ReactController()
-export default class StaticCtl extends ReactBaseController {
+export default class StaticCtl extends BaseReactController {
   renderView(): ReactNode {
     return (
       <>

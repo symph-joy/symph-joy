@@ -22,16 +22,16 @@ import { InjectCustomOptionsInterface } from "../../interfaces/inject-custom-opt
  *
  * @publicApi
  */
-export function Autowire<T = any>(typeOrId?: string | Type<T>) {
-  let providerName: string;
+export function Autowire<T = any>(typeOrId?: string | symbol | Type<T>) {
+  let providerName: string | symbol;
   let providerType: Type<T>;
   if (isFunction(typeOrId)) {
     providerType = typeOrId as Type<T>;
   } else {
-    providerName = typeOrId as string;
+    providerName = typeOrId as string | symbol;
   }
 
-  return (target: Object, key: string, index?: number) => {
+  return (target: Object, key: string | symbol, index?: number) => {
     if (key === undefined) {
       injectConstructor(target, index as number, providerName, providerType);
       return;
@@ -47,7 +47,7 @@ export function Autowire<T = any>(typeOrId?: string | Type<T>) {
 
 export const CUSTOM_INJECT_FUNC_PARAM_META = "__CUSTOM_INJECT_FUNC_PARAM";
 
-function injectPropertyFuncParam(target: Object, key: string, index: number, providerName: string, providerType: Type) {
+function injectPropertyFuncParam(target: Object, key: string | symbol, index: number, providerName: string | symbol, providerType: Type) {
   const params: Map<number, InjectCustomOptionsInterface> = Reflect.getMetadata(CUSTOM_INJECT_FUNC_PARAM_META, target, key) || new Map();
   const param = providerName
     ? {
@@ -60,7 +60,7 @@ function injectPropertyFuncParam(target: Object, key: string, index: number, pro
   Reflect.defineMetadata(CUSTOM_INJECT_FUNC_PARAM_META, params, target, key);
 }
 
-function injectProperty(target: Object, key: string, providerName: string, providerType: Type) {
+function injectProperty(target: Object, key: string | symbol, providerName: string | symbol, providerType: Type) {
   let injectBy = EnuInjectBy.TYPE_NAME;
   const designType = Reflect.getMetadata("design:type", target, key);
   if (!providerType) {
@@ -79,7 +79,7 @@ function injectProperty(target: Object, key: string, providerName: string, provi
   Reflect.defineMetadata(PROPERTY_DEPS_METADATA, properties, target.constructor);
 }
 
-function injectConstructor(target: Object, index: number, providerName: string, providerType: Type): void {
+function injectConstructor(target: Object, index: number, providerName: string | symbol, providerType: Type): void {
   let injectBy = EnuInjectBy.TYPE;
   const paramTypes = Reflect.getMetadata("design:paramtypes", target);
   const designType = paramTypes[index];

@@ -1,21 +1,25 @@
 import { Logger } from "./services/logger.service";
-import { EntryType, ICoreContext, Type } from "./interfaces";
+import { EntryType, IApplicationContext, Type } from "./interfaces";
 import { isNil } from "./utils/shared.utils";
-import { CoreContainer } from "./injector";
+import { ApplicationContainer } from "./injector";
 import { MESSAGES } from "./constants";
 import { JoyContextOptions } from "./interfaces/joy-context-options.interface";
-import { CoreContext } from "./core-context";
+import { ApplicationContext } from "./application-context";
 
 export class CoreFactoryImplement {
   private readonly logger = new Logger("JoyFactory", true);
 
-  public async createApplicationContext(entry: EntryType | EntryType[], parent?: ICoreContext, options?: JoyContextOptions): Promise<ICoreContext> {
+  public async createApplicationContext(
+    entry: EntryType | EntryType[],
+    parent?: IApplicationContext,
+    options?: JoyContextOptions
+  ): Promise<IApplicationContext> {
     this.applyLogger(options);
-    const applicationContext = new CoreContext(entry, parent);
+    const applicationContext = new ApplicationContext(entry, parent);
     return this.initContext(applicationContext);
   }
 
-  protected async initContext<T extends ICoreContext>(context: T): Promise<T> {
+  protected async initContext<T extends IApplicationContext>(context: T): Promise<T> {
     this.logger.log(MESSAGES.APPLICATION_START);
     try {
       await context.init();
@@ -35,4 +39,4 @@ export class CoreFactoryImplement {
   }
 }
 
-export const CoreContextFactory = new CoreFactoryImplement();
+export const ApplicationContextFactory = new CoreFactoryImplement();

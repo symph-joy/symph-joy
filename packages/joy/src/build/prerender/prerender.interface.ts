@@ -1,7 +1,7 @@
-import { ParsedUrlQuery, ReactBaseController } from "@symph/react";
+import { ParsedUrlQuery, BaseReactController } from "@symph/react";
 
 export interface JoyPrerenderInterface {
-  getRoute(): string | ReactBaseController;
+  getRoute(): string | BaseReactController;
 
   isFallback(): Promise<boolean> | boolean;
 

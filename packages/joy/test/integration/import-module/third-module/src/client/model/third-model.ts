@@ -1,9 +1,9 @@
-import { ReactBaseModel, ReactModel } from "@symph/react";
+import { BaseReactModel, ReactModel } from "@symph/react";
 import { Autowire } from "@symph/core";
 import { ThirdFetchService } from "../service/third-fetch.service";
 
 @ReactModel()
-export class ThirdModel extends ReactBaseModel<{
+export class ThirdModel extends BaseReactModel<{
   message: string;
 }> {
   constructor(@Autowire("thirdFetchService") private fetchService: ThirdFetchService) {

@@ -1,5 +1,5 @@
 import { JoyApplicationOptions } from "./interfaces";
-import { CoreContainer, CoreFactoryImplement } from "@symph/core";
+import { ApplicationContainer, CoreFactoryImplement } from "@symph/core";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
 import { ReactApplicationContext } from "./react-application-context";
 import { ReactApplicationConfig } from "./react-application-config";
@@ -12,7 +12,7 @@ export class ReactApplicationFactoryImplement extends CoreFactoryImplement {
   ): Promise<ReactApplicationContext> {
     this.applyLogger(options);
     const applicationConfig = new ReactApplicationConfig();
-    const container = new CoreContainer();
+    const container = new ApplicationContainer();
     const application = new ReactApplicationContext(ReactApplicationConfiguration, applicationConfig);
     await this.initContext(application);
     if (entryModule) {

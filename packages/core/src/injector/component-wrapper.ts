@@ -22,7 +22,7 @@ export interface InstancePerContext<T> {
   readonly id: string;
 }
 export interface PropertyMetadata {
-  key: string;
+  key: string | symbol;
   wrapper: ComponentWrapper;
 }
 
@@ -96,7 +96,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
   }
 
   get isTransient(): boolean {
-    return this.scope === Scope.TRANSIENT;
+    return this.scope === Scope.PROTOTYPE;
   }
 
   private getInstanceByStaticContext(): InstancePerContext<T> {
@@ -104,7 +104,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
   }
 
   public getInstanceByContextId(contextId: ContextId): InstancePerContext<T> {
-    if (this.scope === Scope.TRANSIENT) {
+    if (this.scope === Scope.PROTOTYPE) {
       return this.cloneTransientInstance(contextId);
     }
     const instancePerContext = this.values.get(contextId);
@@ -126,7 +126,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
   }
 
   public setInstanceByContextId(contextId: ContextId, value: InstancePerContext<T>, inquirerId?: string) {
-    if (this.scope === Scope.TRANSIENT && inquirerId) {
+    if (this.scope === Scope.PROTOTYPE && inquirerId) {
       return this.setInstanceByInquirerId(contextId, inquirerId, value);
     }
     this.values.set(contextId, value);
@@ -152,7 +152,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
     return this[INSTANCE_METADATA_SYMBOL].dependencies;
   }
 
-  public addPropertiesMetadata(key: string, wrapper: ComponentWrapper) {
+  public addPropertiesMetadata(key: string | symbol, wrapper: ComponentWrapper) {
     if (!this[INSTANCE_METADATA_SYMBOL].properties) {
       this[INSTANCE_METADATA_SYMBOL].properties = [];
     }
@@ -306,7 +306,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
       instance,
       isResolved,
     });
-    this.scope === Scope.TRANSIENT && (this.transientMap = new Map());
+    this.scope === Scope.PROTOTYPE && (this.transientMap = new Map());
   }
 
   // public toString(): string{

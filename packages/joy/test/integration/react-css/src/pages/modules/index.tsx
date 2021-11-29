@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
 
 import cssStyles from "./index-css.module.css";
 import lessStyles from "./index-less.module.less";
@@ -7,7 +7,7 @@ import scssStyles from "./index-scss.module.scss";
 import sassStyles from "./index-sass.module.sass";
 
 @ReactController()
-export default class ModulesController extends ReactBaseController {
+export default class ModulesController extends BaseReactController {
   renderView(): ReactNode {
     return (
       <div>

@@ -1,4 +1,4 @@
-import { Autowire, Component, EntryType, ICoreContext, RuntimeException, ValueProvider } from "@symph/core";
+import { Autowire, Component, EntryType, IApplicationContext, RuntimeException, ValueProvider } from "@symph/core";
 import { All, Controller, HttpException, HttpStatus, NestApplicationOptions } from "@symph/server";
 import HotReloader from "./hot-reloader";
 import { JoyServerApplication } from "../joy-server/server/joy-server-application";
@@ -20,7 +20,7 @@ export class JoyServerApplicationDev extends JoyServerApplication {
     protected readonly entry: EntryType,
     public readonly configurationClass: typeof ServerConfiguration = ServerConfiguration,
     protected readonly appOptions: NestApplicationOptions = {}, // public container: ServerContainer = new ServerContainer()
-    public readonly parent: ICoreContext | undefined
+    public readonly parent: IApplicationContext | undefined
   ) {
     super(entry, configurationClass, appOptions, parent);
   }

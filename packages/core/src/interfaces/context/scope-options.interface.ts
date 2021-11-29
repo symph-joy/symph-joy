@@ -11,7 +11,7 @@ export enum Scope {
   /**
    * A new private instance of the provider is instantiated for every use
    */
-  TRANSIENT,
+  PROTOTYPE,
   /**
    * A new instance is instantiated for each request processing pipeline
    */

@@ -1,5 +1,5 @@
 import React from "react";
-import { ReactController, ReactBaseController, Route } from "../../../../../index";
+import { ReactController, BaseReactController, Route } from "../../../../../index";
 
 @Route({ path: "/nest/index" })
 @ReactController()

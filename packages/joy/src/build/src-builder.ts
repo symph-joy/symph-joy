@@ -6,6 +6,7 @@ import { FSWatcher, watch } from "chokidar";
 import lodash from "lodash";
 import * as babel from "@babel/core";
 import joySrcBabelPreset from "./babel-src/preset-src";
+import { OutputState, store as consoleStore } from "./output/store";
 
 interface FileModule {
   filePath: string;
@@ -25,21 +26,11 @@ class AggregateChange {
 export class SrcBuilder {
   public srcDir: string;
   public distPath: string;
-
   public sourceFileExts = ["js", "jsx", "ts", "tsx"];
-
   public watcher: FSWatcher | undefined;
-
-  // public modules: FileModule[] = [];
-
-  private aggregateTimeout = 100;
+  private aggregateTimeout = 50;
   public aggregateChange: AggregateChange = new AggregateChange();
-
-  // protected moduleTemplate = handlebars.compile(readFileSync(join(__dirname, "../joy-server/server/joy-app-providers-explorer.handlebars"), "utf-8"));
-  // protected lastGenerateContent: string | undefined;
-
   private buildManifest: Record<string, ISrcBuildModule>;
-
   public isWatch = false;
 
   constructor(@Autowire() private joyAppConfig: JoyAppConfig) {
@@ -129,13 +120,24 @@ export class SrcBuilder {
   }
 
   private async transFile(filePath: string, destPath: string) {
-    const rst = await babel.transformFileAsync(filePath, {
-      presets: [this.presetItem],
-    });
-    if (!rst) {
+    let dist: babel.BabelFileResult | null = null;
+    try {
+      dist = await babel.transformFileAsync(filePath, {
+        presets: [this.presetItem],
+      });
+    } catch (e) {
+      // 1. 启动期间抛出异常，
+      // 2. 而运行期间忽略异常，由webpack打包处理源码中的异常，等用户修复后，刷新界面。
+      if (consoleStore.getState().bootstrap) {
+        console.error(e);
+      } else {
+        //noop
+      }
+    }
+    if (!dist) {
       return;
     }
-    const { code } = rst;
+    const { code } = dist;
 
     await ensureFile(destPath);
     await writeFile(destPath, code);

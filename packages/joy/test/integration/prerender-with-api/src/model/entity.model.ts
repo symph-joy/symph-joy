@@ -1,4 +1,4 @@
-import { ReactBaseModel, ReactModel } from "@symph/react";
+import { BaseReactModel, ReactModel } from "@symph/react";
 import { ReactFetchService } from "@symph/joy";
 import { Autowire } from "@symph/core";
 
@@ -8,7 +8,7 @@ interface Entity {
 }
 
 @ReactModel()
-export class EntityModel extends ReactBaseModel<{
+export class EntityModel extends BaseReactModel<{
   entities: Entity[];
   showEntity?: Entity;
 }> {

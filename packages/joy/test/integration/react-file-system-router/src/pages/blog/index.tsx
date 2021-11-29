@@ -1,5 +1,5 @@
 import React from "react";
-import { ReactBaseController, ReactController } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
 
 if (typeof window !== "undefined") {
   window.onload = () => {
@@ -8,7 +8,7 @@ if (typeof window !== "undefined") {
 }
 
 @ReactController()
-export default class Index extends ReactBaseController {
+export default class Index extends BaseReactController {
   renderView() {
     return <div id="index">Blog Index</div>;
   }

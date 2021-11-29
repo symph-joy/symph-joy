@@ -1,4 +1,4 @@
-import { AutowireHook, ClassProvider, Component, CoreContext, HookType, IHook, RegisterTap, TProviderName } from "@symph/core";
+import { AutowireHook, ClassProvider, Component, ApplicationContext, HookType, IHook, RegisterTap, TProviderName } from "@symph/core";
 import { getPrerenderMeta, PrerenderMeta } from "./prerender.decorator";
 import { JoyPrerenderInterface } from "./prerender.interface";
 import { IScanOutModule } from "../scanner/file-scanner";
@@ -20,7 +20,7 @@ interface PrerenderModule {
 
 @Component()
 export class JoyPrerenderService {
-  constructor(private readonly coreContext: CoreContext, private readonly joyAppConfig: JoyAppConfig) {}
+  constructor(private readonly coreContext: ApplicationContext, private readonly joyAppConfig: JoyAppConfig) {}
 
   /**
    * 在服务端渲染html之前调用的hook
@@ -110,7 +110,7 @@ export class JoyPrerenderService {
     });
 
     // const applicationConfig = new ApplicationConfig();
-    // const joyContainer = new CoreContainer();
+    // const joyContainer = new ApplicationContainer();
     const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppServerConfiguration, {});
     reactApplicationContext.container.addProviders([
       {

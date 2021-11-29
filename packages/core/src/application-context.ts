@@ -1,8 +1,19 @@
-import { Abstract, ClassProvider, EntryType, EnuInjectBy, ICoreContext, Provider, Scope, TProviderName, Type, TypeOrTokenType } from "./interfaces";
+import {
+  Abstract,
+  ClassProvider,
+  EntryType,
+  EnuInjectBy,
+  IApplicationContext,
+  Provider,
+  Scope,
+  TProviderName,
+  Type,
+  TypeOrTokenType,
+} from "./interfaces";
 import { Logger, LoggerService } from "./services/logger.service";
 import { isFunction, isNil } from "./utils/shared.utils";
 import { UnknownElementException } from "./errors/exceptions/unknown-element.exception";
-import { CoreContainer } from "./injector/core-container";
+import { ApplicationContainer } from "./injector/application-container";
 import { Injector } from "./injector/injector";
 import { STATIC_CONTEXT } from "./injector/constants";
 import { InstanceLoader } from "./injector/instance-loader";
@@ -17,7 +28,7 @@ import { getComponentMeta } from "./decorators/core";
 import { ComponentWrapper } from "./injector";
 import { AutowireHook, HookType, IHook } from "./hook";
 
-interface CoreContextEventListener {
+interface ApplicationContextEventListener {
   onContextInitialized(): Promise<void>;
 
   onContextBeforeDispose(): Promise<void>;
@@ -30,7 +41,7 @@ interface CoreContextEventListener {
 /**
  * @publicApi
  */
-export class CoreContext implements ICoreContext {
+export class ApplicationContext implements IApplicationContext {
   protected instanceLoader: InstanceLoader;
   protected dependenciesScanner: ProviderScanner;
   protected readonly hookCenter: HookCenter;
@@ -38,7 +49,7 @@ export class CoreContext implements ICoreContext {
   public readonly injector;
   protected isInitialized = false;
 
-  public readonly container: CoreContainer;
+  public readonly container: ApplicationContainer;
 
   public hasInitialized(): boolean {
     return this.isInitialized;
@@ -46,8 +57,8 @@ export class CoreContext implements ICoreContext {
 
   constructor(
     protected readonly entry?: EntryType | EntryType[],
-    // public readonly container: CoreContainer = new CoreContainer(),
-    public readonly parent?: ICoreContext
+    // public readonly container: ApplicationContainer = new ApplicationContainer(),
+    public readonly parent?: IApplicationContext
   ) {
     this.hookCenter = new HookCenter();
     this.container = this.instanceContainer();
@@ -78,8 +89,8 @@ export class CoreContext implements ICoreContext {
   @AutowireHook({ type: HookType.Traverse, async: true })
   public onShutdownHook: IHook;
 
-  protected instanceContainer(): CoreContainer {
-    return new CoreContainer();
+  protected instanceContainer(): ApplicationContainer {
+    return new ApplicationContainer();
   }
 
   protected instanceInjector(): Injector {

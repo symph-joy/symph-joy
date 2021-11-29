@@ -1,6 +1,6 @@
 import { Scope, Type } from "../../src/interfaces";
 import { ComponentWrapper } from "../../src/injector/component-wrapper";
-import { CoreContainer } from "../../src/injector";
+import { ApplicationContainer } from "../../src/injector";
 import { providerNameGenerate } from "../../src/injector/provider-name-generate";
 import { getComponentMeta, Provider } from "../../src";
 
@@ -17,7 +17,7 @@ export function createInstanceWrapper<T>(providerClazz: Type<T>, matedata?: Part
   });
 }
 
-export function registerComponents<T>(container: CoreContainer, ...providerDefines: (Type<any> | Provider)[]): [...ComponentWrapper<any>[]] {
+export function registerComponents<T>(container: ApplicationContainer, ...providerDefines: (Type<any> | Provider)[]): [...ComponentWrapper<any>[]] {
   const wrappers: any[] = [];
   if (providerDefines && providerDefines.length) {
     providerDefines.forEach((providerDefine) => {

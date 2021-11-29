@@ -9,11 +9,7 @@
 import { ForwardReference } from "@symph/core/dist/interfaces/context/forward-reference.interface";
 import { isNil, isSymbol } from "@symph/core/dist/utils/shared.utils";
 import * as Module from "module";
-import {
-  InjectorDependency,
-  InjectorDependencyContext,
-  Type,
-} from "@symph/core";
+import { InjectorDependency, InjectorDependencyContext, Type } from "@symph/core";
 
 /**
  * Returns the name of an instance
@@ -50,23 +46,17 @@ const getDependencyName = (dependency: InjectorDependency): string =>
 // const getModuleName = (module: Module) =>
 //   (module && getInstanceName(module.metatype)) || 'current';
 
-const stringifyScope = (scope: any[]): string =>
-  (scope || []).map(getInstanceName).join(" -> ");
+const stringifyScope = (scope: any[]): string => (scope || []).map(getInstanceName).join(" -> ");
 
 export const UNKNOWN_DEPENDENCIES_MESSAGE = (
   type: string | symbol,
   unknownDependencyContext: InjectorDependencyContext
   // module: Module,
 ) => {
-  const {
-    index,
-    name = "dependency",
-    dependencies,
-    key,
-  } = unknownDependencyContext;
+  const { index, name = "dependency", dependencies, key } = unknownDependencyContext;
   // const moduleName = getModuleName(module) || 'Module';
   const moduleName = "Module";
-  const dependencyName = getDependencyName(name);
+  const dependencyName = getDependencyName(String(name));
 
   let message = `Nest can't resolve dependencies of the ${type.toString()}`;
 
@@ -94,10 +84,7 @@ Potential solutions:
   return message;
 };
 
-export const INVALID_MIDDLEWARE_MESSAGE = (
-  text: TemplateStringsArray,
-  name: string
-) => `The middleware doesn't provide the 'use' method (${name})`;
+export const INVALID_MIDDLEWARE_MESSAGE = (text: TemplateStringsArray, name: string) => `The middleware doesn't provide the 'use' method (${name})`;
 
 export const UNDEFINED_FORWARDREF_MESSAGE = (
   scope: Type<any>[]
@@ -107,11 +94,7 @@ export const UNDEFINED_FORWARDREF_MESSAGE = (
 Scope [${stringifyScope(scope)}]
   `;
 
-export const INVALID_MODULE_MESSAGE = (
-  parentModule: any,
-  index: number,
-  scope: any[]
-) => {
+export const INVALID_MODULE_MESSAGE = (parentModule: any, index: number, scope: any[]) => {
   const parentModuleName = parentModule?.name || "module";
 
   return `Nest cannot create the ${parentModuleName} instance.
@@ -120,11 +103,7 @@ Received an unexpected value at index [${index}] of the ${parentModuleName} "imp
 Scope [${stringifyScope(scope)}]`;
 };
 
-export const UNDEFINED_MODULE_MESSAGE = (
-  parentModule: any,
-  index: number,
-  scope: any[]
-) => {
+export const UNDEFINED_MODULE_MESSAGE = (parentModule: any, index: number, scope: any[]) => {
   const parentModuleName = parentModule?.name || "module";
 
   return `Nest cannot create the ${parentModuleName} instance.
@@ -137,10 +116,7 @@ Potential causes:
 Scope [${stringifyScope(scope)}]`;
 };
 
-export const UNKNOWN_EXPORT_MESSAGE = (
-  token: string | symbol = "item",
-  module: string
-) => {
+export const UNKNOWN_EXPORT_MESSAGE = (token: string | symbol = "item", module: string) => {
   token = isSymbol(token) ? token.toString() : token;
 
   return `Nest cannot export a provider/module that is not a part of the currently processed module (${module}). Please verify whether the exported ${token} is available in this particular context.
@@ -153,10 +129,7 @@ Possible Solutions:
 export const INVALID_CLASS_MESSAGE = (text: TemplateStringsArray, value: any) =>
   `ModuleRef cannot instantiate class (${value} is not constructable).`;
 
-export const INVALID_CLASS_SCOPE_MESSAGE = (
-  text: TemplateStringsArray,
-  name: string | undefined
-) =>
+export const INVALID_CLASS_SCOPE_MESSAGE = (text: TemplateStringsArray, name: string | undefined) =>
   `${
     name || "This class"
   } is marked as a scoped provider. Request and transient-scoped providers can't be used in combination with "get()" method. Please, use "resolve()" instead.`;

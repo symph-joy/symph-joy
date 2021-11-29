@@ -1,11 +1,11 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, Route } from "@symph/react";
 import { Prerender } from "@symph/joy/react";
 
 @Prerender()
 @Route({ path: "/" })
 @ReactController()
-export default class IndexController extends ReactBaseController {
+export default class IndexController extends BaseReactController {
   renderView(): ReactNode {
     return (
       <div>

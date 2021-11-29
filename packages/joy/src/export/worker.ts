@@ -13,7 +13,7 @@ import { ComponentType } from "react";
 import { GetStaticProps } from "../types";
 import { requireFontManifest } from "../joy-server/server/require";
 import { FontManifest } from "../joy-server/server/font-utils";
-import { Configuration, CoreContext, ValueProvider } from "@symph/core";
+import { Configuration, ApplicationContext, ValueProvider } from "@symph/core";
 import { ReactContextFactory } from "../react/react-context-factory";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
@@ -99,7 +99,7 @@ export class JoyExportConfig {
 
 export default async function start(options: ExportPageInput): Promise<ExportPageResults> {
   const { dir, port } = options;
-  const joyContext = new CoreContext([
+  const joyContext = new ApplicationContext([
     JoyExportConfig,
     {
       initValue: {
@@ -118,7 +118,7 @@ export default async function start(options: ExportPageInput): Promise<ExportPag
 }
 
 export async function exportPage(
-  joyContext: CoreContext,
+  joyContext: ApplicationContext,
   {
     dir,
     path,

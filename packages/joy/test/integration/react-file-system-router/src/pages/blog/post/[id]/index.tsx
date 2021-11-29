@@ -1,8 +1,8 @@
 import React from "react";
-import { ReactBaseController, ReactController, RouteParam } from "@symph/react";
+import { BaseReactController, ReactController, RouteParam } from "@symph/react";
 
 @ReactController()
-export default class Id extends ReactBaseController {
+export default class Id extends BaseReactController {
   @RouteParam()
   private id: string;
 

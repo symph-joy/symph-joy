@@ -59,7 +59,7 @@ export class FileScanner {
   private watchers: Map<string, FSWatcher> = new Map();
 
   public isWatch = false;
-  private aggregateTimeout = 100;
+  private aggregateTimeout = 50;
   public aggregateChange: AggregateChange = new AggregateChange();
 
   constructor(
@@ -103,10 +103,10 @@ export class FileScanner {
   }
 
   public async scanDist(distDir: string): Promise<void> {
-    Log.info("scan and analyze code");
+    Log.wait("scan react components...");
     // todo 支持简化的前端或者后端目录结构， 例如：纯前端应用，src目录下直接展平client目录。
     let distClientDir = path.join(distDir, "./client");
-    const distServerDir = path.join(distDir, "./server");
+    // const distServerDir = path.join(distDir, "./server");
     if (!existsSync(distClientDir)) {
       distClientDir = path.join(distDir, "./pages");
     }
@@ -114,9 +114,9 @@ export class FileScanner {
     if (existsSync(distClientDir)) {
       await this.scan(distClientDir, { contextType: ModuleContextTypeEnum.React });
     }
-    if (existsSync(distServerDir)) {
-      await this.scan(distServerDir, { contextType: ModuleContextTypeEnum.Server });
-    }
+    // if (existsSync(distServerDir)) {
+    //   await this.scan(distServerDir, { contextType: ModuleContextTypeEnum.Server });
+    // }
   }
 
   public async scan(dir: string, options: ScanOptions = {}): Promise<void> {
@@ -138,8 +138,8 @@ export class FileScanner {
         this.applyChange("", filePath, "remove", options);
       });
       watcher.on("ready", async () => {
-        console.log(`Scan react components success. ${this.isWatch ? "Ready for changes..." : ""}`);
         await this.applyAggregatedChanges();
+        Log.event(`scan react components success. ${this.isWatch ? "Ready for changes..." : ""}`);
         resolve();
       });
       watcher.on("error", (error) => {

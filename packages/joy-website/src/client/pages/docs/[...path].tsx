@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController, Route, RouteParam } from "@symph/react";
+import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Autowire } from "@symph/core";
 import { Affix, Col, Menu, Row, Spin, Anchor } from "antd";
@@ -7,7 +7,7 @@ import styles from "./docs.less";
 
 const { Link } = Anchor;
 @ReactController()
-export default class DocsIndexController extends ReactBaseController {
+export default class DocsIndexController extends BaseReactController {
   @RouteParam({ name: "path" })
   docPath: string;
 

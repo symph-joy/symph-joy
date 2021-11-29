@@ -1,8 +1,8 @@
 import { Component } from "@symph/core";
-import { ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 
 @Component({ name: "aTestClass" })
 export class TestClass {
-  @ConfigValue()
+  @Value()
   public configValue: string;
 }

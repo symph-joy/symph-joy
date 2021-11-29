@@ -1,8 +1,8 @@
 import React from "react";
 import { Configuration } from "./decorators/core/configuration/configuration.decorator";
 import { Provider } from "./decorators/core/configuration/provider.decorator";
-import { CoreContext } from "./core-context";
-import { ComponentWrapper, CoreContainer } from "./injector";
+import { ApplicationContext } from "./application-context";
+import { ComponentWrapper, ApplicationContainer } from "./injector";
 import { RegisterTap } from "./hook";
 import { TProviderName } from "./interfaces";
 import { Component } from "./decorators";
@@ -14,7 +14,7 @@ describe("core-context", () => {
     class HelloProvider {
       private message = "hello world";
 
-      constructor(private context: CoreContext) {}
+      constructor(private context: ApplicationContext) {}
 
       hello() {
         return this.message;
@@ -27,8 +27,8 @@ describe("core-context", () => {
       public helloProvider: HelloProvider;
     }
 
-    const container = new CoreContainer();
-    const app = new CoreContext(AppConfig);
+    const container = new ApplicationContainer();
+    const app = new ApplicationContext(AppConfig);
     await app.init();
 
     const helloProvider = await app.get(HelloProvider);
@@ -39,17 +39,17 @@ describe("core-context", () => {
     it("should set application context to component.", async () => {
       @Component()
       class MyProvider implements IApplicationContextAware {
-        public context: CoreContext;
-        setApplicationContext(coreContext: CoreContext): void {
+        public context: ApplicationContext;
+        setApplicationContext(coreContext: ApplicationContext): void {
           this.context = coreContext;
         }
       }
 
-      const container = new CoreContainer();
-      const app = new CoreContext([MyProvider]);
+      const container = new ApplicationContainer();
+      const app = new ApplicationContext([MyProvider]);
       await app.init();
       const myProvider = await app.get(MyProvider);
-      expect(myProvider!.context).toBeInstanceOf(CoreContext);
+      expect(myProvider!.context).toBeInstanceOf(ApplicationContext);
     });
   });
 
@@ -58,7 +58,7 @@ describe("core-context", () => {
     class HelloProvider {
       private message = "hello world";
 
-      constructor(private context: CoreContext) {}
+      constructor(private context: ApplicationContext) {}
 
       hello() {
         return this.message;
@@ -71,7 +71,7 @@ describe("core-context", () => {
       public helloProvider: HelloProvider;
     }
 
-    const app = new CoreContext({});
+    const app = new ApplicationContext({});
     await app.init();
     await app.loadModule(AppConfig);
 
@@ -104,7 +104,7 @@ describe("core-context", () => {
         public helloProvider: HelloProvider;
       }
 
-      const app = new CoreContext();
+      const app = new ApplicationContext();
       await app.init();
       await app.loadModule(AppConfig);
 
@@ -135,8 +135,8 @@ describe("core-context", () => {
         public helloProvider: HelloProvider;
       }
 
-      const container = new CoreContainer();
-      const app = new CoreContext(AppConfig);
+      const container = new ApplicationContainer();
+      const app = new ApplicationContext(AppConfig);
       await app.init();
 
       const helloProvider = await app.get(HelloProvider);

@@ -1,8 +1,8 @@
-import { ReactBaseController, ReactController } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
 import { JoyPrerenderInterface } from "../prerender.interface";
 
 class HelloPrerender implements JoyPrerenderInterface {
-  getRoute(): string | ReactBaseController {
+  getRoute(): string | BaseReactController {
     return "hello/:message";
   }
 

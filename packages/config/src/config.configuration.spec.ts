@@ -1,4 +1,4 @@
-import { Configuration, CoreContextFactory, ValueProvider } from "@symph/core";
+import { Configuration, ApplicationContextFactory, ValueProvider } from "@symph/core";
 import { ConfigService } from "./config.service";
 import { ConfigConfiguration } from "./config.configuration";
 import path from "path";
@@ -10,7 +10,7 @@ import { DotenvConfigLoader } from "./server/loaders/dotenv-config-loader";
 import { ConfigLoaderFactory } from "./loader/config-loader-factory";
 
 async function createConfigService(configClazz: typeof ConfigConfiguration, entryModule: any = {}): Promise<ConfigService> {
-  const context = await CoreContextFactory.createApplicationContext([configClazz, entryModule]);
+  const context = await ApplicationContextFactory.createApplicationContext([configClazz, entryModule]);
   return context.get(ConfigService);
 }
 

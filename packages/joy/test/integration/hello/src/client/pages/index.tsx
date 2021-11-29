@@ -1,11 +1,11 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, Route } from "@symph/react";
 import { IndexModel } from "../model/index.model";
 import { Autowire } from "@symph/core";
 
 @Route({ path: "/" })
 @ReactController()
-export default class HelloReactController extends ReactBaseController {
+export default class HelloReactController extends BaseReactController {
   @Autowire()
   indexModel: IndexModel;
 
