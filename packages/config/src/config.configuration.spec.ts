@@ -4,7 +4,7 @@ import { ConfigConfiguration } from "./config.configuration";
 import path from "path";
 import { SYMPH_CONFIG_INIT_VALUE } from "./constants";
 import { FileConfigLoader } from "./server/loaders/file-config-loader";
-import { ConfigLoader } from "./loader/config-loader";
+import { IConfigLoader } from "./loader/config-loader.interface";
 import { DirConfigLoader } from "./server/loaders/dir-config-loader";
 import { DotenvConfigLoader } from "./server/loaders/dotenv-config-loader";
 import { ConfigLoaderFactory } from "./loader/config-loader-factory";
@@ -30,7 +30,7 @@ describe("config.configuration", () => {
 
   test(`Should load the special config file.`, async () => {
     class LoaderFactory extends ConfigLoaderFactory {
-      getLoaders(configs: Record<string, any>): ConfigLoader[] {
+      getLoaders(configs: Record<string, any>): IConfigLoader[] {
         return [new FileConfigLoader(path.join(__dirname, "./fixtures/configs/config1.js"))];
       }
     }
@@ -57,7 +57,7 @@ describe("config.configuration", () => {
 
   test(`Should manually load config.`, async () => {
     class LoaderFactory extends ConfigLoaderFactory {
-      getLoaders(configs: Record<string, any>): ConfigLoader[] {
+      getLoaders(configs: Record<string, any>): IConfigLoader[] {
         return [new FileConfigLoader(path.join(__dirname, "./fixtures/configs/config1.js"))];
       }
     }
@@ -88,7 +88,7 @@ describe("config.configuration", () => {
 
   test(`Should load the config file which in dir tree.`, async () => {
     class LoaderFactory extends ConfigLoaderFactory {
-      getLoaders(configs: Record<string, any>): ConfigLoader[] {
+      getLoaders(configs: Record<string, any>): IConfigLoader[] {
         return [new DirConfigLoader(path.join(__dirname, "./fixtures/configs"), "config1.js")];
       }
     }
@@ -118,7 +118,7 @@ describe("config.configuration", () => {
 
   test(`Should load the .env config file.`, async () => {
     class LoaderFactory extends ConfigLoaderFactory {
-      getLoaders(configs: Record<string, any>): ConfigLoader[] {
+      getLoaders(configs: Record<string, any>): IConfigLoader[] {
         return [new DotenvConfigLoader(path.join(__dirname, "./fixtures/configs/.env.test1"), true)];
       }
     }
@@ -148,7 +148,7 @@ describe("config.configuration", () => {
 
   test(`Should load config in custom order. the next value should overwrite the before value.`, async () => {
     class LoaderFactory extends ConfigLoaderFactory {
-      getLoaders(configs: Record<string, any>): ConfigLoader[] {
+      getLoaders(configs: Record<string, any>): IConfigLoader[] {
         const fsLoader1 = new FileConfigLoader(path.join(__dirname, "./fixtures/configs/config1.js"));
         const fsLoader2 = new FileConfigLoader(path.join(__dirname, "./fixtures/configs/config2.js"));
         return [fsLoader1, fsLoader2];

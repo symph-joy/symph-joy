@@ -1,9 +1,9 @@
-import { ConfigLoader } from "./config-loader";
+import { IConfigLoader } from "./config-loader.interface";
 import { Component } from "@symph/core";
 
 @Component()
 export class ConfigLoaderFactory {
-  public getLoaders(configs: Record<string, any>): ConfigLoader[] {
+  public getLoaders(configs: Record<string, any>): IConfigLoader[] {
     return [];
   }
 }

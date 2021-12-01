@@ -27,6 +27,40 @@ describe("config.service", () => {
     expect(basicConfig.msg).toBe("From afterPropertiesSet");
   });
 
+  test(`Should transform value with transform function.`, async () => {
+    @Component()
+    class BasicConfig {
+      @Value({
+        configKey: "msg",
+        transform: (value: any) => {
+          return Boolean(value);
+        },
+      })
+      public hasMsg: boolean;
+
+      @Value({
+        transform: (value: any) => true,
+      })
+      public notTransformUndefined: boolean | undefined;
+    }
+
+    const context = await ApplicationContextFactory.createApplicationContext([
+      {
+        initValue: {
+          name: SYMPH_CONFIG_INIT_VALUE,
+          useValue: {
+            msg: "hello",
+          },
+        },
+      },
+      ConfigService,
+      BasicConfig,
+    ]);
+    const basicConfig = await context.get(BasicConfig);
+    expect(basicConfig.hasMsg).toBe(true);
+    expect(basicConfig.notTransformUndefined).toBe(undefined);
+  });
+
   test(`Should inject a function config value to the prop of the configurable component`, async () => {
     @Component()
     class BasicConfig {

@@ -1,15 +1,16 @@
-import { ConfigLoader } from "../loader/config-loader";
+import { IConfigLoader } from "../loader/config-loader.interface";
 import { DotenvConfigLoader } from "./loaders/dotenv-config-loader";
 import { DirConfigLoader } from "./loaders/dir-config-loader";
-import { resolve } from "path";
+import path, { resolve } from "path";
 import { FileConfigLoader } from "./loaders/file-config-loader";
 import { ConfigLoaderFactory } from "../loader/config-loader-factory";
+import { existsSync, readdirSync } from "fs-extra";
 
 export interface ServerConfigLoaderOptions {
   envFile?: string | string[];
   envExpandVariables?: boolean;
   ignoreEnvVars?: boolean;
-  fileName?: string | string[];
+  fileName?: string;
   configFilePath?: string | string[];
 }
 
@@ -34,7 +35,7 @@ export class ServerConfigLoaderFactory extends ConfigLoaderFactory {
     super();
   }
 
-  public getLoaders(configs: Record<string, any>): ConfigLoader[] {
+  public getLoaders(configs: Record<string, any>): IConfigLoader[] {
     const dir = configs.dir;
     const {
       envFile = [],
@@ -44,30 +45,71 @@ export class ServerConfigLoaderFactory extends ConfigLoaderFactory {
       configFilePath = [],
     }: ServerConfigLoaderOptions = this.options;
 
-    const fileNames = Array.isArray(fileName) ? fileName : [fileName];
     const configFilePaths = Array.isArray(configFilePath) ? configFilePath : [configFilePath];
     const envFiles = Array.isArray(envFile) ? envFile : [envFile];
 
-    const loaders = [] as ConfigLoader[];
+    const loaders = [] as IConfigLoader[];
 
-    loaders.push(new DotenvConfigLoader(envFiles, envExpandVariables, ignoreEnvVars));
-
-    let dirConfigLoadPaths: string[] = []; // 已经通过目录查找
-    for (const name of fileNames) {
-      const loader = new DirConfigLoader(dir, name);
-      const loadedFilePath = loader.findConfigPath();
-      loadedFilePath && dirConfigLoadPaths.push(loadedFilePath);
-      loaders.push(loader);
+    // dir loaders
+    if (fileName) {
+      const loader = new DirConfigLoader(dir, fileName);
+      const loadedFilePath = loader.configFilePath;
+      if (loadedFilePath) {
+        loaders.push(loader);
+      }
     }
 
+    // config dir loaders
+    const configsDir = path.join(dir, "config");
+    if (existsSync(configsDir)) {
+      const configsLoaders = this.readConfigDirs(configsDir, process.env.NODE_ENV);
+      if (configsLoaders) {
+        loaders.push(...configsLoaders);
+      }
+    }
+
+    // file loaders
     for (const it of configFilePaths) {
       const absPath = resolve(it);
-      if (dirConfigLoadPaths.includes(absPath)) {
-        continue;
-      }
       loaders.push(new FileConfigLoader(absPath));
     }
 
+    loaders.push(new DotenvConfigLoader(envFiles, envExpandVariables, ignoreEnvVars));
+
+    return loaders;
+  }
+
+  protected readConfigDirs(configDirPath: string, env: string | undefined): IConfigLoader[] | undefined {
+    const configFiles = readdirSync(configDirPath);
+    if (!configFiles?.length) {
+      return;
+    }
+
+    const commonConfigFiles = configFiles.filter((f) => /^[^.]+\.(jsx?|tsx?|json|mjs)/.test(f));
+    let envConfigFiles: string[] | undefined;
+    if (env) {
+      const envRegexp = new RegExp(`^[^.]+\\.${env}\\.(jsx?|tsx?|json|mjs)$`);
+      envConfigFiles = configFiles.filter((f) => envRegexp.test(f));
+    }
+    let localConfigs: string[] | undefined;
+    if ("local" !== env) {
+      localConfigs = configFiles.filter((f) => /^[^.]+\.local\.(jsx?|tsx?|json|mjs)/.test(f));
+    }
+    const files = [] as string[];
+    if (commonConfigFiles?.length) files.push(...commonConfigFiles);
+    if (envConfigFiles?.length) files.push(...envConfigFiles);
+    if (localConfigs?.length) files.push(...localConfigs);
+
+    const loaders = [] as IConfigLoader[];
+    for (const file of files) {
+      const absPath = path.join(configDirPath, file);
+      const configName = file.slice(0, file.indexOf("."));
+      let propName: string | undefined;
+      if (configName !== "config") {
+        propName = configName;
+      }
+      loaders.push(new FileConfigLoader(absPath, propName));
+    }
     return loaders;
   }
 }

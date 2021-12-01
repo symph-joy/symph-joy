@@ -11,6 +11,7 @@ export interface IConfigValueMeta {
   schema: JsonSchema | undefined; // 为空表示不需要校验
   onChange: "reload" | "regenerateTmpFiles";
   default: unknown; //default value
+  transform?: (originalValue: unknown) => unknown;
 }
 
 let cacheHashId = 1;

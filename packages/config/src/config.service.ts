@@ -94,23 +94,29 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
     if (!configValues || !configValues.length) {
       return;
     }
-    const configData = this.internalConfig;
+    const internalConfig = this.internalConfig;
     // const propKeys: string[] = new Array(configMetas.length);
     const configKeys: string[] = new Array(configValues.length);
     const configJsonSchema: JsonSchema = new JsonSchema();
 
+    const configData = {} as Record<string, unknown>;
     for (let i = 0; i < configValues.length; i++) {
-      const { configKey, propKey, schema } = configValues[i];
-      if (schema === undefined) {
-        continue;
-      }
+      const { configKey, propKey, schema, transform } = configValues[i];
+
       // propKeys[i] = propKey;
       configKeys[i] = configKey;
-      configJsonSchema.addProperty(configKey, new JsonSchema(schema));
+      if (schema) {
+        configJsonSchema.addProperty(configKey, new JsonSchema(schema));
+      }
+      const originValue = internalConfig[configKey];
+      if (transform && originValue !== undefined) {
+        configData[configKey] = transform(originValue);
+      } else {
+        configData[configKey] = originValue;
+      }
     }
 
     const ajv = new Ajv();
-
     const isValid = ajv.validate(configJsonSchema.toObject(), configData);
     if (!isValid) {
       const errMsg = ajv.errorsText(ajv.errors);
@@ -121,6 +127,9 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
       const configMeta = configValues[i];
       const value = configData[configMeta.configKey];
       const presetValue = instance[configMeta.propKey];
+      if (configMeta.configKey === "ssr") {
+        console.log(value);
+      }
       if (typeof value === "undefined") {
         if (configMeta.default !== undefined) {
           if (presetValue === undefined) {

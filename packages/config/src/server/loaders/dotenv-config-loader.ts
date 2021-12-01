@@ -2,10 +2,10 @@ import fs from "fs";
 import { resolve } from "path";
 import * as dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
-import { ConfigLoader } from "../../loader/config-loader";
+import { IConfigLoader } from "../../loader/config-loader.interface";
 import { ConfigNotExistException } from "../../errors/config-not-exist-exception";
 
-export class DotenvConfigLoader extends ConfigLoader {
+export class DotenvConfigLoader implements IConfigLoader {
   protected envFiles: string[];
 
   constructor(
@@ -13,7 +13,6 @@ export class DotenvConfigLoader extends ConfigLoader {
     public expandVariables: boolean = true,
     public ignoreEnvVars: boolean = false
   ) {
-    super();
     this.envFiles = Array.isArray(this.envFile) ? this.envFile : [this.envFile];
   }
 

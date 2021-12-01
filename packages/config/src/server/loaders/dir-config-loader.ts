@@ -1,50 +1,52 @@
 import fs from "fs";
 import findUp from "find-up";
 import { basename, extname } from "path";
-import { ConfigLoader } from "../../loader/config-loader";
+import { IConfigLoader } from "../../loader/config-loader.interface";
 import { ConfigNotExistException } from "../../errors/config-not-exist-exception";
-import { readConfigFile } from "./read-config-file";
 import { ConfigPathIsFileException } from "../../errors/config-path-is-file-exception";
+import { FileConfigLoader } from "./file-config-loader";
 
-export class DirConfigLoader extends ConfigLoader {
+export class DirConfigLoader implements IConfigLoader {
+  public fileConfigLoader: FileConfigLoader;
+  public configFilePath: string | undefined;
   constructor(public dir: string, public configName: string) {
-    super();
-  }
-
-  public findConfigPath(): string | undefined {
-    return findUp.sync(this.configName, {
-      cwd: this.dir,
-    });
-  }
-
-  public async loadConfig(): Promise<Record<string, any>> {
-    if (!fs.existsSync(this.dir)) {
-      throw new ConfigNotExistException(this.dir);
-    }
-
     const stats = fs.statSync(this.dir);
-    let config: any;
     if (stats.isFile()) {
       throw new ConfigPathIsFileException(this.dir);
     } else if (stats.isDirectory()) {
-      const configPath = this.findConfigPath();
-      if (configPath?.length) {
-        config = await readConfigFile(configPath);
-        console.log(`Info: Using config "${configPath}".`);
-      } else {
-        const configFileName = this.configName;
-        const configBaseName = basename(configFileName, extname(configFileName));
-        const nonJsPath = findUp.sync([`${configBaseName}.jsx`, `${configBaseName}.ts`, `${configBaseName}.tsx`, `${configBaseName}.json`], {
-          cwd: this.dir,
-        });
-        if (nonJsPath?.length) {
-          throw new Error(`Configuring Joy via "${basename(nonJsPath)}" is not supported. Please replace the file with "${configBaseName}".`);
-        } else {
-          console.log(`Info: Config file "${configBaseName}.js" was not found.`);
-          // throw new ConfigNotExistException(this.dir);
-        }
+      if (!fs.existsSync(this.dir)) {
+        throw new ConfigNotExistException(this.dir);
       }
     }
-    return config;
+
+    this.configFilePath = this.findConfigPath();
+    if (this.configFilePath) {
+      this.fileConfigLoader = new FileConfigLoader(this.configFilePath);
+    }
+  }
+
+  public findConfigPath(): string | undefined {
+    const configPath = findUp.sync(this.configName, {
+      cwd: this.dir,
+    });
+    if (!configPath) {
+      const configFileName = this.configName;
+      const configBaseName = basename(configFileName, extname(configFileName));
+      const nonSupport = findUp.sync([`${configBaseName}.jsx`, `${configBaseName}.tsx`, `${configBaseName}.yaml`], {
+        cwd: this.dir,
+      });
+      if (nonSupport?.length) {
+        throw new Error(`Configuring Joy via "${basename(nonSupport)}" is not supported. Please replace the file with "${configBaseName}".`);
+      } else {
+        console.log(`Info: Config file "${configBaseName}.js" was not found.`);
+      }
+    }
+    return configPath;
+  }
+
+  public async loadConfig(): Promise<Record<string, any> | undefined> {
+    if (this.fileConfigLoader) {
+      return this.fileConfigLoader.loadConfig();
+    }
   }
 }
