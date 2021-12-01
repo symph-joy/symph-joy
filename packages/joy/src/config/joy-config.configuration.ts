@@ -1,6 +1,6 @@
 import { NodeConfigConfiguration, ServerConfigLoaderFactory } from "@symph/config/server";
-import { ConfigLoaderFactory } from "@symph/config/dist/loader/factories/config-loader-factory";
 import { Configuration } from "@symph/core";
+import { ConfigLoaderFactory } from "@symph/config";
 
 @Configuration()
 export class JoyConfigConfiguration extends NodeConfigConfiguration {

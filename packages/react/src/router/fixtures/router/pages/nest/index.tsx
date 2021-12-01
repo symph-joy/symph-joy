@@ -3,7 +3,7 @@ import { ReactController, BaseReactController, Route } from "../../../../../inde
 
 @Route({ path: "/nest/index" })
 @ReactController()
-export default class NestIndex extends ReactBaseController {
+export default class NestIndex extends BaseReactController {
   renderView() {
     return <div data-testid="nestIndex">Nest Index</div>;
   }

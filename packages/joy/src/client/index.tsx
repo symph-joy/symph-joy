@@ -60,6 +60,7 @@ const {
   runtimeConfig,
   dynamicIds,
   isFallback,
+  ssr: isSSR,
 } = data;
 
 const prefix = assetPrefix || "";
@@ -434,7 +435,7 @@ function renderReactElement(reactEl: JSX.Element, domEl: HTMLElement) {
     }
 
     // The check for `.hydrate` is there to support React alternatives like preact
-    if (isInitialRender) {
+    if (isInitialRender && isSSR) {
       ReactDOM.hydrate(reactEl, domEl, markHydrateComplete);
       isInitialRender = false;
 

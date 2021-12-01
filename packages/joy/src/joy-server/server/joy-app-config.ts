@@ -40,6 +40,7 @@ export interface IJoyConfig {
   port?: number; // = 3000
   hostname?: string; // = 'localhost'
   dev: boolean; // = false
+  ssr: boolean; // = true
   quiet: boolean; // = false
   customServer: boolean; // = false
 
@@ -108,56 +109,8 @@ export interface IJoyConfig {
 
 @Component()
 export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
-  // @Hook({
-  //   id: "addJoyConfigSchema",
-  //   type: HookType.Waterfall,
-  //   parallel: false,
-  //   async: true,
-  // })
-  // private addJoyConfigSchema: HookPipe;
-  //
-  // @Hook({
-  //   id: "onJoyConfigChanged",
-  //   type: HookType.Waterfall,
-  //   parallel: false,
-  //   async: true,
-  // })
-  // private onJoyConfigChanged: HookPipe;
-  // public getConfigSchema() {
-  //   return this.addJoyConfigSchema.call({});
-  // }
-
-  // @RegisterTap()
-  // componentAfterPropertiesSet<T>(
-  //   instance: T,
-  //   args: { instanceWrapper: IComponentWrapper }
-  // ): T {
-  //   const { instanceWrapper } = args;
-  //   // const config = getConfigValuesMetadata(instanceWrapper.type)
-  //   // if(!config || !config.length) {
-  //   //   return instance
-  //   // }
-  //
-  //   const setConfigValue = (instance as any)[PROP_KEY_JOY_CONFIG_SET_VALUE];
-  //   if (setConfigValue) {
-  //     setConfigValue.call(instance, this);
-  //   }
-  //
-  //   return instance;
-  // }
-
-  // [configKey: string]: any;
-
   @Value({ default: "/api", configKey: "apiPrefix" })
   protected globalPrefix: string;
-
-  // public setGlobalPrefix(prefix: string) {
-  //   this.apiPrefix = prefix;
-  // }
-  //
-  // public getGlobalPrefix() {
-  //   return this.apiPrefix;
-  // }
 
   @Value()
   pagesDir?: string;
@@ -174,6 +127,17 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
 
   @Value({ default: false })
   dev: boolean;
+
+  /**
+   * 一般在开发调试时，关闭SSR，React的组件都在浏览器上完成加载，方便调试。
+   */
+  @Value({
+    default: true,
+    transform: (value: any) => {
+      return value === "false" ? false : Boolean(value);
+    },
+  })
+  ssr: boolean;
 
   @Value({ default: false })
   quiet: boolean;
@@ -221,9 +185,6 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
 
   @Value({ default: "" })
   basePath: string;
-
-  // @ConfigValue({ default: "/api" })
-  // apiRoutePrefix: string;
 
   sassOptions = {};
   lessOptions = {};

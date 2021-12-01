@@ -58,8 +58,6 @@ import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 
 const getCustomRouteMatcher = pathMatch(true);
 
-type JoyConfig = any;
-
 type Middleware = (req: IncomingMessage, res: ServerResponse, next: (err?: Error) => void) => void;
 
 type FindComponentsResult = {
@@ -79,7 +77,7 @@ export type ServerConstructor = {
   /**
    * Object what you would use in joy.config.js - @default {}
    */
-  conf?: JoyConfig;
+  conf?: JoyAppConfig;
   dev?: boolean;
   customServer?: boolean;
 };
@@ -88,7 +86,7 @@ export type ServerConstructor = {
 export class JoyReactServer implements IComponentLifecycle {
   dir: string;
   quiet: boolean;
-  joyConfig: JoyConfig;
+  joyConfig: JoyAppConfig;
   distDir: string;
   outDir: string;
   pagesDir?: string;
@@ -114,6 +112,7 @@ export class JoyReactServer implements IComponentLifecycle {
     optimizeFonts: boolean;
     fontManifest: FontManifest;
     optimizeImages: boolean;
+    ssr?: boolean;
   };
   private compression?: Middleware;
   private onErrorMiddleware?: ({ err }: { err: Error }) => Promise<void>;
@@ -150,7 +149,8 @@ export class JoyReactServer implements IComponentLifecycle {
 
     // Only serverRuntimeConfig needs the default
     // publicRuntimeConfig gets it's default in client/index.js
-    const { serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, globalPrefix, generateEtags, compress } = this.joyConfig;
+    const { serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, generateEtags, compress } = this.joyConfig;
+    const globalPrefix = this.joyConfig.getGlobalPrefix();
 
     this.renderOpts = {
       initStage: EnumReactAppInitStage.DYNAMIC,
@@ -161,7 +161,7 @@ export class JoyReactServer implements IComponentLifecycle {
       // previewProps: this.getPreviewProps(),
       previewProps: {} as any, // todo remove
       customServer: customServer === true ? true : undefined,
-      ampOptimizerConfig: this.joyConfig.experimental.amp?.optimizer,
+      // ampOptimizerConfig: this.joyConfig.experimental.amp?.optimizer,
       basePath: this.joyConfig.basePath,
       optimizeFonts: this.joyConfig.experimental.optimizeFonts && !dev,
       fontManifest: this.joyConfig.experimental.optimizeFonts && !dev ? requireFontManifest(this.outDir, this._isLikeServerless) : null,
@@ -1055,6 +1055,7 @@ export class JoyReactServer implements IComponentLifecycle {
           ...components,
           ...opts,
           isDataReq,
+          ssr: this.joyConfig.ssr,
           reactApplicationContext: reactAppContext,
         };
         const renderResult = await renderToHTML(req, res, pathname, query, renderOpts);
@@ -1170,61 +1171,17 @@ export class JoyReactServer implements IComponentLifecycle {
     return resHtml;
   }
 
-  // public async getAutoGenerateModules(): Promise<any[]> {
-  //   const genServerModulesPath = this.joyAppConfig.resolveAppDir(
-  //     this.joyAppConfig.distDir,
-  //     "./out/server/gen-server-modules.js"
-  //   );
-  //   const modules = require(genServerModulesPath);
-  //   return modules.default || modules;
-  //   // if (await fileExists(genServerModulesPath)){
-  //   //   const modules = require(genServerModulesPath)
-  //   //   return  modules.default || modules
-  //   // } else {
-  //   //   return  []
-  //   // }
-  // }
-  //
-  // protected getReactAppProviderConfig(): EntryType[] {
-  //   return [JoyReactAppServerConfig];
-  // }
-  //
-  // protected async getReactAppContext(
-  //   req: IncomingMessage,
-  //   res: ServerResponse,
-  //   pathname: string,
-  //   query: ParsedUrlQuery
-  // ): Promise<ReactApplicationContext> {
-  //   const applicationConfig = new ApplicationConfig();
-  //   const joyContainer = new ApplicationContainer();
-  //   const reactApplicationContext = new ReactApplicationContext(
-  //     {},
-  //     applicationConfig,
-  //     joyContainer
-  //   );
-  //   await reactApplicationContext.init();
-  //   const autoGenModules = await this.getAutoGenerateModules();
-  //   await reactApplicationContext.loadModule([
-  //     ...autoGenModules,
-  //     { reactRouterProps: { type: Object, useValue: { location: pathname } } }, // StaticRouter props
-  //     ...this.getReactAppProviderConfig(),
-  //   ]);
-  //   return reactApplicationContext;
-  // }
-
   public async renderToHTML(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery = {}): Promise<string | null> {
-    // ssg
-
-    await this.onBeforeRender.call({ req, res, pathname, query });
-
     const reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, pathname, query);
-
-    if (res.writableEnded) {
-      // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
-    }
 
     try {
       const result = await this.findPageComponents(pathname, query);
+
+      await this.onBeforeRender.call({ req, res, pathname, query, reactAppContext, components: result?.components, renderOptions: this.renderOpts });
+      if (res.writableEnded) {
+        // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
+      }
+
       if (result) {
         try {
           return await this.renderToHTMLWithComponents(req, res, pathname, reactAppContext, result, { ...this.renderOpts });
@@ -1236,26 +1193,28 @@ export class JoyReactServer implements IComponentLifecycle {
       }
 
       if (this.dynamicRoutes) {
-        for (const dynamicRoute of this.dynamicRoutes) {
-          const params = dynamicRoute.match(pathname);
-          if (!params) {
-            continue;
-          }
-
-          const dynamicRouteResult = await this.findPageComponents(dynamicRoute.page, query, params);
-          if (dynamicRouteResult) {
-            try {
-              return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, {
-                ...this.renderOpts,
-                params,
-              });
-            } catch (err) {
-              if (!(err instanceof NoFallbackError)) {
-                throw err;
-              }
-            }
-          }
-        }
+        // todo 使用react-routes 4 之后的动态路由后，该路由是否还有必要存在？
+        throw new Error(">>>>>>>  使用react-routes 4 之后的动态路由后，dynamicRoutes路由是否还有必要存在？" + JSON.stringify(this.dynamicRoutes));
+        // for (const dynamicRoute of this.dynamicRoutes) {
+        //   const params = dynamicRoute.match(pathname);
+        //   if (!params) {
+        //     continue;
+        //   }
+        //
+        //   const dynamicRouteResult = await this.findPageComponents(dynamicRoute.page, query, params);
+        //   if (dynamicRouteResult) {
+        //     try {
+        //       return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, {
+        //         ...this.renderOpts,
+        //         params,
+        //       });
+        //     } catch (err) {
+        //       if (!(err instanceof NoFallbackError)) {
+        //         throw err;
+        //       }
+        //     }
+        //   }
+        // }
       }
     } catch (err) {
       this.logError(err);

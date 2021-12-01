@@ -48,14 +48,14 @@ export class JoyTestContext {
     return this;
   }
 
-  async startDev(port?: number) {
+  async startDev(port?: number, runOpts?: RunOptions) {
     const workDir = this.workDir;
     if (!this.isInit) {
       await this.init();
     }
     port = port || (await findPort());
     this.port = port;
-    const serverProcess = await joyDev(workDir, port);
+    const serverProcess = await joyDev(workDir, port, runOpts);
     this.serverProcess = serverProcess;
     return this;
   }
@@ -74,9 +74,9 @@ export class JoyTestContext {
     }
   }
 
-  static async createDevServerContext(workDir: string, port?: number) {
+  static async createDevServerContext(workDir: string, port?: number, runOpts?: RunOptions,) {
     const testContext = new JoyTestContext(workDir);
-    await testContext.startDev(port);
+    await testContext.startDev(port, runOpts);
     return testContext;
   }
 

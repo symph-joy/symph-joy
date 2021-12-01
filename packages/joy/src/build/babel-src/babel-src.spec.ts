@@ -40,8 +40,8 @@ describe("babel src", () => {
     expect(classMete?.name).toBe("aTestClass");
 
     const propMeta = getConfigValuesMetadata(clazz);
-    expect(propMeta.length).toBe(1);
-    expect(propMeta[0]).toMatchObject({ propKey: "configValue" });
+    expect(propMeta?.length).toBe(1);
+    expect(propMeta![0]).toMatchObject({ propKey: "configValue" });
   });
 
   test(`Transform react class component.`, async () => {

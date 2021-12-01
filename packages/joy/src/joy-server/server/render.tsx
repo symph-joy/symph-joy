@@ -138,6 +138,7 @@ export type RenderOptsPartial = {
   devOnlyCacheBusterQueryString?: string;
 
   reactApplicationContext?: ReactApplicationContext;
+  ssr?: boolean;
 };
 
 export type RenderOpts = LoadComponentsReturnType & RenderOptsPartial;
@@ -170,8 +171,9 @@ function renderDocument(
     hybridAmp,
     dynamicImports,
     headTags,
-    gsp,
-    gssp,
+    // gsp,
+    // gssp,
+    ssr,
     customServer,
     gip,
     appGip,
@@ -193,8 +195,9 @@ function renderDocument(
     dynamicImports: ManifestItem[];
     headTags: any;
     isFallback?: boolean;
-    gsp?: boolean;
-    gssp?: boolean;
+    // gsp?: boolean;
+    // gssp?: boolean;
+    ssr?: boolean;
     customServer?: boolean;
     gip?: boolean;
     appGip?: boolean;
@@ -220,8 +223,9 @@ function renderDocument(
             isFallback,
             dynamicIds: dynamicImportsIds.length === 0 ? undefined : dynamicImportsIds,
             err: err ? serializeError(dev, err) : undefined, // Error if one happened, otherwise don't sent in the resulting HTML
-            gsp, // whether the page is getStaticProps
-            gssp, // whether the page is getServerSideProps
+            // gsp, // whether the page is getStaticProps
+            // gssp, // whether the page is getServerSideProps
+            ssr,
             customServer, // whether the user is using a custom server
             gip, // whether the page has getInitialProps
             appGip, // whether the _app has getInitialProps
@@ -289,6 +293,7 @@ export async function renderToHTML(
 
     reactApplicationContext,
     initStage,
+    ssr = true,
   } = renderOpts;
 
   const getFontDefinition = (url: string): string => {
@@ -325,6 +330,7 @@ export async function renderToHTML(
   const isFallback = !!query.__joyFallback;
   delete query.__joyFallback;
 
+  const isSSR = ssr;
   const isSSG = true;
   // const isSSG = !!getStaticProps
   // const isBuildTimeSSG = isSSG && renderOpts.joyExport
@@ -335,56 +341,9 @@ export async function renderToHTML(
 
   const pageIsDynamic = isDynamicRoute(pathname);
   const isAutoExport = false; // todo 开启自动导出功能，例如在路由组件中没有数据获取的纯静态路由
-  // const isAutoExport =
-  //   !hasPageGetInitialProps &&
-  //   defaultAppGetInitialProps &&
-  //   !isSSG &&
-  //   !getServerSideProps
-
-  // for (const methodName of [
-  //   'getStaticProps',
-  //   'getServerSideProps',
-  //   'getStaticPaths',
-  // ]) {
-  //   if ((Component as any)[methodName]) {
-  //     throw new Error(
-  //       `page ${pathname} ${methodName} ${GSSP_COMPONENT_MEMBER_ERROR}`
-  //     )
-  //   }
-  // }
-
-  // if (hasPageGetInitialProps && isSSG) {
-  //   throw new Error(SSG_GET_INITIAL_PROPS_CONFLICT + ` ${pathname}`)
-  // }
-
-  // if (hasPageGetInitialProps && getServerSideProps) {
-  //   throw new Error(SERVER_PROPS_GET_INIT_PROPS_CONFLICT + ` ${pathname}`)
-  // }
-
-  // if (getServerSideProps && isSSG) {
-  //   throw new Error(SERVER_PROPS_SSG_CONFLICT + ` ${pathname}`)
-  // }
-
-  // if (!!getStaticPaths && !isSSG) {
-  //   throw new Error(
-  //     `getStaticPaths was added without a getStaticProps in ${pathname}. Without getStaticProps, getStaticPaths does nothing`
-  //   )
-  // }
-
-  // if (isSSG && pageIsDynamic && !getStaticPaths) {
-  //   throw new Error(
-  //     `getStaticPaths is required for dynamic SSG pages and is missing for '${pathname}'.` +
-  //       `\nRead more: https://err.sh/next.js/invalid-getstaticpaths-value`
-  //   )
-  // }
 
   if (dev) {
     const { isValidElementType } = require("react-is");
-    // if (!isValidElementType(Component)) {
-    //   throw new Error(
-    //     `The default export is not a React Component in page: "${pathname}"`
-    //   )
-    // }
 
     if (!isValidElementType(App)) {
       throw new Error(`The default export is not a React Component in page: "/_app"`);
@@ -406,7 +365,6 @@ export async function renderToHTML(
       req.url = pathname;
       renderOpts.joyExport = true;
     }
-
     // 404 可以获取数据，所以不需要下面的判断
     // if (pathname === '/404' && (hasPageGetInitialProps || getServerSideProps)) {
     //   throw new Error(PAGES_404_GET_INITIAL_PROPS_ERROR)
@@ -478,187 +436,14 @@ export async function renderToHTML(
       >
         <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
           <App {...props} />
-          {/*<RouteSwitch routes={routes} />*/}
         </LoadableContext.Provider>
       </HeadManagerContext.Provider>
     </AmpStateContext.Provider>
   );
 
-  const AppContainer = () => {
+  let AppContainer = () => {
     return <ReactAppContainer appContext={reactApplicationContext!} Component={ExtendAppComp} />;
   };
-
-  // try {
-  //   props = await loadGetInitialProps(App, {
-  //     AppTree: ctx.AppTree,
-  //     Component：AppContainer,
-  //     router,
-  //     ctx,
-  //   })
-  //
-  //   if (isSSG) {
-  //     props[STATIC_PROPS_ID] = true
-  //   }
-  //
-  //   let previewData: string | false | object | undefined
-  //
-  //   // if ((isSSG || getServerSideProps) && !isFallback) {
-  //   //   // Reads of this are cached on the `req` object, so this should resolve
-  //   //   // instantly. There's no need to pass this data down from a previous
-  //   //   // invoke, where we'd have to consider server & serverless.
-  //   //   previewData = tryGetPreviewData(req, res, previewProps)
-  //   // }
-  //
-  //   if (isSSG && !isFallback) {
-  //     let data: UnwrapPromise<ReturnType<GetStaticProps>>
-  //
-  //     try {
-  //       data = await getStaticProps!({
-  //         ...(pageIsDynamic ? { params: query as ParsedUrlQuery } : undefined),
-  //         ...(previewData !== false
-  //           ? { preview: true, previewData: previewData }
-  //           : undefined),
-  //       })
-  //     } catch (staticPropsError) {
-  //       // remove not found error code to prevent triggering legacy
-  //       // 404 rendering
-  //       if (staticPropsError.code === 'ENOENT') {
-  //         delete staticPropsError.code
-  //       }
-  //       throw staticPropsError
-  //     }
-  //
-  //     if (data == null) {
-  //       throw new Error(GSP_NO_RETURNED_VALUE)
-  //     }
-  //
-  //     const invalidKeys = Object.keys(data).filter(
-  //       (key) => key !== 'revalidate' && key !== 'props'
-  //     )
-  //
-  //     if (invalidKeys.includes('unstable_revalidate')) {
-  //       throw new Error(UNSTABLE_REVALIDATE_RENAME_ERROR)
-  //     }
-  //
-  //     if (invalidKeys.length) {
-  //       throw new Error(invalidKeysMsg('getStaticProps', invalidKeys))
-  //     }
-  //
-  //     if (
-  //       (dev || isBuildTimeSSG) &&
-  //       !isSerializableProps(pathname, 'getStaticProps', data.props)
-  //     ) {
-  //       // this fn should throw an error instead of ever returning `false`
-  //       throw new Error(
-  //         'invariant: getStaticProps did not return valid props. Please report this.'
-  //       )
-  //     }
-  //
-  //     if (typeof data.revalidate === 'number') {
-  //       if (!Number.isInteger(data.revalidate)) {
-  //         throw new Error(
-  //           `A page's revalidate option must be seconds expressed as a natural number. Mixed numbers, such as '${data.revalidate}', cannot be used.` +
-  //             `\nTry changing the value to '${Math.ceil(
-  //               data.revalidate
-  //             )}' or using \`Math.ceil()\` if you're computing the value.`
-  //         )
-  //       } else if (data.revalidate <= 0) {
-  //         throw new Error(
-  //           `A page's revalidate option can not be less than or equal to zero. A revalidate option of zero means to revalidate after _every_ request, and implies stale data cannot be tolerated.` +
-  //             `\n\nTo never revalidate, you can set revalidate to \`false\` (only ran once at build-time).` +
-  //             `\nTo revalidate as soon as possible, you can set the value to \`1\`.`
-  //         )
-  //       } else if (data.revalidate > 31536000) {
-  //         // if it's greater than a year for some reason error
-  //         console.warn(
-  //           `Warning: A page's revalidate option was set to more than a year. This may have been done in error.` +
-  //             `\nTo only run getStaticProps at build-time and not revalidate at runtime, you can set \`revalidate\` to \`false\`!`
-  //         )
-  //       }
-  //     } else if (data.revalidate === true) {
-  //       // When enabled, revalidate after 1 second. This value is optimal for
-  //       // the most up-to-date page possible, but without a 1-to-1
-  //       // request-refresh ratio.
-  //       data.revalidate = 1
-  //     } else {
-  //       // By default, we never revalidate.
-  //       data.revalidate = false
-  //     }
-  //
-  //     props.pageProps = Object.assign({}, props.pageProps, data.props)
-  //     // pass up revalidate and props for export
-  //     // TODO: change this to a different passing mechanism
-  //     ;(renderOpts as any).revalidate = data.revalidate
-  //     ;(renderOpts as any).pageData = props
-  //   }
-  //
-  //   if (getServerSideProps) {
-  //     props[SERVER_PROPS_ID] = true
-  //   }
-  //
-  //   if (getServerSideProps && !isFallback) {
-  //     let data: UnwrapPromise<ReturnType<GetServerSideProps>>
-  //
-  //     try {
-  //       data = await getServerSideProps({
-  //         req,
-  //         res,
-  //         query,
-  //         ...(pageIsDynamic ? { params: params as ParsedUrlQuery } : undefined),
-  //         ...(previewData !== false
-  //           ? { preview: true, previewData: previewData }
-  //           : undefined),
-  //       })
-  //     } catch (serverSidePropsError) {
-  //       // remove not found error code to prevent triggering legacy
-  //       // 404 rendering
-  //       if (serverSidePropsError.code === 'ENOENT') {
-  //         delete serverSidePropsError.code
-  //       }
-  //       throw serverSidePropsError
-  //     }
-  //
-  //     if (data == null) {
-  //       throw new Error(GSSP_NO_RETURNED_VALUE)
-  //     }
-  //
-  //     const invalidKeys = Object.keys(data).filter((key) => key !== 'props')
-  //
-  //     if (invalidKeys.length) {
-  //       throw new Error(invalidKeysMsg('getServerSideProps', invalidKeys))
-  //     }
-  //
-  //     if (
-  //       (dev || isBuildTimeSSG) &&
-  //       !isSerializableProps(pathname, 'getServerSideProps', data.props)
-  //     ) {
-  //       // this fn should throw an error instead of ever returning `false`
-  //       throw new Error(
-  //         'invariant: getServerSideProps did not return valid props. Please report this.'
-  //       )
-  //     }
-  //
-  //     props.pageProps = Object.assign({}, props.pageProps, data.props)
-  //     ;(renderOpts as any).pageData = props
-  //   }
-  // } catch (dataFetchError) {
-  //   if (isDataReq || !dev || !dataFetchError) throw dataFetchError
-  //   ctx.err = dataFetchError
-  //   renderOpts.err = dataFetchError
-  //   console.error(dataFetchError)
-  // }
-
-  // if (
-  //   !isSSG && // we only show this warning for legacy pages
-  //   !getServerSideProps &&
-  //   process.env.NODE_ENV !== 'production' &&
-  //   Object.keys(props?.pageProps || {}).includes('url')
-  // ) {
-  //   console.warn(
-  //     `The prop \`url\` is a reserved prop in Joy.js for legacy reasons and will be overridden on page ${pathname}\n` +
-  //       `See more info here: https://err.sh/vercel/next.js/reserved-page-prop`
-  //   )
-  // }
 
   // We only need to do this if we want to support calling
   // _app's getInitialProps for getServerSideProps if not this can be removed
@@ -710,7 +495,7 @@ export async function renderToHTML(
      * 执行一次页面渲染，触发页面的initialStaticModelState()方法，获取页面的数据，然后用数据在重新绘制一次页面
      * 相当于一次页面请求，服务端需要执行两次 React 渲染
      */
-    const html = renderToStaticMarkup(<AppContainer />);
+    renderToStaticMarkup(<AppContainer />);
     let revalidate: number | undefined;
     try {
       const initRst = await initManager.waitAllFinished(pathname);
@@ -735,10 +520,14 @@ export async function renderToHTML(
       stateHistories: reduxStateHistories,
     };
   };
-
-  await renderData();
+  if (isSSR) {
+    await renderData();
+  }
 
   const renderPage: RenderPage = (options: ComponentsEnhancer = {}): { html: string; head: any } => {
+    if (!isSSR) {
+      return { html: "", head };
+    }
     if (ctx.err && ErrorComponent) {
       return { html: renderToString(<ErrorComponent error={ctx.err} />), head };
     }
@@ -754,13 +543,7 @@ export async function renderToHTML(
     //   Component: EnhancedComponent,
     // } = enhanceComponents(options, App, Component)
 
-    const html = renderToString(
-      <AppContainer />
-      // <AppContainer App={EnhancedApp} />
-      // <AppContainer>
-      //   <EnhancedApp Component={EnhancedComponent} router={router} {...props} />
-      // </AppContainer>
-    );
+    const html = renderToString(<AppContainer />);
 
     return { html, head };
   };
@@ -820,8 +603,9 @@ export async function renderToHTML(
     // gsp: !!getStaticProps ? true : undefined,
     // gssp: !!getServerSideProps ? true : undefined,
     // gip: hasPageGetInitialProps ? true : undefined,
-    gsp: true,
-    gssp: true,
+    // gsp: true,
+    // gssp: true,
+    ssr: isSSR,
     gip: true,
     appGip: !defaultAppGetInitialProps ? true : undefined,
     devOnlyCacheBusterQueryString,

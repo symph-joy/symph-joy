@@ -7,6 +7,7 @@ import lodash from "lodash";
 import * as babel from "@babel/core";
 import joySrcBabelPreset from "./babel-src/preset-src";
 import { OutputState, store as consoleStore } from "./output/store";
+import * as Log from "./output/log";
 
 interface FileModule {
   filePath: string;
@@ -80,7 +81,7 @@ export class SrcBuilder {
         reject(error);
       });
       this.watcher.on("ready", async () => {
-        console.log(`Precompile react (${this.srcDir}) success. ${this.isWatch ? "Ready for changes..." : ""}`);
+        Log.event(`compile react (${this.srcDir}) success. ${this.isWatch ? "Ready for changes..." : ""}`);
         await this.applyAggregatedChanges();
         resolve();
       });

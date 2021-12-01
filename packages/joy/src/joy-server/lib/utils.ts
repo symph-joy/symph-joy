@@ -75,8 +75,9 @@ export type JOY_DATA = {
   isFallback?: boolean;
   dynamicIds?: string[];
   err?: Error & { statusCode?: number };
-  gsp?: boolean;
-  gssp?: boolean;
+  // gsp?: boolean;
+  // gssp?: boolean;
+  ssr?: boolean;
   customServer?: boolean;
   gip?: boolean;
   appGip?: boolean;
@@ -304,7 +305,9 @@ export async function loadGetInitialProps<C extends BaseContext, IP = {}, P = {}
 
   if (process.env.NODE_ENV !== "production") {
     if (Object.keys(props).length === 0 && !ctx.ctx) {
-      console.warn(`${getDisplayName(App)} returned an empty object from \`getInitialProps\`. This de-optimizes and prevents automatic static optimization.`);
+      console.warn(
+        `${getDisplayName(App)} returned an empty object from \`getInitialProps\`. This de-optimizes and prevents automatic static optimization.`
+      );
     }
   }
 

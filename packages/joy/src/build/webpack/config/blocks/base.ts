@@ -33,21 +33,37 @@ export const base = curry(function base(ctx: ConfigurationContext, config: Confi
       // and show scoped variables with their original names.
       // config.devtool = "eval-source-map";
       if (ctx.isClient) {
+        config.devtool = false;
+
         config.plugins?.push(
-          new webpack.SourceMapDevToolPlugin({
-            test: [/\.jsx$/, /\.tsx?$/],
-            // exclude: ["node_modules", "@symph/joy/dist", "@symph/react/dist", "@symph/core/dist"],
+          new webpack.EvalSourceMapDevToolPlugin({
+            test: /\.(tsx|ts|js|mjs|jsx)$/,
+            // test: [/\.jsx?$/, /\.tsx?$/],
+            exclude: [/node_modules/, "@symph/joy/dist", "@symph/react/dist", "@symph/core/dist"],
           })
         );
+        config.module?.rules?.unshift({
+          // test: ".{js,jsx,ts,tsx}",
+          test: /\.(tsx|ts|js|mjs|jsx)$/,
+          // exclude: ["node_modules"],
+          enforce: "pre",
+          use: [
+            {
+              loader: "source-map-loader",
+              options: {
+                filterSourceMappingUrl: (url: string, resourcePath: string) => {
+                  if (/[\\/]node_modules[\\/]/i.test(resourcePath)) {
+                    return false;
+                  }
+                  return true;
+                },
+              },
+            },
+          ],
+        });
       } else {
         config.devtool = "eval-source-map";
       }
-
-      // config.module?.rules?.unshift({
-      //   test: [/\.jsx$/, /\.tsx?$/],
-      //   enforce: "pre",
-      //   use: ["source-map-loader"],
-      // });
     }
   } else {
     // Enable browser sourcemaps:

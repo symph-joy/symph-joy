@@ -48,6 +48,7 @@ export async function pollGetText(url: string, options: OptionsOfTextResponseBod
             {
               throwHttpErrors: false,
               responseType: "text",
+              cache: false,
             },
             options
           )
@@ -74,7 +75,7 @@ export async function pollGetText(url: string, options: OptionsOfTextResponseBod
         clearTimeout(pollTimer);
         pollTimer = undefined;
       }
-      reject(new Error(`pollGet url:${url} timeout:${timeout}`));
+      reject(new Error(`pollGet url:${url}, waitfor: ${waitingReg} timeout:${timeout}`));
     }, timeout);
   });
 }

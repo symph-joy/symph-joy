@@ -71,18 +71,18 @@ export class JoyReactDevServer extends JoyReactServer {
     this.devReady = new Promise((resolve) => {
       this.setDevReady = resolve;
     });
-    (this.renderOpts as any).ampSkipValidation = this.joyConfig.experimental?.amp?.skipValidation ?? false;
-    (this.renderOpts as any).ampValidator = (html: string, pathname: string) => {
-      const validatorPath = this.joyConfig.experimental && this.joyConfig.experimental.amp && this.joyConfig.experimental.amp.validator;
-      return AmpHtmlValidator.getInstance(validatorPath).then((validator: any) => {
-        const result = validator.validateString(html);
-        ampValidation(
-          pathname,
-          result.errors.filter((e: any) => e.severity === "ERROR").filter((e: any) => this._filterAmpDevelopmentScript(html, e)),
-          result.errors.filter((e: any) => e.severity !== "ERROR")
-        );
-      });
-    };
+    // (this.renderOpts as any).ampSkipValidation = this.joyConfig.experimental?.amp?.skipValidation ?? false;
+    // (this.renderOpts as any).ampValidator = (html: string, pathname: string) => {
+    //   const validatorPath = this.joyConfig.experimental && this.joyConfig.experimental.amp && this.joyConfig.experimental.amp.validator;
+    //   return AmpHtmlValidator.getInstance(validatorPath).then((validator: any) => {
+    //     const result = validator.validateString(html);
+    //     ampValidation(
+    //       pathname,
+    //       result.errors.filter((e: any) => e.severity === "ERROR").filter((e: any) => this._filterAmpDevelopmentScript(html, e)),
+    //       result.errors.filter((e: any) => e.severity !== "ERROR")
+    //     );
+    //   });
+    // };
     if (fs.existsSync(pathJoin(this.dir, "static"))) {
       console.warn(`The static directory has been deprecated in favor of the public directory.`);
     }

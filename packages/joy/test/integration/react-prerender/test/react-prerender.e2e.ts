@@ -6,7 +6,7 @@ import { promises } from "fs";
 import { getDomInnerHtml } from "../../../util/html-utils";
 import { JoyRouteInitState } from "@symph/react";
 
-describe("prerender", () => {
+describe("react-prerender", () => {
   let testContext: JoyTestContext;
 
   beforeAll(async () => {
