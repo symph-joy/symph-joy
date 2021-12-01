@@ -74,7 +74,7 @@ export class JoyTestContext {
     }
   }
 
-  static async createDevServerContext(workDir: string, port?: number, runOpts?: RunOptions,) {
+  static async createDevServerContext(workDir: string, port?: number, runOpts?: RunOptions) {
     const testContext = new JoyTestContext(workDir);
     await testContext.startDev(port, runOpts);
     return testContext;
