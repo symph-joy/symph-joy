@@ -1,19 +1,20 @@
-.layout {
-  --font-color: #191e1e;
+// 决定当前平台是web端还是移动端的关键样式
+.menu__collapseBtn {
+  display: none !important;
+}
 
-  &[data-theme="dark"] {
-    --font-color: #fff;
+@media screen and (max-width: 920px) {
+  .menu__collapseBtn {
+    display: block !important;
+    float: right;
   }
 }
 
-.header {
-  // display: flex;
-}
-
-.nav {
+.nav() {
   padding: 8px 0;
-  background-color: #fff;
-  border-bottom: 1px solid #ebf2f2;
+  background-color: var(--nav-background-color);
+  border-bottom: 1px solid var(--nav-border-color);
+  transition: all 0.3s;
 
   &__inner {
     display: flex;
@@ -23,79 +24,136 @@
     padding: 0 20px;
     margin: auto;
   }
+}
 
-  .logo {
-    font-size: 1.4em;
+// web端样式
+body[data-is-mobile="false"] {
+  .nav {
+    .nav();
 
-    img {
-      margin-right: 15px;
-      width: 48px;
-      height: 48px;
-    }
-  }
+    .logo {
+      font-size: 1.4em;
 
-  .menu {
-    min-width: 500px;
-    justify-content: space-evenly;
-    border-bottom: 0;
-    color: var(--font-color);
-    font-size: 15px;
-    font-weight: 500;
-
-    li::after {
-      border-bottom: 0 !important;
-    }
-  }
-
-  .theme__switch {
-    position: relative;
-    display: inline-block;
-    width: 36px;
-    height: 10px;
-    border-radius: 15px;
-    background-color: #d7e7e7;
-
-    span[role="img"] {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      margin: 0;
-      padding: 3px;
-      background-color: #000;
-      border-radius: 50%;
-      color: #fff;
-      opacity: 1;
-      transform: translate(0, -50%);
-      transition: transform .3s;
-
-      &:nth-child(2) {
-        opacity: 0;
-        transform: translate(0px, -50%);
+      img {
+        margin-right: 15px;
+        width: 48px;
+        height: 48px;
       }
     }
 
-    .darkTheme {
+    .menu {
+      min-width: 700px;
+      justify-content: space-evenly;
+      border-bottom: 0;
+      color: var(--font-color);
+      font-size: 15px;
+      font-weight: 500;
+      background-color: transparent;
+
+      li::after {
+        border-bottom: 0 !important;
+      }
+    }
+
+    .theme__switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 10px;
+      border-radius: 15px;
+      background-color: #d7e7e7;
+
       span[role="img"] {
-        &:nth-child(1) {
-          opacity: 0;
-          transform: translate(15px, -50%);
-        }
+        position: absolute;
+        top: 50%;
+        left: 0;
+        margin: 0;
+        padding: 3px;
+        background-color: #000;
+        border-radius: 50%;
+        color: #fff;
+        opacity: 1;
+        transform: translate(0, -50%);
+        transition: transform 0.3s;
 
         &:nth-child(2) {
-          opacity: 1;
-          transform: translate(15px, -50%);
+          opacity: 0;
+          transform: translate(0px, -50%);
+        }
+      }
+    }
+  }
+
+  &[data-theme="dark"] {
+    .nav {
+      .theme__switch {
+        span[role="img"] {
+          &:nth-child(1) {
+            opacity: 0;
+            transform: translate(18px, -50%);
+          }
+
+          &:nth-child(2) {
+            opacity: 1;
+            transform: translate(18px, -50%);
+          }
         }
       }
     }
   }
 }
 
-.search{
-  margin-top: 16px;
-}
-.selectOption{
-  color: rgba(0, 0, 0, 0.85);
-  &:hover{
-    color: #40a9ff;
+// 移动端样式
+body[data-is-mobile="true"] {
+  .header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1;
+  }
+
+  .nav {
+    .nav();
+
+    .logo {
+      font-size: 1em;
+
+      img {
+        margin-right: 10px;
+        width: 30px;
+        height: 30px;
+      }
+    }
+
+    .menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      transition: top 0.3s;
+
+      &.menu__collapsed {
+        top: -100vh;
+      }
+
+      li {
+        margin: 15px 30px;
+        font-size: 1.5em;
+        font-weight: 500;
+        color: var(--font-color);
+        border-bottom: 1px solid;
+      }
+
+      &__closeItem {
+        border-bottom: 0 !important;
+        padding-right: 0;
+        text-align: right;
+
+        svg {
+          font-size: 1.8em;
+        }
+      }
+    }
   }
 }
