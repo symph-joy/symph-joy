@@ -2,7 +2,7 @@ import { Configuration, ApplicationContextFactory, ValueProvider } from "@symph/
 import { ConfigService } from "./config.service";
 import { ConfigConfiguration } from "./config.configuration";
 import path from "path";
-import { SYMPH_CONFIG_INIT_VALUE } from "./constants";
+import { CONFIG_INIT_VALUE } from "./constants";
 import { FileConfigLoader } from "./server/loaders/file-config-loader";
 import { IConfigLoader } from "./loader/config-loader.interface";
 import { DirConfigLoader } from "./server/loaders/dir-config-loader";
@@ -18,7 +18,7 @@ describe("config.configuration", () => {
   test(`Should init with the initial value.`, async () => {
     const configService = await createConfigService(ConfigConfiguration, {
       initValue: {
-        name: SYMPH_CONFIG_INIT_VALUE,
+        name: CONFIG_INIT_VALUE,
         useValue: {
           msg: "hello",
         },
@@ -75,7 +75,7 @@ describe("config.configuration", () => {
 
     const configService = await createConfigService(CustomConfigConfiguration, {
       initValue: {
-        name: SYMPH_CONFIG_INIT_VALUE,
+        name: CONFIG_INIT_VALUE,
         useValue: {
           msg: "hello",
         },

@@ -17,7 +17,7 @@ import { Configuration, ApplicationContext, ValueProvider } from "@symph/core";
 import { ReactContextFactory } from "../react/react-context-factory";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
-import { ConfigService, SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
+import { ConfigService, CONFIG_INIT_VALUE } from "@symph/config";
 import { JoyConfigConfiguration } from "../joy-server/server/joy-config.configuration";
 
 const envConfig = require("../joy-server/lib/runtime-config");
@@ -103,7 +103,7 @@ export default async function start(options: ExportPageInput): Promise<ExportPag
     JoyExportConfig,
     {
       initValue: {
-        name: SYMPH_CONFIG_INIT_VALUE,
+        name: CONFIG_INIT_VALUE,
         useValue: {
           port,
           dir,

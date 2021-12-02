@@ -1,6 +1,6 @@
 import { Configuration, ApplicationContext } from "@symph/core";
 import { ConfigService, ConfigServiceOptions } from "./config.service";
-import { SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_OPTIONS } from "./constants";
+import { CONFIG_DEFAULT_VALUE, CONFIG_OPTIONS } from "./constants";
 import { ConfigLoaderFactory } from "./loader/config-loader-factory";
 
 @Configuration()
@@ -19,12 +19,12 @@ export class ConfigConfiguration {
     return new ConfigLoaderFactory();
   }
 
-  @Configuration.Provider({ name: SYMPH_CONFIG_DEFAULT_VALUE })
+  @Configuration.Provider({ name: CONFIG_DEFAULT_VALUE })
   getDefaultConfig(): Record<string, unknown> {
     return {};
   }
 
-  @Configuration.Provider({ name: SYMPH_CONFIG_OPTIONS })
+  @Configuration.Provider({ name: CONFIG_OPTIONS })
   getConfigServiceOptions(): ConfigServiceOptions {
     return {
       isAutoLoadConfig: this.isAutoLoadConfig(),
@@ -33,7 +33,7 @@ export class ConfigConfiguration {
 
   // @Configuration.Provider({ name: SYMPH_CONFIG_LOADERS, type: Object })
   // private async _getConfigLoaders(
-  //   @Optional() @Inject(SYMPH_CONFIG_INIT_VALUE) initValue: Record<string, any>
+  //   @Optional() @Inject(CONFIG_INIT_VALUE) initValue: Record<string, any>
   // ): Promise<ConfigLoader[]> {
   //   return this.getConfigLoaders(initValue);
   // }

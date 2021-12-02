@@ -1,8 +1,8 @@
 import { Component, ApplicationContextFactory } from "@symph/core";
 import { Value } from "./config-value.decorator";
 import { ConfigService } from "./config.service";
-import { Max, MaxLength } from "@tsed/schema";
-import { SYMPH_CONFIG_INIT_VALUE } from "./constants";
+import { Max, MaxLength, Default } from "@tsed/schema";
+import { CONFIG_INIT_VALUE } from "./constants";
 
 describe("config.service", () => {
   test(`Should inject config value to the prop of the configurable component`, async () => {
@@ -47,7 +47,7 @@ describe("config.service", () => {
     const context = await ApplicationContextFactory.createApplicationContext([
       {
         initValue: {
-          name: SYMPH_CONFIG_INIT_VALUE,
+          name: CONFIG_INIT_VALUE,
           useValue: {
             msg: "hello",
           },
@@ -98,7 +98,7 @@ describe("config.service", () => {
     const context = await ApplicationContextFactory.createApplicationContext([
       {
         initValue: {
-          name: SYMPH_CONFIG_INIT_VALUE,
+          name: CONFIG_INIT_VALUE,
           useValue: {
             msg: "1",
             count: 1,
@@ -144,6 +144,19 @@ describe("config.service", () => {
     expect(basicConfig.msg).toContain("hello");
   });
 
+  test(`should use schema default value.`, async () => {
+    @Component()
+    class BasicConfig {
+      @Value()
+      @Default("hello")
+      public msg: string;
+    }
+
+    const context = await ApplicationContextFactory.createApplicationContext([ConfigService, BasicConfig]);
+    const basicConfig = await context.get(BasicConfig);
+    expect(basicConfig.msg).toContain("hello");
+  });
+
   test(`should use preset set value.`, async () => {
     @Component()
     class BasicConfig {
@@ -174,7 +187,7 @@ describe("config.service", () => {
         await ApplicationContextFactory.createApplicationContext([
           {
             initValue: {
-              name: SYMPH_CONFIG_INIT_VALUE,
+              name: CONFIG_INIT_VALUE,
               useValue: {
                 msg: "123456",
                 count: 3,
@@ -191,7 +204,7 @@ describe("config.service", () => {
       expect(error.message).toContain("should NOT be longer than 3 characters");
     });
 
-    test(`should validate the config value, when type is a object.`, async () => {
+    test(`should validate the config value, when type is a class.`, async () => {
       class ConfigMsg {
         @MaxLength(3)
         public value: string;
@@ -208,7 +221,7 @@ describe("config.service", () => {
         const context = await ApplicationContextFactory.createApplicationContext([
           {
             initValue: {
-              name: SYMPH_CONFIG_INIT_VALUE,
+              name: CONFIG_INIT_VALUE,
               useValue: {
                 msg: {
                   value: "123456",

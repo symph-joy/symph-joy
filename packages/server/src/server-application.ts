@@ -35,7 +35,6 @@ import { isNil } from "@symph/core/dist/utils/shared.utils";
 import { UnknownElementException } from "./errors/exceptions/unknown-element.exception";
 import { createContextId } from "./helpers";
 import { AbstractHttpAdapter } from "./adapters";
-import { SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
 import { ServerConfiguration } from "./server.configuration";
 import { MountService } from "./mount/mount.service";
 import { MountModule } from "./mount/mount-module";
@@ -72,10 +71,11 @@ export class ServerApplication extends ApplicationContext implements INestApplic
   protected async initContext(): Promise<void> {
     await super.initContext();
     const coreComps = [
-      {
-        name: SYMPH_CONFIG_INIT_VALUE,
-        useValue: this.appOptions,
-      } as ValueProvider,
+      // iCONFIG_INIT_VALUE 需要从注册的component中获取，不能把整个应用参数作为初始化配置，这里先屏蔽掉，后续会删除。
+      // {
+      //   name: CONFIG_INIT_VALUE,
+      //   useValue: this.appOptions,
+      // } as ValueProvider,
       {
         name: Symbol("mountService"),
         type: MountService,

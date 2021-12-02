@@ -44,18 +44,18 @@ export function configBabelPreset(api: any, options: JoySrcBabelPresetOptions = 
     plugins: [
       // [require("./plugins/joy-import-babel-plugin"), { isServer: isServer }],
       // [require("./plugins/joy-auto-css-modules")],
-      [
-        require("../babel/plugins/jsx-pragma"),
-        {
-          // This produces the following injected import for modules containing JSX:
-          //   import React from 'react';
-          //   var __jsx = React.createElement;
-          module: "react",
-          importAs: "React",
-          pragma: "__jsx",
-          property: "createElement",
-        },
-      ],
+      // [
+      //   require("../babel/plugins/jsx-pragma"),
+      //   {
+      //     // This produces the following injected import for modules containing JSX:
+      //     //   import React from 'react';
+      //     //   var __jsx = React.createElement;
+      //     module: "react",
+      //     importAs: "React",
+      //     pragma: "__jsx",
+      //     property: "createElement",
+      //   },
+      // ],
       // [
       //   require("./plugins/optimize-hook-destructuring"),
       //   {
@@ -88,7 +88,7 @@ export function configBabelPreset(api: any, options: JoySrcBabelPresetOptions = 
       //   },
       // ],
       // [isTest && options["styled-jsx"] && options["styled-jsx"]["babel-test"] ? require("styled-jsx/babel-test") : require("styled-jsx/babel"), styledJsxOptions(options["styled-jsx"])],
-      require("styled-jsx/babel"),
+      // require("styled-jsx/babel"),
       // require("./plugins/amp-attributes"),
       // isProduction && [
       //   require("babel-plugin-transform-react-remove-prop-types"),

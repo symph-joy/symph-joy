@@ -118,7 +118,7 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   @Value()
   dir: string;
 
-  @Value({ default: 3000 })
+  @Value({ default: 3000, transform: Number })
   @Integer()
   port: number;
 

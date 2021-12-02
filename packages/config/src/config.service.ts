@@ -10,7 +10,7 @@ import {
   Optional,
   RegisterTap,
 } from "@symph/core";
-import { SYMPH_CONFIG_DEFAULT_VALUE, SYMPH_CONFIG_INIT_VALUE, SYMPH_CONFIG_OPTIONS } from "./constants";
+import { CONFIG_DEFAULT_VALUE, CONFIG_INIT_VALUE, CONFIG_OPTIONS } from "./constants";
 import { VALIDATED_ENV_PROPNAME } from "./config.constants";
 import get from "lodash.get";
 import has from "lodash.has";
@@ -52,13 +52,13 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
 
   constructor(
     @Optional()
-    @Autowire(SYMPH_CONFIG_OPTIONS)
+    @Autowire(CONFIG_OPTIONS)
     private configOptions: ConfigServiceOptions = { isAutoLoadConfig: true },
     @Optional()
-    @Autowire(SYMPH_CONFIG_DEFAULT_VALUE)
+    @Autowire(CONFIG_DEFAULT_VALUE)
     private defaultConfig: Record<string, unknown> = {},
     @Optional()
-    @Autowire(SYMPH_CONFIG_INIT_VALUE)
+    @Autowire(CONFIG_INIT_VALUE)
     private initConfig: Record<string, unknown> = {}
   ) {}
 
@@ -116,7 +116,7 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
       }
     }
 
-    const ajv = new Ajv();
+    const ajv = new Ajv({ useDefaults: true, strictTypes: false });
     const isValid = ajv.validate(configJsonSchema.toObject(), configData);
     if (!isValid) {
       const errMsg = ajv.errorsText(ajv.errors);
@@ -127,9 +127,6 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
       const configMeta = configValues[i];
       const value = configData[configMeta.configKey];
       const presetValue = instance[configMeta.propKey];
-      if (configMeta.configKey === "ssr") {
-        console.log(value);
-      }
       if (typeof value === "undefined") {
         if (configMeta.default !== undefined) {
           if (presetValue === undefined) {

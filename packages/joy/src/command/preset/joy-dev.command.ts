@@ -12,7 +12,7 @@ import HotReloader from "../../server/hot-reloader";
 import { BuildDevConfiguration } from "../../build/build-dev.configuration";
 
 import hmrEventEmitter from "../../server/dev/emitter";
-import { SYMPH_CONFIG_INIT_VALUE } from "@symph/config";
+import { CONFIG_INIT_VALUE } from "@symph/config";
 import { debounce } from "lodash";
 
 @CommandProvider()
@@ -166,7 +166,7 @@ export class JoyDevCommand extends JoyCommand {
       BuildDevConfiguration,
       {
         configInitValue: {
-          name: SYMPH_CONFIG_INIT_VALUE,
+          name: CONFIG_INIT_VALUE,
           useValue: {
             dir: dir,
             dev: true,

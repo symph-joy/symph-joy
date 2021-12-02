@@ -50,6 +50,8 @@ export class ServerConfigLoaderFactory extends ConfigLoaderFactory {
 
     const loaders = [] as IConfigLoader[];
 
+    loaders.push(new DotenvConfigLoader(envFiles, envExpandVariables, ignoreEnvVars));
+
     // dir loaders
     if (fileName) {
       const loader = new DirConfigLoader(dir, fileName);
@@ -59,10 +61,11 @@ export class ServerConfigLoaderFactory extends ConfigLoaderFactory {
       }
     }
 
-    // config dir loaders
+    // /config/* dir loaders
     const configsDir = path.join(dir, "config");
     if (existsSync(configsDir)) {
-      const configsLoaders = this.readConfigDirs(configsDir, process.env.NODE_ENV);
+      const env = process.env.JOY_ENV || process.env.NODE_ENV;
+      const configsLoaders = this.getConfigDirLoaders(configsDir, env);
       if (configsLoaders) {
         loaders.push(...configsLoaders);
       }
@@ -74,12 +77,10 @@ export class ServerConfigLoaderFactory extends ConfigLoaderFactory {
       loaders.push(new FileConfigLoader(absPath));
     }
 
-    loaders.push(new DotenvConfigLoader(envFiles, envExpandVariables, ignoreEnvVars));
-
     return loaders;
   }
 
-  protected readConfigDirs(configDirPath: string, env: string | undefined): IConfigLoader[] | undefined {
+  protected getConfigDirLoaders(configDirPath: string, env: string | undefined): IConfigLoader[] | undefined {
     const configFiles = readdirSync(configDirPath);
     if (!configFiles?.length) {
       return;

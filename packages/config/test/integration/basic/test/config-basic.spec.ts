@@ -39,10 +39,12 @@ describe("config basic", () => {
     });
 
     test(`Should load configs from env config`, async () => {
+      // 当初测试环境NODE_ENV为test
       expect(configService.get("testMsg")).toBe("from config test");
     });
 
     test(`Should not load configs from other env config`, async () => {
+      // betaMsg 在config.ts中也有配置，如果 config.beta.js加载了，那边betaMsg将会被替换
       expect(configService.get("betaMsg")).toBe("from config");
     });
 

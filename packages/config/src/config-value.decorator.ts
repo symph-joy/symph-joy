@@ -6,9 +6,13 @@ const REFLECT_KEY_CONFIG = "__joy_config_item";
 
 export interface IConfigValueMeta {
   propKey: string;
-  configKey: string;
+  configKey: string; // 配置文件中的配置键值
   // schema?: T extends any ? any : JSONSchemaType<T, true>, // 为空表示不需要校验
-  schema: JsonSchema | undefined; // 为空表示不需要校验
+  schema: JsonSchema | undefined; // json-schema校验规则，如果配置的不满足规则，则抛出错误,,为空表示不需要校验
+  /**
+   * 当该值发生变化后，系统如何处理，目前仅支持`reload`重新加载应用，或者为空不做任何操作。
+   *   default: unknown; //default value
+   */
   onChange: "reload" | "regenerateTmpFiles";
   default: unknown; //default value
   transform?: (originalValue: unknown) => unknown;

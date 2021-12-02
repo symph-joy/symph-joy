@@ -1,7 +1,7 @@
 import * as babel from "@babel/core";
-import joySrcBabelPreset from "@symph/joy/dist/build/babel-src/preset-src";
 import { RuntimeException } from "@symph/core";
 import * as path from "path";
+import configBabelPreset from "./config-babel-preset";
 
 export async function readConfigFile(filePath: string): Promise<Record<string, any>> {
   const extname = path.extname(filePath);
@@ -21,14 +21,14 @@ export async function readConfigFile(filePath: string): Promise<Record<string, a
   }
 
   if (Object.keys(config).length === 0) {
-    console.warn("Detected joy.config.js, no exported configuration found. #empty-configuration");
+    console.warn(`Detected ${filePath}, no exported configuration found. #empty-configuration`);
   }
   return config;
 }
 
 async function transFile(filePath: string): Promise<string> {
   let dist: babel.BabelFileResult | null = null;
-  const presetItem = babel.createConfigItem(joySrcBabelPreset, { type: "preset" });
+  const presetItem = babel.createConfigItem(configBabelPreset, { type: "preset" });
   dist = await babel.transformFileAsync(filePath, {
     presets: [presetItem],
   });
@@ -36,8 +36,8 @@ async function transFile(filePath: string): Promise<string> {
     throw new RuntimeException(`load config file(${filePath}) error, compile error.`);
   }
   const { code } = dist;
-  if (!code) {
-    throw new RuntimeException(`load config file(${filePath}) error, code is nil;`);
+  if (code === undefined || code === null) {
+    throw new RuntimeException(`load config file(${filePath}) error, code is undefined;`);
   }
   return code;
 }

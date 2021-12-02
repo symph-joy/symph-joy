@@ -25,7 +25,8 @@
     "lodash.has": "^4.5.2",
     "lodash.set": "^4.3.2",
     "lodash.merge": "^4.6.2",
-    "@symph/core": "^2.0.0"
+    "@symph/core": "^2.0.0",
+    "ajv": "^8.8.2"
   },
   "devDependencies": {
     "@types/lodash.get": "^4.4.6",
