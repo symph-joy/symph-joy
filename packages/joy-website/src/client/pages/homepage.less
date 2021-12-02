@@ -11,39 +11,168 @@
 }
 
 .section {
-  height: 100vh;
-  color: var(--white);
   text-align: justify;
 }
 
-.section_1 {
-  display: flex;
-  // linear-gradient(
-  //   45deg,
-  //   hsl(32, 90%, 60%),
-  //   hsl(22, 90%, 60%) 30%,
-  //   hsl(22, 90%, 60%) 70%,
-  //   hsl(32, 90%, 60%)
-  // )
-  background: url('/static/homepage_background2.jpg') right / 50% no-repeat;
-  mix-blend-mode: darken;
+@property --pos {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
 
-  & &__paragraph {
-    display: grid;
-    grid-template-rows: repeat(4, 1fr);
-    gap: 15px;
-    margin: auto;
-    text-align: center;
-    max-width: clamp(500px, 800px, 50vw);
-    transform: translateY(-50px);
+.banner() {
+  padding: 80px 0 95px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
 
-    * {
-      animation-duration: 1s;
-      // animation-iteration-count: infinite;
-      margin: 0;
-      align-self: center;
-      transform: scale(1.2);
+  @keyframes bgAnimation {
+    from {
+      transform: rotate(0) translate(-50%, -50%);
     }
+    to {
+      transform: rotate(360deg) translate(-50%, -50%);
+    }
+  }
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    left: clamp(6%, var(--bigger-than-break-point), 12%);
+    top: 50%;
+    // transform-origin: -25% -25%;
+    transform: translate(-50%, -50%);
+    // animation: bgAnimation 5s infinite;
+    width: clamp(450px, var(--bigger-than-break-point), 500px);
+    height: clamp(450px, var(--bigger-than-break-point), 500px);
+    border-radius: 50%;
+    background: conic-gradient(
+      white 37.5%,
+      hsl(39, 100%, 50%) 37.5%,
+      hsl(39, 100%, 50%) 62.5%,
+      hsl(39, 100%, 40%) 0,
+      hsl(39, 100%, 40%) 87.3%,
+      white 87.4%
+    );
+    z-index: -1;
+  }
+
+  &::after {
+    left: auto;
+    right: clamp(6%, var(--bigger-than-break-point), 12%);
+    transform: translate(50%, -50%);
+    background: conic-gradient(
+      hsl(39, 100%, 40%) 0,
+      hsl(39, 100%, 40%) 25%,
+      white 25%,
+      white 50%,
+      transparent 50%,
+      transparent 75%,
+      hsl(39, 100%, 50%) 75%,
+      hsl(39, 100%, 50%) 0
+    );
+  }
+
+  h1 {
+    font-size: clamp(2rem, var(--bigger-than-break-point), 3.25rem) !important;
+  }
+
+  button {
+    --pos: 0;
+    line-height: normal;
+    height: clamp(2.5rem, var(--bigger-than-break-point), 3rem);
+    font-size: clamp(1rem, var(--bigger-than-break-point), 1.2rem);
+    font-weight: 500;
+    color: var(--font-color);
+    border: 2px solid var(--font-color);
+    border-radius: 0;
+    background: linear-gradient(90deg, var(--font-color) var(--pos), transparent 0) !important;
+    transition: --pos 0.3s, color 0.3s 0.1s;
+
+    & + button {
+      margin-left: 15px;
+    }
+
+    &:hover,
+    &:focus {
+      --pos: 100%;
+      color: var(--font-reverse-color);
+      border: 2px solid var(--font-color);
+    }
+  }
+
+  &__wordWrap {
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: " ";
+      display: inline-block;
+    }
+
+    div {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      &:nth-child(1) > span {
+        transform: translateY(0);
+      }
+
+      &:nth-child(2) > span {
+        transform: translateY(110%);
+      }
+
+      &:nth-child(3) > span {
+        transform: translateY(-110%);
+      }
+    }
+
+    span {
+      --delay: calc(var(--j) * 3s + var(--i) * 0.02s);
+      display: inline-block;
+      animation: transformSpan 9s cubic-bezier(0.65, 0, 0.21, 1.42) var(--delay) infinite;
+    }
+
+    @keyframes transformSpan {
+      0%,
+      33%,
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      34%,
+      66% {
+        transform: translateY(-110%);
+        opacity: 0;
+      }
+
+      67%,
+      99% {
+        transform: translateY(110%);
+        opacity: 0;
+      }
+    }
+  }
+}
+
+// web端样式
+body[data-is-mobile="false"] {
+  .banner {
+    .banner();
+  }
+}
+
+// 移动端样式
+body[data-is-mobile="true"] {
+  .banner {
+    .banner();
+
+    margin-top: 57px;
   }
 }
 
@@ -54,13 +183,7 @@
   width: 100%;
   font-size: 2em;
   color: var(--white);
-  background: linear-gradient(
-    45deg,
-    hsl(380, 78%, 53%),
-    hsl(360, 78%, 53%) 30%,
-    hsl(360, 78%, 53%) 60%,
-    hsl(380, 78%, 53%)
-  );
+  background: linear-gradient(45deg, hsl(380, 78%, 53%), hsl(360, 78%, 53%) 30%, hsl(360, 78%, 53%) 60%, hsl(380, 78%, 53%));
 
   div[role="carousel page"] {
     .text-ellipse();
@@ -122,7 +245,6 @@
     display: grid;
     grid-template-columns: repeat(3, 350px);
     text-align: center;
-
   }
 
   &__item {
@@ -131,7 +253,7 @@
     border: 1px solid hsl(260, 7%, 76%);
     border-radius: 5px;
     transform: scale(1);
-    transition: all .3s;
+    transition: all 0.3s;
     cursor: pointer;
 
     svg {

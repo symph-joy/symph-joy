@@ -1,30 +1,63 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController } from "@symph/react";
-import { Layout, Typography, Button, Carousel } from "antd";
+import { ReactBaseController, ReactController } from "@symph/react";
+import { Layout, Typography, Button, Carousel, Row } from "antd";
 import styles from "./homepage.less";
 import { AndroidOutlined, AppleOutlined, WindowsOutlined, GithubOutlined, TwitterOutlined, GitlabOutlined } from "@ant-design/icons";
-// import 'animate.css/animate.css';
 
 const { Content } = Layout;
 const { Paragraph } = Typography;
 @ReactController()
-export default class HelloController extends BaseReactController {
+export default class HelloController extends ReactBaseController {
   renderView(): ReactNode {
     return (
       <Layout className={styles.layout}>
         <Content>
-          {/* -------- part 1 -------- */}
-          <section role="part1" className={styles.section + " " + styles.section_1}>
-            <Paragraph className={styles.section_1__paragraph}>
-              <h1 className="animate__animated animate__wobble">Symph Joy</h1>
-              <h3 className="animate__animated animate__backInLeft">The World's Most Popular Application!</h3>
-              <p className="animate__animated animate__backInLeft">
-                Aliqua minim occaecat in eiusmod. Amet laboris aute cillum officia Lorem occaecat id ipsum do officia cillum quis consequat. Pariatur
-                duis sint magna ad labore magna. Enim non cillum elit deserunt cillum do.
-              </p>
-              <Button size="large" className="animate__animated animate__backInLeft">
-                Download Now
-              </Button>
+          {/* -------- banner -------- */}
+          <section role="banner" className={styles.banner}>
+            <Paragraph className={styles.banner__paragraph}>
+              <h1>
+                <div>Symph Joy makes JavaScript</div>
+                <div className={styles.banner__wordWrap}>
+                  <div style={{ "--j": 0 }}>
+                    <span style={{ "--i": 1 }}>m</span>
+                    <span style={{ "--i": 2 }}>o</span>
+                    <span style={{ "--i": 3 }}>r</span>
+                    <span style={{ "--i": 4 }}>d</span>
+                    <span style={{ "--i": 5 }}>e</span>
+                    <span style={{ "--i": 6 }}>n</span>
+                    <span style={{ "--i": 7 }}>.</span>
+                  </div>
+                  <div style={{ "--j": 1 }}>
+                    <span style={{ "--i": 1 }}>r</span>
+                    <span style={{ "--i": 2 }}>e</span>
+                    <span style={{ "--i": 3 }}>a</span>
+                    <span style={{ "--i": 4 }}>c</span>
+                    <span style={{ "--i": 5 }}>t</span>
+                    <span style={{ "--i": 6 }}>i</span>
+                    <span style={{ "--i": 7 }}>v</span>
+                    <span style={{ "--i": 8 }}>e</span>
+                    <span style={{ "--i": 9 }}>.</span>
+                  </div>
+                  <div style={{ "--j": 2 }}>
+                    <span style={{ "--i": 1 }}>p</span>
+                    <span style={{ "--i": 2 }}>r</span>
+                    <span style={{ "--i": 3 }}>o</span>
+                    <span style={{ "--i": 4 }}>d</span>
+                    <span style={{ "--i": 5 }}>u</span>
+                    <span style={{ "--i": 6 }}>c</span>
+                    <span style={{ "--i": 7 }}>t</span>
+                    <span style={{ "--i": 8 }}>i</span>
+                    <span style={{ "--i": 9 }}>v</span>
+                    <span style={{ "--i": 10 }}>e</span>
+                    <span style={{ "--i": 11 }}>.</span>
+                  </div>
+                </div>
+              </h1>
+
+              <Row justify="center">
+                <Button>WHY SYMPH JOY</Button>
+                <Button>QUICKSTART</Button>
+              </Row>
             </Paragraph>
           </section>
 

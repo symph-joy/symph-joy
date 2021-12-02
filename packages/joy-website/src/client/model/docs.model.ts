@@ -1,4 +1,4 @@
-import { BaseReactModel, ReactModel } from "@symph/react";
+import { ReactBaseModel, ReactModel } from "@symph/react";
 import { ReactFetchService } from "@symph/joy";
 import { Autowire } from "@symph/core";
 
@@ -30,7 +30,7 @@ export type DocsModelState = {
 };
 
 @ReactModel()
-export class DocsModel extends BaseReactModel<DocsModelState> {
+export class DocsModel extends ReactBaseModel<DocsModelState> {
   constructor(@Autowire("joyFetchService") private fetchService: ReactFetchService) {
     super();
   }
