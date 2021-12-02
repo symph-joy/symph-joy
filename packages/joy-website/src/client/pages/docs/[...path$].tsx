@@ -15,7 +15,7 @@ export default class DocsIndexController extends BaseReactController {
   public docsModel: DocsModel;
 
   async initialModelStaticState(): Promise<void | number> {
-    let path = this.docPath;
+    let path = this.docPath || "/docs/build-css";
     await this.docsModel.getDocMenus();
     await this.fetchPageDocData(path);
   }

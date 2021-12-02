@@ -1,4 +1,4 @@
-import { ReactBaseModel, ReactModel } from "@symph/react";
+import { BaseReactModel, ReactModel } from "@symph/react";
 
 export type ThemeTypes = "light" | "dark";
 
@@ -11,7 +11,7 @@ export interface ILayoutModelState {
 }
 
 @ReactModel()
-export class LayoutModel extends ReactBaseModel<ILayoutModelState> {
+export class LayoutModel extends BaseReactModel<ILayoutModelState> {
   getInitState(): ILayoutModelState {
     let theme = "light";
     if (typeof window !== "undefined") {

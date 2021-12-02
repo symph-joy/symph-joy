@@ -3,7 +3,7 @@ import { Layout, Menu, AutoComplete, Button } from "antd";
 import { Autowire } from "@symph/core";
 import { DocsModel } from "../model/docs.model";
 import _ from "lodash";
-import { ReactBaseController, ReactController, RouteSwitch } from "@symph/react";
+import { BaseReactController, ReactController, RouteSwitch } from "@symph/react";
 import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
@@ -29,7 +29,7 @@ const MoonSvg = () => (
 );
 
 @ReactController()
-export default class MainLayout extends ReactBaseController<any> {
+export default class MainLayout extends BaseReactController<any> {
   @Autowire()
   public layoutModel: LayoutModel;
 

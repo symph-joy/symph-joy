@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ReactBaseController, ReactController } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
 import { Layout, Typography, Button, Carousel, Row } from "antd";
 import styles from "./homepage.less";
 import { AndroidOutlined, AppleOutlined, WindowsOutlined, GithubOutlined, TwitterOutlined, GitlabOutlined } from "@ant-design/icons";
@@ -7,7 +7,7 @@ import { AndroidOutlined, AppleOutlined, WindowsOutlined, GithubOutlined, Twitte
 const { Content } = Layout;
 const { Paragraph } = Typography;
 @ReactController()
-export default class HelloController extends ReactBaseController {
+export default class HelloController extends BaseReactController {
   renderView(): ReactNode {
     return (
       <Layout className={styles.layout}>

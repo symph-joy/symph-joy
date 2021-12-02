@@ -1,8 +1,8 @@
-import { Component, IComponentLifecycle } from "@symph/core";
+import { Component, IComponentLifecycle, RuntimeException } from "@symph/core";
 import * as fs from "fs";
 import * as path from "path";
 import { join, sep } from "path";
-import { ConfigValue } from "@symph/config";
+import { Value } from "@symph/config";
 import { NotFoundException } from "@symph/server/dist/exceptions-common";
 import { marked } from "marked";
 
@@ -38,7 +38,7 @@ export interface TreeItem {
 
 @Component()
 export class DocsService implements IComponentLifecycle {
-  @ConfigValue({ configKey: "docs" })
+  @Value({ configKey: "docs" })
   public configDocs: DocJoyConfig;
 
   public menus: Doc[];
@@ -52,7 +52,7 @@ export class DocsService implements IComponentLifecycle {
   }
 
   public async getAllDocs() {
-    this.getMenus();
+    await this.getMenus();
     const res = [];
     for (const menu of this.menus) {
       for (const child of menu.children) {
@@ -82,9 +82,11 @@ export class DocsService implements IComponentLifecycle {
   }
 
   public async getMenus(): Promise<DocMenu[]> {
-    const { dir } = {
-      dir: "./docs",
-    };
+    // const { dir } = {
+    //   dir: "./docs",
+    // };
+
+    const { dir } = this.configDocs || {};
     if (!dir) {
       console.warn("Warning: Doc dir is not config.");
       return [];

@@ -74,7 +74,7 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
   private readonly cache: Partial<K> = {} as any;
 
   @RegisterTap()
-  componentAfterInitialize<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
+  componentAfterPropertiesSet<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T {
     // custom implement setConfigValue
     const onSetConfigValue = (instance as any).onSetConfigValue;
     if (onSetConfigValue && typeof onSetConfigValue === "function") {

@@ -12,6 +12,7 @@ export class FileConfigLoader implements IConfigLoader {
     if (!fs.existsSync(filePath)) {
       throw new ConfigNotExistException(filePath);
     }
+    console.log(`info: Using config "${filePath}".`);
 
     const stats = fs.statSync(filePath);
     let config: any;

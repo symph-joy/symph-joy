@@ -64,12 +64,15 @@ export interface InjectorDependencyContext {
 }
 
 export interface InjectorHookTaps {
-  componentAfterInitialize<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T;
+  componentAfterInitialize?<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T;
+  componentAfterPropertiesSet?<T>(instance: T, args: { instanceWrapper: IComponentWrapper }): T;
 }
 
 export class Injector {
   @AutowireHook({ async: false, parallel: false, type: HookType.Waterfall })
   private componentAfterInitialize: IHook;
+  @AutowireHook({ async: false, parallel: false, type: HookType.Waterfall })
+  private componentAfterPropertiesSet: IHook;
 
   constructor(public container: ApplicationContainer, protected parentInjector?: Injector) {
     // this.container = appContent.container;
@@ -133,6 +136,13 @@ export class Injector {
         return this.loadInstanceProperties(instance, wrapper, contextId).then((injectedProps: unknown[]) => {
           return instance;
         });
+      })
+      .then((instance: any) => {
+        instance =
+          this.componentAfterPropertiesSet?.call(instance, {
+            instanceWrapper: wrapper,
+          }) || instance;
+        return instance;
       })
       .then((instance: any) => {
         if (isComponentInfoAwareComp(instance)) {
