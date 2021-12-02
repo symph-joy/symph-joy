@@ -14,14 +14,14 @@ export class JoyConfigDevConfiguration extends NodeConfigConfiguration {
     return new ConfigLoaderFactory(); // 从父容器中继承配置值，不用重新加载配置。
   }
 
-  @Configuration.Provider({ name: CONFIG_INIT_VALUE })
-  getInitConfig(): Record<string, unknown> {
-    const parent = this.appContext.parent;
-    if (parent) {
-      const parentConfigService = parent.syncGet(ConfigService);
-      return merge(super.getDefaultConfig(), parentConfigService.get());
-    } else {
-      return super.getDefaultConfig();
-    }
-  }
+  // @Configuration.Provider({ name: CONFIG_INIT_VALUE })
+  // getInitConfig(): Record<string, unknown> {
+  //   const parent = this.appContext.parent;
+  //   if (parent) {
+  //     const parentConfigService = parent.syncGet(ConfigService);
+  //     return parentConfigService.get();
+  //   } else {
+  //     return super.getDefaultConfig();
+  //   }
+  // }
 }

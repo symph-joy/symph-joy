@@ -38,6 +38,7 @@ import { AbstractHttpAdapter } from "./adapters";
 import { ServerConfiguration } from "./server.configuration";
 import { MountService } from "./mount/mount.service";
 import { MountModule } from "./mount/mount-module";
+import { CONFIG_INIT_VALUE } from "@symph/config";
 
 type ServerAPPEntryType = EntryType | Provider | MountModule | (EntryType | MountModule | Provider)[];
 
@@ -71,11 +72,10 @@ export class ServerApplication extends ApplicationContext implements INestApplic
   protected async initContext(): Promise<void> {
     await super.initContext();
     const coreComps = [
-      // iCONFIG_INIT_VALUE 需要从注册的component中获取，不能把整个应用参数作为初始化配置，这里先屏蔽掉，后续会删除。
-      // {
-      //   name: CONFIG_INIT_VALUE,
-      //   useValue: this.appOptions,
-      // } as ValueProvider,
+      {
+        name: CONFIG_INIT_VALUE,
+        useValue: this.appOptions,
+      } as ValueProvider,
       {
         name: Symbol("mountService"),
         type: MountService,

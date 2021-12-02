@@ -201,7 +201,7 @@ describe("config.service", () => {
         error = e;
       }
       expect(error).toBeTruthy();
-      expect(error.message).toContain("should NOT be longer than 3 characters");
+      expect(error.message).toContain("more than 3 characters");
     });
 
     test(`should validate the config value, when type is a class.`, async () => {
@@ -237,7 +237,7 @@ describe("config.service", () => {
       } catch (e) {
         error = e;
       }
-      expect(error.message).toContain("should NOT be longer than 3 characters");
+      expect(error.message).toContain("more than 3 characters");
     });
   });
 });

@@ -174,9 +174,12 @@ describe("react-prerender", () => {
     });
 
     test("should has Cache-Control in http response header", async () => {
-      page.goto(testContext.getUrl("/revalidate"));
-      const res = await page.waitForResponse((response) => response.url().includes("/revalidate"));
-      const header = await res.headers();
+      const [res] = await Promise.all([
+        page.waitForResponse((response) => response.url().includes("/revalidate")),
+        page.goto(testContext.getUrl("/revalidate")),
+      ]);
+      // const res = await page.waitForResponse((response) => response.url().includes("/revalidate"));
+      const header = res.headers();
       // 是否正常返回了数据
       expect(header["cache-control"]).toBe("s-maxage=1, stale-while-revalidate");
     });

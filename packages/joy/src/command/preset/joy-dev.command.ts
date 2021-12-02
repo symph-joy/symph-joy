@@ -12,7 +12,7 @@ import HotReloader from "../../server/hot-reloader";
 import { BuildDevConfiguration } from "../../build/build-dev.configuration";
 
 import hmrEventEmitter from "../../server/dev/emitter";
-import { CONFIG_INIT_VALUE } from "@symph/config";
+import { CONFIG_INIT_VALUE, ConfigService } from "@symph/config";
 import { debounce } from "lodash";
 
 @CommandProvider()
@@ -79,10 +79,13 @@ export class JoyDevCommand extends JoyCommand {
     if (this.joyServerApplicationDev) {
       await this.joyServerApplicationDev.close();
     }
+    const parentConfigService = this.buildContext.syncGet(ConfigService);
+    const parentConfigs = parentConfigService.get();
     const appContext = await JoyServerFactoryDev.createServer(
       {},
       this.joyDevConfiguration,
-      { dir: this.dir, dev: true, ...this.argOpts },
+      // { dir: this.dir, dev: true, ...this.argOpts },
+      parentConfigs,
       this.buildContext
     );
     this.joyServerApplicationDev = appContext;
