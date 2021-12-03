@@ -7,6 +7,7 @@ import child_process from "child_process";
 import treeKill from "tree-kill";
 import { OptionsOfTextResponseBody } from "got/dist/source/types";
 import got from "got";
+import getPort from "get-port";
 
 export async function renderViaAPI(app: JoyReactServer, pathname: string, query?: ParsedUrlQuery): Promise<string | null> {
   const url = `${pathname}${query ? `?${stringify(query)}` : ""}`;
@@ -23,8 +24,8 @@ export async function fetchViaHTTP(appPort: number, pathname: string, query?: Pa
 }
 
 export async function findPort(): Promise<number> {
-  // return getPort();
-  return 4000;
+  return getPort();
+  // return 4000;
 }
 
 export async function waitForMoment(millisecond = 100000000): Promise<void> {

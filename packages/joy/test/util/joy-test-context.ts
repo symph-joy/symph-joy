@@ -42,7 +42,7 @@ export class JoyTestContext {
       }
       return;
     }
-    port = 4000 || port || (await findPort());
+    port = port || (await findPort());
     this.port = port;
     this.serverProcess = await joyStart(workDir, port, startOpts);
     return this;

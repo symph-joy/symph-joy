@@ -1,6 +1,5 @@
 module.exports = {
   root: true,
-  files: ["**/*.ts?(x)"],
   parserOptions: {
     project: "./tsconfig.json",
     sourceType: "module",
