@@ -1,6 +1,8 @@
 import { ComponentOptions, Scope } from "@symph/core";
 import { ReactComponent } from "./react-component.decorator";
 
+export const META_KEY_REACT_CONTROLLER = Symbol("react-component");
+
 export interface ControllerMeta {
   path: string;
 }
@@ -44,6 +46,7 @@ export function ReactController<T>(
       { scope: Scope.PROTOTYPE, lazyRegister: false }
     );
     ReactComponent(options)(ExtReactControllerDeco);
+    Reflect.defineMetadata(META_KEY_REACT_CONTROLLER, true, ExtReactControllerDeco);
 
     return (ExtReactControllerDeco as unknown) as typeof constructor;
   };

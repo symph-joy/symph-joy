@@ -56,7 +56,16 @@ describe("joy export", () => {
 
     const indexData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/index.json`);
     await checkDataFile(indexData, "reactAppInitManager/__SET_STATE", "state./.initStatic", JoyRouteInitState.SUCCESS);
-    const helloData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/index.json`);
-    await checkDataFile(helloData, "reactAppInitManager/__SET_STATE", "state./.initStatic", JoyRouteInitState.SUCCESS);
+    const helloData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/hello.json`);
+    await checkDataFile(helloData, "reactAppInitManager/__SET_STATE", "state./hello.initStatic", JoyRouteInitState.SUCCESS);
+  }, 999999);
+
+  test("Should export out fs route page.", async () => {
+    // await waitForMoment()
+    const indexHtml = testContext.joyAppConfig.resolveAppDir("out/sub-route/fs-route.html");
+    await checkHtmlFile(indexHtml, "msg", "hello fs route");
+
+    const indexData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/sub-route/fs-route.json`);
+    await checkDataFile(indexData, "reactAppInitManager/__SET_STATE", "state./sub-route/fs-route.initStatic", JoyRouteInitState.SUCCESS);
   }, 999999);
 });

@@ -1,4 +1,4 @@
-import { getRouteMeta, ReactComponent } from "@symph/react";
+import { getRouteMeta, META_KEY_REACT_CONTROLLER, ReactComponent } from "@symph/react";
 import { isPrerenderClazz } from "./prerender.interface";
 import { isDynamicRoute } from "../../joy-server/lib/router/utils";
 
@@ -14,7 +14,7 @@ export type PrerenderMetaByProvider = {
   byProvider: boolean;
 };
 
-export function Prerender(options?: PrerenderMeta): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
+export function Prerender(options?: PrerenderMeta | undefined): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
   return (constructor) => {
     if (isPrerenderClazz(constructor)) {
       if (options) {
@@ -26,23 +26,36 @@ export function Prerender(options?: PrerenderMeta): <TFunction extends Function>
       Reflect.defineMetadata(JOY_PRERENDER_META, meta, constructor);
       ReactComponent(Object.assign({}, options, { lazyRegister: true }))(constructor);
     } else {
+      const metaCtrl = Reflect.getMetadata(META_KEY_REACT_CONTROLLER, constructor);
+      if (!metaCtrl) {
+        throw new Error(`The component(${constructor.name}) is not a react controller, so can't decorate by @Prerender(). `);
+      }
+      const { route, paths, isFallback } = options || {};
       const routeMeta = getRouteMeta(constructor);
-      if (!routeMeta) {
-        throw new Error(`The component(${constructor.name}) is not a route component, so can't decorate by @Prerender(). `);
-      }
-      if (Array.isArray(routeMeta.path) && !options?.route) {
-        throw new Error(`The controller's route.path should not be an array, When @Prerender() decorate a route component(${constructor.name}).`);
-      }
-      const routePath = routeMeta.path as string;
-      if (isDynamicRoute(routePath)) {
-        throw new Error(`route.path should not be a dynamic path, When @Prerender() decorate a route component(${constructor.name}).`);
+      if (routeMeta) {
+        if (route) {
+          if (Array.isArray(routeMeta.path)) {
+            if (!routeMeta.path.indexOf(route)) {
+              throw new Error(`The @Prerender()'s route is not one of the @Routes()'s path, component(${constructor.name}).`);
+            }
+          } else if (route !== routeMeta.path) {
+            throw new Error(`The @Prerender()'s route is not equal the @Routes()'s path, component(${constructor.name}).`);
+          }
+        }
+        // const routePath = routeMeta.path as string;
+        // if (isDynamicRoute(routePath)) {
+        //   throw new Error(`route.path should not be a dynamic path, When @Prerender() decorate a route component(${constructor.name}).`);
+        // }
+      } else {
+        // 有可能是文件路由，所以不做非空判断
+        //   throw new Error(`The component(${constructor.name}) is not a route component, so can't decorate by @Prerender(). `);
       }
 
       const meta = Object.assign(
         {
-          route: routePath,
-          paths: [routePath],
-          isFallback: false,
+          // route: routePath,
+          // paths: [routePath],
+          // isFallback: false,
         },
         options
       ) as PrerenderMeta;
