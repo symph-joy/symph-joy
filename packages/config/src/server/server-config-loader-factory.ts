@@ -80,29 +80,44 @@ export class ServerConfigLoaderFactory extends ConfigLoaderFactory {
     return loaders;
   }
 
+  protected filterAndSortConfigs(files: string[], filter: (s: string) => boolean): string[] {
+    const rstFiles = files.filter(filter);
+    if (!rstFiles?.length) {
+      return [];
+    }
+
+    const mainConfigIndex = rstFiles.findIndex((f) => /^config\./.test(f));
+    if (mainConfigIndex >= 0) {
+      files[mainConfigIndex] = String.fromCharCode(0) + rstFiles[mainConfigIndex];
+    }
+    const sorted = rstFiles.sort((a, b) => (a < b ? -1 : 1));
+    sorted[0] = sorted[0].replace(String.fromCharCode(0), "");
+    return sorted;
+  }
+
   protected getConfigDirLoaders(configDirPath: string, env: string | undefined): IConfigLoader[] | undefined {
-    const configFiles = readdirSync(configDirPath);
-    if (!configFiles?.length) {
+    const files = readdirSync(configDirPath);
+    if (!files?.length) {
       return;
     }
 
-    const commonConfigFiles = configFiles.filter((f) => /^[^.]+\.(jsx?|tsx?|json|mjs)/.test(f));
+    const commonConfigFiles = this.filterAndSortConfigs(files, (f) => /^[^.]+\.(jsx?|tsx?|json|mjs)/.test(f));
     let envConfigFiles: string[] | undefined;
     if (env) {
       const envRegexp = new RegExp(`^[^.]+\\.${env}\\.(jsx?|tsx?|json|mjs)$`);
-      envConfigFiles = configFiles.filter((f) => envRegexp.test(f));
+      envConfigFiles = this.filterAndSortConfigs(files, (f) => envRegexp.test(f));
     }
     let localConfigs: string[] | undefined;
     if ("local" !== env) {
-      localConfigs = configFiles.filter((f) => /^[^.]+\.local\.(jsx?|tsx?|json|mjs)/.test(f));
+      localConfigs = this.filterAndSortConfigs(files, (f) => /^[^.]+\.local\.(jsx?|tsx?|json|mjs)/.test(f));
     }
-    const files = [] as string[];
-    if (commonConfigFiles?.length) files.push(...commonConfigFiles);
-    if (envConfigFiles?.length) files.push(...envConfigFiles);
-    if (localConfigs?.length) files.push(...localConfigs);
+    const configFiles = [] as string[];
+    if (commonConfigFiles?.length) configFiles.push(...commonConfigFiles);
+    if (envConfigFiles?.length) configFiles.push(...envConfigFiles);
+    if (localConfigs?.length) configFiles.push(...localConfigs);
 
     const loaders = [] as IConfigLoader[];
-    for (const file of files) {
+    for (const file of configFiles) {
       const absPath = path.join(configDirPath, file);
       const configName = file.slice(0, file.indexOf("."));
       let propName: string | undefined;

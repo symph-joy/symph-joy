@@ -15,27 +15,4 @@ export class NodeConfigConfiguration extends ConfigConfiguration {
       dir: process.cwd(),
     });
   }
-
-  // protected async getConfigLoaders(
-  //   initConfig: Record<string, unknown>
-  // ): Promise<ConfigLoader[]> {
-  //   const dir = initConfig.dir as string;
-  //   const configPath = initConfig.configPath as string;
-  //   const loaders = [] as ConfigLoader[];
-  //
-  //   loaders.push(new DotenvConfigLoader(dir))
-  //
-  //   let dirConfigPath: string | undefined;
-  //   if (dir) {
-  //     const loader = new DirConfigLoader(dir, "joy.config.js");
-  //     dirConfigPath = loader.findConfigPath();
-  //     loaders.push(loader);
-  //   }
-  //
-  //   if (configPath && configPath !== dirConfigPath) {
-  //     loaders.push(new FileConfigLoader(configPath));
-  //   }
-  //
-  //   return loaders;
-  // }
 }
