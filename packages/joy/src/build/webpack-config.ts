@@ -465,7 +465,7 @@ export default async function getBaseWebpackConfig(
               hash.update(module.libIdent({ context: dir }));
             }
 
-            return hash.digest("hex").substring(0, 8);
+            return "lib-" + hash.digest("hex").substring(0, 8);
           },
           priority: 30,
           minChunks: 1,
@@ -761,15 +761,16 @@ export default async function getBaseWebpackConfig(
           ? { name: "webpack-runtime" }
           : undefined
         : { name: CLIENT_STATIC_FILES_RUNTIME_WEBPACK },
-      minimize: !(dev || isServer),
+      // minimize: !(dev || isServer),
+      minimize: false,
       minimizer: [
         // Minify JavaScript
-        // new TerserPlugin({
-        //   extractComments: false,
-        //   // cache: path.join(outDir, 'cache', 'joy-minifier'), // webpack5 升级后不兼容，先屏蔽掉
-        //   parallel: config.experimental.cpus || true,
-        //   terserOptions,
-        // }),
+        new TerserPlugin({
+          extractComments: false,
+          // cache: path.join(outDir, 'cache', 'joy-minifier'), // webpack5 升级后不兼容，先屏蔽掉
+          parallel: config.experimental.cpus || true,
+          terserOptions,
+        }),
         // Minify CSS
         new CssMinimizerPlugin({
           postcssOptions: {
@@ -1048,26 +1049,26 @@ export default async function getBaseWebpackConfig(
           const { FontStylesheetGatheringPlugin } = require("./webpack/plugins/font-stylesheet-gathering-plugin");
           return new FontStylesheetGatheringPlugin();
         })(),
-      config.experimental.conformance &&
-        !isWebpack5 &&
-        !dev &&
-        new WebpackConformancePlugin({
-          tests: [
-            !isServer && conformanceConfig.MinificationConformanceCheck.enabled && new MinificationConformanceCheck(),
-            conformanceConfig.ReactSyncScriptsConformanceCheck.enabled &&
-              new ReactSyncScriptsConformanceCheck({
-                AllowedSources: conformanceConfig.ReactSyncScriptsConformanceCheck.allowedSources || [],
-              }),
-            !isServer &&
-              conformanceConfig.DuplicatePolyfillsConformanceCheck.enabled &&
-              new DuplicatePolyfillsConformanceCheck({
-                BlockedAPIToBePolyfilled: conformanceConfig.DuplicatePolyfillsConformanceCheck.BlockedAPIToBePolyfilled,
-              }),
-            !isServer &&
-              conformanceConfig.GranularChunksConformanceCheck.enabled &&
-              new GranularChunksConformanceCheck(splitChunksConfigs.prodGranular),
-          ].filter(Boolean),
-        }),
+      // config.experimental.conformance &&
+      //   !isWebpack5 &&
+      //   !dev &&
+      //   new WebpackConformancePlugin({
+      //     tests: [
+      //       !isServer && conformanceConfig.MinificationConformanceCheck.enabled && new MinificationConformanceCheck(),
+      //       conformanceConfig.ReactSyncScriptsConformanceCheck.enabled &&
+      //         new ReactSyncScriptsConformanceCheck({
+      //           AllowedSources: conformanceConfig.ReactSyncScriptsConformanceCheck.allowedSources || [],
+      //         }),
+      //       !isServer &&
+      //         conformanceConfig.DuplicatePolyfillsConformanceCheck.enabled &&
+      //         new DuplicatePolyfillsConformanceCheck({
+      //           BlockedAPIToBePolyfilled: conformanceConfig.DuplicatePolyfillsConformanceCheck.BlockedAPIToBePolyfilled,
+      //         }),
+      //       !isServer &&
+      //         conformanceConfig.GranularChunksConformanceCheck.enabled &&
+      //         new GranularChunksConformanceCheck(splitChunksConfigs.prodGranular),
+      //     ].filter(Boolean),
+      //   }),
       new WellKnownErrorsPlugin(),
       // isServer && new EmitSrcPlugin({path: path.join(outDir, 'dist')})
     ].filter((Boolean as any) as ExcludesFalse),

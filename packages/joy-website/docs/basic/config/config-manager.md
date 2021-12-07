@@ -1,6 +1,6 @@
 # 配置
 
-Joy 遵循约定大约配置原则，参照最佳实践约定默认配置，0 配置也可启动应用，即新应用无需配置文件也可立即运行和发布。
+Joy 遵循约定大于配置原则，参考最佳实践约定默认配置，0 配置也可启动应用，即新应用无需配置文件也可立即运行和发布。
 
 ## 配置文件
 
@@ -24,9 +24,10 @@ export default {
 export default [{ exact: true, path: "/", component: "index" }];
 ```
 
-和主配置合并后：
+等同于：
 
 ```typescript
+// joy.config.ts
 {
   apiPrefix: "/api";
   routes: [{ exact: true, path: "/", component: "index" }];
@@ -72,7 +73,7 @@ $ cross-env port=3000 umi dev
 
 ### .env 配置文件
 
-Joy 约定根目录下的`.env`为环境变量配置文件，该配置文件将在初始化配置时加载。
+Joy 约定根目录下的`.env`为环境变量配置文件，该配置文件将在初始化配置时加载，其配置的值于 [执行命令时添加环境变量](#执行命令时添加环境变量)
 
 ```typescript
 // .env
@@ -81,15 +82,57 @@ port = 3000;
 hostname = "localhost";
 ```
 
-## 读取配置
+## 应用内获取配置
 
-在应用组件的属性上，通过`@Value(options)`装饰器申明需要自动注入配置，注入的属性键值默认为组件的属性名称，例如：
+### 通过 ConfigService 服务获取
+
+`@symph/config`提供 `ConfigService`服务类，Joy 已内置该服务，通过其提供的`get<T = any>(configPath?:string, defaultValue?: T): T | undefined`方法获取配置值，方法参数：
+
+- configPath: 配置键值，支持 object path，获取配置值对象的内部值。
+- defaultValue: 默认值，如果配置不存在，则返回默认值。
+
+例如有以下配置内容：
+
+```typescript
+// joy.config.ts
+export default {
+  database: {
+    type: "mysql",
+    host: "localhost",
+    port: 3306,
+  },
+};
+```
+
+在服务类中获取以上配置值：
+
+```typescript
+import { ConfigService } from "@symph/config";
+
+import { Component } from "@symph/core";
+import { Value } from "@symph/config";
+
+@Component()
+export class HelloService {
+  constructor(private configService: ConfigService) {
+    // 通过 configKey 获取 配置
+    const database = configService.get("database");
+
+    // 如果配置值是一个对象，可以通过object path，获取获取对象内部属性的值
+    const host = configService.get<string>("database.host", "localhost");
+  }
+}
+```
+
+### @Value 装饰器方式获取
+
+在组件的属性上，通过`@Value(options)`装饰器申明需要自动注入配置，注入的属性键值默认为组件的属性名称，例如：
 
 ```typescript
 import { Component } from "@symph/core";
 import { Value } from "@symph/config";
 
-@Component
+@Component()
 export class HelloService {
   // 读取joy.config.ts中配置的msg的值。
   @Value()
@@ -108,7 +151,7 @@ export class HelloService {
 
 > `@Value()`声明的属性，也等于声明了一个配置项及其类型和验证规则，需要避免在不同地方声明相同的配置但又不兼容的类型，这种情况下，我们可以将声明移动到一个独立的配置类中，其它地方如果需要使用该配置，应该依赖和使用该类。
 
-### 校验配置值
+#### 校验配置值
 
 使用`@tsed/schema`库提供的装饰器来申明校验规则。
 

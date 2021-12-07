@@ -46,8 +46,7 @@ export class IncrementalCache {
       dev,
       distDir,
       pagesDir,
-      flushToDisk:
-        !dev && (typeof flushToDisk !== "undefined" ? flushToDisk : true),
+      flushToDisk: !dev && (typeof flushToDisk !== "undefined" ? flushToDisk : true),
     };
 
     if (dev) {
@@ -56,11 +55,10 @@ export class IncrementalCache {
         routes: {},
         dynamicRoutes: {},
         preview: null as any, // `preview` is special case read in joy-dev-server
+        apis: [],
       };
     } else {
-      this.prerenderManifest = JSON.parse(
-        readFileSync(path.join(distDir, PRERENDER_MANIFEST), "utf8")
-      );
+      this.prerenderManifest = JSON.parse(readFileSync(path.join(distDir, PRERENDER_MANIFEST), "utf8"));
     }
 
     this.cache = new LRUCache({
@@ -85,15 +83,10 @@ export class IncrementalCache {
     const curTime = new Date().getTime();
     if (this.incrementalOptions.dev) return curTime - 1000;
 
-    const { initialRevalidateSeconds } = this.prerenderManifest.routes[
-      pathname
-    ] || {
+    const { initialRevalidateSeconds } = this.prerenderManifest.routes[pathname] || {
       initialRevalidateSeconds: 1,
     };
-    const revalidateAfter =
-      typeof initialRevalidateSeconds === "number"
-        ? initialRevalidateSeconds * 1000 + curTime
-        : initialRevalidateSeconds;
+    const revalidateAfter = typeof initialRevalidateSeconds === "number" ? initialRevalidateSeconds * 1000 + curTime : initialRevalidateSeconds;
 
     return revalidateAfter;
   }
@@ -114,13 +107,8 @@ export class IncrementalCache {
     if (!data) {
       try {
         // todo 优化：当缓存不存在时，减少磁盘的反问次数。
-        const html = await promises.readFile(
-          this.getSeedPath(pathname, "html"),
-          "utf8"
-        );
-        const pageData = JSON.parse(
-          await promises.readFile(this.getSeedPath(pathname, "json"), "utf8")
-        );
+        const html = await promises.readFile(this.getSeedPath(pathname, "html"), "utf8");
+        const pageData = JSON.parse(await promises.readFile(this.getSeedPath(pathname, "json"), "utf8"));
 
         data = {
           html,
@@ -133,11 +121,7 @@ export class IncrementalCache {
       }
     }
 
-    if (
-      data &&
-      data.revalidateAfter !== false &&
-      data.revalidateAfter < new Date().getTime()
-    ) {
+    if (data && data.revalidateAfter !== false && data.revalidateAfter < new Date().getTime()) {
       data.isStale = true;
     }
     const manifestEntry = this.prerenderManifest.routes[pathname];
@@ -162,10 +146,7 @@ export class IncrementalCache {
       // TODO: Update this to not mutate the manifest from the
       // build.
       this.prerenderManifest.routes[pathname] = {
-        dataRoute: path.posix.join(
-          "/_joy/data",
-          `${normalizePagePath(pathname)}.json`
-        ),
+        dataRoute: path.posix.join("/_joy/data", `${normalizePagePath(pathname)}.json`),
         srcRoute: null, // FIXME: provide actual source route, however, when dynamically appending it doesn't really matter
         initialRevalidateSeconds: revalidateSeconds,
       };
@@ -184,11 +165,7 @@ export class IncrementalCache {
         const seedPath = this.getSeedPath(pathname, "html");
         await promises.mkdir(path.dirname(seedPath), { recursive: true });
         await promises.writeFile(seedPath, data.html, "utf8");
-        await promises.writeFile(
-          this.getSeedPath(pathname, "json"),
-          JSON.stringify(data.pageData),
-          "utf8"
-        );
+        await promises.writeFile(this.getSeedPath(pathname, "json"), JSON.stringify(data.pageData), "utf8");
       } catch (error) {
         // failed to flush to disk
         console.warn("Failed to update prerender files for", pathname, error);

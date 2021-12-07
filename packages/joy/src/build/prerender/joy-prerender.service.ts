@@ -1,23 +1,28 @@
 import { AutowireHook, ClassProvider, Component, ApplicationContext, HookType, IHook, RegisterTap, TProviderName } from "@symph/core";
 import { getPrerenderMeta, PrerenderMeta, PrerenderMetaByProvider } from "./prerender.decorator";
-import { JoyPrerenderInterface } from "./prerender.interface";
+import { IJoyPrerender } from "./prerender.interface";
 import { IScanOutModule } from "../scanner/file-scanner";
 import { JoyReactAppServerConfiguration } from "../../react/joy-react-app-server.configuration";
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { JoyReactApplicationContext } from "../../react/joy-react-application-context";
-import { getRouteMeta } from "@symph/react";
+import { getRouteMeta, MountService } from "@symph/react";
 import { JoyReactRouterPlugin } from "../../react/router/joy-react-router-plugin";
 
 export interface JoyPrerenderInfo {
   route: string;
-  paths: string[]; // todo 这里需要支持query参数。
+  paths: string[];
+  /**
+   * 提前获取的异步api接口，会根据api的请求路径，在对应目录中，生成包含整个响应的文件。
+   * 在export生成api文件，不在build阶段生成，因为build后可以通过node运行整个应用，实时获取接口数据。
+   */
+  apis?: string[];
   isFallback: boolean;
   revalidate?: number;
 }
 
 interface PrerenderModule {
   module: IScanOutModule;
-  ids: TProviderName[];
+  names: TProviderName[];
 }
 
 @Component()
@@ -44,7 +49,7 @@ export class JoyPrerenderService {
     }
     const { mount } = module;
     let hasPrerender = false;
-    const ids = [] as TProviderName[];
+    const names = [] as TProviderName[];
     module.providerDefines.forEach((providerDefine, exportKey) => {
       providerDefine.providers.forEach((provider) => {
         if (!(provider as ClassProvider).useClass) {
@@ -58,9 +63,9 @@ export class JoyPrerenderService {
 
         if ((prerenderMeta as PrerenderMetaByProvider).byProvider) {
           if (Array.isArray(name)) {
-            ids.push(...name);
+            names.push(...name);
           } else {
-            ids.push(name);
+            names.push(name);
           }
         } else {
           let { route, paths, isFallback } = prerenderMeta as PrerenderMeta;
@@ -97,9 +102,9 @@ export class JoyPrerenderService {
         hasPrerender = hasPrerender || !!prerenderMeta;
       });
     });
-    if (ids.length > 0) {
+    if (names.length > 0) {
       this.prerenderProviderIds.push({
-        ids,
+        names: names,
         module,
       });
     }
@@ -138,10 +143,10 @@ export class JoyPrerenderService {
     }
 
     const modules = [] as Record<string, any>[];
-    let ids = [] as TProviderName[];
+    let names = [] as TProviderName[];
     this.prerenderProviderIds.forEach((it) => {
       modules.push(it.module.module);
-      ids = ids.concat(it.ids);
+      names = names.concat(it.names);
     });
 
     // const applicationConfig = new ApplicationConfig();
@@ -157,13 +162,29 @@ export class JoyPrerenderService {
     await reactApplicationContext.init();
     reactApplicationContext.scannedModules.push(...modules); // 防止再次注册再编译时的模块，或导致路由等重复注册。
     reactApplicationContext.registerModule(modules);
+    const mountService = await reactApplicationContext.get(MountService);
 
-    const tasks = ids.map(async (prerenderId) => {
-      const provider: JoyPrerenderInterface = await reactApplicationContext.get(prerenderId);
+    const tasks = names.map(async (prerenderId) => {
+      const provider: IJoyPrerender = await reactApplicationContext.get(prerenderId);
       const route = provider.getRoute() as string;
       const isFallback = await provider.isFallback();
       const paths = await provider.getPaths();
-      return { route, isFallback, paths } as JoyPrerenderInfo;
+      const prerenderApis = provider.getApis && (await provider.getApis());
+      const apis = [] as string[];
+      if (prerenderApis?.length) {
+        for (const prerenderApi of prerenderApis) {
+          let apiFullPath: string;
+          if (prerenderApi.isModuleApi === false) {
+            apiFullPath = `${this.joyAppConfig.basePath}${this.joyAppConfig.getGlobalPrefix()}${prerenderApi.path}`;
+          } else {
+            apiFullPath = `${this.joyAppConfig.basePath}${this.joyAppConfig.getGlobalPrefix()}${mountService.getMount(prerenderId) || ""}${
+              prerenderApi.path
+            }`;
+          }
+          apis.push(apiFullPath);
+        }
+      }
+      return { route, isFallback, paths, apis } as JoyPrerenderInfo;
     });
 
     const generateList = await Promise.all(tasks);

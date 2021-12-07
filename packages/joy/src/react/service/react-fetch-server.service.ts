@@ -31,6 +31,7 @@ export class ReactFetchServerService extends ReactFetchService {
     if (pathOrUrl[0] !== "/") {
       throw new RuntimeException('Url path must start with "/", it should be a absolute path.');
     }
+
     return `http://localhost:${this.joyAppConfig.port}${this.joyAppConfig.basePath}${this.joyAppConfig.getGlobalPrefix()}${mount}${pathOrUrl}`;
   }
 }

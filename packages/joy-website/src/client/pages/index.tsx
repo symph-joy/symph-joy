@@ -3,9 +3,12 @@ import { BaseReactController, ReactController } from "@symph/react";
 import { Layout, Typography, Button, Carousel, Row } from "antd";
 import styles from "./homepage.less";
 import { AndroidOutlined, AppleOutlined, WindowsOutlined, GithubOutlined, TwitterOutlined, GitlabOutlined } from "@ant-design/icons";
+import { Prerender } from "@symph/joy";
 
 const { Content } = Layout;
 const { Paragraph } = Typography;
+
+@Prerender()
 @ReactController()
 export default class HelloController extends BaseReactController {
   renderView(): ReactNode {
