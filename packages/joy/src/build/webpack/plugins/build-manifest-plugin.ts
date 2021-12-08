@@ -1,7 +1,14 @@
 import devalue from "devalue";
 import webpack, { Chunk, Compiler } from "webpack";
 import sources from "webpack-sources";
-import { BUILD_MANIFEST, CLIENT_STATIC_FILES_PATH, CLIENT_STATIC_FILES_RUNTIME_MAIN, CLIENT_STATIC_FILES_RUNTIME_POLYFILLS, CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH, CLIENT_STATIC_FILES_RUNTIME_WEBPACK } from "../../../joy-server/lib/constants";
+import {
+  BUILD_MANIFEST,
+  CLIENT_STATIC_FILES_PATH,
+  CLIENT_STATIC_FILES_RUNTIME_MAIN,
+  CLIENT_STATIC_FILES_RUNTIME_POLYFILLS,
+  CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH,
+  CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
+} from "../../../joy-server/lib/constants";
 import { BuildManifest } from "../../../joy-server/server/get-page-files";
 import getRouteFromEntrypoint from "../../../joy-server/server/get-route-from-entrypoint";
 import { Rewrite } from "../../../lib/load-custom-routes";
@@ -49,7 +56,7 @@ function generateClientManifest(assetMap: BuildManifest, isModern: boolean, rewr
 
 function isJsFile(file: string): boolean {
   // We don't want to include `.hot-update.js` files into the initial page
-  return !file.endsWith(".hot-update.js") && file.endsWith(".js");
+  return !file.endsWith(".hot-update.js") && (file.endsWith(".js") || file.endsWith(".css"));
 }
 
 function getFilesArray(files: any) {
@@ -133,7 +140,17 @@ export default class BuildManifestPlugin {
     const webpackRuntimeJsFiles: string[] = getFilesArray(webpackRuntimeJsChunk?.files).filter(isJsFile);
     const mainJsChunk = namedChunks.get(CLIENT_STATIC_FILES_RUNTIME_MAIN);
     const mainJsFiles: string[] = getFilesArray(mainJsChunk?.files).filter(isJsFile);
-    assetMap.commonFiles = [...mainJsFiles, ...webpackRuntimeJsFiles];
+    const libChunkJsFiles: string[] = [];
+    for (const chunkName of namedChunks.keys()) {
+      if (!chunkName.startsWith("lib-")) {
+        continue;
+      }
+      const files = getFilesArray(namedChunks.get(chunkName)?.files).filter(isJsFile);
+      if (files?.length) {
+        libChunkJsFiles.push(...files);
+      }
+    }
+    assetMap.commonFiles = [...mainJsFiles, ...libChunkJsFiles, ...webpackRuntimeJsFiles];
 
     const polyfillChunk = namedChunks.get(CLIENT_STATIC_FILES_RUNTIME_POLYFILLS);
     // Create a separate entry  for polyfills
@@ -217,12 +234,16 @@ export default class BuildManifestPlugin {
 
     const clientManifestPath = `${CLIENT_STATIC_FILES_PATH}/${this.buildId}/_buildManifest.js`;
 
-    assets[clientManifestPath] = new RawSource(`self.__BUILD_MANIFEST = ${generateClientManifest(assetMap, false, this.rewrites)};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()`);
+    assets[clientManifestPath] = new RawSource(
+      `self.__BUILD_MANIFEST = ${generateClientManifest(assetMap, false, this.rewrites)};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()`
+    );
 
     if (this.modern) {
       const modernClientManifestPath = `${CLIENT_STATIC_FILES_PATH}/${this.buildId}/_buildManifest.module.js`;
 
-      assets[modernClientManifestPath] = new RawSource(`self.__BUILD_MANIFEST = ${generateClientManifest(assetMap, true, this.rewrites)};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()`);
+      assets[modernClientManifestPath] = new RawSource(
+        `self.__BUILD_MANIFEST = ${generateClientManifest(assetMap, true, this.rewrites)};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()`
+      );
     }
 
     return assets;

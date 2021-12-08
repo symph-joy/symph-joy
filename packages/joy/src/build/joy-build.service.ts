@@ -41,7 +41,6 @@ import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
 import { AutowireHook, Component, ApplicationContext, HookType, IHook } from "@symph/core";
-import { getWebpackConfigForSrc } from "./webpack-config-for-src";
 import { FileGenerator } from "./file-generator";
 import { FileScanner } from "./scanner/file-scanner";
 import { Worker } from "jest-worker";
@@ -52,6 +51,7 @@ import { getWebpackConfigForApi } from "./webpack-config-for-api";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 import { trace } from "../trace";
 import { SrcBuilder } from "./src-builder";
+import { TJoyPrerenderApi } from "./prerender/prerender.interface";
 
 export type SsgRoute = {
   initialRevalidateSeconds: number | false;
@@ -73,6 +73,7 @@ export type PrerenderManifest = {
   routes: { [route: string]: SsgRoute };
   dynamicRoutes: { [route: string]: DynamicSsgRoute };
   preview?: __ApiPreviewProps; // todo remove
+  apis: string[];
 };
 
 @Component()
@@ -331,8 +332,9 @@ export class JoyBuildService {
 
     const finalPrerenderRoutes: { [route: string]: SsgRoute } = {};
     const finalDynamicRoutes: PrerenderManifest["dynamicRoutes"] = {};
+    const finalApis: string[] = [];
     prerenderInfos.forEach((prerenderInfo) => {
-      const { route, paths, isFallback } = prerenderInfo;
+      const { route, paths, isFallback, apis } = prerenderInfo;
       const isDynamic = isDynamicRoute(route);
       for (let i = 0; i < paths.length; i++) {
         const pathname = paths[i];
@@ -354,12 +356,21 @@ export class JoyBuildService {
           dataRouteRegex: normalizeRouteRegex(getRouteRegex(dataRoute.replace(/\.json$/, "")).re.source.replace(/\(\?:\\\/\)\?\$$/, "\\.json$")),
         };
       }
+
+      if (apis) {
+        finalApis.push(...apis);
+        // for (const api of apis) {
+        //   const fullPath = this.joyConfig.getGlobalPrefix() + api;
+        //   finalApis.push(fullPath);
+        // }
+      }
     });
 
     const prerenderManifest: PrerenderManifest = {
       version: 2,
       routes: finalPrerenderRoutes,
       dynamicRoutes: finalDynamicRoutes,
+      apis: finalApis,
     };
 
     await promises.writeFile(path.join(outDir, PRERENDER_MANIFEST), JSON.stringify(prerenderManifest), "utf8");

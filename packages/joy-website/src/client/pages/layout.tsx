@@ -129,6 +129,11 @@ export default class MainLayout extends BaseReactController<any> {
   onSelect = () => {
     this.search = "";
     this.docsModel.clearSearch();
+  }
+
+  pushHistory = (url) => {
+    const { history } = this.props;
+    history.push(url);
   };
 
   renderView(): ReactNode {
@@ -154,7 +159,11 @@ export default class MainLayout extends BaseReactController<any> {
                     <CloseOutlined onClick={this.handleToggleCollapsed} />
                   </MenuItem>
                 )}
-                <MenuItem key="1">开始</MenuItem>
+                <MenuItem key="1">
+                  <a href={"/docs"} onClick={this.pushHistory.bind(this, "/docs")}>
+                    开始
+                  </a>
+                </MenuItem>
                 <MenuItem key="2">配置</MenuItem>
                 <MenuItem key="3">API</MenuItem>
                 <MenuItem key="4">指南</MenuItem>

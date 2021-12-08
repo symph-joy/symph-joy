@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { exists as existsOrig, existsSync, promises, readFileSync, writeFileSync } from "fs";
+import { existsSync, promises, readFileSync, writeFileSync, ensureFile, writeFile } from "fs-extra";
 import { Worker } from "jest-worker";
 import { dirname, join, resolve, sep } from "path";
 import { promisify } from "util";
@@ -31,8 +31,6 @@ import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { Component } from "@symph/core";
 import getPort from "get-port";
 import { JoyServerApplication } from "../joy-server/server/joy-server-application";
-
-const exists = promisify(existsOrig);
 
 const createProgress = (total: number, label = "Exporting") => {
   let curProgress = 0;
@@ -178,9 +176,11 @@ export class JoyExportAppService {
       !options.pages && (require(join(distDir, isLikeServerless ? SERVERLESS_DIRECTORY : SERVER_DIRECTORY, PAGES_MANIFEST)) as PagesManifest);
 
     let prerenderManifest: PrerenderManifest | undefined = undefined;
-    try {
-      prerenderManifest = require(join(distDir, PRERENDER_MANIFEST));
-    } catch (_) {}
+    if (!buildExport) {
+      try {
+        prerenderManifest = require(join(distDir, PRERENDER_MANIFEST));
+      } catch (_) {}
+    }
 
     const excludedPrerenderRoutes = new Set<string>();
     const pages = options.pages || Object.keys(pagesManifest);
@@ -237,8 +237,12 @@ export class JoyExportAppService {
       "utf8"
     );
 
+    if (!buildExport && prerenderManifest?.apis?.length) {
+      await this.exportStaticApi(prerenderManifest.apis, outDir, port);
+    }
+
     // Copy static directory
-    if (!options.buildExport && existsSync(join(dir, "static"))) {
+    if (!buildExport && existsSync(join(dir, "static"))) {
       if (!options.silent) {
         Log.info('Copying "static" directory');
       }
@@ -246,7 +250,7 @@ export class JoyExportAppService {
     }
 
     // Copy .joy/out/react/static and export directory
-    if (!options.buildExport) {
+    if (!buildExport) {
       if (!options.silent) {
         Log.info('Copying "static build" directory');
       }
@@ -304,7 +308,7 @@ export class JoyExportAppService {
       joyExport: true,
     };
 
-    if (!options.silent && !options.buildExport) {
+    if (!options.silent && !buildExport) {
       Log.info(`Launching ${threads} workers`);
     }
     const exportPathMap = await exportPathMapFn(defaultPathMap, {
@@ -333,7 +337,7 @@ export class JoyExportAppService {
       hasApiRoutes = true;
     }
 
-    if (prerenderManifest && !options.buildExport) {
+    if (prerenderManifest && !buildExport) {
       const fallbackEnabledPages = new Set();
 
       for (const key of Object.keys(prerenderManifest.dynamicRoutes)) {
@@ -373,14 +377,14 @@ export class JoyExportAppService {
     }
 
     const progress = !options.silent && createProgress(filteredPaths.length, `${Log.prefixes.info} ${options.statusMessage || "Generating pages"}`);
-    const pagesDataDir = options.buildExport ? outDir : join(outDir, "_joy/data", buildId);
+    const pagesDataDir = buildExport ? outDir : join(outDir, "_joy/data", buildId);
 
     const ampValidations: AmpPageStatus = {};
     let hadValidationError = false;
 
     const publicDir = join(dir, CLIENT_PUBLIC_FILES_PATH);
     // Copy public directory
-    if (!options.buildExport && existsSync(publicDir)) {
+    if (!buildExport && existsSync(publicDir)) {
       if (!options.silent) {
         Log.info('Copying "public" directory');
       }
@@ -418,8 +422,8 @@ export class JoyExportAppService {
           renderOpts,
           serverRuntimeConfig: serverRuntimeConfig as any,
           subFolders: subFolders as any,
-          buildExport: options.buildExport,
-          prerenderOut: !options.buildExport && prerenderManifest && prerenderManifest.routes?.[path] ? this.getRouteSsgOutFiles(path) : undefined,
+          buildExport: buildExport,
+          prerenderOut: !buildExport && prerenderManifest && prerenderManifest.routes?.[path] ? this.getRouteSsgOutFiles(path) : undefined,
           serverless: isTargetLikeServerless(joyConfig.target),
           optimizeFonts: joyConfig.experimental.optimizeFonts,
           optimizeImages: joyConfig.experimental.optimizeImages,
@@ -433,7 +437,7 @@ export class JoyExportAppService {
         renderError = renderError || !!result.error;
         if (!!result.error) errorPaths.push(path);
 
-        if (options.buildExport && typeof result.fromBuildExportRevalidate !== "undefined") {
+        if (buildExport && typeof result.fromBuildExportRevalidate !== "undefined") {
           initialPageRevalidationMap[path] = result.fromBuildExportRevalidate;
         }
         if (progress) progress();
@@ -445,7 +449,7 @@ export class JoyExportAppService {
     await this.serverApplication.httpAdapter.close();
 
     // copy prerendered routes to outDir
-    if (!options.buildExport && prerenderManifest) {
+    if (!buildExport && prerenderManifest) {
       await Promise.all(
         Object.keys(prerenderManifest.routes).map(async (route) => {
           // const { srcRoute } = prerenderManifest!.routes[route];
@@ -515,5 +519,22 @@ export class JoyExportAppService {
       html: `${orig}.html`,
       data: `${orig}.json`,
     };
+  }
+
+  /**
+   * todo 内部实现最大并行处理，提升api文件生成效率。
+   */
+  private async exportStaticApi(apis: string[], outDir: string, port: number) {
+    if (!apis?.length) {
+      return;
+    }
+    for (const api of apis) {
+      const fullUrl = `http://localhost:${port}${api}`;
+      const resp = await global.fetch(fullUrl);
+      const data = await resp.text();
+      const apiRespDataFile = join(outDir, api);
+      await ensureFile(apiRespDataFile);
+      await writeFile(apiRespDataFile, data, { encoding: "utf-8" });
+    }
   }
 }

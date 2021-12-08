@@ -127,11 +127,7 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     this.addFromScanOutModule(module);
   }
 
-  private addFSRoute(scanOutModule: IScanOutModule, exportKey: string, provider: Provider, basePath?: string): T | undefined {
-    const filePath = scanOutModule.resource;
-    if (!filePath) {
-      return undefined;
-    }
+  public getFsRoute(filePath: string, provider?: Provider, basePath?: string): T | undefined {
     const pagesDir = this.joyAppConfig.resolvePagesDir();
     if (!filePath.startsWith(pagesDir)) {
       return undefined;
@@ -158,10 +154,22 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
       path: routePath,
       isContainer,
       exact,
-      providerName: provider.name,
-      providerPackage: provider.package,
+      providerName: provider?.name,
+      providerPackage: provider?.package,
     } as T;
-    this.addRoute(fsRoute);
+
+    return fsRoute;
+  }
+
+  private addFSRoute(scanOutModule: IScanOutModule, exportKey: string, provider: Provider, basePath?: string): T | undefined {
+    const filePath = scanOutModule.resource;
+    if (!filePath) {
+      return undefined;
+    }
+    const fsRoute = this.getFsRoute(filePath, provider, basePath);
+    if (fsRoute) {
+      this.addRoute(fsRoute);
+    }
     return fsRoute;
   }
 

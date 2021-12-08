@@ -183,6 +183,9 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
     canonicalBase: "",
   };
 
+  /**
+   * 发布Joy应用到子路径下时，使用`basePath`设置子路径名称。
+   */
   @Value({ default: "" })
   basePath: string;
 

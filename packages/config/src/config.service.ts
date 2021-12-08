@@ -19,7 +19,7 @@ import merge from "lodash.merge";
 import { NoInferType } from "./types";
 import { ConfigLoaderFactory } from "./loader/config-loader-factory";
 import { getConfigValuesMetadata, IConfigValueMeta } from "./config-value.decorator";
-import { getJsonSchema, JsonSchema } from "@tsed/schema";
+import { JsonSchema } from "@tsed/schema";
 import Ajv from "ajv";
 
 export interface ConfigServiceOptions {
@@ -194,24 +194,24 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
    * Get a configuration value (either custom configuration or process environment variable)
    * based on property path (you can use dot notation to traverse nested object, e.g. "database.host").
    * It returns a default value if the key does not exist.
-   * @param propertyPath
+   * @param configPath
    * @param defaultValue
    */
-  get<T = any>(propertyPath?: keyof K, defaultValue?: T): T | undefined {
-    if (typeof propertyPath === "undefined") {
+  get<T = any>(configPath?: keyof K, defaultValue?: T): T | undefined {
+    if (typeof configPath === "undefined") {
       return this.internalConfig as any;
     }
-    const validatedEnvValue = this.getFromValidatedEnv(propertyPath);
+    const validatedEnvValue = this.getFromValidatedEnv(configPath);
     if (validatedEnvValue !== undefined) {
       return validatedEnvValue;
     }
 
-    const processEnvValue = this.getFromProcessEnv(propertyPath, defaultValue);
+    const processEnvValue = this.getFromProcessEnv(configPath, defaultValue);
     if (processEnvValue !== undefined) {
       return processEnvValue;
     }
 
-    const internalValue = this.getFromInternalConfig(propertyPath);
+    const internalValue = this.getFromInternalConfig(configPath);
     if (internalValue !== undefined) {
       return internalValue;
     }
