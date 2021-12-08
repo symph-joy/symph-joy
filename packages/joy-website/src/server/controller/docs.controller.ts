@@ -14,7 +14,6 @@ export class DocsController {
 
   @Get("/detail")
   public async getDoc(@Query("path") path: any) {
-    console.log(path);
     return {
       data: await this.docsService.getDoc(path),
     };

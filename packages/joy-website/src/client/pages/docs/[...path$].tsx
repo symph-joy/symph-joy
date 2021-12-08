@@ -1,11 +1,33 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
-import { Autowire } from "@symph/core";
+import { Autowire, IApplicationContext } from "@symph/core";
 import { Affix, Col, Menu, Row, Spin, Anchor } from "antd";
 import styles from "./docs.less";
+import { Prerender, IJoyPrerender, TJoyPrerenderApi } from "@symph/joy/react";
 
 const { Link } = Anchor;
+
+@Prerender()
+export class DocsPrerenderGenerator implements IJoyPrerender {
+  getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
+    return "/docs/:path";
+  }
+
+  isFallback(): Promise<boolean> | boolean {
+    return false;
+  }
+
+  async getPaths(): Promise<Array<string>> {
+    return ["/docs/docs/build-css", "/docs/docs/introduce"];
+  }
+
+  async getApis?(): Promise<Array<TJoyPrerenderApi>> {
+    return [{
+      path: '/docs/detail/start/introduce'
+    }]
+  }
+}
 @ReactController()
 export default class DocsIndexController extends BaseReactController {
   @RouteParam({ name: "path" })
@@ -15,7 +37,7 @@ export default class DocsIndexController extends BaseReactController {
   public docsModel: DocsModel;
 
   async initialModelStaticState(): Promise<void | number> {
-    let path = this.docPath || "/docs/build-css";
+    let path = this.docPath || "/docs/docs/build-css";
     await this.docsModel.getDocMenus();
     await this.fetchPageDocData(path);
   }
@@ -70,7 +92,7 @@ export default class DocsIndexController extends BaseReactController {
 
   renderView(): ReactNode {
     const { docMenus, titleTrees, currentDoc, loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
-    console.log(this.docPath);
+    // console.log(this.props.match);
     return (
       <Row style={{ minHeight: "calc(100vh - 64px)", position: "relative" }}>
         <Col sm={24} md={6} lg={6} xl={5} xxl={4}>
@@ -91,7 +113,7 @@ export default class DocsIndexController extends BaseReactController {
             {currentDoc ? <div className={styles.docContent} dangerouslySetInnerHTML={{ __html: currentDoc.htmlContent }} /> : undefined}
           </Spin>
         </Col>
-        <Col sm={24} md={2} lg={2} xl={2} xxl={2}>
+        <Col sm={24} md={3} lg={3} xl={3} xxl={3}>
           {titleTrees ? (
             <Anchor className={styles.titleTree}>
               {titleTrees.map((value, key) => {
