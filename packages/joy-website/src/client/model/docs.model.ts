@@ -88,6 +88,12 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     });
   }
 
+  async clearSearch() {
+    this.setState({
+      result: [],
+    });
+  }
+
   async getDocMenus() {
     const resp = await this.fetchService.fetchApi("/docs/menus");
     const respJson = await resp.json();

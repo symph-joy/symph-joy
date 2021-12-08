@@ -29,6 +29,7 @@ export default class DocsIndexController extends BaseReactController {
   }
 
   shouldComponentUpdate(pre: any, next: any, nextContext: any) {
+    console.log(pre, next);
     const oldPath = this.docPath;
     super.shouldComponentUpdate(pre, next, nextContext);
     const newPath = this.docPath;
@@ -70,7 +71,7 @@ export default class DocsIndexController extends BaseReactController {
 
   renderView(): ReactNode {
     const { docMenus, titleTrees, currentDoc, loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
-    console.log(this.docPath);
+    console.log(this.props.match);
     return (
       <Row style={{ minHeight: "calc(100vh - 64px)", position: "relative" }}>
         <Col sm={24} md={6} lg={6} xl={5} xxl={4}>
@@ -91,7 +92,7 @@ export default class DocsIndexController extends BaseReactController {
             {currentDoc ? <div className={styles.docContent} dangerouslySetInnerHTML={{ __html: currentDoc.htmlContent }} /> : undefined}
           </Spin>
         </Col>
-        <Col sm={24} md={2} lg={2} xl={2} xxl={2}>
+        <Col sm={24} md={3} lg={3} xl={3} xxl={3}>
           {titleTrees ? (
             <Anchor className={styles.titleTree}>
               {titleTrees.map((value, key) => {

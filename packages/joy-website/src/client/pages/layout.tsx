@@ -36,6 +36,8 @@ export default class MainLayout extends BaseReactController<any> {
   @Autowire()
   public docsModel: DocsModel;
 
+  search: string;
+
   componentDidMount() {
     super.componentDidMount();
     this.appendLink();
@@ -61,7 +63,12 @@ export default class MainLayout extends BaseReactController<any> {
   }
 
   onChange = async (value) => {
-    const result = await this.docsModel.getSearch(value);
+    console.log(value, "123");
+    if (value) {
+      await this.docsModel.getSearch(value);
+    } else {
+      await this.docsModel.clearSearch();
+    }
   };
   componentWillUnmount() {
     super.componentWillUnmount();
@@ -72,12 +79,13 @@ export default class MainLayout extends BaseReactController<any> {
     observer.unobserve(oBtn);
   }
 
-  jump = (value) => {
+  jump = async (value) => {
     if (value.children) {
       this.props.history.push(`/docs${value.path}${value.children[0].id}`);
     } else {
       this.props.history.push(`/docs${value.path}`);
     }
+    await this.docsModel.clearSearch();
   };
 
   // 切换样式文件
@@ -118,13 +126,16 @@ export default class MainLayout extends BaseReactController<any> {
     this.layoutModel.changeCollapsed(!collapsed);
   };
 
+  onSelect = () => {
+    this.search = "";
+    this.docsModel.clearSearch();
+  };
+
   renderView(): ReactNode {
     const { route } = this.props;
     const { result } = this.docsModel.state;
     const { collapsed, isMobile } = this.layoutModel.state;
-
-    console.log("collapsed: ", collapsed);
-
+    console.log("reslt:", result);
     return (
       <Layout className={styles.layout}>
         <header className={styles.header}>
@@ -158,7 +169,13 @@ export default class MainLayout extends BaseReactController<any> {
                     </a>
                   </MenuItem>,
                   <MenuItem key="7">
-                    <AutoComplete placeholder="搜索" onChange={_.debounce(this.onChange, 100)} style={{ width: 200 }}>
+                    <AutoComplete
+                      value={this.search}
+                      placeholder="搜索"
+                      onSelect={this.onSelect}
+                      onChange={_.debounce(this.onChange, 100)}
+                      style={{ width: 200 }}
+                    >
                       {result.map((value, key) => (
                         <Option key={key} value={value.text}>
                           {value.children ? (

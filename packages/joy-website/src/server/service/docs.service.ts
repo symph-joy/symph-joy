@@ -51,30 +51,39 @@ export class DocsService implements IComponentLifecycle {
     await this.getAllDocs();
   }
 
+  // 获取所有能搜索到的树结构
   public async getAllDocs() {
     await this.getMenus();
     const res = [];
     for (const menu of this.menus) {
-      for (const child of menu.children) {
-        const doc = await this.getTree(child.path, 2, 0);
-        const obj = {
-          ...doc[0],
-          path: child.path,
-          file: child.file,
-        };
-        res.push(obj);
-        const doc2 = await this.getTree(child.path, 3, 2);
-        const obj1 = {
-          path: child.path,
-          file: child.file,
-          text: child.title,
-          depth: 1,
-          children: doc2,
-        };
-        res.push(obj1);
-      }
+      await this.getOneSeachTree(menu, res);
     }
     this.titleArray = res;
+  }
+
+  public async getOneSeachTree(menu, res) {
+    if (menu.children) {
+      for (const child of menu.children) {
+        await this.getOneSeachTree(child, res);
+      }
+    } else {
+      const doc = await this.getTree(menu.path, 2, 0);
+      const obj = {
+        ...doc[0],
+        path: menu.path,
+        file: menu.file,
+      };
+      res.push(obj);
+      const doc2 = await this.getTree(menu.path, 3, 2);
+      const obj1 = {
+        path: menu.path,
+        file: menu.file,
+        text: doc[0].text,
+        depth: 1,
+        children: doc2,
+      };
+      res.push(obj1);
+    }
   }
 
   public getTitleArray() {
@@ -82,10 +91,6 @@ export class DocsService implements IComponentLifecycle {
   }
 
   public async getMenus(): Promise<DocMenu[]> {
-    // const { dir } = {
-    //   dir: "./docs",
-    // };
-
     const { dir } = this.configDocs || {};
     if (!dir) {
       console.warn("Warning: Doc dir is not config.");
