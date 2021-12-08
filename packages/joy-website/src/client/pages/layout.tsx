@@ -129,7 +129,7 @@ export default class MainLayout extends BaseReactController<any> {
   onSelect = () => {
     this.search = "";
     this.docsModel.clearSearch();
-  }
+  };
 
   pushHistory = (url) => {
     const { history } = this.props;
