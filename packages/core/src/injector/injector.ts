@@ -414,7 +414,7 @@ export class Injector {
       case EnuInjectBy.TYPE_NAME:
       default:
         let err: Error | undefined;
-        if (type !== undefined) {
+        if (type !== undefined && type !== Object) {
           try {
             instanceWrapper = container.getProviderByType(type);
           } catch (e) {
