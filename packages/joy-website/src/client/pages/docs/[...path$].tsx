@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactComponent, ReactController, Route, RouteParam } from "@symph/react";
+import { BaseReactController, ReactComponent, ReactController, RouteParam } from "@symph/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Autowire, IApplicationContext } from "@symph/core";
 import { Affix, Col, Menu, Row, Spin, Anchor } from "antd";
@@ -11,7 +11,7 @@ const { Link } = Anchor;
 @Prerender()
 @ReactComponent()
 export class DocsPrerenderGenerator implements IJoyPrerender {
-  @Autowire(DocsModel)
+  @Autowire()
   public docsModel: DocsModel;
 
   getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
@@ -34,8 +34,11 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
   async getApis?(): Promise<Array<TJoyPrerenderApi>> {
     return [
       {
-        path: "/docs/menus",
+        path: '/docs/menus'
       },
+      {
+        path: '/docs/detail/docs/build-css'
+      }
     ];
   }
 }
@@ -59,7 +62,6 @@ export default class DocsIndexController extends BaseReactController {
       path = "/" + path;
     }
     await this.docsModel.getDoc(path);
-    await this.docsModel.getTitleTree(path);
   }
 
   shouldComponentUpdate(pre: any, next: any, nextContext: any) {
@@ -75,7 +77,6 @@ export default class DocsIndexController extends BaseReactController {
   private async showDoc(menu: DocMenuItem) {
     this.props.history.push(`/docs${menu.path}`);
     await this.docsModel.getDoc(menu.path);
-    await this.docsModel.getTitleTree(menu.path);
   }
 
   private renderMenuItem(items: DocMenuItem[] | undefined) {
