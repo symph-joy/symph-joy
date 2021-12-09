@@ -2,9 +2,10 @@ import React, { ReactNode } from "react";
 import { BaseReactController, ReactComponent, ReactController, RouteParam } from "@symph/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Autowire, IApplicationContext } from "@symph/core";
-import { Affix, Col, Menu, Row, Spin, Anchor } from "antd";
+import { Affix, Col, Menu, Row, Spin, Anchor, Drawer } from "antd";
 import styles from "./docs.less";
 import { Prerender, IJoyPrerender, TJoyPrerenderApi } from "@symph/joy/react";
+import { MenuUnfoldOutlined } from "@ant-design/icons";
 
 const { Link } = Anchor;
 
@@ -23,22 +24,24 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
   }
 
   async getPaths(): Promise<Array<string>> {
-    console.log(" this.docsModel:", this.docsModel.state);
-    console.log(" this.docsModel:", this);
-    const menus = await this.docsModel.getDocMenus();
-    const paths = (menus || []).map((menu) => `/docs/${encodeURIComponent(menu.path)}`);
+    await this.docsModel.getDocMenus();
+    let paths = await this.docsModel.getPreDocMenus();
+    paths = paths.map((value) => value.doc);
     return paths;
-    // return ["/docs/docs/build-css", "/docs/docs/introduce"];
   }
 
   async getApis?(): Promise<Array<TJoyPrerenderApi>> {
+    let paths = await this.docsModel.getPreDocMenus();
+    paths = paths.map((value) => {
+      return {
+        path: value.detail,
+      };
+    });
     return [
       {
         path: "/docs/menus",
       },
-      {
-        path: "/docs/detail/docs/build-css",
-      },
+      ...paths,
     ];
   }
 }
@@ -47,6 +50,11 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
 export default class DocsIndexController extends BaseReactController {
   @RouteParam({ name: "path" })
   docPath: string;
+
+  state = {
+    showDrawer: false
+  }
+  
 
   @Autowire()
   public docsModel: DocsModel;
@@ -100,23 +108,57 @@ export default class DocsIndexController extends BaseReactController {
         );
       }
     }
-    console.log("views:", views);
     return views;
   }
 
   renderView(): ReactNode {
     const { docMenus, defaultOption, titleTrees, currentDoc, loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
-    console.log("defaultOption:", defaultOption);
+    console.log(this)
     return (
       <Row style={{ minHeight: "calc(100vh - 64px)", position: "relative", background: "#fff" }}>
-        <Col sm={24} md={6} lg={6} xl={5} xxl={4}>
+        <Col className={styles.menu} sm={24} md={5} lg={5} xl={4} xxl={3}>
           <Affix>
-            <Menu mode="inline" openKeys={defaultOption} style={{ height: "calc(100vh - 64px)" }} className={styles.docMenus}>
+            <Menu
+              selectedKeys={[currentDoc?.path]}
+              mode="inline"
+              openKeys={defaultOption}
+              style={{ height: "calc(100vh - 64px)" }}
+              className={styles.docMenus}
+            >
               {this.renderMenuItem(docMenus)}
             </Menu>
           </Affix>
         </Col>
-        <Col flex={"1 0"}>
+        <div
+          className={styles.menuIcon}
+          onClick={() => {
+            this.setState({
+              showDrawer: true
+            })
+          }}
+        >
+          <MenuUnfoldOutlined />
+        </div>
+        <Drawer
+          placement="left"
+          onClose={() => {
+            this.setState({
+              showDrawer: false
+            })
+          }}
+          visible={this.state.showDrawer}
+        >
+          <Menu
+            selectedKeys={[currentDoc?.path]}
+            mode="inline"
+            openKeys={defaultOption}
+            style={{ height: "calc(100vh - 64px)" }}
+            className={styles.docMenus}
+          >
+            {this.renderMenuItem(docMenus)}
+          </Menu>
+        </Drawer>
+        <Col style={{ flex: 1 }}>
           <Spin delay={200} spinning={loadingCurrentDoc}>
             {loadCurrentDocErr ? (
               <div>

@@ -36,7 +36,9 @@ export default class MainLayout extends BaseReactController<any> {
   @Autowire()
   public docsModel: DocsModel;
 
-  search: string;
+  state = {
+    search: ''
+  }
 
   componentDidMount() {
     super.componentDidMount();
@@ -63,7 +65,6 @@ export default class MainLayout extends BaseReactController<any> {
   }
 
   onChange = async (value) => {
-    console.log(value, "123");
     if (value) {
       await this.docsModel.getSearch(value);
     } else {
@@ -127,7 +128,9 @@ export default class MainLayout extends BaseReactController<any> {
   };
 
   onSelect = () => {
-    this.search = "";
+    this.setState({
+      search: ''
+    })
     this.docsModel.clearSearch();
   };
 
@@ -140,7 +143,6 @@ export default class MainLayout extends BaseReactController<any> {
     const { route } = this.props;
     const { result } = this.docsModel.state;
     const { collapsed, isMobile } = this.layoutModel.state;
-    console.log("result:", result);
     return (
       <Layout className={styles.layout}>
         <header className={styles.header}>
@@ -179,7 +181,7 @@ export default class MainLayout extends BaseReactController<any> {
                   </MenuItem>,
                   <MenuItem key="7">
                     <AutoComplete
-                      value={this.search}
+                      value={this.state.search}
                       placeholder="搜索"
                       onSelect={this.onSelect}
                       onChange={_.debounce(this.onChange, 100)}
