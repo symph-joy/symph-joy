@@ -1032,15 +1032,13 @@ export default async function getBaseWebpackConfig(
         (() => {
           const { JoyEsmPlugin: JoyEsmPlugin } = require("./webpack/plugins/joy-esm-plugin");
           return new JoyEsmPlugin({
-            filename:
-              (getFileName: Function | string) =>
-              (...args: any[]) => {
-                const name = typeof getFileName === "function" ? getFileName(...args) : getFileName;
+            filename: (getFileName: Function | string) => (...args: any[]) => {
+              const name = typeof getFileName === "function" ? getFileName(...args) : getFileName;
 
-                return name.includes(".js")
-                  ? name.replace(/\.js$/, ".module.js")
-                  : escapePathVariables(args[0].chunk.name.replace(/\.js$/, ".module.js"));
-              },
+              return name.includes(".js")
+                ? name.replace(/\.js$/, ".module.js")
+                : escapePathVariables(args[0].chunk.name.replace(/\.js$/, ".module.js"));
+            },
             chunkFilename: (inputChunkName: string) => inputChunkName.replace(/\.js$/, ".module.js"),
           });
         })(),
@@ -1073,7 +1071,7 @@ export default async function getBaseWebpackConfig(
       //   }),
       new WellKnownErrorsPlugin(),
       // isServer && new EmitSrcPlugin({path: path.join(outDir, 'dist')})
-    ].filter(Boolean as any as ExcludesFalse),
+    ].filter((Boolean as any) as ExcludesFalse),
   };
 
   // Support tsconfig and jsconfig baseUrl

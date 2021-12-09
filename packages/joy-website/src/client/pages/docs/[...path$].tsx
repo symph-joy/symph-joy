@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactComponent, ReactController, Route, RouteParam } from "@symph/react";
+import { BaseReactController, ReactComponent, ReactController, RouteParam } from "@symph/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Autowire, IApplicationContext } from "@symph/core";
 import { Affix, Col, Menu, Row, Spin, Anchor } from "antd";
@@ -23,7 +23,12 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
   }
 
   async getPaths(): Promise<Array<string>> {
-    return ["/docs/docs/build-css", "/docs/docs/introduce"];
+    console.log(" this.docsModel:", this.docsModel.state);
+    console.log(" this.docsModel:", this);
+    const menus = await this.docsModel.getDocMenus();
+    const paths = (menus || []).map((menu) => `/docs/${encodeURIComponent(menu.path)}`);
+    return paths;
+    // return ["/docs/docs/build-css", "/docs/docs/introduce"];
   }
 
   async getApis?(): Promise<Array<TJoyPrerenderApi>> {
@@ -37,6 +42,7 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
     ];
   }
 }
+
 @ReactController()
 export default class DocsIndexController extends BaseReactController {
   @RouteParam({ name: "path" })

@@ -3,7 +3,7 @@ import { ReactFetchService } from "@symph/joy";
 import { Autowire } from "@symph/core";
 
 interface Entity {
-  id: number;
+  id: string;
   msg: string;
 }
 
@@ -22,16 +22,16 @@ export class EntityModel extends BaseReactModel<{
     };
   }
 
-  async getAllEntities(): Promise<void> {
-    const data = await this.fetchService.fetch("/api/entities").then((res) => res.json());
+  async getAllEntities(): Promise<Entity[]> {
+    const data = await this.fetchService.fetch("/entities").then((res) => res.json());
     this.setState({
       entities: data,
     });
     return data;
   }
 
-  async getEntity(id: number): Promise<void> {
-    const data = await this.fetchService.fetch(`/api/entity/${id}`).then((res) => res.json());
+  async getEntity(id: number): Promise<Entity> {
+    const data = await this.fetchService.fetch(`/entity/${id}`).then((res) => res.json());
     this.setState({
       showEntity: data,
     });

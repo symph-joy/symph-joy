@@ -2,9 +2,10 @@ import "jest-playwright-preset";
 import * as path from "path";
 import { JoyTestContext } from "../../../util/joy-test-context";
 import { promises } from "fs";
-import { joyBuild, joyExport, waitForMoment } from "../../../util/joy-test-utils";
+import { findPort, joyBuild, joyExport, killApp, runHttpServer, waitForMoment } from "../../../util/joy-test-utils";
 import { getDomInnerHtml } from "../../../util/html-utils";
 import { JoyRouteInitState } from "@symph/react";
+import * as child_process from "child_process";
 
 async function checkHtmlFile(filePath: string, domId: string, checkContent: string) {
   expect((await promises.stat(filePath)).isFile()).toBe(true);
@@ -24,21 +25,30 @@ async function checkDataFile(filePath: string, actionType: string, actionPropNam
 
 describe("joy export", () => {
   let testContext: JoyTestContext;
+  let serverProcess: child_process.ChildProcess;
   beforeAll(async () => {
     const curPath = path.resolve(__dirname, "../");
-    // build
-    // testContext = await JoyTestContext.createServerContext(curPath);
+
     testContext = new JoyTestContext(curPath);
     await testContext.init();
+    // build
     await joyBuild(curPath);
     // export
     const exportState = await joyExport(curPath, "out");
     if (exportState.code !== 0) {
       throw new Error(exportState.stderr || "Export failed.");
     }
+
+    const port = await findPort();
+    testContext.port = port;
+    serverProcess = await runHttpServer(path.join(curPath, "out"), port);
   }, 999999);
 
-  afterAll(async () => {});
+  afterAll(async () => {
+    if (serverProcess) {
+      await killApp(serverProcess);
+    }
+  });
 
   test("Should copy static files.", async () => {
     const filePath = testContext.joyAppConfig.resolveAppDir("out/hello.txt");
@@ -67,5 +77,27 @@ describe("joy export", () => {
 
     const indexData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/sub-route/fs-route.json`);
     await checkDataFile(indexData, "reactAppInitManager/__SET_STATE", "state./sub-route/fs-route.initStatic", JoyRouteInitState.SUCCESS);
+  }, 999999);
+
+  test("Should pre fetch api data and write to file.", async () => {
+    const apiFile = testContext.joyAppConfig.resolveAppDir("out/api/hello");
+    const content = await promises.readFile(apiFile, { encoding: "utf-8" });
+    expect(content).toContain("hello from api");
+
+    const htmlFile = testContext.joyAppConfig.resolveAppDir("out/with-api.html");
+    await checkHtmlFile(htmlFile, "msg", "hello from model");
+
+    await page.goto(testContext.getUrl("/with-api"));
+    let msg = await page.innerText("#msg");
+    expect(msg).toBe("hello from model");
+    await page.click("#btnFetchMsg");
+    msg = await page.innerText("#msg");
+    expect(msg).toBe("hello from api");
+  }, 999999);
+
+  test("Should export with styles.", async () => {
+    await page.goto(testContext.getUrl("/style/with-style"));
+    const cssStyleColor = await page.$eval("#msg", (e: any) => getComputedStyle(e).color);
+    expect(cssStyleColor).toBe("rgb(255, 0, 0)");
   }, 999999);
 });

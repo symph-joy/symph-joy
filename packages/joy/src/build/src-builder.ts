@@ -26,6 +26,7 @@ class AggregateChange {
 @Component()
 export class SrcBuilder {
   public srcDir: string;
+  public rootDir: string;
   public distPath: string;
   public sourceFileExts = ["js", "jsx", "ts", "tsx"];
   public watcher: FSWatcher | undefined;
@@ -36,11 +37,11 @@ export class SrcBuilder {
 
   constructor(@Autowire() private joyAppConfig: JoyAppConfig) {
     const clientDir = this.joyAppConfig.resolveAppDir("src/client");
-    const pagesDir = this.joyAppConfig.resolveAppDir("src/pages");
+    this.rootDir = this.joyAppConfig.resolveAppDir("src");
     if (existsSync(clientDir)) {
       this.srcDir = clientDir;
-    } else if (existsSync(pagesDir)) {
-      this.srcDir = pagesDir;
+    } else if (existsSync(this.rootDir)) {
+      this.srcDir = this.rootDir;
     } else {
       console.debug("React src dir(src/client or src/pages) is not exists.");
     }
@@ -158,6 +159,10 @@ export class SrcBuilder {
   );
 
   private applyChange(mount = "", filePath: string, changeType: keyof AggregateChange) {
+    if (filePath.startsWith(path.join(this.rootDir, "server"))) {
+      // 服务端代码，由服务端模块处理，这里暂时只处理React的代码。
+      return;
+    }
     this.aggregateChange[changeType].push({ filePath: filePath });
     if (this.isWatch) {
       this.triggerAggregatedChange();

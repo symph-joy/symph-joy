@@ -51,7 +51,8 @@ import { getWebpackConfigForApi } from "./webpack-config-for-api";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 import { trace } from "../trace";
 import { SrcBuilder } from "./src-builder";
-import { TJoyPrerenderApi } from "./prerender/prerender.interface";
+import { JoyServerApplication } from "../joy-server/server/joy-server-application";
+import { JoyPrerenderServer } from "./prerender/joy-prerender-server";
 
 export type SsgRoute = {
   initialRevalidateSeconds: number | false;
@@ -89,13 +90,14 @@ export class JoyBuildService {
   private buildManifestPath: string;
 
   constructor(
-    private readonly coreContext: ApplicationContext,
+    private readonly coreContext: JoyServerApplication,
     private joyConfig: JoyAppConfig,
     private buildConfig: BuildConfig,
     private fileGenerator: FileGenerator,
     private fileScanner: FileScanner,
     private joyReactRoute: ReactRouter,
-    private prerenderService: JoyPrerenderService,
+    private joyPrerenderServer: JoyPrerenderServer,
+    private joyPrerenderService: JoyPrerenderService,
     public joyExportAppService: JoyExportAppService,
     private srcBuilder: SrcBuilder
   ) {
@@ -274,12 +276,13 @@ export class JoyBuildService {
   // }
 
   public async prerenderRoutes(pageInfos: Map<string, PageInfo>): Promise<PrerenderManifest> {
-    const distDir = this.distDir;
     const outDir = this.outDir;
     const dir = this.dir;
     const buildId = await this.buildConfig.getBuildId();
 
-    const prerenderInfos = await this.prerenderService.getPrerenderList();
+    await this.joyPrerenderServer.startPrerenderServer();
+
+    const prerenderInfos = await this.joyPrerenderService.getPrerenderList();
 
     // const combinedPages = [...staticPages, ...ssgPages];
     const combinedPages = prerenderInfos.reduce<string[]>((value, info, infoIndex) => {
@@ -379,8 +382,9 @@ export class JoyBuildService {
       buildId,
       isModern: this.joyConfig.experimental.modern,
     });
-
     if (postBuildSpinner) postBuildSpinner.stopAndPersist();
+
+    await this.joyPrerenderServer.closePrerenderServer();
     return prerenderManifest;
   }
 
@@ -595,7 +599,7 @@ export class JoyBuildService {
         entrypoints: entrypoints.client,
         rewrites,
         routes: this.joyReactRoute.getRoutes(),
-        runWebpackSpan,
+        // runWebpackSpan,
       }),
       getBaseWebpackConfig(dir, {
         buildId,
@@ -607,7 +611,7 @@ export class JoyBuildService {
         entrypoints: entrypoints.server,
         rewrites,
         routes: this.joyReactRoute.getRoutes(),
-        runWebpackSpan,
+        // runWebpackSpan,
       }),
     ]);
     genWebpackConfigSpan.stop();

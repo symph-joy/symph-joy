@@ -29,8 +29,8 @@ import { ExportRenderOpts } from "./worker";
 import { PagesManifest } from "../build/webpack/plugins/pages-manifest-plugin";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { Component } from "@symph/core";
-import getPort from "get-port";
 import { JoyServerApplication } from "../joy-server/server/joy-server-application";
+import { JoyPrerenderServer } from "../build/prerender/joy-prerender-server";
 
 const createProgress = (total: number, label = "Exporting") => {
   let curProgress = 0;
@@ -95,32 +95,25 @@ interface ExportOptions {
 export class JoyExportAppService {
   private distDir: string;
 
-  constructor(private joyAppConfig: JoyAppConfig, private serverApplication: JoyServerApplication) {
+  constructor(private joyAppConfig: JoyAppConfig, private serverApplication: JoyServerApplication, private joyPrerenderServer: JoyPrerenderServer) {
     this.distDir = joyAppConfig.resolveAppDir(joyAppConfig.distDir);
   }
 
   async exportApp(dir: string, options: ExportOptions): Promise<void> {
     dir = resolve(dir);
+    const joyConfig = this.joyAppConfig;
+    const { buildExport, trailingSlash } = options;
+
     // await this.serverApplication.loadModule(ExportServerConfiguration);
-    const port = await getPort();
-    // const joyServer = await this.serverApplication.get(JoyServer);
-    // await joyServer.prepare();
-    await this.serverApplication.prepare();
-    try {
-      await this.serverApplication.listenAsync(port, "127.0.0.1");
-    } catch (err) {
-      if (err.code === "EADDRINUSE") {
-        let errorMessage = `Start export server failed, Port ${port} is already in use.`;
-        throw new Error(errorMessage);
-      } else {
-        throw err;
-      }
+    // const port = await getPort();
+    const port = this.joyAppConfig.port;
+    if (!buildExport) {
+      await this.joyPrerenderServer.startPrerenderServer();
     }
 
     // attempt to load global env values so they are available in next.config.js
     // loadEnvConfig(dir);
-    const joyConfig = this.joyAppConfig;
-    const { buildExport, trailingSlash } = options;
+
     const initialPageRevalidationMap = options.initialPageRevalidationMap || {};
     let exportPathMapFn;
     if (buildExport) {
@@ -446,7 +439,8 @@ export class JoyExportAppService {
 
     await worker.end();
 
-    await this.serverApplication.httpAdapter.close();
+    // await this.serverApplication.httpAdapter.close();
+    await this.joyPrerenderServer.closePrerenderServer();
 
     // copy prerendered routes to outDir
     if (!buildExport && prerenderManifest) {

@@ -96,7 +96,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     });
   }
 
-  async getDocMenus() {
+  async getDocMenus(): Promise<DocMenuItem[]> {
     const resp = await this.fetchService.fetchApi("/docs/menus");
     const respJson = await resp.json();
     const defaultOption = await this.getDefaultOpenKeys(respJson.data);

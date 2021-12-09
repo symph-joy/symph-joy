@@ -6,6 +6,8 @@ import { Prerender, IJoyPrerender } from "@symph/joy/react";
 
 @Prerender()
 export class EntityPrerenderGenerator implements IJoyPrerender {
+  constructor(private entityModel: EntityModel) {}
+
   getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
     return "/entity/:id";
   }
@@ -15,7 +17,10 @@ export class EntityPrerenderGenerator implements IJoyPrerender {
   }
 
   async getPaths(): Promise<Array<string>> {
-    return ["/entity/1", "/entity/2"];
+    // return ["/entity/1", "/entity/2"];
+    const entities = await this.entityModel.getAllEntities();
+    const paths = entities.map((entity) => `/entity/${entity.id}`);
+    return paths;
   }
 }
 

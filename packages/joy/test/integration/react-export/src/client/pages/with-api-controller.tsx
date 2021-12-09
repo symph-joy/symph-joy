@@ -41,7 +41,9 @@ export default class WithApiController extends BaseReactController {
     const { message } = this.helloModel.state;
     return (
       <div>
-        <button onClick={this.fetchMsg}>fetchMsg</button>
+        <button id={"btnFetchMsg"} onClick={this.fetchMsg}>
+          fetchMsg
+        </button>
         <div id="msg">{message}</div>
       </div>
     );

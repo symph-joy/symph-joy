@@ -21,17 +21,7 @@ type JoyReactRouteLoaderOptions = {
   providerModule: Record<string, unknown> | (() => Promise<Record<string, unknown>>);
 };
 
-export function JoyReactRouteLoader({
-  route,
-  match,
-  history,
-  component,
-  // providerName,
-  // providerModule,
-  loading,
-  extraProps,
-  location,
-}: JoyReactRouteLoaderOptions) {
+export function JoyReactRouteLoader({ route, match, history, component, loading, extraProps, location }: JoyReactRouteLoaderOptions) {
   const joyAppContext = useContext(JoyReactContext);
   if (!joyAppContext) {
     throw new Error("react app context is not initialed");

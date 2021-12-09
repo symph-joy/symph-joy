@@ -2,7 +2,7 @@ import { ParsedUrlQuery, ParsedUrlQueryInput, stringify } from "querystring";
 import { IncomingMessage, ServerResponse } from "http";
 import { JoyBoot, JoyReactServer, JoyBootConfiguration } from "@symph/joy";
 import path from "path";
-import spawn from "cross-spawn";
+import crossSpawn from "cross-spawn";
 import child_process from "child_process";
 import treeKill from "tree-kill";
 import { OptionsOfTextResponseBody } from "got/dist/source/types";
@@ -107,7 +107,7 @@ export function runJoyCommand(argv: string[], opts: RunOptions = { stdout: true,
 
   return new Promise<{ code: number; stdout?: string; stderr?: string }>((resolve, reject) => {
     console.log(`Running command "joy ${argv.join(" ")}"`);
-    const instance = spawn("node", [nextBin, ...argv, "--no-deprecation"], {
+    const instance = crossSpawn("node", [nextBin, ...argv, "--no-deprecation"], {
       ...opts.spawnOptions,
       cwd,
       env,
@@ -192,7 +192,7 @@ export function runJoyServer(dev: boolean, argv: any[], opts: RunOptions = {}) {
   };
 
   return new Promise<child_process.ChildProcess>((resolve, reject) => {
-    const instance = spawn("node", ["--no-deprecation", "bin/joy", dev ? "dev" : "start", ...argv], { ...opts.spawnOptions, cwd, env });
+    const instance = crossSpawn("node", ["--no-deprecation", "bin/joy", dev ? "dev" : "start", ...argv], { ...opts.spawnOptions, cwd, env });
     let didResolve = false;
 
     function handleStdout(data: any) {
@@ -314,4 +314,59 @@ export function joyExport(dir: string, outdir: string, opts?: RunOptions) {
 
 export function joyExportDefault(dir: string, opts?: RunOptions) {
   return runJoyCommand(["export", dir], opts);
+}
+
+export function runHttpServer(
+  dir: string,
+  port: number,
+  args: string[] = [],
+  env: Record<string, any> & any = {}
+): Promise<child_process.ChildProcess> {
+  return new Promise<child_process.ChildProcess>((resolve, reject) => {
+    const subEnv = { ...process.env, NODE_OPTIONS: "", ...env };
+    const instance = child_process.spawn("http-server", ["-p", String(port), ...args], {
+      cwd: dir,
+      detached: true,
+      env: subEnv,
+    });
+    // const instance = child_process.exec("npx http-server", { env: {} as any });
+    let didResolve = false;
+
+    function handleStdout(data: any) {
+      const message: string = data.toString();
+      process.stdout.write(message);
+      if (/Available on/.test(message)) {
+        if (!didResolve) {
+          didResolve = true;
+          resolve(instance);
+        }
+      }
+    }
+
+    function handleStderr(data: any) {
+      const message = data.toString();
+      process.stdout.write(message);
+      reject(message);
+    }
+
+    instance.stdout!.on("data", handleStdout);
+    instance.stderr!.on("data", handleStderr);
+
+    instance.on("close", () => {
+      instance.stdout!.removeListener("data", handleStdout);
+      instance.stderr!.removeListener("data", handleStderr);
+      if (!didResolve) {
+        didResolve = true;
+        if (instance.exitCode !== 0) {
+          reject(new Error(`Exist code: ${instance.exitCode}`));
+        } else {
+          resolve(instance);
+        }
+      }
+    });
+
+    instance.on("error", (err) => {
+      reject(err);
+    });
+  });
 }
