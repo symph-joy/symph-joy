@@ -140,7 +140,7 @@ export default class MainLayout extends BaseReactController<any> {
     const { route } = this.props;
     const { result } = this.docsModel.state;
     const { collapsed, isMobile } = this.layoutModel.state;
-    console.log("reslt:", result);
+    console.log("result:", result);
     return (
       <Layout className={styles.layout}>
         <header className={styles.header}>

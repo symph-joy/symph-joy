@@ -29,11 +29,11 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
   async getApis?(): Promise<Array<TJoyPrerenderApi>> {
     return [
       {
-        path: '/docs/menus'
+        path: "/docs/menus",
       },
       {
-        path: '/docs/detail/docs/build-css'
-      }
+        path: "/docs/detail/docs/build-css",
+      },
     ];
   }
 }
@@ -94,17 +94,18 @@ export default class DocsIndexController extends BaseReactController {
         );
       }
     }
+    console.log("views:", views);
     return views;
   }
 
   renderView(): ReactNode {
-    const { docMenus, titleTrees, currentDoc, loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
-    // console.log(this.props.match);
+    const { docMenus, defaultOption, titleTrees, currentDoc, loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
+    console.log("defaultOption:", defaultOption);
     return (
-      <Row style={{ minHeight: "calc(100vh - 64px)", position: "relative" }}>
+      <Row style={{ minHeight: "calc(100vh - 64px)", position: "relative", background: "#fff" }}>
         <Col sm={24} md={6} lg={6} xl={5} xxl={4}>
           <Affix>
-            <Menu mode="inline" style={{ height: "calc(100vh - 64px)" }} className={styles.docMenus}>
+            <Menu mode="inline" openKeys={defaultOption} style={{ height: "calc(100vh - 64px)" }} className={styles.docMenus}>
               {this.renderMenuItem(docMenus)}
             </Menu>
           </Affix>

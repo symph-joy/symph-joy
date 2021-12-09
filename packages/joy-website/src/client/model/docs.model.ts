@@ -27,6 +27,7 @@ export type DocsModelState = {
   loadingCurrentDoc: boolean;
   loadCurrentDocErr?: { code: number; message: string };
   currentDoc: DocMenuItem & { htmlContent };
+  defaultOption: Array<string>
 };
 
 @ReactModel()
@@ -42,6 +43,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
       titleTrees: [],
       currentDoc: undefined,
       result: [],
+      defaultOption: []
     };
   }
 
@@ -97,13 +99,30 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
   async getDocMenus() {
     const resp = await this.fetchService.fetchApi("/docs/menus");
     const respJson = await resp.json();
+    const defaultOption = await this.getDefaultOpenKeys(respJson.data)
     this.setState({
       docMenus: respJson.data,
+      defaultOption
     });
-    return respJson.data
+    return respJson.data;
   }
 
+  async flatDocMenus(arr, res) {
+    if (Array.isArray(arr)) {
+      for (const child of arr) {
+        if (child.children) {
+          res.push(child.path);
+          this.flatDocMenus(child.children, res);
+        }
+      }
+    }
+  }
 
+  async getDefaultOpenKeys(docMenus) {
+    const res = [];
+    await this.flatDocMenus(docMenus, res);
+    return res
+  }
 
   async getDoc(path: string) {
     this.setState({
@@ -129,7 +148,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     }
 
     const doc = respJson.data;
-    const titleTrees = respJson.treeData
+    const titleTrees = respJson.treeData;
     this.setState({
       loadCurrentDocErr: undefined,
       currentDoc: doc,
