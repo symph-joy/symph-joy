@@ -103,8 +103,6 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     return respJson.data;
   }
 
-
-
   async getDoc(path: string) {
     this.setState({
       loadingCurrentDoc: true,
@@ -129,7 +127,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     }
 
     const doc = respJson.data;
-    const titleTrees = respJson.treeData
+    const titleTrees = respJson.treeData;
     this.setState({
       loadCurrentDocErr: undefined,
       currentDoc: doc,

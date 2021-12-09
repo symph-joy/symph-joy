@@ -15,8 +15,8 @@ export class DocsController {
   @Get("/detail/**")
   public async getDoc(@Param("*") path) {
     return {
-      data: await this.docsService.getDoc('/' + path),
-      treeData: await this.docsService.getTitleTree('/' + path)
+      data: await this.docsService.getDoc("/" + path),
+      treeData: await this.docsService.getTitleTree("/" + path),
     };
   }
 }

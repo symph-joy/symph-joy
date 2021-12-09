@@ -34,11 +34,11 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
   async getApis?(): Promise<Array<TJoyPrerenderApi>> {
     return [
       {
-        path: '/docs/menus'
+        path: "/docs/menus",
       },
       {
-        path: '/docs/detail/docs/build-css'
-      }
+        path: "/docs/detail/docs/build-css",
+      },
     ];
   }
 }

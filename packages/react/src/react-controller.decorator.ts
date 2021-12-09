@@ -48,6 +48,6 @@ export function ReactController<T>(
     ReactComponent(options)(ExtReactControllerDeco);
     Reflect.defineMetadata(META_KEY_REACT_CONTROLLER, true, ExtReactControllerDeco);
 
-    return ExtReactControllerDeco as unknown as typeof constructor;
+    return (ExtReactControllerDeco as unknown) as typeof constructor;
   };
 }

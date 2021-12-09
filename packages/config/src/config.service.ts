@@ -251,12 +251,12 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
 
   private getFromCache<T = any>(propertyPath: keyof K, defaultValue?: T): T | undefined {
     const cachedValue = get(this.cache, propertyPath);
-    return cachedValue === undefined ? defaultValue : (cachedValue as unknown as T);
+    return cachedValue === undefined ? defaultValue : ((cachedValue as unknown) as T);
   }
 
   private getFromValidatedEnv<T = any>(propertyPath: keyof K): T | undefined {
     const validatedEnvValue = get(this.internalConfig[VALIDATED_ENV_PROPNAME], propertyPath);
-    return validatedEnvValue as unknown as T;
+    return (validatedEnvValue as unknown) as T;
   }
 
   private getFromProcessEnv<T = any>(propertyPath: keyof K, defaultValue: any): T | undefined {
@@ -267,7 +267,7 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
     const processValue = get(process.env, propertyPath);
     this.setInCacheIfDefined(propertyPath, processValue);
 
-    return processValue as unknown as T;
+    return (processValue as unknown) as T;
   }
 
   private getFromInternalConfig<T = any>(propertyPath: keyof K): T | undefined {
