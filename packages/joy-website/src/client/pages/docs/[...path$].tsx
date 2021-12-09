@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
+import { BaseReactController, ReactComponent, ReactController, Route, RouteParam } from "@symph/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Autowire, IApplicationContext } from "@symph/core";
 import { Affix, Col, Menu, Row, Spin, Anchor } from "antd";
@@ -9,7 +9,11 @@ import { Prerender, IJoyPrerender, TJoyPrerenderApi } from "@symph/joy/react";
 const { Link } = Anchor;
 
 @Prerender()
+@ReactComponent()
 export class DocsPrerenderGenerator implements IJoyPrerender {
+  @Autowire(DocsModel)
+  public docsModel: DocsModel;
+
   getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
     return "/docs/:path";
   }
@@ -19,15 +23,23 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
   }
 
   async getPaths(): Promise<Array<string>> {
-    return ["/docs/docs/build-css", "/docs/docs/introduce"];
+    console.log(" this.docsModel:", this.docsModel.state);
+    console.log(" this.docsModel:", this);
+    const menus = await this.docsModel.getDocMenus();
+    const paths = (menus || []).map((menu) => `/docs/${encodeURIComponent(menu.path)}`);
+    return paths;
+    // return ["/docs/docs/build-css", "/docs/docs/introduce"];
   }
 
   async getApis?(): Promise<Array<TJoyPrerenderApi>> {
-    return [{
-      path: '/docs/detail/start/introduce'
-    }]
+    return [
+      {
+        path: "/docs/menus",
+      },
+    ];
   }
 }
+
 @ReactController()
 export default class DocsIndexController extends BaseReactController {
   @RouteParam({ name: "path" })
