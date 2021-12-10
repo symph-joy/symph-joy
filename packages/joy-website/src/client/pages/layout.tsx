@@ -37,8 +37,8 @@ export default class MainLayout extends BaseReactController<any> {
   public docsModel: DocsModel;
 
   state = {
-    search: ''
-  }
+    search: "",
+  };
 
   componentDidMount() {
     super.componentDidMount();
@@ -129,8 +129,8 @@ export default class MainLayout extends BaseReactController<any> {
 
   onSelect = () => {
     this.setState({
-      search: ''
-    })
+      search: "",
+    });
     this.docsModel.clearSearch();
   };
 

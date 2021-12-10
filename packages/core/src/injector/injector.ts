@@ -252,34 +252,32 @@ export class Injector {
     let paramDeps: IInjectableDependency[] = [];
     // when useFactory or custom inject constructor params
     if (!isNil(params)) {
-      paramDeps = params.map(
-        (param, index): IInjectableDependency => {
-          let type: Type | undefined;
-          let name: string | symbol | undefined;
-          let injectBy: EnuInjectBy | undefined;
-          let isOptional: boolean | undefined;
-          if (typeof param === "object") {
-            type = param.type;
-            name = param.name;
-            isOptional = param.isOptional;
-            injectBy = type !== undefined ? EnuInjectBy.TYPE : EnuInjectBy.NAME;
-          } else if (isFunction(param)) {
-            type = param as Type;
-            injectBy = EnuInjectBy.TYPE;
-          } else {
-            name = param as string;
-            injectBy = EnuInjectBy.NAME;
-          }
-          return {
-            index,
-            name,
-            type,
-            designType: type,
-            injectBy,
-            isOptional,
-          };
+      paramDeps = params.map((param, index): IInjectableDependency => {
+        let type: Type | undefined;
+        let name: string | symbol | undefined;
+        let injectBy: EnuInjectBy | undefined;
+        let isOptional: boolean | undefined;
+        if (typeof param === "object") {
+          type = param.type;
+          name = param.name;
+          isOptional = param.isOptional;
+          injectBy = type !== undefined ? EnuInjectBy.TYPE : EnuInjectBy.NAME;
+        } else if (isFunction(param)) {
+          type = param as Type;
+          injectBy = EnuInjectBy.TYPE;
+        } else {
+          name = param as string;
+          injectBy = EnuInjectBy.NAME;
         }
-      );
+        return {
+          index,
+          name,
+          type,
+          designType: type,
+          injectBy,
+          isOptional,
+        };
+      });
       return paramDeps;
     }
     const cusParams = this.reflectCustomfParams<T>(type); // items that decorated by @Inject()

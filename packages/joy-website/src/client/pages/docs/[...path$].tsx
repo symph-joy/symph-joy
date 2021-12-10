@@ -52,9 +52,8 @@ export default class DocsIndexController extends BaseReactController {
   docPath: string;
 
   state = {
-    showDrawer: false
-  }
-  
+    showDrawer: false,
+  };
 
   @Autowire()
   public docsModel: DocsModel;
@@ -113,7 +112,7 @@ export default class DocsIndexController extends BaseReactController {
 
   renderView(): ReactNode {
     const { docMenus, defaultOption, titleTrees, currentDoc, loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
-    console.log(this)
+    console.log(this);
     return (
       <Row style={{ minHeight: "calc(100vh - 64px)", position: "relative", background: "#fff" }}>
         <Col className={styles.menu} sm={24} md={5} lg={5} xl={4} xxl={3}>
@@ -133,8 +132,8 @@ export default class DocsIndexController extends BaseReactController {
           className={styles.menuIcon}
           onClick={() => {
             this.setState({
-              showDrawer: true
-            })
+              showDrawer: true,
+            });
           }}
         >
           <MenuUnfoldOutlined />
@@ -143,8 +142,8 @@ export default class DocsIndexController extends BaseReactController {
           placement="left"
           onClose={() => {
             this.setState({
-              showDrawer: false
-            })
+              showDrawer: false,
+            });
           }}
           visible={this.state.showDrawer}
         >

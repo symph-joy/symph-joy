@@ -125,24 +125,24 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
   }
 
   async recurrencePreDocMenus(menu, res) {
-    for(const arr of menu) {
-      if (arr.children){
-        if(arr.children.length > 0 ) {
-          this.recurrencePreDocMenus(arr.children, res)
+    for (const arr of menu) {
+      if (arr.children) {
+        if (arr.children.length > 0) {
+          this.recurrencePreDocMenus(arr.children, res);
         }
       } else {
         res.push({
-          doc: '/docs' + arr.path,
-          detail: '/docs/detail' +  arr.path
-        })
+          doc: "/docs" + arr.path,
+          detail: "/docs/detail" + arr.path,
+        });
       }
     }
   }
 
   async getPreDocMenus() {
-    const res = []
-    await this.recurrencePreDocMenus(this.state.docMenus, res)
-    return res
+    const res = [];
+    await this.recurrencePreDocMenus(this.state.docMenus, res);
+    return res;
   }
 
   async getDoc(path: string) {
