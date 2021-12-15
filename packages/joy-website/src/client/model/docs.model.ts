@@ -27,6 +27,7 @@ export type DocsModelState = {
   loadingCurrentDoc: boolean;
   loadCurrentDocErr?: { code: number; message: string };
   currentDoc: DocMenuItem & { htmlContent };
+  defaultOption: Array<string>;
 };
 
 @ReactModel()
@@ -42,6 +43,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
       titleTrees: [],
       currentDoc: undefined,
       result: [],
+      defaultOption: [],
     };
   }
 
@@ -97,10 +99,50 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
   async getDocMenus(): Promise<DocMenuItem[]> {
     const resp = await this.fetchService.fetchApi("/docs/menus");
     const respJson = await resp.json();
+    const defaultOption = await this.getDefaultOpenKeys(respJson.data);
     this.setState({
       docMenus: respJson.data,
+      defaultOption,
     });
     return respJson.data;
+  }
+
+  async flatDocMenus(arr, res) {
+    if (Array.isArray(arr)) {
+      for (const child of arr) {
+        if (child.children) {
+          res.push(child.path);
+          this.flatDocMenus(child.children, res);
+        }
+      }
+    }
+  }
+
+  async getDefaultOpenKeys(docMenus) {
+    const res = [];
+    await this.flatDocMenus(docMenus, res);
+    return res;
+  }
+
+  async recurrencePreDocMenus(menu, res) {
+    for (const arr of menu) {
+      if (arr.children) {
+        if (arr.children.length > 0) {
+          this.recurrencePreDocMenus(arr.children, res);
+        }
+      } else {
+        res.push({
+          doc: "/docs" + arr.path,
+          detail: "/docs/detail" + arr.path,
+        });
+      }
+    }
+  }
+
+  async getPreDocMenus() {
+    const res = [];
+    await this.recurrencePreDocMenus(this.state.docMenus, res);
+    return res;
   }
 
   async getDoc(path: string) {
