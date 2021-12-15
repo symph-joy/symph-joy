@@ -110,7 +110,9 @@ export async function printTreeView(
     const ampFirst = buildManifest.ampFirstPages.includes(item);
 
     messages.push([
-      `${symbol} ${item === "/_app" ? " " : pageInfo?.static ? "○" : pageInfo?.isSsg ? "●" : "λ"} ${pageInfo?.initialRevalidateSeconds ? `${item} (ISR: ${pageInfo?.initialRevalidateSeconds} Seconds)` : item}`,
+      `${symbol} ${item === "/_app" ? " " : pageInfo?.static ? "○" : pageInfo?.isSsg ? "●" : "λ"} ${
+        pageInfo?.initialRevalidateSeconds ? `${item} (ISR: ${pageInfo?.initialRevalidateSeconds} Seconds)` : item
+      }`,
       pageInfo ? (ampFirst ? chalk.cyan("AMP") : pageInfo.size >= 0 ? prettyBytes(pageInfo.size) : "") : "",
       pageInfo ? (ampFirst ? chalk.cyan("AMP") : pageInfo.size >= 0 ? getPrettySize(pageInfo.totalSize) : "") : "",
     ]);
@@ -179,22 +181,22 @@ export async function printTreeView(
   );
 
   console.log();
-  console.log(
-    textTable(
-      [
-        ["λ", serverless ? "(Lambda)" : "(Server)", `server-side renders at runtime (uses ${chalk.cyan("getInitialProps")} or ${chalk.cyan("getServerSideProps")})`],
-        ["○", "(Static)", "automatically rendered as static HTML (uses no initial props)"],
-        ["●", "(SSG)", `automatically generated as static HTML + JSON (uses ${chalk.cyan("getStaticProps")})`],
-        ["", "(ISR)", `incremental static regeneration (uses revalidate in ${chalk.cyan("getStaticProps")})`],
-      ] as [string, string, string][],
-      {
-        align: ["l", "l", "l"],
-        stringLength: (str) => stripAnsi(str).length,
-      }
-    )
-  );
-
-  console.log();
+  // console.log(
+  //   textTable(
+  //     [
+  //       ["λ", serverless ? "(Lambda)" : "(Server)", `server-side renders at runtime (uses ${chalk.cyan("getInitialProps")} or ${chalk.cyan("getServerSideProps")})`],
+  //       ["○", "(Static)", "automatically rendered as static HTML (uses no initial props)"],
+  //       ["●", "(SSG)", `automatically generated as static HTML + JSON (uses ${chalk.cyan("getStaticProps")})`],
+  //       ["", "(ISR)", `incremental static regeneration (uses revalidate in ${chalk.cyan("getStaticProps")})`],
+  //     ] as [string, string, string][],
+  //     {
+  //       align: ["l", "l", "l"],
+  //       stringLength: (str) => stripAnsi(str).length,
+  //     }
+  //   )
+  // );
+  //
+  // console.log();
 }
 
 export function printCustomRoutes({ redirects, rewrites, headers }: CustomRoutes) {
@@ -266,7 +268,12 @@ let lastCompute: ComputeManifestShape | undefined;
 let lastComputeModern: boolean | undefined;
 let lastComputePageInfo: boolean | undefined;
 
-async function computeFromManifest(manifest: BuildManifest, distPath: string, isModern: boolean, pageInfos?: Map<string, PageInfo>): Promise<ComputeManifestShape> {
+async function computeFromManifest(
+  manifest: BuildManifest,
+  distPath: string,
+  isModern: boolean,
+  pageInfos?: Map<string, PageInfo>
+): Promise<ComputeManifestShape> {
   if (Object.is(cachedBuildManifest, manifest) && lastComputeModern === isModern && lastComputePageInfo === !!pageInfos) {
     return lastCompute!;
   }
@@ -376,7 +383,10 @@ export async function getJsPageSizeInKb(page: string, distPath: string, buildMan
   return [-1, -1];
 }
 
-export async function buildStaticPaths(page: string, getStaticPaths: GetStaticPaths): Promise<Omit<UnwrapPromise<ReturnType<GetStaticPaths>>, "paths"> & { paths: string[] }> {
+export async function buildStaticPaths(
+  page: string,
+  getStaticPaths: GetStaticPaths
+): Promise<Omit<UnwrapPromise<ReturnType<GetStaticPaths>>, "paths"> & { paths: string[] }> {
   const prerenderPaths = new Set<string>();
   const _routeRegex = getRouteRegex(page);
   const _routeMatcher = getRouteMatcher(_routeRegex);
@@ -405,7 +415,10 @@ export async function buildStaticPaths(page: string, getStaticPaths: GetStaticPa
   const toPrerender = staticPathsResult.paths;
 
   if (!Array.isArray(toPrerender)) {
-    throw new Error(`Invalid \`paths\` value returned from getStaticProps in ${page}.\n` + `\`paths\` must be an array of strings or objects of shape { params: [key: string]: string }`);
+    throw new Error(
+      `Invalid \`paths\` value returned from getStaticProps in ${page}.\n` +
+        `\`paths\` must be an array of strings or objects of shape { params: [key: string]: string }`
+    );
   }
 
   toPrerender.forEach((entry) => {
@@ -442,13 +455,17 @@ export async function buildStaticPaths(page: string, getStaticPaths: GetStaticPa
           paramValue = [];
         }
         if ((repeat && !Array.isArray(paramValue)) || (!repeat && typeof paramValue !== "string")) {
-          throw new Error(`A required parameter (${validParamKey}) was not provided as ${repeat ? "an array" : "a string"} in getStaticPaths for ${page}`);
+          throw new Error(
+            `A required parameter (${validParamKey}) was not provided as ${repeat ? "an array" : "a string"} in getStaticPaths for ${page}`
+          );
         }
         let replaced = `[${repeat ? "..." : ""}${validParamKey}]`;
         if (optional) {
           replaced = `[${replaced}]`;
         }
-        builtPage = builtPage.replace(replaced, repeat ? (paramValue as string[]).map(escapePathDelimiters).join("/") : escapePathDelimiters(paramValue as string)).replace(/(?!^)\/$/, "");
+        builtPage = builtPage
+          .replace(replaced, repeat ? (paramValue as string[]).map(escapePathDelimiters).join("/") : escapePathDelimiters(paramValue as string))
+          .replace(/(?!^)\/$/, "");
       });
 
       prerenderPaths?.add(builtPage);

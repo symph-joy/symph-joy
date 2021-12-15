@@ -153,7 +153,7 @@ export class JoyReactServer implements IComponentLifecycle {
     const globalPrefix = this.joyConfig.getGlobalPrefix();
 
     this.renderOpts = {
-      initStage: EnumReactAppInitStage.DYNAMIC,
+      initStage: EnumReactAppInitStage.STATIC,
       poweredByHeader: this.joyConfig.poweredByHeader,
       canonicalBase: this.joyConfig.amp.canonicalBase,
       buildId: this.buildId, // will be updated in afterPropertiesSet
@@ -1194,7 +1194,7 @@ export class JoyReactServer implements IComponentLifecycle {
 
       if (this.dynamicRoutes) {
         // todo 使用react-routes 4 之后的动态路由后，该路由是否还有必要存在？
-        throw new Error(">>>>>>>  使用react-routes 4 之后的动态路由后，dynamicRoutes路由是否还有必要存在？" + JSON.stringify(this.dynamicRoutes));
+        throw new Error("使用react-routes 4 之后的动态路由后，dynamicRoutes路由不在需要" + JSON.stringify(this.dynamicRoutes));
         // for (const dynamicRoute of this.dynamicRoutes) {
         //   const params = dynamicRoute.match(pathname);
         //   if (!params) {

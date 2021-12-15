@@ -10,7 +10,7 @@ export default class BasicReactController extends BaseReactController {
   @Autowire()
   private helloModel: BasicReactModel;
 
-  async initialModelState(context: any): Promise<void> {
+  async initialModelStaticState(context: any): Promise<void> {
     await this.helloModel.add(1);
   }
 

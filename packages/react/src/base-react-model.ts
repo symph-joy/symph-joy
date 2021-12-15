@@ -1,6 +1,8 @@
 import { ReactReduxService } from "./redux/react-redux.service";
 import { Autowire, IComponentInfoAware, ComponentAwareInfo, IComponentLifecycle, RuntimeException, TProviderName } from "@symph/core";
-import { Action } from "redux";
+import warning from "./redux/utils/warning";
+import isPlainObject from "./redux/utils/isPlainObject";
+import { func } from "prop-types";
 
 export abstract class BaseReactModel<TState> implements IComponentLifecycle, IComponentInfoAware {
   public getNamespace(): string {
@@ -20,6 +22,34 @@ export abstract class BaseReactModel<TState> implements IComponentLifecycle, ICo
 
   initialize(): void {
     const initState = this.state || this.getInitState();
+    if (process.env.NODE_ENV !== "production") {
+      if (initState) {
+        function getType(obj: unknown): string {
+          const match = Object.prototype.toString.call(obj).match(/\s([a-z|A-Z]+)/);
+          return match ? match[1] : "";
+        }
+        if (!isPlainObject(initState)) {
+          warning(`The ${this.getNamespace()} react model's initState has unexpected type of "${getType(initState)}"`);
+        }
+        const props = Object.keys(initState);
+        for (const prop of props) {
+          const propValue = (initState as any)[prop];
+          if (propValue === undefined || propValue === null) {
+            continue;
+          }
+          const propType = typeof propValue;
+          if (propType === "object" && !Array.isArray(propValue) && !isPlainObject(propValue)) {
+            warning(
+              `The "${prop}" prop has unexpected type of "${getType(
+                propValue
+              )}", on ${this.getNamespace()} react model's initState, it expect a plain object.`
+            );
+          } else if (propType === "function") {
+            warning(`The "${prop}" prop has unexpected type of "function", on ${this.getNamespace()} react model's initState`);
+          }
+        }
+      }
+    }
     this.reduxStore.registerModel(this, initState);
   }
 
@@ -29,8 +59,8 @@ export abstract class BaseReactModel<TState> implements IComponentLifecycle, ICo
     }
     const providerName = name;
     if (!providerName || typeof providerName !== "string") {
-      throw new RuntimeException(`If model namespace is not defined, the provider name must be a string,
-       and will be used as it's namespace. the current get provider name is ${String(name)}).`);
+      throw new RuntimeException(`The ${String(name)}) has unexpected type of "${typeof providerName}". The component name must be a string,
+       and it will be used as model's namespace. `);
     }
     this._namespace = providerName;
   }

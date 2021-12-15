@@ -63,6 +63,7 @@ export class ReactReduxService {
       middlewares: [],
     });
 
+    this.preState = this.store.getState();
     this.store.subscribe(this.storeStateListener);
   }
 
@@ -146,16 +147,15 @@ export class ReactReduxService {
     let index = 0;
     for (const namespace of Object.getOwnPropertyNames(this.models)) {
       const registeredModel = this.models[namespace];
-      if (preState[namespace] !== storeState[namespace] && registeredModel.listeners) {
+      if (preState[namespace] !== storeState[namespace] && registeredModel.listeners?.length) {
         for (index = 0; index < registeredModel.listeners.length; index++) {
           const listener = registeredModel.listeners[index];
           let changedModels = effectListeners.get(listener);
           if (!changedModels) {
-            changedModels = new Array<string>(namespace);
+            changedModels = new Array<string>();
             effectListeners.set(listener, changedModels);
-          } else {
-            changedModels.push(namespace);
           }
+          changedModels.push(namespace);
         }
       }
     }
@@ -168,6 +168,7 @@ export class ReactReduxService {
         handler(changedModels, storeState, preState);
       });
     }
+    this.preState = storeState;
   };
 
   /**

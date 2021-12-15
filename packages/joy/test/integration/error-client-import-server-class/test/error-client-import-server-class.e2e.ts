@@ -9,7 +9,7 @@ describe("error-client-import-server-class", () => {
     beforeAll(async () => {
       const curPath = path.resolve(__dirname, "../");
       testContext = await JoyTestContext.createDevServerContext(curPath);
-    }, 999999);
+    });
 
     afterAll(async () => {
       await testContext.killServer();
@@ -23,7 +23,7 @@ describe("error-client-import-server-class", () => {
       expect(response.statusCode).toBe(500);
       const html = response.body.trim();
       expect(html).toContain('Error import { JoyBoot } from \\"@symph/joy\\",');
-    }, 999999);
+    });
   });
 
   describe("prod", () => {
@@ -31,7 +31,7 @@ describe("error-client-import-server-class", () => {
     beforeAll(async () => {
       const curPath = path.resolve(__dirname, "../");
       testContext = await JoyTestContext.createServerContext(curPath, undefined, [], { stdout: false, stderr: false, ignoreFail: true });
-    }, 999999);
+    });
 
     afterAll(async () => {
       await testContext.killServer();
@@ -41,6 +41,6 @@ describe("error-client-import-server-class", () => {
       expect(testContext.buildState).not.toBeNull();
       expect(testContext.buildState?.code !== 0).toBe(true);
       expect(testContext.buildState?.stderr).toContain('Error import { JoyBoot } from "@symph/joy",');
-    }, 999999);
+    });
   });
 });

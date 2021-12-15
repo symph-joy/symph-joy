@@ -48,7 +48,9 @@ export function RouteSwitch({ routes, location, extraProps }: RouterContainerTyp
                 // @ts-ignore
                 return <instanceWrapper.type {...props} {...extraProps} route={route} />;
               } else {
-                throw new Error(`Can not render the route(${route.path}), there is no property named 'render' or 'component' or 'providerName' used to render`);
+                throw new Error(
+                  `Can not render the route(${route.path}), there is no property named 'render' or 'component' or 'providerName' used to render`
+                );
               }
             }}
           />

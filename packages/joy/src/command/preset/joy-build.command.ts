@@ -4,6 +4,7 @@ import { printAndExit } from "../../server/lib/utils";
 import { JoyBuildService } from "../../build/joy-build.service";
 import { JoyBuildConfiguration } from "../../server/joy-build.configuration";
 import { JoyServerFactory } from "../../joy-server/server/joy-server-factory";
+import getPort from "get-port";
 
 @CommandProvider()
 export class JoyBuildCommand extends JoyCommand {
@@ -52,8 +53,9 @@ export class JoyBuildCommand extends JoyCommand {
     const dir = args._[0] || ".";
     const { _, $0, ...argOpts } = args;
     // this.configService.mergeConfig({ dir, dev: false, ...argOpts });
+    const prerenderPort = await getPort();
 
-    const appContext = await JoyServerFactory.createServer({}, JoyBuildConfiguration, { dir, dev: false, ...argOpts });
+    const appContext = await JoyServerFactory.createServer({}, JoyBuildConfiguration, { dir, dev: false, port: prerenderPort, ...argOpts });
 
     // await this.configService.loadConfig();
     try {

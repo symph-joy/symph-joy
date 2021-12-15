@@ -1,7 +1,8 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
-import { IApplicationContext } from "@symph/core";
+import { Autowire, IApplicationContext } from "@symph/core";
 import { IJoyPrerender, Prerender } from "@symph/joy/react";
+import { DynamicMsgModel } from "../../model/dynamic-msg-model";
 
 @Prerender()
 export class DynamicStaticPathGenerator implements IJoyPrerender {
@@ -22,16 +23,20 @@ export class DynamicStaticPathGenerator implements IJoyPrerender {
 @Route({ path: "/dynamic/:msg" })
 @ReactController()
 export default class DynamicRouteCtl extends BaseReactController {
-  initialModelStaticState(urlParams: any): Promise<void> {
+  async initialModelStaticState(): Promise<void> {
+    await this.dynamicMsgModel.fetchMessage(this.msg);
     return;
   }
 
-  initialModelState(context: any): Promise<void> {
+  async initialModelState(): Promise<void> {
     return;
   }
 
   @RouteParam()
   private msg: string;
+
+  @Autowire()
+  public dynamicMsgModel: DynamicMsgModel;
 
   onClickLink = (link: string) => {
     // @ts-ignore
@@ -39,10 +44,11 @@ export default class DynamicRouteCtl extends BaseReactController {
   };
 
   renderView(): ReactNode {
+    const { message } = this.dynamicMsgModel.state;
     return (
       <>
         <div>
-          msg: <span id="msg">{this.msg}</span>
+          msg: <span id="message">{message}</span>
         </div>
         <div id="link-hello2" onClick={this.onClickLink.bind(this, "/dynamic/hello2")}>
           /dynamic/hello2

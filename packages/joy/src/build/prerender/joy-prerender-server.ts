@@ -1,6 +1,7 @@
 import { Component } from "@symph/core";
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { JoyServerApplication } from "../../joy-server/server/joy-server-application";
+import getPort from "get-port";
 
 @Component()
 export class JoyPrerenderServer {

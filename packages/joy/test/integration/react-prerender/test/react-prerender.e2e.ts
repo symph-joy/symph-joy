@@ -93,7 +93,7 @@ describe("react-prerender", () => {
         expect(Number(ssgStaticUpdateTime) > 0).toBeTruthy();
         expect(Number(ssgDynamicUpdateTime) === 0).toBeTruthy();
 
-        await page.goto(testContext.getUrl("/stateful"));
+        await page.goto(testContext.getUrl("/stateful"), { waitUntil: "networkidle" });
         const browserStaticMessage = await page.$eval("#staticMessage", (el: any) => el.innerHTML);
         const browserStaticUpdateTime = await page.$eval("#staticUpdateTime", (el: any) => el.innerHTML);
         const browserDynamicMessage = await page.$eval("#dynamicMessage", (el: any) => el.innerHTML);
@@ -116,8 +116,7 @@ describe("react-prerender", () => {
 
       test("should fetch data.json file when go into a ssg route, and then merge data into browser store， instead of invoke initStaticModelState method.", async () => {
         await page.goto(testContext.getUrl("/links"));
-        page.click("#stateful"); // 不用等待click执行完成，否则无法捕获的响应事件。
-        const res = await page.waitForResponse((response) => response.url().includes("/stateful.json"));
+        const [res] = await Promise.all([page.waitForResponse((response) => response.url().includes("/stateful.json")), page.click("#stateful")]);
         const data = (await res.json()) as Array<any>;
         // 是否正常返回了数据
         expect(data).toBeTruthy();
@@ -160,6 +159,16 @@ describe("react-prerender", () => {
         const data = (await res.json()) as Array<any>;
         // 是否正常返回了数据
         expect(data?.length).toBeTruthy();
+      });
+
+      test("should reload when push new url is matched to current dynamic rout.", async () => {
+        await page.goto(testContext.getUrl("/dynamic/hello1"));
+        let msg = await page.innerHTML("#msg");
+        expect(msg).toBe("hello1");
+
+        await Promise.all([page.click("#link-hello2")]);
+        msg = await page.innerHTML("#msg");
+        expect(msg).toBe("hello2");
       });
     });
 

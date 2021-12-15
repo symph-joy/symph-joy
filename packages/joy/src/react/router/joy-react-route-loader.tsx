@@ -5,6 +5,7 @@ import * as H from "history";
 import { match } from "react-router-dom";
 import { DynamicLoading, Loader } from "../../joy-server/lib/dynamic";
 import { RuntimeException } from "@symph/core";
+import { isDynamicRoute } from "./router-utils";
 
 type JoyReactRouteLoaderOptions = {
   match: match;
@@ -22,17 +23,32 @@ type JoyReactRouteLoaderOptions = {
 };
 
 export function JoyReactRouteLoader({ route, match, history, component, loading, extraProps, location }: JoyReactRouteLoaderOptions) {
+  const { ssr, joyExport } = window.__JOY_DATA__;
+  const { url: matchUrl } = match;
   const joyAppContext = useContext(JoyReactContext);
   if (!joyAppContext) {
     throw new Error("react app context is not initialed");
   }
   const { providerName, providerPackage, providerModule } = route;
 
-  const LoadingComp = loading || (() => <div>route loading...</div>);
+  const LoadingComp =
+    loading || (({ match, location, route }: { match: match; location: H.Location; route: IReactRoute }) => <div>{match.url} loading...</div>);
 
   let RouteComponent: ComponentType | Promise<ComponentType> = useMemo(() => {
+    function wrapperComp(Comp: ComponentType) {
+      // 当是叶子路由且是动态路由时，url地址发生后，新地址依然匹配当前路由时，界面重新加载。
+      if (!route.routes?.length && isDynamicRoute(route.path)) {
+        return (props: any) => {
+          return <Comp {...props} />;
+        };
+      } else {
+        return Comp;
+      }
+    }
+
     if (component) {
-      return (component as any).default || component;
+      const Comp = (component as any).default || component;
+      return wrapperComp(Comp);
     } else if (typeof providerName !== "undefined") {
       const getComponent = (pModule: Record<string, unknown>) => {
         let info = joyAppContext.getProviderDefinition(providerName, providerPackage);
@@ -48,7 +64,8 @@ export function JoyReactRouteLoader({ route, match, history, component, loading,
         if (!info) {
           throw new RuntimeException(`Joy can not find the route controller component(providerName:${String(providerName)})`);
         }
-        return info.useClass;
+        const Comp = info.useClass as ComponentType;
+        return wrapperComp(Comp);
       };
       if (typeof providerModule === "function") {
         // dynamic lazy load
@@ -61,34 +78,26 @@ export function JoyReactRouteLoader({ route, match, history, component, loading,
     } else {
       throw new RuntimeException("Joy react route loader can not get content component.");
     }
-  }, [providerName, providerModule]);
+  }, [matchUrl]);
 
   // prefetch Data
   const router = joyAppContext.syncGet(ReactRouterClient);
   const href = location.pathname;
+
   /**
    * 是否采用ssg数据的条件：
    * 1. 预渲染的静态路由页面，revalidate为false。
    * 2. 预渲染的动态路由页面，fallback为false，revalidate为false。
    */
   const isUseSSGData = useMemo(() => {
-    const initManager = joyAppContext.syncGet(ReactAppInitManager);
-    const initState = initManager.getPathState(href);
-    if (initState && initState.initStatic === JoyRouteInitState.SUCCESS) {
+    if (!ssr) {
       return false;
     }
     const check = (ssgInfo: boolean) => {
       if (!ssgInfo) {
         return false;
       }
-      // return initState && (initState.initStatic === JoyRouteInitState.NONE || initState.initStatic === JoyRouteInitState.ERROR);
-      const isUse = true;
-      if (isUse) {
-        initManager.setInitState(href, {
-          initStatic: JoyRouteInitState.LOADING,
-        });
-      }
-      return isUse;
+      return true;
     };
 
     const ssgInfo = router.getSSGManifest(match.path);
@@ -97,60 +106,58 @@ export function JoyReactRouteLoader({ route, match, history, component, loading,
     } else {
       return check(ssgInfo);
     }
-  }, []);
-  const isWaitingCheckSSGData = isUseSSGData instanceof Promise;
+  }, [matchUrl]);
+
   const [loadingState, setLoadingStat] = useState({
-    isDataLoading: isWaitingCheckSSGData,
+    isDataLoading: false,
     isCompLoading: RouteComponent instanceof Promise,
   });
 
   // fetch page data
   useEffect(() => {
-    Promise.resolve(isUseSSGData).then((is) => {
-      if (!is) {
+    Promise.resolve(isUseSSGData).then((isUseSSG) => {
+      if (isUseSSG) {
+        if (loadingState.isDataLoading) {
+          return;
+        }
+        setLoadingStat({ isDataLoading: true, isCompLoading: loadingState.isCompLoading });
+
+        router
+          .fetchSSGData(href)
+          .then((ssgData: Array<any>) => {
+            // todo merge store state
+            if (ssgData && ssgData.length) {
+              for (const data of ssgData) {
+                joyAppContext.dispatch(data);
+              }
+            }
+          })
+          .catch((e) => {
+            console.error(e);
+            // });
+          })
+          .finally(() => {
+            setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
+          });
+        return;
+      } else {
         if (loadingState.isDataLoading) {
           setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
         }
-        return;
-      }
-      const initManager = joyAppContext.syncGet(ReactAppInitManager);
-
-      router
-        .fetchSSGData(href)
-        .then((ssgData: Array<any>) => {
-          // todo merge store state
-          if (ssgData && ssgData.length) {
-            for (const data of ssgData) {
-              joyAppContext.dispatch(data);
-            }
-          }
-          initManager.setInitState(href, {
-            initStatic: JoyRouteInitState.SUCCESS,
-          });
-        })
-        .catch((e) => {
-          initManager.setInitState(href, {
-            initStatic: JoyRouteInitState.ERROR,
-          });
-        });
-
-      if (loadingState.isDataLoading) {
-        setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
       }
     });
 
-    if (RouteComponent instanceof Promise) {
-      RouteComponent.then((ctl) => {
-        RouteComponent = ctl;
+    Promise.resolve(RouteComponent).then((Ctl) => {
+      if (loadingState.isCompLoading) {
         setLoadingStat({ isDataLoading: loadingState.isDataLoading, isCompLoading: false });
-      });
-    }
-  }, [match]);
+      }
+    });
+  }, [matchUrl]);
 
   const props = { match, location, history, route };
 
   if (loadingState.isDataLoading || loadingState.isCompLoading) {
-    return <LoadingComp />;
+    return <LoadingComp {...props} />;
   }
   // @ts-ignore
   return <RouteComponent {...props} {...extraProps} route={route} />;

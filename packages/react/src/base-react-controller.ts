@@ -76,6 +76,9 @@ export abstract class BaseReactController<
 
   public async prepareComponent(): Promise<any> {}
 
+  private isRendingView = false;
+  private modelStateDeps: Record<string, string[]> = {};
+
   constructor(props: TProps, context: TContext) {
     super(props as any, context);
     // this.hasInitInvoked = false;
@@ -193,10 +196,14 @@ export abstract class BaseReactController<
   private registersModel(propDeps: IInjectableDependency[]) {
     this._models = new Array<BaseReactModel<unknown>>();
     for (let i = 0; i < propDeps.length; i++) {
-      const model = propDeps[i].instance;
-      if (BaseReactModel.isModel(model)) {
-        this._models.push(model);
+      const propDep = propDeps[i];
+      const instance = propDep.instance;
+      if (!BaseReactModel.isModel(instance)) {
+        continue;
       }
+      const model = instance as BaseReactModel<unknown>;
+      this[propDep.key as keyof this] = this.createModelProxy(model) as any;
+      this._models.push(model);
     }
     if (this._models.length) {
       this.reduxStore.addModelStateListener(
@@ -206,19 +213,77 @@ export abstract class BaseReactController<
     }
   }
 
+  private createModelProxy(model: BaseReactModel<unknown>): BaseReactModel<unknown> {
+    const modelNs = model.getNamespace();
+    return new Proxy(model, {
+      get: (target: BaseReactModel<any>, p: string | symbol, receiver: any): any => {
+        if (p === "state") {
+          return new Proxy(target[p], {
+            get: (state: any, stateProp: string | symbol, receiver: any): any => {
+              if (this.isRendingView) {
+                if (!this.modelStateDeps[modelNs]) {
+                  this.modelStateDeps[modelNs] = [];
+                }
+                this.modelStateDeps[modelNs].push(stateProp as string);
+              }
+              return state[stateProp];
+            },
+          });
+        } else {
+          return (target as any)[p];
+        }
+      },
+    });
+  }
+
   protected modelStateListener: ModelStateChangeHandler = (models, nextState, previousState) => {
     if (!this.isCtlMounted) {
       return;
     }
+    const hasStateChange = models
+      .map((ns) => {
+        const nextModelState = nextState[ns] as Record<string, unknown>;
+        const preModelState = previousState[ns] as Record<string, unknown>;
+        return this.isModelStateChange(ns, nextModelState, preModelState);
+      })
+      .reduce((previousValue, currentValue) => previousValue || currentValue);
+    if (hasStateChange) {
+      this.setState({
+        // @ts-ignore
+        _modelStateVersion: this.state._modelStateVersion + 1,
+      });
+    }
+  };
 
-    this.setState({
-      // @ts-ignore
-      _modelStateVersion: this.state._modelStateVersion + 1,
-    });
+  protected isModelStateChange = (modelNameSpace: string, nextModelState: Record<string, unknown>, preModelState: Record<string, unknown>) => {
+    if (modelNameSpace === this.initManager.getNamespace()) {
+      if (!this.props.match) {
+        return false;
+      }
+      const matchedUrl = this.props.match.url;
+      const nextUrlState = (nextModelState as ReactAppInitManager["state"])[matchedUrl];
+      const preUrlState = (preModelState as ReactAppInitManager["state"])[matchedUrl];
+      return nextUrlState?.initStatic !== preUrlState?.initStatic || nextUrlState?.init !== preUrlState?.init;
+    } else {
+      const depProps = this.modelStateDeps[modelNameSpace];
+      if (!depProps?.length) {
+        return false;
+      }
+      for (const depProp of depProps) {
+        if (!preModelState || !nextModelState || preModelState[depProp] !== nextModelState[depProp]) {
+          return true;
+        }
+      }
+      return false;
+    }
   };
 
   render(): ReactNode {
     const { initStatic, init } = this.initManager.getPathState(this.location.pathname);
+
+    // reset model state dep props
+    this.modelStateDeps = {};
+    this.isRendingView = true;
 
     if (!this.hasInjectProps || initStatic === JoyRouteInitState.LOADING) {
       return "loading...";
@@ -231,7 +296,9 @@ export abstract class BaseReactController<
       console.warn(`controller${this.constructor.name} init model state failed`);
     }
 
-    return this.renderView();
+    const view = this.renderView();
+    this.isRendingView = false;
+    return view;
   }
 
   abstract renderView(): ReactNode;

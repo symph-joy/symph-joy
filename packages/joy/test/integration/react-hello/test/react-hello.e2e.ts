@@ -16,7 +16,8 @@ describe("react-hello", () => {
 
     test("should render hello page", async () => {
       await page.goto(testContext.getUrl("/"));
-      const browser = await page.$eval("#message", (el: any) => el.innerHTML);
+      const browser = await page.innerHTML("#message");
+
       expect(browser).toContain("Welcome to Joy!");
     }, 999999);
   });

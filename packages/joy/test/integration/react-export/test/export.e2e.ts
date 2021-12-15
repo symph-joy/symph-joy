@@ -100,4 +100,21 @@ describe("joy export", () => {
     const cssStyleColor = await page.$eval("#msg", (e: any) => getComputedStyle(e).color);
     expect(cssStyleColor).toBe("rgb(255, 0, 0)");
   }, 999999);
+
+  test("should reload controller, when history pushed url is matched to current dynamic rout.", async () => {
+    await page.goto(testContext.getUrl("/dynamic/hello1"));
+    let msg = await page.innerHTML("#message");
+    expect(msg).toBe("hello1");
+    const [res] = await Promise.all([
+      page.waitForResponse((response) => response.url().includes("/dynamic/hello2.json")),
+      page.click("#link-hello2"),
+    ]);
+
+    const data = (await res.json()) as Array<any>;
+    // 是否正常返回了数据
+    expect(data?.length).toBeTruthy();
+
+    msg = await page.innerHTML("#message");
+    expect(msg).toBe("hello2");
+  });
 });

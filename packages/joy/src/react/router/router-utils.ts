@@ -1,6 +1,14 @@
 import { IReactRoute } from "@symph/react";
 import { matchPath } from "react-router";
 
+const TEST_ROUTE = /\/\[[^/]+?\](?=\/|$)/;
+
+const TEST_ROUTE_1 = /\/:[^/]+?(?=\/|$)/;
+
+export function isDynamicRoute(route: string): boolean {
+  return TEST_ROUTE_1.test(route) || TEST_ROUTE.test(route);
+}
+
 export function getMatchedRoutes(pathname: string, routes?: IReactRoute[], matchContext: IReactRoute[] = []): IReactRoute[] {
   routes = routes || [];
   if (!routes?.length) {

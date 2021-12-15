@@ -55,6 +55,7 @@ export class ReactRouterClient extends ReactRouter {
   }
 
   public getSSGManifest(path: string): Promise<boolean> | boolean {
+    // this._cachedSSgManifest = new Set(["/docs/:path*"]);
     // this._cachedSSgManifest = new Set(["\u002Fdynamic\u002F:id", '/static', '/stateful' ])
     if (!this._cachedSSgManifest && (window as any).__SSG_MANIFEST) {
       this._cachedSSgManifest = (window as any).__SSG_MANIFEST;

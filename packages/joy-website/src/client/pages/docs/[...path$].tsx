@@ -26,7 +26,17 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
     console.log(" this.docsModel:", this.docsModel.state);
     console.log(" this.docsModel:", this);
     const menus = await this.docsModel.getDocMenus();
-    const paths = (menus || []).map((menu) => `/docs/${encodeURIComponent(menu.path)}`);
+    const paths = [] as string[];
+    const addChildren = (menus: DocMenuItem[]) => {
+      (menus || []).forEach((menu) => {
+        if (menu.children?.length) {
+          addChildren(menu.children);
+        } else {
+          paths.push(`/docs${menu.path}`);
+        }
+      });
+    };
+    addChildren(menus || []);
     return paths;
     // return ["/docs/docs/build-css", "/docs/docs/introduce"];
   }
@@ -64,19 +74,19 @@ export default class DocsIndexController extends BaseReactController {
     await this.docsModel.getDoc(path);
   }
 
-  shouldComponentUpdate(pre: any, next: any, nextContext: any) {
-    const oldPath = this.docPath;
-    super.shouldComponentUpdate(pre, next, nextContext);
-    const newPath = this.docPath;
-    if (oldPath !== newPath) {
-      this.fetchPageDocData("/" + newPath);
-    }
-    return true;
-  }
+  // shouldComponentUpdate(pre: any, next: any, nextContext: any) {
+  //   const oldPath = this.docPath;
+  //   super.shouldComponentUpdate(pre, next, nextContext);
+  //   const newPath = this.docPath;
+  //   if (oldPath !== newPath) {
+  //     this.fetchPageDocData("/" + newPath);
+  //   }
+  //   return true;
+  // }
 
   private async showDoc(menu: DocMenuItem) {
     this.props.history.push(`/docs${menu.path}`);
-    await this.docsModel.getDoc(menu.path);
+    // await this.docsModel.getDoc(menu.path);
   }
 
   private renderMenuItem(items: DocMenuItem[] | undefined) {

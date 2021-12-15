@@ -93,7 +93,9 @@ export function bindRouteFromCompProps(routeCompInstance: Component<any>, props:
 
   const match = props.match as IReactRouteMatched | undefined;
   if (!match) {
-    throw new Error("@RouteParam() decorator must be used on Component, which is decorated by @Route()");
+    throw new Error(
+      `@RouteParam() decorator Component ${Object.getPrototypeOf(routeCompInstance).constructor?.displayName}, which is decorated by @Route(),`
+    );
   }
   const matchedParams = match.params || {};
   if (parmas && parmas.length) {
