@@ -3,22 +3,11 @@
 import { ParsedUrlQuery } from "querystring";
 import { ComponentType } from "react";
 import { UrlObject } from "url";
-import {
-  normalizePathTrailingSlash,
-  removePathTrailingSlash,
-} from "../../../client/normalize-trailing-slash";
+import { normalizePathTrailingSlash, removePathTrailingSlash } from "../../../client/normalize-trailing-slash";
 import { GoodPageCache, StyleSheetTuple } from "../../../client/page-loader";
 import { denormalizePagePath } from "../../server/denormalize-page-path";
 import mitt, { MittEmitter } from "../mitt";
-import {
-  AppContextType,
-  formatWithValidation,
-  getLocationOrigin,
-  getURL,
-  loadGetInitialProps,
-  JoyPageContext,
-  ST,
-} from "../utils";
+import { AppContextType, formatWithValidation, getLocationOrigin, getURL, loadGetInitialProps, JoyPageContext, ST } from "../utils";
 import { isDynamicRoute } from "./utils/is-dynamic";
 import { parseRelativeUrl } from "./utils/parse-relative-url";
 import { searchParamsToUrlQuery } from "./utils/querystring";
@@ -52,11 +41,7 @@ export function hasBasePath(path: string): boolean {
 
 export function addBasePath(path: string): string {
   // we only add the basepath on relative urls
-  return basePath && path.startsWith("/")
-    ? path === "/"
-      ? normalizePathTrailingSlash(basePath)
-      : basePath + path
-    : path;
+  return basePath && path.startsWith("/") ? (path === "/" ? normalizePathTrailingSlash(basePath) : basePath + path) : path;
 }
 
 export function delBasePath(path: string): string {
@@ -87,15 +72,12 @@ type Url = UrlObject | string;
 export function resolveHref(currentPath: string, href: Url): string {
   // we use a dummy base url for relative urls
   const base = new URL(currentPath, "http://n");
-  const urlAsString =
-    typeof href === "string" ? href : formatWithValidation(href);
+  const urlAsString = typeof href === "string" ? href : formatWithValidation(href);
   try {
     const finalUrl = new URL(urlAsString, base);
     finalUrl.pathname = normalizePathTrailingSlash(finalUrl.pathname);
     // if the origin didn't change, it means we received a relative href
-    return finalUrl.origin === base.origin
-      ? finalUrl.href.slice(finalUrl.origin.length)
-      : finalUrl.href;
+    return finalUrl.origin === base.origin ? finalUrl.href.slice(finalUrl.origin.length) : finalUrl.href;
   } catch (_) {
     return urlAsString;
   }
@@ -123,25 +105,14 @@ export type BaseRouter = {
   basePath: string;
 };
 
-export type JoyRouter = BaseRouter &
-  Pick<
-    Router,
-    | "push"
-    | "replace"
-    | "reload"
-    | "back"
-    | "prefetch"
-    | "beforePopState"
-    | "events"
-    | "isFallback"
-  >;
+export type JoyRouter = BaseRouter & Pick<Router, "push" | "replace" | "reload" | "back" | "prefetch" | "beforePopState" | "events" | "isFallback">;
 
 export type PrefetchOptions = {
   priority?: boolean;
 };
 
 export type PrivateRouteInfo = {
-  Component: ComponentType;
+  // Component: ComponentType;
   styleSheets: StyleSheetTuple[];
   __N_SSG?: boolean;
   __N_SSP?: boolean;
@@ -150,15 +121,12 @@ export type PrivateRouteInfo = {
   error?: any;
 };
 
-export type AppProps = Pick<PrivateRouteInfo, "Component" | "err"> & {
-  router: Router;
+export type AppProps = Pick<PrivateRouteInfo, "err"> & {
+  // router: Router;
 } & Record<string, any>;
 export type AppComponent = ComponentType<AppProps>;
 
-type Subscription = (
-  data: PrivateRouteInfo,
-  App: AppComponent
-) => Promise<void>;
+type Subscription = (data: PrivateRouteInfo, App: AppComponent) => Promise<void>;
 
 type BeforePopStateCallback = (state: JoyHistoryState) => boolean;
 
@@ -166,10 +134,7 @@ type ComponentLoadCancel = (() => void) | null;
 
 type HistoryMethod = "replaceState" | "pushState";
 
-const manualScrollRestoration =
-  process.env.__JOY_SCROLL_RESTORATION &&
-  typeof window !== "undefined" &&
-  "scrollRestoration" in window.history;
+const manualScrollRestoration = process.env.__JOY_SCROLL_RESTORATION && typeof window !== "undefined" && "scrollRestoration" in window.history;
 
 function fetchRetry(url: string, attempts: number): Promise<any> {
   return fetch(url, {
@@ -271,7 +236,7 @@ export default class Router implements BaseRouter {
     // come again to the errored page.
     if (pathname !== "/_error") {
       this.components[this.route] = {
-        Component,
+        // Component,
         styleSheets: initialStyleSheets,
         props: initialProps,
         err,
@@ -281,7 +246,7 @@ export default class Router implements BaseRouter {
     }
 
     this.components["/_app"] = {
-      Component: App as ComponentType,
+      // Component: App as ComponentType,
       styleSheets: [
         /* /_app does not need its stylesheets managed */
       ],
@@ -315,11 +280,7 @@ export default class Router implements BaseRouter {
       if (as.substr(0, 2) !== "//") {
         // in order for `e.state` to work on the `onpopstate` event
         // we have to register the initial route upon initialization
-        this.changeState(
-          "replaceState",
-          formatWithValidation({ pathname: addBasePath(pathname), query }),
-          getURL()
-        );
+        this.changeState("replaceState", formatWithValidation({ pathname: addBasePath(pathname), query }), getURL());
       }
 
       window.addEventListener("popstate", this.onPopState);
@@ -369,11 +330,7 @@ export default class Router implements BaseRouter {
       // Actually, for (1) we don't need to nothing. But it's hard to detect that event.
       // So, doing the following for (1) does no harm.
       const { pathname, query } = this;
-      this.changeState(
-        "replaceState",
-        formatWithValidation({ pathname: addBasePath(pathname), query }),
-        getURL()
-      );
+      this.changeState("replaceState", formatWithValidation({ pathname: addBasePath(pathname), query }), getURL());
       return;
     }
 
@@ -440,12 +397,7 @@ export default class Router implements BaseRouter {
     return this.change("replaceState", url, as, options);
   }
 
-  async change(
-    method: HistoryMethod,
-    url: string,
-    as: string,
-    options: TransitionOptions
-  ): Promise<boolean> {
+  async change(method: HistoryMethod, url: string, as: string, options: TransitionOptions): Promise<boolean> {
     if (!isLocalURL(url)) {
       window.location.href = url;
       return false;
@@ -487,8 +439,7 @@ export default class Router implements BaseRouter {
     // get their query parameters to allow ensuring they can be parsed properly
     // when rewritten to
     const pages = await this.pageLoader.getPageList();
-    const { __rewrites: rewrites } = await this.pageLoader
-      .promisedBuildManifest;
+    const { __rewrites: rewrites } = await this.pageLoader.promisedBuildManifest;
 
     let parsed = parseRelativeUrl(url);
 
@@ -506,9 +457,7 @@ export default class Router implements BaseRouter {
     // url and as should always be prefixed with basePath by this
     // point by either joy/link or router.push/replace so strip the
     // basePath from the pathname to match the pages dir 1-to-1
-    pathname = pathname
-      ? removePathTrailingSlash(delBasePath(pathname))
-      : pathname;
+    pathname = pathname ? removePathTrailingSlash(delBasePath(pathname)) : pathname;
 
     // If asked to change the current URL we should reload the current page
     // (not location.reload() but reload getInitialProps and other Joy.js stuffs)
@@ -527,14 +476,7 @@ export default class Router implements BaseRouter {
     let resolvedAs = as;
 
     if (process.env.__JOY_HAS_REWRITES) {
-      resolvedAs = resolveRewrites(
-        as,
-        pages,
-        basePath,
-        rewrites,
-        query,
-        (p: string) => this._resolveHref({ pathname: p }, pages).pathname!
-      );
+      resolvedAs = resolveRewrites(as, pages, basePath, rewrites, query, (p: string) => this._resolveHref({ pathname: p }, pages).pathname!);
     }
     resolvedAs = delBasePath(resolvedAs);
 
@@ -543,23 +485,16 @@ export default class Router implements BaseRouter {
       const routeRegex = getRouteRegex(route);
       const routeMatch = getRouteMatcher(routeRegex)(asPathname);
       if (!routeMatch) {
-        const missingParams = Object.keys(routeRegex.groups).filter(
-          (param) => !query[param]
-        );
+        const missingParams = Object.keys(routeRegex.groups).filter((param) => !query[param]);
 
         if (missingParams.length > 0) {
           if (process.env.NODE_ENV !== "production") {
             console.warn(
-              `Mismatching \`as\` and \`href\` failed to manually provide ` +
-                `the params: ${missingParams.join(
-                  ", "
-                )} in the \`href\`'s \`query\``
+              `Mismatching \`as\` and \`href\` failed to manually provide ` + `the params: ${missingParams.join(", ")} in the \`href\`'s \`query\``
             );
           }
 
-          throw new Error(
-            `The provided \`as\` value (${asPathname}) is incompatible with the \`href\` value (${route}). `
-          );
+          throw new Error(`The provided \`as\` value (${asPathname}) is incompatible with the \`href\` value (${route}). `);
         }
       } else {
         // Merge params into `query`, overwriting any specified in search
@@ -570,31 +505,21 @@ export default class Router implements BaseRouter {
     Router.events.emit("routeChangeStart", as);
 
     try {
-      const routeInfo = await this.getRouteInfo(
-        route,
-        pathname,
-        query,
-        as,
-        shallow
-      );
+      const routeInfo = await this.getRouteInfo(route, pathname, query, as, shallow);
       let { error } = routeInfo;
 
       Router.events.emit("beforeHistoryChange", as);
       this.changeState(method, url, as, options);
 
       if (process.env.NODE_ENV !== "production") {
-        const appComp: any = this.components["/_app"].Component;
-        (window as any).joy.isPrerendered =
-          appComp.getInitialProps === appComp.origGetInitialProps &&
-          !(routeInfo.Component as any).getInitialProps;
+        // const appComp: any = this.components["/_app"].Component;
+        // (window as any).joy.isPrerendered = appComp.getInitialProps === appComp.origGetInitialProps && !(routeInfo.Component as any).getInitialProps;
       }
 
-      await this.set(route, pathname!, query, cleanedAs, routeInfo).catch(
-        (e) => {
-          if (e.cancelled) error = error || e;
-          else throw e;
-        }
-      );
+      await this.set(route, pathname!, query, cleanedAs, routeInfo).catch((e) => {
+        if (e.cancelled) error = error || e;
+        else throw e;
+      });
 
       if (error) {
         Router.events.emit("routeChangeError", error, cleanedAs);
@@ -617,12 +542,7 @@ export default class Router implements BaseRouter {
     }
   }
 
-  changeState(
-    method: HistoryMethod,
-    url: string,
-    as: string,
-    options: TransitionOptions = {}
-  ): void {
+  changeState(method: HistoryMethod, url: string, as: string, options: TransitionOptions = {}): void {
     if (process.env.NODE_ENV !== "production") {
       if (typeof window.history === "undefined") {
         console.error(`Warning: window.history is not available.`);
@@ -682,11 +602,9 @@ export default class Router implements BaseRouter {
     }
 
     try {
-      const { page: Component, styleSheets } = await this.fetchComponent(
-        "/_error"
-      );
+      const { page: Component, styleSheets } = await this.fetchComponent("/_error");
       const routeInfo: PrivateRouteInfo = {
-        Component,
+        // Component,
         styleSheets,
         err,
         error: err,
@@ -709,80 +627,62 @@ export default class Router implements BaseRouter {
     }
   }
 
-  async getRouteInfo(
-    route: string,
-    pathname: string,
-    query: any,
-    as: string,
-    shallow = false
-  ): Promise<PrivateRouteInfo> {
-    try {
-      const cachedRouteInfo = this.components[route];
-
-      if (shallow && cachedRouteInfo && this.route === route) {
-        return cachedRouteInfo;
-      }
-
-      const routeInfo: PrivateRouteInfo = cachedRouteInfo
-        ? cachedRouteInfo
-        : await this.fetchComponent(route).then((res) => ({
-            Component: res.page,
-            styleSheets: res.styleSheets,
-            __N_SSG: res.mod.__N_SSG,
-            __N_SSP: res.mod.__N_SSP,
-          }));
-
-      const { Component, __N_SSG, __N_SSP } = routeInfo;
-
-      if (process.env.NODE_ENV !== "production") {
-        const { isValidElementType } = require("react-is");
-        if (!isValidElementType(Component)) {
-          throw new Error(
-            `The default export is not a React Component in page: "${pathname}"`
-          );
-        }
-      }
-
-      let dataHref: string | undefined;
-
-      if (__N_SSG || __N_SSP) {
-        dataHref = this.pageLoader.getDataHref(
-          formatWithValidation({ pathname, query }),
-          delBasePath(as),
-          __N_SSG
-        );
-      }
-
-      const props = await this._getData<PrivateRouteInfo>(() =>
-        __N_SSG
-          ? this._getStaticData(dataHref!)
-          : __N_SSP
-          ? this._getServerData(dataHref!)
-          : this.getInitialProps(
-              Component,
-              // we provide AppTree later so this needs to be `any`
-              {
-                pathname,
-                query,
-                asPath: as,
-              } as any
-            )
-      );
-      routeInfo.props = props;
-      this.components[route] = routeInfo;
-      return routeInfo;
-    } catch (err) {
-      return this.handleRouteInfoError(err, pathname, query, as);
-    }
+  async getRouteInfo(route: string, pathname: string, query: any, as: string, shallow = false): Promise<any> {
+    // try {
+    //   const cachedRouteInfo = this.components[route];
+    //
+    //   if (shallow && cachedRouteInfo && this.route === route) {
+    //     return cachedRouteInfo;
+    //   }
+    //
+    //   const routeInfo: PrivateRouteInfo = cachedRouteInfo
+    //     ? cachedRouteInfo
+    //     : await this.fetchComponent(route).then((res) => ({
+    //         Component: res.page,
+    //         styleSheets: res.styleSheets,
+    //         __N_SSG: res.mod.__N_SSG,
+    //         __N_SSP: res.mod.__N_SSP,
+    //       }));
+    //
+    //   const {  __N_SSG, __N_SSP } = routeInfo;
+    //
+    //   // if (process.env.NODE_ENV !== "production") {
+    //   //   const { isValidElementType } = require("react-is");
+    //   //   if (!isValidElementType(Component)) {
+    //   //     throw new Error(`The default export is not a React Component in page: "${pathname}"`);
+    //   //   }
+    //   // }
+    //
+    //   let dataHref: string | undefined;
+    //
+    //   if (__N_SSG || __N_SSP) {
+    //     dataHref = this.pageLoader.getDataHref(formatWithValidation({ pathname, query }), delBasePath(as), __N_SSG);
+    //   }
+    //
+    //   // const props = await this._getData<PrivateRouteInfo>(() =>
+    //   //   __N_SSG
+    //   //     ? this._getStaticData(dataHref!)
+    //   //     : __N_SSP
+    //   //     ? this._getServerData(dataHref!)
+    //   //     : this.getInitialProps(
+    //   //         Component,
+    //   //         // we provide AppTree later so this needs to be `any`
+    //   //         {
+    //   //           pathname,
+    //   //           query,
+    //   //           asPath: as,
+    //   //         } as any
+    //   //       )
+    //   // );
+    //   // routeInfo.props = props;
+    //   this.components[route] = routeInfo;
+    //   return routeInfo;
+    // } catch (err) {
+    //   return this.handleRouteInfoError(err, pathname, query, as);
+    // }
   }
 
-  set(
-    route: string,
-    pathname: string,
-    query: ParsedUrlQuery,
-    as: string,
-    data: PrivateRouteInfo
-  ): Promise<void> {
+  set(route: string, pathname: string, query: ParsedUrlQuery, as: string, data: PrivateRouteInfo): Promise<void> {
     this.isFallback = false;
 
     this.route = route;
@@ -860,10 +760,7 @@ export default class Router implements BaseRouter {
     if (!pages.includes(cleanPathname!)) {
       // eslint-disable-next-line array-callback-return
       pages.some((page) => {
-        if (
-          isDynamicRoute(page) &&
-          getRouteRegex(page).re.test(cleanPathname!)
-        ) {
+        if (isDynamicRoute(page) && getRouteRegex(page).re.test(cleanPathname!)) {
           parsedHref.pathname = addBasePath(page);
           return true;
         }
@@ -878,11 +775,7 @@ export default class Router implements BaseRouter {
    * @param url the href of prefetched page
    * @param asPath the as path of the prefetched page
    */
-  async prefetch(
-    url: string,
-    asPath: string = url,
-    options: PrefetchOptions = {}
-  ): Promise<void> {
+  async prefetch(url: string, asPath: string = url, options: PrefetchOptions = {}): Promise<void> {
     let parsed = parseRelativeUrl(url);
 
     let { pathname } = parsed;
@@ -902,10 +795,7 @@ export default class Router implements BaseRouter {
     }
 
     const route = removePathTrailingSlash(pathname);
-    await Promise.all([
-      this.pageLoader.prefetchData(url, asPath),
-      this.pageLoader[options.priority ? "loadPage" : "prefetch"](route),
-    ]);
+    await Promise.all([this.pageLoader.prefetchData(url, asPath), this.pageLoader[options.priority ? "loadPage" : "prefetch"](route)]);
   }
 
   async fetchComponent(route: string): Promise<GoodPageCache> {
@@ -917,9 +807,7 @@ export default class Router implements BaseRouter {
     const componentResult = await this.pageLoader.loadPage(route);
 
     if (cancelled) {
-      const error: any = new Error(
-        `Abort fetching component for route: "${route}"`
-      );
+      const error: any = new Error(`Abort fetching component for route: "${route}"`);
       error.cancelled = true;
       throw error;
     }
@@ -967,16 +855,16 @@ export default class Router implements BaseRouter {
     return fetchJoyData(dataHref, this.isSsr);
   }
 
-  getInitialProps(Component: ComponentType, ctx: JoyPageContext): Promise<any> {
-    const { Component: App } = this.components["/_app"];
-    const AppTree = this._wrapApp(App as AppComponent);
-    ctx.AppTree = AppTree;
-    return loadGetInitialProps<AppContextType<Router>>(App, {
-      AppTree,
-      Component,
-      router: this,
-      ctx,
-    });
+  getInitialProps(Component: ComponentType, ctx: JoyPageContext): any {
+    // const { Component: App } = this.components["/_app"];
+    // const AppTree = this._wrapApp(App as AppComponent);
+    // ctx.AppTree = AppTree;
+    // return loadGetInitialProps<AppContextType<Router>>(App, {
+    //   AppTree,
+    //   Component,
+    //   router: this,
+    //   ctx,
+    // });
   }
 
   abortComponentLoad(as: string): void {
@@ -987,7 +875,7 @@ export default class Router implements BaseRouter {
     }
   }
 
-  notify(data: PrivateRouteInfo): Promise<void> {
-    return this.sub(data, this.components["/_app"].Component as AppComponent);
+  notify(data: PrivateRouteInfo): any {
+    // return this.sub(data, this.components["/_app"].Component as AppComponent);
   }
 }

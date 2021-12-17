@@ -277,10 +277,9 @@ export default async (opts: { webpackHMR?: any } = {}) => {
     wrapApp,
     err: initialErr,
     isFallback: Boolean(isFallback),
-    subscription: ({ Component, styleSheets, props, err }, App) =>
+    subscription: ({ styleSheets, props, err }, App) =>
       render({
         App,
-        Component,
         styleSheets,
         props,
         err,
@@ -372,7 +371,7 @@ export function renderError(renderErrorProps: RenderErrorProps) {
     return doRender({
       App: () => null,
       props: {},
-      Component: () => null,
+      // Component: () => null,
       styleSheets: [],
       reactApplicationContext,
     });
@@ -406,7 +405,7 @@ export function renderError(renderErrorProps: RenderErrorProps) {
       doRender({
         ...renderErrorProps,
         err,
-        Component: ErrorComponent,
+        // Component: ErrorComponent,
         styleSheets,
         props: initProps,
       })
@@ -515,13 +514,13 @@ const wrapApp = (App: AppComponent) => (wrappedAppProps: Record<string, any>) =>
   );
 };
 
-function doRender({ App, Component, props, err, styleSheets, reactApplicationContext }: RenderRouteInfo): Promise<any> {
-  Component = Component || lastAppProps.Component;
+function doRender({ App, props, err, styleSheets, reactApplicationContext }: RenderRouteInfo): Promise<any> {
+  // Component = Component || lastAppProps.Component;
   props = props || lastAppProps.props;
 
   const appProps: AppProps = {
     ...props,
-    Component,
+    // Component,
     err,
     router,
   };
@@ -636,10 +635,7 @@ function doRender({ App, Component, props, err, styleSheets, reactApplicationCon
   const elem = (
     <Root callback={onCommit}>
       <AppContainer>
-        <ReactAppContainer
-          appContext={reactApplicationContext}
-          Component={App as any} // todo 定义参数的类型
-        />
+        <ReactAppContainer appContext={reactApplicationContext} App={App as any} />
       </AppContainer>
     </Root>
   );

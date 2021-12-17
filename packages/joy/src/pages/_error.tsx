@@ -1,6 +1,6 @@
 import React from "react";
 import { JoyPageContext } from "../joy-server/lib/utils";
-import Head from "../joy-server/lib/head";
+import { Head } from "../joy-server/lib/head";
 
 const statusCodes: { [code: number]: string } = {
   400: "Bad Request",
@@ -14,12 +14,8 @@ export type ErrorProps = {
   title?: string;
 };
 
-function _getInitialProps({
-  res,
-  err,
-}: JoyPageContext): Promise<ErrorProps> | ErrorProps {
-  const statusCode =
-    res && res.statusCode ? res.statusCode : err ? err.statusCode! : 404;
+function _getInitialProps({ res, err }: JoyPageContext): Promise<ErrorProps> | ErrorProps {
+  const statusCode = res && res.statusCode ? res.statusCode : err ? err.statusCode! : 404;
   return { statusCode };
 }
 
@@ -34,10 +30,7 @@ export default class Error<P = {}> extends React.Component<P & ErrorProps> {
 
   render() {
     const { statusCode } = this.props;
-    const title =
-      this.props.title ||
-      statusCodes[statusCode] ||
-      "An unexpected error has occurred";
+    const title = this.props.title || statusCodes[statusCode] || "An unexpected error has occurred";
 
     return (
       <div style={styles.error}>
@@ -62,8 +55,7 @@ const styles: { [k: string]: React.CSSProperties } = {
   error: {
     color: "#000",
     background: "#fff",
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, Roboto, "Segoe UI", "Fira Sans", Avenir, "Helvetica Neue", "Lucida Grande", sans-serif',
+    fontFamily: '-apple-system, BlinkMacSystemFont, Roboto, "Segoe UI", "Fira Sans", Avenir, "Helvetica Neue", "Lucida Grande", sans-serif',
     height: "100vh",
     textAlign: "center",
     display: "flex",

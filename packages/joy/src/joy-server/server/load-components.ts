@@ -4,6 +4,7 @@ import { requirePage } from "./require";
 import { BuildManifest } from "./get-page-files";
 import { AppType, DocumentType } from "../lib/utils";
 import { PageConfig } from "../../types";
+import { TReactAppComponent } from "@symph/react";
 
 export function interopDefault(mod: any) {
   return mod.default || mod;
@@ -23,7 +24,7 @@ export type LoadComponentsReturnType = {
   buildManifest: BuildManifest;
   reactLoadableManifest: ReactLoadableManifest;
   Document: DocumentType;
-  App: AppType;
+  App: TReactAppComponent;
   // getStaticProps?: GetStaticProps
   // getStaticPaths?: GetStaticPaths
   // getServerSideProps?: GetServerSideProps

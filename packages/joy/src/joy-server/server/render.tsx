@@ -31,7 +31,7 @@ import { FontManifest, getFontDefinitionFromManifest } from "./font-utils";
 import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
-import { JoyRouteInitState, ReactAppContainer, ReactAppInitManager, ReactApplicationContext } from "@symph/react";
+import { JoyRouteInitState, ReactAppContainer, ReactAppInitManager, ReactApplicationContext, TReactAppComponent } from "@symph/react";
 import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 
@@ -88,23 +88,23 @@ class ServerRouter implements JoyRouter {
 
 function enhanceComponents(
   options: ComponentsEnhancer,
-  App: AppType,
-  Component: JoyComponentType
+  App: TReactAppComponent
+  // Component: JoyComponentType
 ): {
-  App: AppType;
-  Component: JoyComponentType;
+  App: TReactAppComponent;
+  // Component: JoyComponentType;
 } {
   // For backwards compatibility
   if (typeof options === "function") {
     return {
       App,
-      Component: options(Component),
+      // Component: options(Component),
     };
   }
 
   return {
     App: options.enhanceApp ? options.enhanceApp(App) : App,
-    Component: options.enhanceComponent ? options.enhanceComponent(Component) : Component,
+    // Component: options.enhanceComponent ? options.enhanceComponent(Component) : Component,
   };
 }
 
@@ -334,7 +334,7 @@ export async function renderToHTML(
   const isSSG = true;
   // const isSSG = !!getStaticProps
   // const isBuildTimeSSG = isSSG && renderOpts.joyExport
-  const defaultAppGetInitialProps = App.getInitialProps === (App as any).origGetInitialProps;
+  // const defaultAppGetInitialProps = App.getInitialProps === (App as any).origGetInitialProps;
 
   // todo 在controller装饰器中，校验controller类的合法性
   // const hasPageGetInitialProps = !!(Component as any).getInitialProps
@@ -395,14 +395,14 @@ export async function renderToHTML(
     pathname,
     query,
     asPath,
-    AppTree: (props: any) => {
-      // return (
-      //   <AppContainer App={App}>
-      //     <App {...props} Component={Component} router={router} />
-      //   </AppContainer>
-      // )
-      return <AppContainer />;
-    },
+    // AppTree: (props: any) => {
+    //   // return (
+    //   //   <AppContainer App={App}>
+    //   //     <App {...props} Component={Component} router={router} />
+    //   //   </AppContainer>
+    //   // )
+    //   return <AppContainer />;
+    // },
   };
   const props: any = {};
 
@@ -418,31 +418,23 @@ export async function renderToHTML(
 
   let head: JSX.Element[] = defaultHead(inAmpMode);
 
-  // const AppContainer = ({ children }: any) => (
-  //   <RouterContext.Provider value={router}>
-  //
-  //   </RouterContext.Provider>
-  // )
-
-  const ExtendAppComp = (props: any) => (
-    <AmpStateContext.Provider value={ampState}>
-      <HeadManagerContext.Provider
-        value={{
-          updateHead: (state) => {
-            head = state;
-          },
-          mountedInstances: new Set(),
-        }}
-      >
-        <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
-          <App {...props} />
-        </LoadableContext.Provider>
-      </HeadManagerContext.Provider>
-    </AmpStateContext.Provider>
-  );
-
-  let AppContainer = () => {
-    return <ReactAppContainer appContext={reactApplicationContext!} Component={ExtendAppComp} />;
+  let AppContainer = ({ App }: { App: TReactAppComponent }) => {
+    return (
+      <AmpStateContext.Provider value={ampState}>
+        <HeadManagerContext.Provider
+          value={{
+            updateHead: (state) => {
+              head = state;
+            },
+            mountedInstances: new Set(),
+          }}
+        >
+          <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
+            <ReactAppContainer appContext={reactApplicationContext!} App={App} />
+          </LoadableContext.Provider>
+        </HeadManagerContext.Provider>
+      </AmpStateContext.Provider>
+    );
   };
 
   // We only need to do this if we want to support calling
@@ -491,11 +483,12 @@ export async function renderToHTML(
     initManager.resetInitState(pathname);
     initManager.initStage = initStage;
     reduxService.startRecordState();
+
     /**
      * 执行一次页面渲染，触发页面的initialStaticModelState()方法，获取页面的数据，然后用数据在重新绘制一次页面
      * 相当于一次页面请求，服务端需要执行两次 React 渲染
      */
-    renderToStaticMarkup(<AppContainer />);
+    renderToStaticMarkup(<AppContainer App={App} />);
     let revalidate: number | undefined;
     try {
       const initRst = await initManager.waitAllFinished(pathname);
@@ -538,12 +531,12 @@ export async function renderToHTML(
     //   );
     // }
 
-    // const {
-    //   App: EnhancedApp,
-    //   Component: EnhancedComponent,
-    // } = enhanceComponents(options, App, Component)
+    const {
+      App: EnhancedApp,
+      // Component: EnhancedComponent,
+    } = enhanceComponents(options, App);
 
-    const html = renderToString(<AppContainer />);
+    const html = renderToString(<AppContainer App={EnhancedApp} />);
 
     return { html, head };
   };
@@ -607,7 +600,7 @@ export async function renderToHTML(
     // gssp: true,
     ssr: isSSR,
     gip: true,
-    appGip: !defaultAppGetInitialProps ? true : undefined,
+    // appGip: !defaultAppGetInitialProps ? true : undefined,
     devOnlyCacheBusterQueryString,
   });
 

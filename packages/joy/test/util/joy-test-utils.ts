@@ -32,6 +32,42 @@ export async function waitForMoment(millisecond = 100000000): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, millisecond));
 }
 
+// check for content in 1 second intervals timing out after
+// 30 seconds
+export async function check(
+  contentFn: (...args: any[]) => string | Promise<string>,
+  regex: RegExp,
+  timeout = 30000,
+  hardError = true
+): Promise<string | undefined> {
+  let content;
+  let lastErr;
+
+  for (let tries = 0; tries < timeout / 1000; tries++) {
+    try {
+      content = await contentFn();
+      if (typeof regex === "string") {
+        if (regex === content) {
+          return content;
+        }
+      } else if (regex.test(content)) {
+        // found the content
+        return content;
+      }
+      await waitForMoment(1000);
+    } catch (err) {
+      await waitForMoment(1000);
+      lastErr = err;
+    }
+  }
+  console.error("TIMED OUT CHECK: ", { regex, content, lastErr });
+
+  if (hardError) {
+    throw new Error("TIMED OUT: " + regex + "\n\n" + content);
+  }
+  return undefined;
+}
+
 /**
  * 轮询的方式获取接口数据，直到获取到匹配的内容，或者超时。
  * @param url

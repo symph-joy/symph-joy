@@ -7,6 +7,7 @@ import { ManifestItem } from "../server/load-components";
 import { JoyRouter } from "./router/router";
 import { Env } from "../../lib/load-env-config";
 import { BuildManifest } from "../server/get-page-files";
+import { TReactAppComponent } from "@symph/react";
 
 /**
  * Types used by both joy and joy-server
@@ -25,9 +26,9 @@ export type DocumentType = JoyComponentType<DocumentContext, DocumentInitialProp
   renderDocument(Document: DocumentType, props: DocumentProps): React.ReactElement;
 };
 
-export type AppType = JoyComponentType<AppContextType, AppInitialProps, AppPropsType>;
+export type AppType = JoyComponentType<AppContextType>;
 
-export type AppTreeType = ComponentType<AppInitialProps & { [name: string]: any }>;
+// export type AppTreeType = ComponentType<{ [name: string]: any }>;
 
 /**
  * Web vitals provided to _app.reportWebVitals by Core Web Vitals plugin developed by Google Chrome team.
@@ -44,8 +45,8 @@ export type Enhancer<C> = (Component: C) => C;
 
 export type ComponentsEnhancer =
   | {
-      enhanceApp?: Enhancer<AppType>;
-      enhanceComponent?: Enhancer<JoyComponentType>;
+      enhanceApp?: Enhancer<TReactAppComponent>;
+      // enhanceComponent?: Enhancer<JoyComponentType>;
     }
   | Enhancer<JoyComponentType>;
 
@@ -114,25 +115,14 @@ export interface JoyPageContext {
   /**
    * `Component` the tree of the App to use if needing to render separately
    */
-  AppTree: AppTreeType;
+  // AppTree: AppTreeType;
 }
 
 export type AppContextType<R extends JoyRouter = JoyRouter> = {
   Component: JoyComponentType<JoyPageContext>;
-  AppTree: AppTreeType;
+  // AppTree: AppTreeType;
   ctx: JoyPageContext;
   router: R;
-};
-
-export type AppInitialProps = {
-  pageProps: any;
-};
-
-export type AppPropsType<R extends JoyRouter = JoyRouter, P = {}> = AppInitialProps & {
-  Component: JoyComponentType<JoyPageContext, any, P>;
-  router: R;
-  __N_SSG?: boolean;
-  __N_SSP?: boolean;
 };
 
 export type DocumentContext = JoyPageContext & {
