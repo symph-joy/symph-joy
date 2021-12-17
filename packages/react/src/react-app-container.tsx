@@ -1,4 +1,4 @@
-import React, { createContext, ReactElement } from "react";
+import React, { createContext, ReactElement, useMemo } from "react";
 import { Provider as ReduxProvider } from "react-redux";
 import { ReactReduxService } from "./redux/react-redux.service";
 import { IReactApplication } from "./interfaces";
@@ -9,14 +9,20 @@ export const JoyReactContext = createContext<IReactApplication | undefined>(unde
 
 interface ApplicationComponentProps {
   appContext: IReactApplication;
-  Component?: TReactAppComponent;
+  // children?: JSX.Element;
+  App?: TReactAppComponent;
 }
 
-export function ReactAppContainer({ appContext, Component }: ApplicationComponentProps): React.ComponentElement<any, any> {
-  const reduxStore = appContext.syncGet(ReactReduxService);
-  // todo useMemo
-  const ReactRouterComponent = appContext.syncGet("reactRouterComponent") as { new (...args: any): any };
-  const reactRouterProps = appContext.syncTryGet<Record<string, any>>("reactRouterProps");
+export function ReactAppContainer({ appContext, App }: ApplicationComponentProps): React.ComponentElement<any, any> {
+  const [reduxStore, ReactRouterComponent, reactRouterProps] = useMemo(() => {
+    return [
+      appContext.syncGet(ReactReduxService),
+      appContext.syncGet("reactRouterComponent") as { new (...args: any): any },
+      appContext.syncTryGet<Record<string, any>>("reactRouterProps"),
+    ];
+  }, []);
+  // const ReactRouterComponent = useMemo(() => appContext.syncGet("reactRouterComponent") as { new (...args: any): any }, []);
+  // const reactRouterProps =  useMemo(() => appContext.syncTryGet<Record<string, any>>("reactRouterProps"), []);
   // const reactRouter = appContext.syncGet<ReactRouter>("reactRouter", {
   //   optional: true,
   // });
@@ -28,12 +34,12 @@ export function ReactAppContainer({ appContext, Component }: ApplicationComponen
   }
   // const routes = reactRouter?.getRoutes() || [];
   // const routes =  [{path: '/', providerName: 'main'}]
-  const EnsuredApp = Component || ReactAppComponent;
+  App = App || ReactAppComponent;
   return (
     <JoyReactContext.Provider value={appContext}>
       <ReduxProvider store={reduxStore.store}>
         <ReactRouterComponent {...(reactRouterProps || {})}>
-          <EnsuredApp appContext={appContext} />
+          <App appContext={appContext} />
         </ReactRouterComponent>
       </ReduxProvider>
     </JoyReactContext.Provider>

@@ -1,10 +1,21 @@
 import React from "react";
 import { IReactApplication, ReactRouter, RouteSwitch } from "@symph/react";
 
-export default function App(props: { appContext: IReactApplication }) {
-  const { appContext } = props;
-  const reactRouter = appContext.syncTryGet<ReactRouter>("reactRouter");
-  const routes = reactRouter?.getRoutes() || [];
+export type ReactAppProps = {
+  appContext: IReactApplication;
+};
 
-  return <RouteSwitch routes={routes} extraProps={{}} />;
+export class App extends React.Component<ReactAppProps, any> {
+  protected reactRouter: ReactRouter;
+  constructor(props: ReactAppProps, context?: any) {
+    super(props, context);
+    const appContext = props.appContext;
+    this.reactRouter = appContext.syncGet<ReactRouter>("reactRouter");
+  }
+  render() {
+    const routes = this.reactRouter.getRoutes() || [];
+    return <RouteSwitch routes={routes} extraProps={{}} />;
+  }
 }
+
+export default App;

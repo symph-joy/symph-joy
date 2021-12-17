@@ -142,7 +142,7 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
     // return createApplicationComponent(this);
     const appContent = renderComponent({
       appContext: this,
-      Component: rootComponent,
+      App: rootComponent,
     });
 
     if (domContainer) {
