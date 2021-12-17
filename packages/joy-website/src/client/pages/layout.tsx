@@ -28,24 +28,33 @@ const MoonSvg = () => (
   </svg>
 );
 
+interface IStateProps {
+  search: string;
+  // 观察菜单展开收缩按钮，根据按钮是否显示决定当前是移动端还是web端
+  observer: IntersectionObserver;
+}
+
 @ReactController()
-export default class MainLayout extends BaseReactController<any> {
+export default class MainLayout extends BaseReactController<any, IStateProps> {
   @Autowire()
   public layoutModel: LayoutModel;
 
   @Autowire()
   public docsModel: DocsModel;
 
-  state = {
+  state: IStateProps = {
     search: "",
+    observer: undefined,
   };
 
   componentDidMount() {
     super.componentDidMount();
-    this.appendLink();
 
+    const { theme } = this.layoutModel.state;
     const oBtn = document.getElementById("collapseBtn");
     const oBody = document.getElementsByTagName("body")[0];
+
+    oBody.setAttribute("data-theme", theme);
 
     const observer = new IntersectionObserver(([entry]) => {
       const { intersectionRatio } = entry;
@@ -61,7 +70,9 @@ export default class MainLayout extends BaseReactController<any> {
 
     observer.observe(oBtn);
 
-    this.layoutModel.setObserver(observer);
+    this.setState({
+      observer,
+    });
   }
 
   onChange = async (value) => {
@@ -71,13 +82,14 @@ export default class MainLayout extends BaseReactController<any> {
       await this.docsModel.clearSearch();
     }
   };
+
   componentWillUnmount() {
     super.componentWillUnmount();
 
-    const { observer } = this.layoutModel.state;
+    const { observer } = this.state;
     const oBtn = document.getElementById("collapseBtn");
 
-    observer.unobserve(oBtn);
+    observer && observer.unobserve(oBtn);
   }
 
   jump = async (value) => {
@@ -90,21 +102,10 @@ export default class MainLayout extends BaseReactController<any> {
   };
 
   // 切换样式文件
-  appendLink = () => {
+  changeBodyTheme = () => {
     const { theme } = this.layoutModel.state;
-    let link = document.getElementById("theme-style") as HTMLLinkElement;
     const oBody = document.getElementsByTagName("body")[0];
 
-    if (!link) {
-      link = document.createElement("link");
-      link.type = "text/css";
-      link.rel = "stylesheet";
-      link.id = "theme-style";
-
-      document.body.appendChild(link);
-    }
-
-    link.href = theme === "dark" ? "/static/antd.dark.css" : "/static/antd.css";
     oBody.setAttribute("data-theme", theme);
   };
 
@@ -115,14 +116,12 @@ export default class MainLayout extends BaseReactController<any> {
 
     this.layoutModel.changeTheme(newTheme);
 
-    this.appendLink();
+    this.changeBodyTheme();
   };
 
   // 处理移动端展示时，菜单展示收缩按钮点击事件
   handleToggleCollapsed = () => {
     const { collapsed } = this.layoutModel.state;
-
-    console.log("hhhhhhh");
 
     this.layoutModel.changeCollapsed(!collapsed);
   };
@@ -142,9 +141,13 @@ export default class MainLayout extends BaseReactController<any> {
   renderView(): ReactNode {
     const { route } = this.props;
     const { result } = this.docsModel.state;
-    const { collapsed, isMobile } = this.layoutModel.state;
+    const { collapsed, isMobile, theme } = this.layoutModel.state;
+    const themeUrl = theme === "dark" ? "/static/antd.dark.css" : "/static/antd.css";
+
+    console.log("themeUrl: ", themeUrl);
     return (
       <Layout className={styles.layout}>
+        <link id="theme-style" rel="stylesheet" href={themeUrl} />
         <header className={styles.header}>
           <nav id="nav" className={styles.nav}>
             <div id="nav-inner" className={styles.nav__inner}>
@@ -153,7 +156,7 @@ export default class MainLayout extends BaseReactController<any> {
                 Symph Joy
               </a>
               <Button id="collapseBtn" className={styles.menu__collapseBtn} type="text" size="large" onClick={this.handleToggleCollapsed}>
-                {React.createElement(this.state.collapsed ? MenuUnfoldOutlined : MenuFoldOutlined)}
+                {React.createElement(collapsed ? MenuUnfoldOutlined : MenuFoldOutlined)}
               </Button>
               <Menu className={styles.menu + " " + (collapsed ? styles.menu__collapsed : "")} mode={isMobile ? "vertical" : "horizontal"}>
                 {isMobile && (

@@ -1,18 +1,40 @@
-@import url("~animate.css/animate.css");
 @import url("~highlight.js/styles/atom-one-dark.css");
 
 body {
+  --blue: #086dc3;
   --font-color: #191e1e;
+  --border-color: #ebf2f2;
+  --background-color: #fff;
   --font-reverse-color: #fff;
-  --nav-background-color: #fff;
-  --nav-border-color: #ebf2f2;
+  /**  header**/
+  --header-border-color: #fff;
+  --header-background-color: #fff;
+  /**  banner**/
+  --banner-background-color: #ebf2f2;
+
   --break-point: 920px;
   --bigger-than-break-point: calc(100vw - var(--break-point));
 }
 
+body {
+  color: var(--font-color);
+  background-color: var(--background-color);
+}
+
 body[data-theme="dark"] {
+  --blue: #1f98ff;
   --font-color: #fff;
+  --border-color: #2b2f33;
   --font-reverse-color: #fff;
-  --nav-background-color: #141414;
-  --nav-border-color: #2b2f33;
+  --background-color: #191e1e;
+  /**  header**/
+  --header-border-color: #000;
+  --header-background-color: #1b1f23;
+  /**  banner**/
+  --banner-background-color: #262a2d;
+}
+
+/* 覆盖antd的背景颜色，便于主题切换 */
+.ant-layout {
+  background-color: transparent !important;
 }

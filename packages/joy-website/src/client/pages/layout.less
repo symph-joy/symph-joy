@@ -12,8 +12,8 @@
 
 .nav() {
   padding: 8px 0;
-  background-color: var(--nav-background-color);
-  border-bottom: 1px solid var(--nav-border-color);
+  background-color: var(--header-background-color);
+  border-bottom: 1px solid var(--header-border-color);
   transition: all 0.3s;
 
   &__inner {
@@ -30,6 +30,7 @@
 body[data-is-mobile="false"] {
   .nav {
     .nav();
+    padding: 12px 0;
 
     .logo {
       font-size: 1.4em;
