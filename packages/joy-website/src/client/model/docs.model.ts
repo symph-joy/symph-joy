@@ -1,6 +1,5 @@
 import { BaseReactModel, ReactModel } from "@symph/react";
 import { ReactFetchService } from "@symph/joy";
-import { Autowire } from "@symph/core";
 
 export interface DocMenuItem {
   title: string;
@@ -32,7 +31,7 @@ export type DocsModelState = {
 
 @ReactModel()
 export class DocsModel extends BaseReactModel<DocsModelState> {
-  constructor(@Autowire("joyFetchService") private fetchService: ReactFetchService) {
+  constructor(@Inject("joyFetchService") private fetchService: ReactFetchService) {
     super();
   }
 

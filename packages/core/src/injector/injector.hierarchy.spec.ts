@@ -1,4 +1,4 @@
-import { Autowire, Component, Configuration } from "../decorators/core";
+import { Inject, Component, Configuration } from "../decorators/core";
 import { EntryType, IApplicationContext, Scope } from "../interfaces";
 import { ApplicationContainer } from "../injector";
 import { ComponentWrapper } from "./component-wrapper";
@@ -51,7 +51,7 @@ describe("Inject hierarchy", () => {
 
     @Configuration()
     class ConfigP {
-      @Configuration.Provider()
+      @Configuration.Component()
       public dep: DepP;
     }
 
@@ -62,7 +62,7 @@ describe("Inject hierarchy", () => {
 
     @Configuration()
     class ConfigC {
-      @Configuration.Provider()
+      @Configuration.Component()
       public dep: DepC;
     }
 
@@ -104,7 +104,7 @@ describe("Inject hierarchy", () => {
 
     @Configuration()
     class ConfigP {
-      @Configuration.Provider()
+      @Configuration.Component()
       public dep: DepP;
     }
 
@@ -115,7 +115,7 @@ describe("Inject hierarchy", () => {
 
     @Configuration()
     class ConfigC {
-      @Configuration.Provider()
+      @Configuration.Component()
       public mainC: MainC;
     }
 

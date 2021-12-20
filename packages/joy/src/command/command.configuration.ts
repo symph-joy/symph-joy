@@ -8,22 +8,22 @@ import { JoyExportCommand } from "./preset/joy-export.command";
 
 @Configuration()
 export class CommandConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public commandCenter: CommandCenter;
 
   // ====== preset commands
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyDevCommand: JoyDevCommand;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyVersionCommand: JoyVersionCommand;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public JoyBuildCommand: JoyBuildCommand;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyStartCommand: JoyStartCommand;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyExportCommand: JoyExportCommand;
 }

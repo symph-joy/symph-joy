@@ -1,7 +1,7 @@
 import * as path from "path";
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { pollGetText, waitForMoment } from "../../../util/joy-test-utils";
+import { pollGetText, waitFor } from "../../../util/joy-test-utils";
 import got from "got";
 import { rmdirSync, rmSync, writeFileSync, mkdirp, mkdirpSync, existsSync, readFileSync } from "fs-extra";
 

@@ -1,7 +1,7 @@
 import * as path from "path";
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { waitForMoment } from "../../../util/joy-test-utils";
+import { waitFor } from "../../../util/joy-test-utils";
 import got from "got";
 import spawn from "cross-spawn";
 
@@ -12,6 +12,7 @@ describe("import-module", () => {
     const thirdModulePath = path.resolve(__dirname, "../third-module");
     spawn.sync("npx", ["tsc", "-p", "tsconfig.json", "--sourcemap"], { cwd: thirdModulePath });
     testContext = await JoyTestContext.createDevServerContext(curPath);
+    // await waitFor();
   }, 999999);
 
   afterAll(async () => {
@@ -19,7 +20,6 @@ describe("import-module", () => {
   });
 
   test("main module api", async () => {
-    // await waitForMoment();
     const response = await got.get(testContext.getUrl("/api/hello"), {
       throwHttpErrors: false,
       responseType: "text",
@@ -28,7 +28,6 @@ describe("import-module", () => {
   }, 999999);
 
   test("main module page", async () => {
-    // await waitForMoment();
     await page.goto(testContext.getUrl("/"));
     const message = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(message).toBe("Hello main");

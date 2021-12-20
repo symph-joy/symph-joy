@@ -1,5 +1,5 @@
 export * from "./abstract.interface";
-export * from "./context/provider.interface";
+export * from "./context/component.interface";
 export * from "./context/component-info-aware.interface";
 export * from "./application-context.interface";
 export * from "./context/scope-options.interface";

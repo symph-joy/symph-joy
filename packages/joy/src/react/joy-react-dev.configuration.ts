@@ -11,15 +11,15 @@ import { JoyReactDevServer } from "../server/joy-react-dev-server";
  */
 @Configuration()
 export class JoyReactDevConfiguration {
-  // @Configuration.Provider()
+  // @Configuration.Component()
   // public joyBuildConfiguration: JoyBuildDevConfiguration;
 
-  // @Configuration.Provider()
+  // @Configuration.Component()
   // public joyReactRouter: JoyReactRouterPluginDev;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactContextFactory: ReactContextFactoryDev;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyReactServer: JoyReactDevServer;
 }

@@ -16,14 +16,14 @@ interface ApplicationComponentProps {
 export function ReactAppContainer({ appContext, App }: ApplicationComponentProps): React.ComponentElement<any, any> {
   const [reduxStore, ReactRouterComponent, reactRouterProps] = useMemo(() => {
     return [
-      appContext.syncGet(ReactReduxService),
-      appContext.syncGet("reactRouterComponent") as { new (...args: any): any },
-      appContext.syncTryGet<Record<string, any>>("reactRouterProps"),
+      appContext.getSync(ReactReduxService),
+      appContext.getSync("reactRouterComponent") as { new (...args: any): any },
+      appContext.getOptionalSync<Record<string, any>>("reactRouterProps"),
     ];
   }, []);
-  // const ReactRouterComponent = useMemo(() => appContext.syncGet("reactRouterComponent") as { new (...args: any): any }, []);
-  // const reactRouterProps =  useMemo(() => appContext.syncTryGet<Record<string, any>>("reactRouterProps"), []);
-  // const reactRouter = appContext.syncGet<ReactRouter>("reactRouter", {
+  // const ReactRouterComponent = useMemo(() => appContext.getSync("reactRouterComponent") as { new (...args: any): any }, []);
+  // const reactRouterProps =  useMemo(() => appContext.getOptionalSync<Record<string, any>>("reactRouterProps"), []);
+  // const reactRouter = appContext.getSync<ReactRouter>("reactRouter", {
   //   optional: true,
   // });
   if (!reduxStore) {

@@ -1,4 +1,4 @@
-import { Component, ProviderScanner, RegisterTap } from "@symph/core";
+import { Component, ComponentScanner, RegisterTap } from "@symph/core";
 import { Value } from "@symph/config";
 import { JoyReactRouterPlugin } from "../react/router/joy-react-router-plugin";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
@@ -38,7 +38,7 @@ export class JoyImportService {
 
   constructor(
     public joyReactRouterPlugin: JoyReactRouterPlugin,
-    public providerScanner: ProviderScanner,
+    public componentScanner: ComponentScanner,
     public fileScanner: FileScanner,
     public joyAppConfig: JoyAppConfig,
     public apiSrcEntryGenerator: ApiSrcEntryGenerator

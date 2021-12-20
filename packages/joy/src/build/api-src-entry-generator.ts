@@ -1,4 +1,4 @@
-import { Autowire, Component, RegisterTap } from "@symph/core";
+import { Inject, Component, RegisterTap } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { join, sep } from "path";
 import { readFileSync } from "fs";
@@ -39,7 +39,7 @@ export class ApiSrcEntryGenerator {
 
   public isWatch = false;
 
-  constructor(@Autowire() private joyAppConfig: JoyAppConfig, private fileGenerator: FileGenerator) {
+  constructor(@Inject() private joyAppConfig: JoyAppConfig, private fileGenerator: FileGenerator) {
     this.srcDir = this.joyAppConfig.resolveAppDir("src/server");
     this.isWatch = this.joyAppConfig.dev;
   }

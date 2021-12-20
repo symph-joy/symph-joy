@@ -1,4 +1,4 @@
-import { Abstract, ClassProvider, FactoryProvider, Provider, Scope, TProviderName, Type, ValueProvider } from "../interfaces";
+import { Abstract, ClassComponent, FactoryComponent, TComponent, Scope, ComponentName, Type, ValueComponent } from "../interfaces";
 import { randomStringGenerator } from "../utils/random-string-generator.util";
 import { isNil } from "../utils/shared.utils";
 import { STATIC_CONTEXT } from "./constants";
@@ -34,7 +34,7 @@ interface InstanceMetadataStore {
 
 export interface IComponentWrapper<T = any> {
   readonly id: string;
-  readonly name: TProviderName | TProviderName[];
+  readonly name: ComponentName | ComponentName[];
   readonly async?: boolean;
   readonly scope?: Scope;
   type: Type<T> | Abstract<T>;
@@ -44,13 +44,13 @@ export type InstanceBy = "class" | "factory" | "value";
 export type ComponentWrapperOptions<T = any> = Partial<ComponentWrapper<T>> & Partial<InstancePerContext<T>>;
 
 export class ComponentWrapper<T = any> implements IComponentWrapper {
-  public readonly name: TProviderName;
-  public readonly alias: TProviderName[];
+  public readonly name: ComponentName;
+  public readonly alias: ComponentName[];
   public readonly package?: string;
   public readonly global = false as boolean; // 如果为false，只有通过明确的包名，才能找到该Component，无法通过匿名包名或全局找到。
   public readonly async?: boolean;
   // public readonly module?: any;
-  public readonly scope?: Scope = Scope.DEFAULT;
+  public readonly scope?: Scope = Scope.SINGLETON;
   public type: Type<T> | Abstract<T>;
   public factory?: ((...args: any[]) => T) | { factory: Type; property: string }; // useFactory
   public inject?: (string | Type<any> | InjectCustomOptionsInterface)[];
@@ -178,7 +178,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
   }
 
   public isDependencyTreeStatic(): boolean {
-    if (this.scope === Scope.DEFAULT) {
+    if (this.scope === Scope.SINGLETON) {
       return true;
     }
     return false;
@@ -258,15 +258,15 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
    *
    * @param provider
    */
-  public replaceWith(provider: Partial<Provider>) {
+  public replaceWith(provider: Partial<TComponent>) {
     if (provider.type) {
       this.type = provider.type;
     }
 
     if ((provider as any).useValue) {
-      this.setInstanceByContextId(STATIC_CONTEXT, (provider as ValueProvider).useValue);
+      this.setInstanceByContextId(STATIC_CONTEXT, (provider as ValueComponent).useValue);
     } else if ((provider as any).useClass) {
-      const { type, scope, lazyRegister, useClass } = provider as ClassProvider;
+      const { type, scope, lazyRegister, useClass } = provider as ClassComponent;
       Object.assign(this, {
         type,
         scope,
@@ -276,7 +276,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
       });
       this.values.delete(STATIC_CONTEXT);
     } else if ((provider as any).useFactory) {
-      const { useFactory, inject, scope } = provider as FactoryProvider;
+      const { useFactory, inject, scope } = provider as FactoryComponent;
       Object.assign(this, { useFactory, inject: inject || [], scope });
       this.values.delete(STATIC_CONTEXT);
     } else {

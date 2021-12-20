@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactComponent, ReactController, RouteParam } from "@symph/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
-import { Autowire, IApplicationContext } from "@symph/core";
+import { Inject, IApplicationContext } from "@symph/core";
 import { Affix, Col, Menu, Row, Spin, Anchor, Drawer } from "antd";
 import styles from "./docs.less";
 import { Prerender, IJoyPrerender, TJoyPrerenderApi } from "@symph/joy/react";
@@ -12,7 +12,7 @@ const { Link } = Anchor;
 @Prerender()
 @ReactComponent()
 export class DocsPrerenderGenerator implements IJoyPrerender {
-  @Autowire()
+  @Inject()
   public docsModel: DocsModel;
 
   getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
@@ -67,7 +67,7 @@ export default class DocsIndexController extends BaseReactController {
     showDrawer: false,
   };
 
-  @Autowire()
+  @Inject()
   public docsModel: DocsModel;
 
   async initialModelStaticState(): Promise<void | number> {

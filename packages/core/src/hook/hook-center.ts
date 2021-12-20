@@ -1,19 +1,8 @@
-import {
-  AsyncParallelHook,
-  AsyncParallelBailHook,
-  AsyncSeriesHook,
-  AsyncSeriesWaterfallHook,
-  AsyncSeriesBailHook,
-  SyncHook,
-  SyncBailHook,
-  SyncWaterfallHook,
-  AsyncHook,
-} from "tapable";
 import { HookType, IHook } from "./interface/hook.interface";
 import { RuntimeException } from "../errors/exceptions/runtime.exception";
 import { ITap } from "./interface/tap.interface";
-import { Abstract, Provider, TProviderName, Type } from "../interfaces";
-import { getHooksMetadata, IHookMeta } from "./autowire-hook.decorator";
+import { Abstract, Type } from "../interfaces";
+import { getHooksMetadata } from "./inject-hook.decorator";
 import { getTapsMetadata } from "./register-tap.decorator";
 import { ComponentWrapper } from "../injector";
 import { Hook } from "./hook";

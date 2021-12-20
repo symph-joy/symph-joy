@@ -1,11 +1,11 @@
 import React from "react";
-import { Controller, ReactController, Autowire } from "@symph/core";
+import { Controller, ReactController, Inject } from "@symph/core";
 import { CalculateModel } from "../models/CalculateModel";
 import "./CalculateController.css";
 
 @Controller()
 export class CalculateController extends ReactController<any, any> {
-  @Autowire()
+  @Inject()
   public calculateModel: CalculateModel;
 
   renderView() {

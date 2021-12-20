@@ -1,7 +1,7 @@
 import assert from "assert";
 import { ICommandHandler } from "./interface/command-handler.interface";
 import { getCommandsMetadata } from "./command.decorator";
-import { IComponentWrapper, Component, InjectorHookTaps, RegisterTap, Type, EntryType, ProviderScanner } from "@symph/core";
+import { Component, IComponentWrapper, InjectorHookTaps, RegisterTap, Type } from "@symph/core";
 import { getCommandMetadata } from "./command-provider.decorator";
 import { JoyCommand } from "./command";
 

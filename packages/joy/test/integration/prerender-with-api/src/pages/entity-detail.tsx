@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
 import { EntityModel } from "../model/entity.model";
-import { Autowire, IApplicationContext } from "@symph/core";
+import { Inject, IApplicationContext } from "@symph/core";
 import { Prerender, IJoyPrerender } from "@symph/joy/react";
 
 @Prerender()
@@ -30,7 +30,7 @@ export default class EntityDetail extends BaseReactController {
   @RouteParam()
   private id: number;
 
-  @Autowire()
+  @Inject()
   public entityModel: EntityModel;
 
   async initialModelStaticState(urlParams: any): Promise<void | number> {

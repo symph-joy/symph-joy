@@ -1,41 +1,35 @@
-import { Abstract, ClassProvider, FactoryProvider, IInjectable, Provider, TProviderName, Type, ValueProvider } from "../interfaces";
+import { Abstract, ClassComponent, FactoryComponent, IInjectable, TComponent, ComponentName, Type, ValueComponent } from "../interfaces";
 import { isEmpty, isNil, isSubClass, isUndefined } from "../utils/shared.utils";
 import { ComponentWrapper, ComponentWrapperOptions } from "./component-wrapper";
 import { RuntimeException } from "../errors/exceptions/runtime.exception";
-import { AutowireHook, HookType, IHook } from "../hook";
+import { InjectHook, HookType, IHook } from "../hook";
 import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-unique-matched-provider.exception";
-
-// type TProviderName = string;
-
-interface ProviderName {
-  name?: string | symbol;
-}
 
 interface ProviderIndex {
   touchIndex(indexKey: string): void;
 
-  get(indexKey: string): TProviderName[];
+  get(indexKey: string): ComponentName[];
 
-  add(indexKey: string, providerId: TProviderName): void;
+  add(indexKey: string, providerId: ComponentName): void;
 
-  remove(indexKey: string, providerId: TProviderName): void;
+  remove(indexKey: string, providerId: ComponentName): void;
 }
 
 export class ApplicationContainer {
   // private readonly _providers = new Map<string, ComponentWrapper<Injectable>>()
   constructor() {}
 
-  @AutowireHook({ type: HookType.Traverse, async: false })
+  @InjectHook({ type: HookType.Traverse, async: false })
   public onComponentRegisterAfter: IHook;
 
-  @AutowireHook({ type: HookType.Traverse, async: false })
+  @InjectHook({ type: HookType.Traverse, async: false })
   public onComponentReplaceAfter: IHook;
 
   private readonly _providerStore = new Map<string, ComponentWrapper>();
 
   private readonly _typeMap = new Map<Type | Abstract, Map<Type | Abstract, string[]>>();
-  private readonly _nameMap = new Map<TProviderName, string[]>(); // key: component.name, value: component.id
-  private readonly _aliasMap = new Map<TProviderName, TProviderName>(); // key: aliasName, value: component.name
+  private readonly _nameMap = new Map<ComponentName, string[]>(); // key: component.name, value: component.id
+  private readonly _aliasMap = new Map<ComponentName, ComponentName>(); // key: aliasName, value: component.name
 
   // /**
   //  * 可使用已存在Component的情况：已存在的同名的，且类型兼容，scope相等。
@@ -177,7 +171,7 @@ export class ApplicationContainer {
     return hasDel;
   }
 
-  public addProviders(providers: Provider[]): ComponentWrapper[] {
+  public addProviders(providers: TComponent[]): ComponentWrapper[] {
     const instanceWrappers = new Array<ComponentWrapper>(providers?.length || 0);
     if (!providers || providers.length === 0) {
       return instanceWrappers;
@@ -185,7 +179,7 @@ export class ApplicationContainer {
     return providers.map((provider) => this.addProvider(provider));
   }
 
-  public getProviderDefinition<T = unknown>(nameOrType: string | Type<T> | Abstract<T>): Provider | undefined {
+  public getProviderDefinition<T = unknown>(nameOrType: string | Type<T> | Abstract<T>): TComponent | undefined {
     const wrapper = this.getProvider<T>(nameOrType);
     if (!wrapper) {
       return undefined;
@@ -193,8 +187,8 @@ export class ApplicationContainer {
     return this.getProviderDefinitionByWrapper(wrapper);
   }
 
-  private getProviderDefinitionByWrapper<T = unknown>(wrapper: ComponentWrapper<T>): Provider<T> {
-    let definition: Provider<T>;
+  private getProviderDefinitionByWrapper<T = unknown>(wrapper: ComponentWrapper<T>): TComponent<T> {
+    let definition: TComponent<T>;
     const { instanceBy, name, type, scope } = wrapper;
     if (instanceBy === "class") {
       definition = {
@@ -202,13 +196,13 @@ export class ApplicationContainer {
         useClass: type,
         scope,
         lazyRegister: wrapper.autoLoad,
-      } as ClassProvider<T>;
+      } as ClassComponent<T>;
     } else if (instanceBy === "value") {
       definition = {
         name: name,
         type,
         useValue: wrapper.instance,
-      } as ValueProvider<T>;
+      } as ValueComponent<T>;
     } else if (instanceBy === "factory") {
       definition = {
         name: name,
@@ -216,14 +210,14 @@ export class ApplicationContainer {
         useFactory: wrapper.factory,
         inject: wrapper.inject,
         scope: scope,
-      } as FactoryProvider<T>;
+      } as FactoryComponent<T>;
     } else {
       throw new Error(`unknown instanceBy, wrapper:${wrapper.id}`);
     }
     return definition;
   }
 
-  public addProvider(provider: Provider): ComponentWrapper {
+  public addProvider(provider: TComponent): ComponentWrapper {
     let instanceWrapper: ComponentWrapper;
     if (this.isCustomClass(provider)) {
       instanceWrapper = this.addCustomClass(provider);
@@ -237,23 +231,23 @@ export class ApplicationContainer {
     return instanceWrapper;
   }
 
-  public isCustomProvider(provider: Provider): provider is ClassProvider | FactoryProvider | ValueProvider {
-    return !isNil((provider as ClassProvider | FactoryProvider | ValueProvider).name);
+  public isCustomProvider(provider: TComponent): provider is ClassComponent | FactoryComponent | ValueComponent {
+    return !isNil((provider as ClassComponent | FactoryComponent | ValueComponent).name);
   }
 
-  public isCustomClass(provider: any): provider is ClassProvider {
-    return !isUndefined((provider as ClassProvider).useClass);
+  public isCustomClass(provider: any): provider is ClassComponent {
+    return !isUndefined((provider as ClassComponent).useClass);
   }
 
-  public isCustomValue(provider: any): provider is ValueProvider {
-    return !isUndefined((provider as ValueProvider).useValue);
+  public isCustomValue(provider: any): provider is ValueComponent {
+    return !isUndefined((provider as ValueComponent).useValue);
   }
 
-  public isCustomFactory(provider: any): provider is FactoryProvider {
-    return !isUndefined((provider as FactoryProvider).useFactory);
+  public isCustomFactory(provider: any): provider is FactoryComponent {
+    return !isUndefined((provider as FactoryComponent).useFactory);
   }
 
-  public addCustomClass(provider: ClassProvider): ComponentWrapper {
+  public addCustomClass(provider: ClassComponent): ComponentWrapper {
     const { name, package: packageName, global, alias, type, useClass, scope } = provider;
     return this.addWrapper({
       instanceBy: "class",
@@ -269,7 +263,7 @@ export class ApplicationContainer {
     });
   }
 
-  public addCustomValue(provider: ValueProvider): ComponentWrapper {
+  public addCustomValue(provider: ValueComponent): ComponentWrapper {
     const { name, alias, useValue: value, type = Object } = provider;
     return this.addWrapper({
       instanceBy: "value",
@@ -282,7 +276,7 @@ export class ApplicationContainer {
     });
   }
 
-  public addCustomFactory(provider: FactoryProvider): ComponentWrapper {
+  public addCustomFactory(provider: FactoryComponent): ComponentWrapper {
     const { name, alias, useFactory: factory, inject, scope, type } = provider;
     return this.addWrapper({
       instanceBy: "factory",
@@ -297,7 +291,7 @@ export class ApplicationContainer {
     });
   }
 
-  public replace(toReplaceWrapperId: string, newProvider: Partial<Provider>) {
+  public replace(toReplaceWrapperId: string, newProvider: Partial<TComponent>) {
     const provider = this.getProviderById(toReplaceWrapperId);
     if (!provider) {
       throw new RuntimeException("cannot merge provider, originalProvider id${}");
@@ -321,7 +315,7 @@ export class ApplicationContainer {
     return this._providerStore.get(componentId) !== undefined;
   }
 
-  public getProvider<T = unknown>(nameOrType: TProviderName | Type<T> | Abstract<T>, packageName?: string): ComponentWrapper<T> | undefined {
+  public getProvider<T = unknown>(nameOrType: ComponentName | Type<T> | Abstract<T>, packageName?: string): ComponentWrapper<T> | undefined {
     let wrapper: ComponentWrapper<T> | undefined;
     if (typeof nameOrType === "string" || typeof nameOrType === "symbol") {
       wrapper = this.getProviderByName(nameOrType, packageName) as ComponentWrapper<T>;
@@ -350,7 +344,7 @@ export class ApplicationContainer {
    * @param name
    * @param packageName
    */
-  public getProviderByName<T = any>(name: TProviderName, packageName?: string): ComponentWrapper<T> | undefined {
+  public getProviderByName<T = any>(name: ComponentName, packageName?: string): ComponentWrapper<T> | undefined {
     let id = this._nameMap.get(name);
     if (!id || id.length === 0) {
       const targetName = this._aliasMap.get(name);

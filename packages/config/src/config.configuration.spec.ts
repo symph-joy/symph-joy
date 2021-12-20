@@ -1,4 +1,4 @@
-import { Configuration, ApplicationContextFactory, ValueProvider } from "@symph/core";
+import { Configuration, ApplicationContextFactory, ValueComponent } from "@symph/core";
 import { ConfigService } from "./config.service";
 import { ConfigConfiguration } from "./config.configuration";
 import path from "path";
@@ -22,7 +22,7 @@ describe("config.configuration", () => {
         useValue: {
           msg: "hello",
         },
-      } as ValueProvider,
+      } as ValueComponent,
     });
     expect(configService).toBeInstanceOf(ConfigService);
     expect(configService.get("msg")).toBe("hello");
@@ -79,7 +79,7 @@ describe("config.configuration", () => {
         useValue: {
           msg: "hello",
         },
-      } as ValueProvider,
+      } as ValueComponent,
     });
     expect(configService.get("msg")).toBe("hello");
     await configService.loadConfig();

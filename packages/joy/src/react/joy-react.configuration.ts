@@ -4,9 +4,9 @@ import { JoyReactServer } from "../joy-server/server/joy-react-server";
 
 @Configuration()
 export class JoyReactConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactContextFactory: ReactContextFactory;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyReactServer: JoyReactServer;
 }

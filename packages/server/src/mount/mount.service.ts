@@ -1,8 +1,8 @@
-import { Component, ComponentWrapper, RuntimeException, TProviderName, TypeOrTokenType } from "@symph/core";
+import { Component, ComponentWrapper, RuntimeException, ComponentName, TypeOrTokenType } from "@symph/core";
 
 @Component()
 export class MountService {
-  private mountMap = new Map<TProviderName, string>();
+  private mountMap = new Map<ComponentName, string>();
 
   public setMount(mount: string, components: ComponentWrapper[]): void {
     if (components && components.length) {
@@ -13,7 +13,7 @@ export class MountService {
   }
 
   public getMount(typeOrToken: TypeOrTokenType): string | undefined {
-    let componentName: TProviderName;
+    let componentName: ComponentName;
     if (typeof typeOrToken === "string" || typeof typeOrToken === "symbol") {
       componentName = typeOrToken;
     } else {

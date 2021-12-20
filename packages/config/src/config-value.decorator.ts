@@ -1,5 +1,5 @@
 import { getJsonSchema, JsonSchema, Property } from "@tsed/schema";
-import { Autowire, Type } from "@symph/core";
+import { Inject, Type } from "@symph/core";
 import { ConfigService } from "./config.service";
 
 const REFLECT_KEY_CONFIG = "__joy_config_item";
@@ -65,7 +65,7 @@ export function Value(options: Partial<Omit<IConfigValueMeta, "propKey">> = {}):
     }
 
     // 声明一个隐藏的私有依赖属性，确保在ConfigService实例化后，才实例化被装饰的类。
-    Autowire(ConfigService)(target, JoyConfigProp);
+    Inject(ConfigService)(target, JoyConfigProp);
     Reflect.defineMetadata(REFLECT_KEY_CONFIG, existConfigs, target);
   };
 }

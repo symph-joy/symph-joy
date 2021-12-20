@@ -4,9 +4,9 @@ import { HelloService } from "./hello.service";
 
 @Configuration()
 export class HelloConfig {
-  @Configuration.Provider()
+  @Configuration.Component()
   helloController: HelloController;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   helloService: HelloService;
 }

@@ -1,7 +1,7 @@
 import { CONFIGURATION_METADATA } from "../../../constants";
-import { Provider } from "./provider.decorator";
+import { Component } from "./configuration-component.decorator";
 import { EntryType } from "../../../interfaces";
-import { Component } from "../component.decorator";
+import { Component as ComponentDec } from "../component.decorator";
 
 export interface IConfigurationOptions {
   imports?: Record<string, EntryType>;
@@ -18,7 +18,7 @@ export function Configuration(options: IConfigurationOptions = {}): ClassDecorat
       }
     }
     Reflect.defineMetadata(CONFIGURATION_METADATA, metaData, target);
-    Component()(target);
+    ComponentDec()(target);
   };
 }
 
@@ -27,4 +27,4 @@ export function getConfigurationMeta(val: any): IConfigurationOptions | undefine
   return configMetaData;
 }
 
-Configuration.Provider = Provider;
+Configuration.Component = Component;

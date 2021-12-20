@@ -19,7 +19,7 @@ export default class App extends React.Component<ReactAppProps, any> {
   constructor(props: ReactAppProps, context?: any) {
     super(props, context);
     const appContext = props.appContext;
-    this.reactRouter = appContext.syncGet<ReactRouter>("reactRouter");
+    this.reactRouter = appContext.getSync<ReactRouter>("reactRouter");
   }
   render() {
     const routes = this.reactRouter.getRoutes() || [];

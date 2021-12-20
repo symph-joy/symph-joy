@@ -8,7 +8,7 @@ import getPort from "get-port";
 
 @CommandProvider()
 export class JoyBuildCommand extends JoyCommand {
-  // constructor(@Autowire() protected configService: ConfigService, @Autowire() protected appContext: ServerApplication) {
+  // constructor(@Inject() protected configService: ConfigService, @Inject() protected appContext: ServerApplication) {
   //   super();
   // }
 

@@ -8,23 +8,23 @@ import { ConfigConfiguration } from "@symph/config";
 
 @Configuration()
 export class ReactApplicationConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public configConfiguration: ConfigConfiguration;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactApplicationConfig: ReactApplicationConfig;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactRouterComponent(): typeof StaticRouter | typeof BrowserRouter | typeof MemoryRouter | typeof HashRouter {
     return MemoryRouter;
   }
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactRouter: ReactRouter;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public mountService: MountService;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactAppInitManager: ReactAppInitManager;
 }

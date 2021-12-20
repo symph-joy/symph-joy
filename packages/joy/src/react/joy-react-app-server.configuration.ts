@@ -1,5 +1,5 @@
 import { ReactRouterServer } from "./router/react-router-server";
-import { Autowire, Configuration } from "@symph/core";
+import { Inject, Configuration } from "@symph/core";
 import { BrowserRouter, HashRouter, MemoryRouter, StaticRouter } from "react-router-dom";
 import { IReactRoute, ReactApplicationConfiguration } from "@symph/react";
 import { ReactFetchServerService } from "./service/react-fetch-server.service";
@@ -9,15 +9,15 @@ import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 
 @Configuration()
 export class JoyReactAppServerConfiguration extends ReactApplicationConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactRouterComponent(): typeof StaticRouter | typeof BrowserRouter | typeof MemoryRouter | typeof HashRouter {
     return StaticRouter;
   }
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactRouter: ReactRouterServer;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyReactAutoGenModules(joyAppConfig: JoyAppConfig): Record<string, unknown>[] {
     const distDir = joyAppConfig.resolveAppDir(joyAppConfig.distDir);
     const genServerModulesPath = path.join(distDir, REACT_OUT_DIR, "server/gen-server-modules.js");
@@ -25,8 +25,8 @@ export class JoyReactAppServerConfiguration extends ReactApplicationConfiguratio
     return modules.default || modules;
   }
 
-  @Configuration.Provider()
-  public joyReactAutoGenRoutes(@Autowire("joyReactAutoGenModules") genModules: Record<string, unknown>[]): IReactRoute[] {
+  @Configuration.Component()
+  public joyReactAutoGenRoutes(@Inject("joyReactAutoGenModules") genModules: Record<string, unknown>[]): IReactRoute[] {
     for (const genModule of genModules) {
       if (genModule.joyReactAutoGenRoutes) {
         return genModule.joyReactAutoGenRoutes as any;
@@ -35,6 +35,6 @@ export class JoyReactAppServerConfiguration extends ReactApplicationConfiguratio
     return [];
   }
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyFetchService: ReactFetchServerService;
 }

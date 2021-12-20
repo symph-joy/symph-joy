@@ -11,27 +11,27 @@ export class ConfigConfiguration {
     return true;
   }
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public configService: ConfigService;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public getConfigLoaderFactory(): ConfigLoaderFactory {
     return new ConfigLoaderFactory();
   }
 
-  @Configuration.Provider({ name: CONFIG_DEFAULT_VALUE })
+  @Configuration.Component({ name: CONFIG_DEFAULT_VALUE })
   getDefaultConfig(): Record<string, unknown> {
     return {};
   }
 
-  @Configuration.Provider({ name: CONFIG_OPTIONS })
+  @Configuration.Component({ name: CONFIG_OPTIONS })
   getConfigServiceOptions(): ConfigServiceOptions {
     return {
       isAutoLoadConfig: this.isAutoLoadConfig(),
     };
   }
 
-  // @Configuration.Provider({ name: SYMPH_CONFIG_LOADERS, type: Object })
+  // @Configuration.Component({ name: SYMPH_CONFIG_LOADERS, type: Object })
   // private async _getConfigLoaders(
   //   @Optional() @Inject(CONFIG_INIT_VALUE) initValue: Record<string, any>
   // ): Promise<ConfigLoader[]> {

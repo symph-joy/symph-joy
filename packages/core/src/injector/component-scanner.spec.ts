@@ -1,14 +1,12 @@
 import "reflect-metadata";
-import { ProviderScanner } from "./provider-scanner";
+import { ComponentScanner } from "./component-scanner";
 import { Configuration } from "../decorators/core/configuration/configuration.decorator";
-import { Provider } from "../decorators/core/configuration/provider.decorator";
-import { Autowire, Component, Optional } from "../decorators/core";
+import { Inject, Component, Optional } from "../decorators/core";
 import { EntryType, IApplicationContext, Scope } from "../interfaces";
 import { ApplicationContainer } from "./index";
 import { Injector } from "./injector";
 import { HookCenter } from "../hook/hook-center";
 import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
-import { object } from "prop-types";
 import { ApplicationContext } from "../application-context";
 
 function instanceContainer(): ApplicationContainer {
@@ -26,10 +24,10 @@ function createTestAppContext(entry?: EntryType[], parent?: IApplicationContext)
   return [context, container, injector];
 }
 
-describe("provider-scanner", () => {
+describe("component-scanner", () => {
   describe("scan configuration class", () => {
     const container = new ApplicationContainer();
-    const providerScanner = new ProviderScanner();
+    const componentScanner = new ComponentScanner();
 
     @Component()
     class TestProvider {
@@ -41,25 +39,25 @@ describe("provider-scanner", () => {
       class TestConfig {
         public prop1 = "value1";
 
-        @Provider()
+        @Configuration.Component()
         public testProvider: TestProvider;
       }
 
-      const providers = await providerScanner.scanForConfig(TestConfig);
+      const providers = await componentScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const testProvider = providers[1];
       expect(testProvider).toMatchObject({
         name: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       });
     });
 
     test("should scan out a factory provider", async () => {
       @Configuration()
       class TestConfig {
-        @Provider()
+        @Configuration.Component()
         public factoryProvider(): TestProvider {
           const p = new TestProvider();
           p.msg = "from factoryProvider 1";
@@ -67,7 +65,7 @@ describe("provider-scanner", () => {
         }
       }
 
-      const providers = await providerScanner.scanForConfig(TestConfig);
+      const providers = await componentScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const factoryProvider = providers[1];
       expect(factoryProvider).toMatchObject({
@@ -75,22 +73,22 @@ describe("provider-scanner", () => {
         useFactory: { factory: TestConfig, property: "factoryProvider" },
         inject: [],
         type: TestProvider,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       });
     });
 
     test("should scan out a factory provider，with custom inject param", async () => {
       @Configuration()
       class TestConfig {
-        @Provider()
-        public factoryProvider(@Autowire("initValue") initValue: string): TestProvider {
+        @Configuration.Component()
+        public factoryProvider(@Inject("initValue") initValue: string): TestProvider {
           const p = new TestProvider();
           p.msg = initValue;
           return p;
         }
       }
 
-      const providers = await providerScanner.scanForConfig(TestConfig);
+      const providers = await componentScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const factoryProvider = providers[1];
       expect(factoryProvider).toMatchObject({
@@ -103,22 +101,22 @@ describe("provider-scanner", () => {
           } as InjectCustomOptionsInterface,
         ],
         type: TestProvider,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       });
     });
 
     test("should scan out a factory provider，with optional param", async () => {
       @Configuration()
       class TestConfig {
-        @Provider()
-        public factoryProvider(@Optional() @Autowire("initValue") initValue: string): TestProvider {
+        @Configuration.Component()
+        public factoryProvider(@Optional() @Inject("initValue") initValue: string): TestProvider {
           const p = new TestProvider();
           p.msg = initValue;
           return p;
         }
       }
 
-      const providers = await providerScanner.scanForConfig(TestConfig);
+      const providers = await componentScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const factoryProvider = providers[1];
       expect(factoryProvider).toMatchObject({
@@ -132,7 +130,7 @@ describe("provider-scanner", () => {
           } as InjectCustomOptionsInterface,
         ],
         type: TestProvider,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       });
     });
 
@@ -145,7 +143,7 @@ describe("provider-scanner", () => {
         },
       };
 
-      const providers = await providerScanner.scan(valueProvider);
+      const providers = await componentScanner.scan(valueProvider);
       expect(providers && providers.length).toBe(1);
       const provider = providers[0];
       expect(provider).toMatchObject({
@@ -158,14 +156,14 @@ describe("provider-scanner", () => {
     test("should scan out a provider, with meta data", async () => {
       @Configuration()
       class TestConfig {
-        @Provider({
+        @Configuration.Component({
           name: "testProvider1",
           scope: Scope.PROTOTYPE,
         })
         public testProvider: TestProvider;
       }
 
-      const providers = await providerScanner.scanForConfig(TestConfig);
+      const providers = await componentScanner.scanForConfig(TestConfig);
       expect(providers && providers.length).toBe(2);
       const testProvider1 = providers[1];
       expect(testProvider1).toMatchObject({
@@ -184,30 +182,30 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class TestConfig {
-        @Provider()
+        @Configuration.Component()
         public testProvider: TestProvider;
       }
 
       @Configuration()
       class ExtendConfig extends TestConfig {
-        @Provider()
+        @Configuration.Component()
         public extendTestProvider: TestProvider1;
       }
 
-      const providers = await providerScanner.scanForConfig(ExtendConfig);
+      const providers = await componentScanner.scanForConfig(ExtendConfig);
       const testProvider = providers.find((v) => v.name === "testProvider");
       const extendTestProvider = providers.find((v) => v.name === "extendTestProvider");
       expect(testProvider).toMatchObject({
         name: "testProvider",
         useClass: TestProvider,
         type: TestProvider,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       });
       expect(extendTestProvider).toMatchObject({
         name: "extendTestProvider",
         useClass: TestProvider1,
         type: TestProvider1,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       });
     });
 
@@ -219,7 +217,7 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class TestConfig {
-        @Provider()
+        @Configuration.Component()
         public testProvider: TestProvider;
       }
 
@@ -230,25 +228,25 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class ExtendConfig extends TestConfig {
-        @Provider()
+        @Configuration.Component()
         public testProvider: TestProvider2;
       }
 
-      const providers = await providerScanner.scanForConfig(ExtendConfig);
+      const providers = await componentScanner.scanForConfig(ExtendConfig);
       const testProvider = providers.find((v) => v.name === "testProvider");
 
       expect(testProvider).toMatchObject({
         name: "testProvider",
         useClass: TestProvider2,
         type: TestProvider2,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       });
     });
   });
 
   describe("scan module exports", () => {
     const container1 = instanceContainer();
-    const providerScanner = new ProviderScanner();
+    const componentScanner = new ComponentScanner();
 
     @Component({ scope: Scope.PROTOTYPE })
     class TestProvider {
@@ -259,7 +257,7 @@ describe("provider-scanner", () => {
       const exports = {
         TestProvider,
       };
-      const providers = await providerScanner.scan(exports);
+      const providers = await componentScanner.scan(exports);
       container1.addProviders(providers);
       expect(providers && providers.length).toBe(1);
       const testProvider = providers[0];
@@ -275,7 +273,7 @@ describe("provider-scanner", () => {
     test("should scan out providers", async () => {
       @Configuration()
       class TestConfig {
-        @Provider()
+        @Configuration.Component()
         public testProvider1: TestProvider;
       }
 
@@ -283,7 +281,7 @@ describe("provider-scanner", () => {
         TestProvider,
         TestConfig,
       };
-      const providers = await providerScanner.scan(exports);
+      const providers = await componentScanner.scan(exports);
       container1.addProviders(providers);
       expect(providers && providers.length).toBe(3);
       const testProvider = providers.find((it) => it.name === "testProvider");
@@ -299,14 +297,14 @@ describe("provider-scanner", () => {
         name: "testProvider1",
         useClass: TestProvider,
         type: TestProvider,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       });
     });
   });
 
   describe("scan imports", () => {
     const container = new ApplicationContainer();
-    const providerScanner = new ProviderScanner();
+    const componentScanner = new ComponentScanner();
 
     test("should scan cover the imports modules", async () => {
       @Component()
@@ -316,14 +314,14 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class DepConfig {
-        @Provider()
+        @Configuration.Component()
         public testProvider: TestProvider;
       }
 
       @Configuration({ imports: { DepConfig } })
       class Main {}
 
-      const providers = await providerScanner.scan(Main);
+      const providers = await componentScanner.scan(Main);
       const testProvider = providers.find((v) => v.name === "testProvider");
       expect(testProvider).not.toBeNull();
     });
@@ -331,7 +329,7 @@ describe("provider-scanner", () => {
 
   describe("scan an array entry", () => {
     const container = new ApplicationContainer();
-    const providerScanner = new ProviderScanner();
+    const componentScanner = new ComponentScanner();
 
     test("should scan out providers in all array items", async () => {
       @Component()
@@ -342,18 +340,18 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class DepConfig {
-        @Provider()
+        @Configuration.Component()
         public testProvider2: TestProvider2;
       }
 
-      const providers = await providerScanner.scan([TestProvider1, DepConfig]);
+      const providers = await componentScanner.scan([TestProvider1, DepConfig]);
       expect(providers.length).toBe(3);
     });
   });
 
   describe("scan nest config", () => {
     const container = new ApplicationContainer();
-    const providerScanner = new ProviderScanner();
+    const componentScanner = new ComponentScanner();
 
     test("should scan out providers, when config class is nested in object", async () => {
       @Component()
@@ -364,11 +362,11 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class Config1 {
-        @Provider()
+        @Configuration.Component()
         public testProvider2: TestProvider2;
       }
 
-      const providers = await providerScanner.scan({ TestProvider1, Config1 });
+      const providers = await componentScanner.scan({ TestProvider1, Config1 });
       expect(providers.length).toBe(3);
     });
 
@@ -381,20 +379,20 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class Config1 {
-        @Provider()
+        @Configuration.Component()
         public testProvider1: TestProvider1;
       }
 
       @Configuration()
       class Config2 {
-        @Provider()
+        @Configuration.Component()
         public testProvider2: TestProvider2;
 
-        @Provider()
+        @Configuration.Component()
         public config1: Config1;
       }
 
-      const providers = await providerScanner.scan(Config2);
+      const providers = await componentScanner.scan(Config2);
       expect(providers.length).toBe(4);
       expect(providers.find((it) => it.name === "testProvider1")).not.toBeNull();
       expect(providers.find((it) => it.name === "testProvider2")).not.toBeNull();
@@ -411,22 +409,22 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class Config1 {
-        @Provider()
+        @Configuration.Component()
         public testProvider1: TestProvider1;
       }
 
       @Configuration()
       class Config2 {
-        @Provider()
+        @Configuration.Component()
         public testProvider2: TestProvider2;
 
-        @Provider()
+        @Configuration.Component()
         public config1(): Config1 {
           return new Config1();
         }
       }
 
-      const providers = await providerScanner.scan(Config2);
+      const providers = await componentScanner.scan(Config2);
       expect(providers.length).toBe(4);
       expect(providers.find((it) => it.name === "testProvider1")).not.toBeNull();
       expect(providers.find((it) => it.name === "testProvider2")).not.toBeNull();
@@ -436,7 +434,7 @@ describe("provider-scanner", () => {
   });
 
   describe("integrate container、 scanner and injector", () => {
-    const providerScanner = new ProviderScanner();
+    const componentScanner = new ComponentScanner();
     const [context, container, injector] = createTestAppContext();
 
     @Component()
@@ -447,7 +445,7 @@ describe("provider-scanner", () => {
     test("should load instance", async () => {
       @Configuration()
       class TestConfig {
-        @Provider()
+        @Configuration.Component()
         public testProvider(): TestProvider {
           const test = new TestProvider();
           test.msg = "hello";
@@ -455,7 +453,7 @@ describe("provider-scanner", () => {
         }
       }
 
-      const providers = await providerScanner.scan(TestConfig);
+      const providers = await componentScanner.scan(TestConfig);
       container.addProviders(providers);
       const testProviderWrapper = container.getProvider<TestProvider>("testProvider");
       const testProviderInstance = await injector.loadProvider(testProviderWrapper!);
@@ -465,7 +463,7 @@ describe("provider-scanner", () => {
   });
 
   describe("scan out order.", () => {
-    const providerScanner = new ProviderScanner();
+    const componentScanner = new ComponentScanner();
 
     test("Should is the same order as defined in configuration class.", async () => {
       @Component()
@@ -473,17 +471,17 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class Config {
-        @Provider()
+        @Configuration.Component()
         public provider1: TestProvider;
 
-        @Provider()
+        @Configuration.Component()
         public provider2: TestProvider;
 
-        @Provider()
+        @Configuration.Component()
         public provider3: TestProvider;
       }
 
-      const providers = await providerScanner.scan(Config);
+      const providers = await componentScanner.scan(Config);
       expect(providers[0].type).toBe(Config);
       expect(providers[1].name).toBe("provider1");
       expect(providers[2].name).toBe("provider2");
@@ -496,26 +494,26 @@ describe("provider-scanner", () => {
 
       @Configuration()
       class Config {
-        @Provider()
+        @Configuration.Component()
         public provider1: TestProvider;
 
-        @Provider()
+        @Configuration.Component()
         public provider2: TestProvider;
 
-        @Provider()
+        @Configuration.Component()
         public provider3: TestProvider;
       }
 
       @Configuration()
       class Config1 extends Config {
-        @Provider()
+        @Configuration.Component()
         public provider2: TestProvider;
 
-        @Provider()
+        @Configuration.Component()
         public provider4: TestProvider;
       }
 
-      const providers = await providerScanner.scan(Config1);
+      const providers = await componentScanner.scan(Config1);
       expect(providers[0].type).toBe(Config1);
       expect(providers[1].name).toBe("provider1");
       expect(providers[2].name).toBe("provider2");
@@ -545,7 +543,7 @@ describe("provider-scanner", () => {
         },
       };
 
-      const providers = await providerScanner.scan(module);
+      const providers = await componentScanner.scan(module);
       expect(providers[0].name).toBe("provider1");
       expect(providers[1].name).toBe("provider2");
       expect(providers[2].name).toBe("provider3");
@@ -585,7 +583,7 @@ describe("provider-scanner", () => {
         type: TestProvider,
       };
 
-      const providers = await providerScanner.scan(module);
+      const providers = await componentScanner.scan(module);
       expect(providers[0].name).toBe("provider1");
       expect(providers[1].name).toBe("provider22");
       expect(providers[2].name).toBe("provider3");

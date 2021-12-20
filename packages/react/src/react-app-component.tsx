@@ -19,7 +19,7 @@ export default function ReactAppComponent() {
   if (!appContext) {
     throw new Error("React App Context not found.");
   }
-  const reactRouter = appContext.syncGet<ReactRouter>("reactRouter");
+  const reactRouter = appContext.getSync<ReactRouter>("reactRouter");
   const routes = reactRouter.getRoutes() || [];
 
   return <RouteSwitch routes={routes} extraProps={{}} />;

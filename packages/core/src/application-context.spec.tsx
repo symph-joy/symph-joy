@@ -1,10 +1,10 @@
 import React from "react";
 import { Configuration } from "./decorators/core/configuration/configuration.decorator";
-import { Provider } from "./decorators/core/configuration/provider.decorator";
+import { Component } from "./decorators/core/configuration/configuration-component.decorator";
 import { ApplicationContext } from "./application-context";
 import { ComponentWrapper, ApplicationContainer } from "./injector";
 import { RegisterTap } from "./hook";
-import { TProviderName } from "./interfaces";
+import { ComponentName } from "./interfaces";
 import { Component } from "./decorators";
 import { IApplicationContextAware } from "./interfaces/context/application-context-ware.interface";
 
@@ -23,7 +23,7 @@ describe("core-context", () => {
 
     @Configuration()
     class AppConfig {
-      @Provider()
+      @Component()
       public helloProvider: HelloProvider;
     }
 
@@ -67,7 +67,7 @@ describe("core-context", () => {
 
     @Configuration()
     class AppConfig {
-      @Provider()
+      @Component()
       public helloProvider: HelloProvider;
     }
 
@@ -83,7 +83,7 @@ describe("core-context", () => {
     test("onModuleAfterLoad", async () => {
       @Component()
       class HelloProvider {
-        public allProviderNames: TProviderName[] = [];
+        public allProviderNames: ComponentName[] = [];
 
         @RegisterTap()
         async onModuleAfterLoad(modules: any, instanceWrappers: ComponentWrapper[]) {
@@ -100,7 +100,7 @@ describe("core-context", () => {
 
       @Configuration()
       class AppConfig {
-        @Provider()
+        @Component()
         public helloProvider: HelloProvider;
       }
 
@@ -131,7 +131,7 @@ describe("core-context", () => {
 
       @Configuration()
       class AppConfig {
-        @Provider()
+        @Component()
         public helloProvider: HelloProvider;
       }
 

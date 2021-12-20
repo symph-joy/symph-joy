@@ -1,6 +1,6 @@
 import { PROPERTY_DEPS_METADATA, SELF_DECLARED_DEPS_METADATA } from "../../constants";
-import { isFunction, isUndefined } from "../../utils/shared.utils";
-import { providerNameGenerate } from "../../injector/provider-name-generate";
+import { isFunction } from "../../utils/shared.utils";
+import { componentNameGenerate } from "../../injector/component-name-generate";
 import { IInjectableDependency, EnuInjectBy } from "../../interfaces/injectable-dependency.interface";
 import { Type } from "../../interfaces";
 import { InjectCustomOptionsInterface } from "../../interfaces/inject-custom-options.interface";
@@ -22,7 +22,7 @@ import { InjectCustomOptionsInterface } from "../../interfaces/inject-custom-opt
  *
  * @publicApi
  */
-export function Autowire<T = any>(typeOrId?: string | symbol | Type<T>) {
+export function Inject<T = any>(typeOrId?: string | symbol | Type<T>) {
   let providerName: string | symbol;
   let providerType: Type<T>;
   if (isFunction(typeOrId)) {
@@ -91,7 +91,7 @@ function injectConstructor(target: Object, index: number, providerName: string |
   if (providerName) {
     injectBy = EnuInjectBy.NAME;
   } else {
-    providerName = providerNameGenerate(providerType);
+    providerName = componentNameGenerate(providerType);
   }
   let dependencies: IInjectableDependency[] = Reflect.getMetadata(SELF_DECLARED_DEPS_METADATA, target) || [];
   dependencies = [...dependencies, { index, designType, name: providerName, type: providerType, injectBy }];

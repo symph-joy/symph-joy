@@ -1,8 +1,8 @@
-import { ClassProvider, FactoryProvider, Provider as ProviderType, TProviderName, ValueProvider } from "../../../interfaces/context/provider.interface";
+import { ClassComponent, FactoryComponent, TComponent, ComponentName, ValueComponent } from "../../../interfaces/context/component.interface";
 import { isNil, isUndefined } from "../../../utils/shared.utils";
 import { METADATA } from "../../../constants";
 import { Scope } from "../../../interfaces";
-import { CUSTOM_INJECT_FUNC_PARAM_META } from "../autowire.decorator";
+import { CUSTOM_INJECT_FUNC_PARAM_META } from "../inject.decorator";
 import { InjectCustomOptionsInterface } from "../../../interfaces/inject-custom-options.interface";
 
 /**
@@ -14,7 +14,7 @@ export type ProviderOptions = {
   /**
    * provider name
    */
-  name?: TProviderName;
+  name?: ComponentName;
 
   /**
    * Optional enum defining lifetime of the provider that is injected.
@@ -30,16 +30,16 @@ export type ProviderOptions = {
   /**
    * alias array
    */
-  alias?: TProviderName[];
+  alias?: ComponentName[];
 };
 
-export function Provider(options: ProviderOptions = {}): PropertyDecorator {
+export function Component(options: ProviderOptions = {}): PropertyDecorator {
   return (target, propertyKey) => {
     const propType = Reflect.getMetadata("design:type", target, propertyKey);
     const paramTypes = Reflect.getMetadata("design:paramtypes", target, propertyKey);
     const returnType = Reflect.getMetadata("design:returntype", target, propertyKey);
 
-    let provider: ProviderType;
+    let provider: TComponent;
     if (!isUndefined(paramTypes)) {
       // FactoryProvider
       const inject = [...paramTypes];
@@ -65,22 +65,22 @@ export function Provider(options: ProviderOptions = {}): PropertyDecorator {
           // useFactory: target[propertyKey],
           useFactory: { factory: target.constructor, property: propertyKey },
           inject,
-          scope: Scope.DEFAULT,
+          scope: Scope.SINGLETON,
         },
         options
-      ) as FactoryProvider;
+      ) as FactoryComponent;
     } else {
-      if (isCustomValueProvider(options)) {
-        //ValueProvider
+      if (isCustomValueComponent(options)) {
+        //ValueComponent
         provider = Object.assign(
           {
             name: propertyKey,
             type: propType,
             useValue: options.useValue,
-            scope: Scope.DEFAULT,
+            scope: Scope.SINGLETON,
           },
           options
-        ) as ValueProvider;
+        ) as ValueComponent;
       } else {
         //ClassProvider
         provider = Object.assign(
@@ -88,14 +88,14 @@ export function Provider(options: ProviderOptions = {}): PropertyDecorator {
             name: propertyKey,
             type: propType,
             useClass: propType,
-            scope: Scope.DEFAULT,
+            scope: Scope.SINGLETON,
           },
           options
-        ) as ClassProvider;
+        ) as ClassComponent;
       }
     }
 
-    let providers: ProviderType[] = Reflect.getOwnMetadata(METADATA.PROVIDERS, target);
+    let providers: TComponent[] = Reflect.getOwnMetadata(METADATA.PROVIDERS, target);
     if (isNil(providers)) {
       // 尝试重父类获取
       providers = [...(Reflect.getMetadata(METADATA.PROVIDERS, target) || [])];
@@ -112,10 +112,10 @@ export function Provider(options: ProviderOptions = {}): PropertyDecorator {
   };
 }
 
-export function getConfigurationProviders(configClazz: any): ProviderType[] {
-  return Reflect.getMetadata(METADATA.PROVIDERS, configClazz.prototype) as ProviderType[];
+export function getConfigurationComponents(configClazz: any): TComponent[] {
+  return Reflect.getMetadata(METADATA.PROVIDERS, configClazz.prototype) as TComponent[];
 }
 
-export function isCustomValueProvider(provider: any): provider is ValueProvider {
-  return provider && !isUndefined((provider as ValueProvider).useValue);
+export function isCustomValueComponent(provider: any): provider is ValueComponent {
+  return provider && !isUndefined((provider as ValueComponent).useValue);
 }

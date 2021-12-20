@@ -7,15 +7,15 @@ export enum Scope {
    * is strictly tied to the application lifecycle. Once the application has
    * bootstrapped, all providers have been instantiated.
    */
-  DEFAULT,
+  SINGLETON = "singleton",
   /**
    * A new private instance of the provider is instantiated for every use
    */
-  PROTOTYPE,
+  PROTOTYPE = "prototype",
   /**
    * A new instance is instantiated for each request processing pipeline
    */
-  REQUEST,
+  REQUEST = "request",
 }
 
 /**

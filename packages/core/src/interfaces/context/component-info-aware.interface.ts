@@ -1,9 +1,9 @@
 import { Scope } from "./scope-options.interface";
 import { Type } from "../type.interface";
-import { TProviderName } from "./provider.interface";
+import { ComponentName } from "./component.interface";
 import { Abstract } from "../abstract.interface";
 
-export type ComponentAwareInfo = { name: TProviderName; type: Type | Abstract; scope: Scope };
+export type ComponentAwareInfo = { name: ComponentName; type: Type | Abstract; scope: Scope };
 
 export interface IComponentInfoAware {
   setProviderInfo(info: ComponentAwareInfo): void;

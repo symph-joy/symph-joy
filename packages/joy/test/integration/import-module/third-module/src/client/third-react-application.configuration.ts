@@ -5,12 +5,12 @@ import { ThirdFetchService } from "./service/third-fetch.service";
 
 @ReactConfiguration()
 export class ThirdReactApplicationConfiguration {
-  @ReactConfiguration.Provider()
+  @ReactConfiguration.Component()
   public thirdHelloReactController: ThirdHelloReactController;
 
-  @ReactConfiguration.Provider()
+  @ReactConfiguration.Component()
   public thirdEmbedView1: ThirdEmbedView1;
 
-  @ReactConfiguration.Provider()
+  @ReactConfiguration.Component()
   public thirdFetchService: ThirdFetchService;
 }

@@ -2,7 +2,7 @@ import "jest-playwright-preset";
 import * as path from "path";
 import { JoyTestContext } from "../../../util/joy-test-context";
 import { promises } from "fs";
-import { waitForMoment } from "../../../util/joy-test-utils";
+import { waitFor } from "../../../util/joy-test-utils";
 import { getDomInnerHtml } from "../../../util/html-utils";
 
 describe("prerender-with-api", () => {

@@ -17,8 +17,8 @@ export class ReactModuleFetchService implements IComponentInfoAware, IComponentL
   }
 
   initialize(): Promise<void> | void {
-    this.joyFetchService = this.context.syncGet(ReactFetchService);
-    this.mountService = this.context.syncGet(MountService);
+    this.joyFetchService = this.context.getSync(ReactFetchService);
+    this.mountService = this.context.getSync(MountService);
   }
 
   public componentName: string | undefined;

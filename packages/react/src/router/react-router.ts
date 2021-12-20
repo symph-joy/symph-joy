@@ -1,6 +1,6 @@
 import { IReactRoute } from "../interfaces";
 import { matchPath } from "react-router";
-import { ClassProvider, isClassProvider, Provider, TProviderName, Type } from "@symph/core";
+import { ClassComponent, isClassComponent, TComponent, ComponentName, Type } from "@symph/core";
 import { getRouteMeta, IRouteMeta } from "./react-route.decorator";
 import * as H from "history";
 import { RoutePathNode } from "./route-sorter";
@@ -159,7 +159,7 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     // by default, there is nothing to merge
   }
 
-  public addRouteProvider(provider: Provider, basePath?: string): T[] | undefined {
+  public addRouteProvider(provider: TComponent, basePath?: string): T[] | undefined {
     if (!provider.type || provider.type === Object) {
       return;
     }
@@ -185,7 +185,7 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     return addedRoutes;
   }
 
-  public replaceRouteProvider(nextProvider: ClassProvider, preProviderName: string): { added: T[]; removed: T[]; modified: T[] } {
+  public replaceRouteProvider(nextProvider: ClassComponent, preProviderName: string): { added: T[]; removed: T[]; modified: T[] } {
     const nextRoutes = this.scanProvider(nextProvider) || [];
     const preProviders = this.filterRoutes((route) => route.providerName === preProviderName);
 
@@ -224,7 +224,7 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
 
   protected createFromMeta(
     path: string,
-    providerName: TProviderName,
+    providerName: ComponentName,
     providerPackage: string | undefined,
     meta: IRouteMeta,
     useClass: Type | Function
@@ -241,10 +241,10 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     } as T;
   }
 
-  public scanProvider(provider: Provider): T[] | undefined {
+  public scanProvider(provider: TComponent): T[] | undefined {
     const { name, package: providerPackage } = provider;
     let clazz: Type | Function;
-    if (isClassProvider(provider)) {
+    if (isClassComponent(provider)) {
       clazz = provider.useClass;
     } else {
       clazz = provider.type;

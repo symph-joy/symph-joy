@@ -1,5 +1,5 @@
 import { DOMElement, ReactElement } from "react";
-import { ComponentWrapper, EntryType, IApplicationContext, Provider } from "@symph/core";
+import { ComponentWrapper, EntryType, IApplicationContext, TComponent } from "@symph/core";
 import { TReactAppComponent } from "../react-app-component";
 import { MountModule } from "../mount/mount-module";
 
@@ -16,7 +16,7 @@ export interface IReactApplication extends IApplicationContext {
 
   getState(): any;
 
-  registerModule(module: EntryType | Provider | MountModule | (EntryType | MountModule | Provider)[]): ComponentWrapper[];
+  registerModule(module: EntryType | TComponent | MountModule | (EntryType | MountModule | TComponent)[]): ComponentWrapper[];
 
   /**
    * Registers a prefix for every HTTP route path.

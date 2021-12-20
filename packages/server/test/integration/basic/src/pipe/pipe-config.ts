@@ -5,12 +5,12 @@ import { PipeUserByIdPipe } from "./pipe-user-by-id.pipe";
 
 @Configuration()
 export class PipeConfig {
-  @Configuration.Provider()
+  @Configuration.Component()
   pipeController: PipeController;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   usersService: PipeUsersService;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   userByIdPipe: PipeUserByIdPipe;
 }

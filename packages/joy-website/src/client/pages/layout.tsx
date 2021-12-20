@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { Layout, Menu, AutoComplete, Button } from "antd";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 import { DocsModel } from "../model/docs.model";
 import _ from "lodash";
 import { BaseReactController, ReactController, RouteSwitch } from "@symph/react";
@@ -36,10 +36,10 @@ interface IStateProps {
 
 @ReactController()
 export default class MainLayout extends BaseReactController<any, IStateProps> {
-  @Autowire()
+  @Inject()
   public layoutModel: LayoutModel;
 
-  @Autowire()
+  @Inject()
   public docsModel: DocsModel;
 
   state: IStateProps = {

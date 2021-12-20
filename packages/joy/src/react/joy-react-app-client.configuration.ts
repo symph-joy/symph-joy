@@ -12,14 +12,14 @@ import { ReactFetchClientService } from "./service/react-fetch.client.service";
   },
 })
 export class JoyReactAppClientConfiguration extends ReactApplicationConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactRouterComponent(): typeof StaticRouter | typeof BrowserRouter | typeof MemoryRouter | typeof HashRouter {
     return BrowserRouter;
   }
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactRouter: ReactRouterClient;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyFetchService: ReactFetchClientService;
 }

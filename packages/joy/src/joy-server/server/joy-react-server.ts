@@ -45,7 +45,7 @@ import { PagesManifest } from "../../build/webpack/plugins/pages-manifest-plugin
 import { removePathTrailingSlash } from "../../client/normalize-trailing-slash";
 import getRouteFromAssetPath from "../lib/router/utils/get-route-from-asset-path";
 import { FontManifest } from "./font-utils";
-import { HookType, Component, IComponentLifecycle, AutowireHook, IHook } from "@symph/core";
+import { HookType, Component, IComponentLifecycle, InjectHook, IHook } from "@symph/core";
 import { JoyAppConfig } from "./joy-app-config";
 // import { ServerConfig } from "./server-config";
 // import { JoyReactAppServerConfig } from "../lib/joy-react-app-server-config";
@@ -124,7 +124,7 @@ export class JoyReactServer implements IComponentLifecycle {
   /**
    * 在服务端渲染html之前调用的hook
    */
-  @AutowireHook({ parallel: false, type: HookType.Waterfall })
+  @InjectHook({ parallel: false, type: HookType.Waterfall })
   private onBeforeRender: IHook;
 
   // public constructor({

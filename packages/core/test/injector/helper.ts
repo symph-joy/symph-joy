@@ -1,15 +1,15 @@
 import { Scope, Type } from "../../src/interfaces";
 import { ComponentWrapper } from "../../src/injector/component-wrapper";
 import { ApplicationContainer } from "../../src/injector";
-import { providerNameGenerate } from "../../src/injector/provider-name-generate";
-import { getComponentMeta, Provider } from "../../src";
+import { componentNameGenerate } from "../../src/injector/component-name-generate";
+import { getComponentMeta, TComponent } from "../../src";
 
 export function createInstanceWrapper<T>(providerClazz: Type<T>, matedata?: Partial<ComponentWrapper>): ComponentWrapper<T> {
   return new ComponentWrapper({
-    name: providerNameGenerate(providerClazz),
+    name: componentNameGenerate(providerClazz),
     type: providerClazz,
     instance: Object.create(providerClazz.prototype),
-    scope: Scope.DEFAULT,
+    scope: Scope.SINGLETON,
     isResolved: false,
     instanceBy: "class",
     // host: hostModule,
@@ -17,7 +17,7 @@ export function createInstanceWrapper<T>(providerClazz: Type<T>, matedata?: Part
   });
 }
 
-export function registerComponents<T>(container: ApplicationContainer, ...providerDefines: (Type<any> | Provider)[]): [...ComponentWrapper<any>[]] {
+export function registerComponents<T>(container: ApplicationContainer, ...providerDefines: (Type<any> | TComponent)[]): [...ComponentWrapper<any>[]] {
   const wrappers: any[] = [];
   if (providerDefines && providerDefines.length) {
     providerDefines.forEach((providerDefine) => {
@@ -31,7 +31,7 @@ export function registerComponents<T>(container: ApplicationContainer, ...provid
       // }
       // const wrapper = createInstanceWrapper(clz, providerMateData);
 
-      let meta: Provider;
+      let meta: TComponent;
       if (typeof providerDefine === "function") {
         meta = getComponentMeta(providerDefine)!;
       } else {

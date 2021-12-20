@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { ReactModel, BaseReactController, ReactController, BaseReactModel, Route } from "@symph/react";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 import { Prerender } from "@symph/joy/react";
 
 @ReactModel()
@@ -53,7 +53,7 @@ export class StatefulModel extends BaseReactModel<{
 @Route({ path: "/stateful" })
 @ReactController()
 export default class StatefulCtl extends BaseReactController {
-  @Autowire()
+  @Inject()
   public statefulModel: StatefulModel;
 
   async initialModelStaticState(urlParams: any): Promise<void> {

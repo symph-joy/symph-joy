@@ -7,7 +7,7 @@ import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { JoyDevConfiguration } from "../../server/joy-dev.configuration";
 import { JoyServerApplicationDev } from "../../server/joy-server-application-dev";
 import { JoyServerFactoryDev } from "../../server/joy-server-factory-dev";
-import { ApplicationContext, ValueProvider } from "@symph/core";
+import { ApplicationContext, ValueComponent } from "@symph/core";
 import HotReloader from "../../server/hot-reloader";
 import { BuildDevConfiguration } from "../../build/build-dev.configuration";
 
@@ -79,7 +79,7 @@ export class JoyDevCommand extends JoyCommand {
     if (this.joyServerApplicationDev) {
       await this.joyServerApplicationDev.close();
     }
-    const parentConfigService = this.buildContext.syncGet(ConfigService);
+    const parentConfigService = this.buildContext.getSync(ConfigService);
     const parentConfigs = parentConfigService.get();
     const appContext = await JoyServerFactoryDev.createServer(
       {},
@@ -175,7 +175,7 @@ export class JoyDevCommand extends JoyCommand {
             dev: true,
             ...argOpts,
           },
-        } as ValueProvider,
+        } as ValueComponent,
       },
     ]);
     await this.buildContext.init();

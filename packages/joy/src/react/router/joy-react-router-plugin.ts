@@ -1,4 +1,4 @@
-import { ClassProvider, Component, Provider, RegisterTap } from "@symph/core";
+import { ClassComponent, Component, TComponent, RegisterTap } from "@symph/core";
 import { IReactRoute, ReactRouter } from "@symph/react";
 import { IScanOutModule } from "../../build/scanner/file-scanner";
 import { readFileSync } from "fs";
@@ -127,7 +127,7 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     this.addFromScanOutModule(module);
   }
 
-  public getFsRoute(filePath: string, provider?: Provider, basePath?: string): T | undefined {
+  public getFsRoute(filePath: string, provider?: TComponent, basePath?: string): T | undefined {
     const pagesDir = this.joyAppConfig.resolvePagesDir();
     if (!filePath.startsWith(pagesDir)) {
       return undefined;
@@ -161,7 +161,7 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     return fsRoute;
   }
 
-  private addFSRoute(scanOutModule: IScanOutModule, exportKey: string, provider: Provider, basePath?: string): T | undefined {
+  private addFSRoute(scanOutModule: IScanOutModule, exportKey: string, provider: TComponent, basePath?: string): T | undefined {
     const filePath = scanOutModule.resource;
     if (!filePath) {
       return undefined;

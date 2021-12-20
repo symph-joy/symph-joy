@@ -26,7 +26,7 @@ import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { FileGenerator } from "../build/file-generator";
 import { EventEmitter } from "events";
 import OnDemandModuleHandler from "./on-demand-module-handler";
-import { AutowireHook, Component, HookType, IHook } from "@symph/core";
+import { InjectHook, Component, HookType, IHook } from "@symph/core";
 import { BuildDevConfig } from "./build-dev-config";
 import crypto from "crypto";
 import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
@@ -125,7 +125,7 @@ function erroredPages(compilation: Compilation) {
 
 @Component()
 export default class HotReloader {
-  @AutowireHook({ type: HookType.Traverse, async: true })
+  @InjectHook({ type: HookType.Traverse, async: true })
   public onWillJoyBuild: IHook<{ dev: boolean }, void>;
 
   private dir: string;

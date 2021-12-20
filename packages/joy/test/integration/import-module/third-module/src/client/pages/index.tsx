@@ -1,12 +1,12 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, Route } from "@symph/react";
 import { ThirdModel } from "../model/third-model";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 
 @Route({ path: "/" })
 @ReactController()
 export default class ThirdHelloReactController extends BaseReactController {
-  @Autowire()
+  @Inject()
   thirdModel: ThirdModel;
 
   async initialModelStaticState(urlParams: any): Promise<void | number> {

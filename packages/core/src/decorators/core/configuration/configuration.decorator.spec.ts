@@ -1,6 +1,6 @@
 import { Component } from "../component.decorator";
 import { Configuration } from "./configuration.decorator";
-import { ProviderScanner } from "../../../injector/provider-scanner";
+import { ComponentScanner } from "../../../injector/component-scanner";
 import { createPackage } from "../../../package/package";
 
 describe("configuration.decorator", () => {
@@ -17,7 +17,7 @@ describe("configuration.decorator", () => {
     @Configuration({ imports: { P2 } })
     class B extends A {}
 
-    const scanner = new ProviderScanner();
+    const scanner = new ComponentScanner();
     const providers = scanner.scan(B);
     expect(providers.find((it) => it.type === P1)).toBeTruthy();
     expect(providers.find((it) => it.type === P2)).toBeTruthy();
@@ -37,7 +37,7 @@ describe("configuration.decorator", () => {
     @Configuration({ imports: { p: P2 } })
     class B extends A {}
 
-    const scanner = new ProviderScanner();
+    const scanner = new ComponentScanner();
     const providers = scanner.scan(B);
     expect(providers.find((it) => it.type === P1)).not.toBeTruthy();
     expect(providers.find((it) => it.type === P2)).toBeTruthy();
@@ -54,18 +54,18 @@ describe("configuration.decorator", () => {
     @pk1.Package()
     @Configuration()
     class Config {
-      @Configuration.Provider({ global: true })
+      @Configuration.Component({ global: true })
       public p1(): P1 {
         return new P1();
       }
 
-      @Configuration.Provider()
+      @Configuration.Component()
       public p2(): P2 {
         return new P2();
       }
     }
 
-    const scanner = new ProviderScanner();
+    const scanner = new ComponentScanner();
     const providers = scanner.scan(Config);
     const dp1 = providers.find((it) => it.type === P1);
     const dp2 = providers.find((it) => it.type === P2);

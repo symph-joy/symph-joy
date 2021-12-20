@@ -11,18 +11,18 @@ import { BuildCommonConfiguration } from "./build-common.configuration";
  */
 @Configuration()
 export class BuildDevConfiguration extends BuildCommonConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public configConfiguration: JoyConfigConfiguration;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyAppConfig: JoyAppConfig;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public hotReloader: HotReloader;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public buildConfig: BuildDevConfig;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyReactRouterPlugin: JoyReactRouterPluginDev;
 }

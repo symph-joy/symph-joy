@@ -1,8 +1,8 @@
 import { Scope } from "../../interfaces/context/scope-options.interface";
 import { INJECTABLE_METADATA } from "../../constants";
 import "reflect-metadata";
-import { ClassProvider, TProviderName } from "../../interfaces";
-import { providerNameGenerate } from "../../injector/provider-name-generate";
+import { ClassComponent, ComponentName } from "../../interfaces";
+import { componentNameGenerate } from "../../injector/component-name-generate";
 
 /**
  * Defines the injection scope.
@@ -13,7 +13,7 @@ export type ComponentOptions = {
   /**
    * provider name
    */
-  name?: TProviderName;
+  name?: ComponentName;
 
   /**
    * Optional enum defining lifetime of the provider that is injected.
@@ -29,7 +29,7 @@ export type ComponentOptions = {
   /**
    * alias array
    */
-  alias?: TProviderName[];
+  alias?: ComponentName[];
 
   /**
    * 通过类型依赖注入时，如果未在容器中注册，是否自动注册组件，并获取实例。
@@ -55,13 +55,13 @@ export type ComponentOptions = {
  */
 export function Component(options: ComponentOptions = {}): ClassDecorator {
   return (target) => {
-    const name = options.name || providerNameGenerate(target);
-    const provider: ClassProvider = Object.assign(
+    const name = options.name || componentNameGenerate(target);
+    const provider: ClassComponent = Object.assign(
       {
         name,
         type: target,
         useClass: target,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
         lazyRegister: false,
         global: true,
       },
@@ -71,7 +71,7 @@ export function Component(options: ComponentOptions = {}): ClassDecorator {
   };
 }
 
-export function getComponentMeta(target: Object, ownMeta = true): ClassProvider | undefined {
+export function getComponentMeta(target: Object, ownMeta = true): ClassComponent | undefined {
   if (ownMeta) {
     return Reflect.getOwnMetadata(INJECTABLE_METADATA, target);
   } else {

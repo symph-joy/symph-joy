@@ -19,13 +19,13 @@ import { ExceptionFilter } from "../interfaces/exceptions";
 import { HttpServer } from "../interfaces/http";
 import { ArgumentsHost } from "../interfaces/features/arguments-host.interface";
 import { HttpStatus } from "../enums";
-import { Autowire, Logger, Optional } from "@symph/core";
+import { Inject, Logger, Optional } from "@symph/core";
 
 export class BaseExceptionFilter<T = any> implements ExceptionFilter<T> {
   private static readonly logger = new Logger("ExceptionsHandler");
 
   @Optional()
-  @Autowire()
+  @Inject()
   protected readonly httpAdapterHost?: HttpAdapterHost;
 
   constructor(protected readonly applicationRef?: HttpServer) {}

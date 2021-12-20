@@ -12,37 +12,37 @@ import { BuildConfig } from "./build-config";
 
 @Configuration()
 export class BuildCommonConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public buildConfig: BuildConfig;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public apiSrcEntryGenerator: ApiSrcEntryGenerator;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public srcBuilder: SrcBuilder;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public emitSrcService: EmitSrcService;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public fileGenerator: FileGenerator;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public fileScanner: FileScanner;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyReactRouterPlugin: JoyReactRouterPlugin;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyPrerenderService: JoyPrerenderService;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyImportService: JoyImportService;
 
-  // @Configuration.Provider()
+  // @Configuration.Component()
   // public buildService: JoyBuildService;
 
   // feature serviers
-  @Configuration.Provider()
+  @Configuration.Component()
   public globalCssPlugin: GlobalCssPlugin;
 }

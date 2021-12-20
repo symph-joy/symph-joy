@@ -9,7 +9,7 @@ import { ReactController } from "./react-controller.decorator";
 import { matchPath, MemoryRouter, useLocation } from "react-router-dom";
 import "reflect-metadata";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
-import { Configuration, Autowire, ApplicationContainer } from "@symph/core";
+import { Configuration, Inject, ApplicationContainer } from "@symph/core";
 import { ReactApplicationFactory } from "./react-application-factory";
 import { ReactComponent } from "./react-component.decorator";
 
@@ -27,7 +27,7 @@ describe("react-application", () => {
 
       @Configuration()
       class AppConfig {
-        @Configuration.Provider()
+        @Configuration.Component()
         public helloProvider: HelloProvider;
       }
 
@@ -80,7 +80,7 @@ describe("react-application", () => {
 
       @ReactController()
       class HelloController extends BaseReactController {
-        @Autowire()
+        @Inject()
         private helloModel: HelloModel;
 
         renderView() {
@@ -118,7 +118,7 @@ describe("react-application", () => {
       class HelloController extends BaseReactController<{
         message: string;
       }> {
-        @Autowire()
+        @Inject()
         private helloModel: HelloModel;
 
         componentDidMount() {
@@ -153,7 +153,7 @@ describe("react-application", () => {
 
       @Configuration()
       class AppConfig {
-        @Configuration.Provider()
+        @Configuration.Component()
         helloModel: HelloModel;
       }
 
@@ -191,7 +191,7 @@ describe("react-application", () => {
       class HelloController extends BaseReactController<{
         message: string;
       }> {
-        @Autowire()
+        @Inject()
         private helloModel: HelloModel;
 
         constructor(props: any, context: any) {
@@ -250,10 +250,10 @@ describe("react-application", () => {
 
       @ReactController()
       class HelloController extends BaseReactController {
-        @Autowire()
+        @Inject()
         private helloModel: HelloModel;
 
-        @Autowire("helloModel1")
+        @Inject("helloModel1")
         private helloModel1: HelloModel;
 
         componentDidMount() {

@@ -3,28 +3,28 @@ import { Scope } from "./scope-options.interface";
 import { Type } from "../type.interface";
 import { InjectCustomOptionsInterface } from "../inject-custom-options.interface";
 
-export type TProviderName = string | symbol;
+export type ComponentName = string | symbol;
 
 /**
  * Injection token type
  */
-export type ProviderToken = TProviderName | Type<any> | Abstract<any>;
+export type ProviderToken = ComponentName | Type<any> | Abstract<any>;
 
 /**
  * todo rename to ProviderDefinition
  * @publicApi
  */
-export type Provider<T = any> =
-  | IProvider // deprecated
-  | ClassProvider<T>
-  | ValueProvider<T>
-  | FactoryProvider<T>;
+export type TComponent<T = any> =
+  | IComponent // deprecated
+  | ClassComponent<T>
+  | ValueComponent<T>
+  | FactoryComponent<T>;
 
-export interface IProvider<T = any> {
+export interface IComponent<T = any> {
   /**
    * provider name
    */
-  name: TProviderName;
+  name: ComponentName;
 
   /**
    * in which package domain
@@ -36,7 +36,7 @@ export interface IProvider<T = any> {
   /**
    * alias array
    */
-  alias?: TProviderName[];
+  alias?: ComponentName[];
 
   /**
    * provider class
@@ -61,7 +61,7 @@ export interface IProvider<T = any> {
  *
  * @publicApi
  */
-export interface ClassProvider<T = any> extends IProvider<T> {
+export interface ClassComponent<T = any> extends IComponent<T> {
   /**
    * Type (class name) of provider (instance to be injected).
    */
@@ -90,31 +90,31 @@ export interface ClassProvider<T = any> extends IProvider<T> {
  *
  * @publicApi
  */
-export interface ValueProvider<T = any> extends IProvider<T> {
+export interface ValueComponent<T = any> extends IComponent<T> {
   /**
-   * Instance of a provider to be injected.
+   * Instance of a component to be injected.
    */
   useValue: T;
 }
 
 /**
- * Interface defining a *Factory* type provider.
+ * Interface defining a *Factory* type component.
  *
  * For example:
  * ```typescript
  * const connectionFactory = {
  *   provide: 'CONNECTION',
- *   useFactory: (optionsProvider: OptionsProvider) => {
- *     const options = optionsProvider.get();
+ *   useFactory: (optionsComponent: OptionsComponent) => {
+ *     const options = optionsComponent.get();
  *     return new DatabaseConnection(options);
  *   },
- *   inject: [OptionsProvider],
+ *   inject: [OptionsComponent],
  * };
  * ```
  *
  * @publicApi
  */
-export interface FactoryProvider<T = any> extends IProvider<T> {
+export interface FactoryComponent<T = any> extends IComponent<T> {
   /**
    * Factory function that returns an instance of the provider to be injected.
    */
@@ -129,19 +129,19 @@ export interface FactoryProvider<T = any> extends IProvider<T> {
   scope?: Scope;
 }
 
-export function isProvider(provider: Provider): provider is ClassProvider | FactoryProvider | ValueProvider {
+export function isComponent(provider: TComponent): provider is ClassComponent | FactoryComponent | ValueComponent {
   const { id, useClass, useValue, useFactory } = provider as any;
   return typeof id != "undefined" && (typeof useClass !== "undefined" || typeof useValue !== "undefined" || typeof useFactory !== "undefined");
 }
 
-export function isClassProvider(provider: any): provider is ClassProvider {
-  return typeof (provider as ClassProvider).useClass !== "undefined";
+export function isClassComponent(provider: any): provider is ClassComponent {
+  return typeof (provider as ClassComponent).useClass !== "undefined";
 }
 
-export function isValueProvider(provider: any): provider is ValueProvider {
-  return typeof (provider as ValueProvider).useValue !== "undefined";
+export function isValueComponent(provider: any): provider is ValueComponent {
+  return typeof (provider as ValueComponent).useValue !== "undefined";
 }
 
-export function isFactoryProvider(provider: any): provider is FactoryProvider {
-  return typeof (provider as FactoryProvider).useFactory !== "undefined";
+export function isFactoryComponent(provider: any): provider is FactoryComponent {
+  return typeof (provider as FactoryComponent).useFactory !== "undefined";
 }
