@@ -19,4 +19,11 @@ export class DocsController {
       treeData: await this.docsService.getTitleTree("/" + path),
     };
   }
+
+  @Get("/titleArray")
+  public async getTitleArray() {
+    return {
+      data: await this.docsService.getTitleArray(),
+    };
+  }
 }

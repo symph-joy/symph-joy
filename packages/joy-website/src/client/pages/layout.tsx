@@ -76,11 +76,24 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
   }
 
   onChange = async (value) => {
+    this.setState({
+      search: value,
+    });
     if (value) {
       await this.docsModel.getSearch(value);
     } else {
       await this.docsModel.clearSearch();
     }
+  };
+
+  onSelect = async (v, option) => {
+    const value = this.docsModel.state.result[option.key];
+    if (value.children) {
+      this.pushHistory(`/docs${value.path}${value.children[0].id}`);
+    } else {
+      this.pushHistory(`/docs${value.path}`);
+    }
+    await this.docsModel.clearSearch();
   };
 
   componentWillUnmount() {
@@ -91,15 +104,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
 
     observer && observer.unobserve(oBtn);
   }
-
-  jump = async (value) => {
-    if (value.children) {
-      this.props.history.push(`/docs${value.path}${value.children[0].id}`);
-    } else {
-      this.props.history.push(`/docs${value.path}`);
-    }
-    await this.docsModel.clearSearch();
-  };
 
   // 切换样式文件
   changeBodyTheme = () => {
@@ -126,14 +130,8 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     this.layoutModel.changeCollapsed(!collapsed);
   };
 
-  onSelect = () => {
-    this.setState({
-      search: "",
-    });
-    this.docsModel.clearSearch();
-  };
-
   pushHistory = (url) => {
+    console.log("url:", url);
     const { history } = this.props;
     history.push(url);
   };
@@ -143,8 +141,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     const { result } = this.docsModel.state;
     const { collapsed, isMobile, theme } = this.layoutModel.state;
     const themeUrl = theme === "dark" ? "/static/antd.dark.css" : "/static/antd.css";
-
-    console.log("themeUrl: ", themeUrl);
     return (
       <Layout className={styles.layout}>
         <link id="theme-style" rel="stylesheet" href={themeUrl} />
@@ -184,6 +180,7 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                   </MenuItem>,
                   <MenuItem key="7">
                     <AutoComplete
+                      allowClear
                       value={this.state.search}
                       placeholder="搜索"
                       onSelect={this.onSelect}
@@ -193,13 +190,11 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                       {result.map((value, key) => (
                         <Option key={key} value={value.text}>
                           {value.children ? (
-                            <a onClick={() => this.jump(value)} className={styles.selectOption}>
+                            <a className={styles.selectOption}>
                               {value.text} &gt; {value.children[0].text}
                             </a>
                           ) : (
-                            <a onClick={() => this.jump(value)} className={styles.selectOption}>
-                              {value.text}
-                            </a>
+                            <a className={styles.selectOption}>{value.text}</a>
                           )}
                         </Option>
                       ))}
