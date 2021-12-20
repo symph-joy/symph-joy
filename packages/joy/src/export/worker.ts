@@ -185,13 +185,13 @@ export async function exportPage(
       getHeaderNames: () => [],
     };
 
-    const req = ({
+    const req = {
       url: path,
       ...headerMocks,
-    } as unknown) as IncomingMessage;
-    const res = ({
+    } as unknown as IncomingMessage;
+    const res = {
       ...headerMocks,
-    } as unknown) as ServerResponse;
+    } as unknown as ServerResponse;
 
     envConfig.setConfig({
       serverRuntimeConfig,

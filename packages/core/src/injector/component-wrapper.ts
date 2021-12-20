@@ -229,7 +229,7 @@ export class ComponentWrapper<T = any> implements IComponentWrapper {
   public isInRequestScope(contextId: ContextId, inquirer?: ComponentWrapper | undefined): boolean {
     const isDependencyTreeStatic = this.isDependencyTreeStatic();
 
-    return ((!isDependencyTreeStatic && contextId !== STATIC_CONTEXT && (!this.isTransient || (this.isTransient && inquirer))) as any) as boolean;
+    return (!isDependencyTreeStatic && contextId !== STATIC_CONTEXT && (!this.isTransient || (this.isTransient && inquirer))) as any as boolean;
   }
 
   public isLazyTransient(contextId: ContextId, inquirer: ComponentWrapper | undefined): boolean {
