@@ -1,4 +1,4 @@
-import { Autowire, Component, EntryType, IApplicationContext, RuntimeException, ValueProvider } from "@symph/core";
+import { Inject, Component, EntryType, IApplicationContext, RuntimeException, ValueComponent } from "@symph/core";
 import { All, Controller, HttpException, HttpStatus, NestApplicationOptions } from "@symph/server";
 import HotReloader from "./hot-reloader";
 import { JoyServerApplication } from "../joy-server/server/joy-server-application";

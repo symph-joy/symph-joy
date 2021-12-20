@@ -1,7 +1,7 @@
 import { FSWatcher, watch } from "chokidar";
 import lodash from "lodash";
 import winPath from "../util/winPath/winPath";
-import { AutowireHook, Component, HookType, IHook, Autowire, IComponentLifecycle } from "@symph/core";
+import { InjectHook, Component, HookType, IHook, Inject, IComponentLifecycle } from "@symph/core";
 import { dirname } from "path";
 import { EOL } from "os";
 import { promises } from "fs";
@@ -58,7 +58,7 @@ export interface IGenerateFiles {
 
 @Component()
 export class FileGenerator implements IComponentLifecycle {
-  constructor(@Autowire() private joyAppConfig: JoyAppConfig) {}
+  constructor(@Inject() private joyAppConfig: JoyAppConfig) {}
 
   async initialize() {
     await this.cleanTempFiles();
@@ -66,10 +66,10 @@ export class FileGenerator implements IComponentLifecycle {
     // await this.generateEntryModuleFiles();
   }
 
-  @AutowireHook({ type: HookType.Waterfall, async: true })
+  @InjectHook({ type: HookType.Waterfall, async: true })
   private onGenerateFiles: IHook;
 
-  @AutowireHook({ type: HookType.Waterfall, async: true })
+  @InjectHook({ type: HookType.Waterfall, async: true })
   private addTmpGenerateWatcherPaths: IHook;
 
   public watchers: FSWatcher[] = [];

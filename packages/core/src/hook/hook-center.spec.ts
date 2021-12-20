@@ -1,5 +1,5 @@
 import { HookType, IHook } from "./interface/hook.interface";
-import { AutowireHook } from "./autowire-hook.decorator";
+import { InjectHook } from "./inject-hook.decorator";
 import { Configuration, Component } from "../decorators/core";
 import { ApplicationContext } from "../application-context";
 import { RegisterTap } from "./register-tap.decorator";
@@ -11,7 +11,7 @@ describe("hook", () => {
     class APlugin {
       key: string;
 
-      @AutowireHook({ id: "modifyContent", parallel: false, type: HookType.Waterfall })
+      @InjectHook({ id: "modifyContent", parallel: false, type: HookType.Waterfall })
       public modifyContent: IHook;
 
       public async content() {
@@ -35,10 +35,10 @@ describe("hook", () => {
 
     @Configuration()
     class AppConfig {
-      @Configuration.Provider()
+      @Configuration.Component()
       public aPlugin!: APlugin;
 
-      @Configuration.Provider()
+      @Configuration.Component()
       public bPlugin!: BPlugin;
     }
 
@@ -54,7 +54,7 @@ describe("hook", () => {
     class APlugin {
       key: string;
 
-      @AutowireHook({ parallel: false, type: HookType.Waterfall })
+      @InjectHook({ parallel: false, type: HookType.Waterfall })
       public ahook: IHook;
 
       public async content() {
@@ -84,13 +84,13 @@ describe("hook", () => {
 
     @Configuration()
     class AppConfig {
-      @Configuration.Provider()
+      @Configuration.Component()
       public aPlugin: APlugin;
 
-      // @Configuration.Provider()
+      // @Configuration.Component()
       // public bPlugin: BPlugin;
 
-      @Configuration.Provider()
+      @Configuration.Component()
       public cPlugin: CPlugin;
     }
 

@@ -8,6 +8,6 @@ export * from "./services";
 // export * from "./utils";
 export * from "./hook";
 export * from "./application-context";
-export * from "./injector/provider-scanner";
+export * from "./injector/component-scanner";
 
 export * from "./application-context-factory";

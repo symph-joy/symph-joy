@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { getComponentMeta, getConfigurationMeta } from "../decorators";
-import { getConfigurationProviders } from "../decorators/core/configuration/provider.decorator";
+import { getConfigurationComponents } from "../decorators/core/configuration/configuration-component.decorator";
 
 const PACKAGE_METADATA = "__joy_package";
 
@@ -37,7 +37,7 @@ export class Package {
   }
 
   private packageConfigurationClass(target: Function) {
-    const components = getConfigurationProviders(target);
+    const components = getConfigurationComponents(target);
     if (!components || components.length === 0) {
       return;
     }

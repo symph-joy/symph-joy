@@ -1,9 +1,9 @@
 import { REQUEST } from "./request-constants";
-import { Provider, Scope } from "@symph/core";
+import { TComponent, Scope } from "@symph/core";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
-export const requestProvider: Provider = {
+export const requestProvider: TComponent = {
   name: REQUEST,
   type: Object,
   scope: Scope.REQUEST,

@@ -1,12 +1,12 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, Route } from "@symph/react";
 import { IndexModel } from "../model/index.model";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 
 @Route({ path: "/" })
 @ReactController()
 export default class HelloReactController extends BaseReactController {
-  @Autowire()
+  @Inject()
   indexModel: IndexModel;
 
   async initialModelStaticState(urlParams: any): Promise<void | number> {

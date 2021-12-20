@@ -1,6 +1,6 @@
 import { BaseReactModel, ReactModel } from "@symph/react";
 import { ReactFetchService } from "@symph/joy";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 
 interface Entity {
   id: string;
@@ -12,7 +12,7 @@ export class EntityModel extends BaseReactModel<{
   entities: Entity[];
   showEntity?: Entity;
 }> {
-  constructor(@Autowire("joyFetchService") public fetchService: ReactFetchService) {
+  constructor(@Inject("joyFetchService") public fetchService: ReactFetchService) {
     super();
   }
 

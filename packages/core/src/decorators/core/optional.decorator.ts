@@ -1,7 +1,7 @@
 import { OPTIONAL_DEPS_METADATA, OPTIONAL_PROPERTY_DEPS_METADATA } from "../../constants";
 import { isUndefined } from "../../utils/shared.utils";
 import { InjectCustomOptionsInterface } from "../../interfaces/inject-custom-options.interface";
-import { CUSTOM_INJECT_FUNC_PARAM_META } from "./autowire.decorator";
+import { CUSTOM_INJECT_FUNC_PARAM_META } from "./inject.decorator";
 
 /**
  * Parameter decorator for an injected dependency marking the

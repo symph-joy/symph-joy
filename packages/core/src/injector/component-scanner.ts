@@ -1,16 +1,16 @@
-import { ClassProvider, EntryType, FactoryProvider, Provider, Type, ValueProvider } from "../interfaces";
+import { EntryType, TComponent, Type } from "../interfaces";
 import { METADATA } from "../constants";
 import { isFunction, isNil, isObject } from "../utils/shared.utils";
 import { getComponentMeta, getConfigurationMeta } from "../decorators";
 
-export class ProviderScanner {
+export class ComponentScanner {
   private ctxRegistry: EntryType[] = [];
 
   public scan(
-    config: EntryType | Provider | (EntryType | Provider)[]
+    config: EntryType | TComponent | (EntryType | TComponent)[]
     // ctxRegistry: EntryType[] = []
-  ): Provider[] {
-    let providers: Provider[] = [];
+  ): TComponent[] {
+    let providers: TComponent[] = [];
     if (Array.isArray(config)) {
       if (config.length > 0) {
         config.forEach((it) => {
@@ -28,9 +28,9 @@ export class ProviderScanner {
   public scanObject(
     obj: Record<string, unknown>
     // ctxRegistry: EntryType[] = []
-  ): Provider[] {
+  ): TComponent[] {
     const ctxRegistry = this.ctxRegistry;
-    let providers: Provider[] = [];
+    let providers: TComponent[] = [];
     if (ctxRegistry.includes(obj)) {
       return providers;
     }
@@ -68,9 +68,9 @@ export class ProviderScanner {
   public scanForConfig(
     configClazz: Type<unknown>
     // ctxRegistry: EntryType[] = []
-  ): Provider[] {
+  ): TComponent[] {
     const ctxRegistry = this.ctxRegistry;
-    let providers: Provider[] = [];
+    let providers: TComponent[] = [];
     if (!isFunction(configClazz)) {
       return providers;
     }
@@ -90,9 +90,9 @@ export class ProviderScanner {
       }
     }
 
-    const reflectProviders = Reflect.getMetadata(METADATA.PROVIDERS, configClazz.prototype) as Provider[];
+    const reflectProviders = Reflect.getMetadata(METADATA.PROVIDERS, configClazz.prototype) as TComponent[];
     if (reflectProviders) {
-      const ownerProviders = [] as Provider[];
+      const ownerProviders = [] as TComponent[];
       reflectProviders.forEach((provider) => {
         ownerProviders.push(provider);
         // 扫描通过属性定义导入的configuration类
@@ -125,7 +125,7 @@ export class ProviderScanner {
     return false;
   }
 
-  public isProvider(val: any): val is Provider {
+  public isProvider(val: any): val is TComponent {
     return val && typeof val === "object" && (val.useFactory || val.useValue || val.useClass);
   }
 }

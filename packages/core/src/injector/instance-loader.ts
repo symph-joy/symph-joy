@@ -23,7 +23,7 @@ export class InstanceLoader {
   private async createInstancesOfProviders(wrappers: ComponentWrapper[]): Promise<unknown[]> {
     const promises = [];
     for (const wrapper of wrappers) {
-      if (wrapper.scope !== Scope.DEFAULT) {
+      if (wrapper.scope !== Scope.SINGLETON) {
         continue;
       }
       const provider = this.injector.loadProvider(wrapper);

@@ -10,10 +10,10 @@ import { JoyServerFactory } from "../../joy-server/server/joy-server-factory";
 
 @Configuration()
 class JoyExportCommandConfig {
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyAppConfig: JoyAppConfig;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyExportAppService: JoyExportAppService;
 }
 

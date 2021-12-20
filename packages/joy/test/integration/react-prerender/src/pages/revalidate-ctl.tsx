@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { ReactModel, BaseReactController, ReactController, BaseReactModel, Route } from "@symph/react";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 import { Prerender } from "@symph/joy/react";
 
 @ReactModel()
@@ -35,7 +35,7 @@ export class RevalidateModel extends BaseReactModel<{
 @Route({ path: "/revalidate" })
 @ReactController()
 export default class RevalidateCtl extends BaseReactController {
-  @Autowire()
+  @Inject()
   public revalidateModel: RevalidateModel;
 
   async initialModelStaticState(urlParams: any): Promise<number> {

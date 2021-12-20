@@ -40,7 +40,7 @@ import { writeBuildId } from "./write-build-id";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { BuildConfig } from "./build-config";
 import devalue from "devalue";
-import { AutowireHook, Component, ApplicationContext, HookType, IHook } from "@symph/core";
+import { InjectHook, Component, ApplicationContext, HookType, IHook } from "@symph/core";
 import { FileGenerator } from "./file-generator";
 import { FileScanner } from "./scanner/file-scanner";
 import { Worker } from "jest-worker";
@@ -79,7 +79,7 @@ export type PrerenderManifest = {
 
 @Component()
 export class JoyBuildService {
-  @AutowireHook({ type: HookType.Traverse, async: true })
+  @InjectHook({ type: HookType.Traverse, async: true })
   private onWillJoyBuild: IHook<{ dev: boolean }, void>;
 
   private dir: string;

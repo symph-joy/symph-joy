@@ -40,7 +40,7 @@ export {
   // ScopeOptions,
   // Type,
   ValidationError,
-  // ValueProvider,
+  // ValueComponent,
   WebSocketAdapter,
   WsExceptionFilter,
   WsMessageHandler,

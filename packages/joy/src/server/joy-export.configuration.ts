@@ -5,9 +5,9 @@ import { JoyPrerenderServer } from "../build/prerender/joy-prerender-server";
 
 @Configuration()
 export class JoyExportConfiguration extends JoyServerConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyPrerenderServer: JoyPrerenderServer;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyExportAppService: JoyExportAppService;
 }

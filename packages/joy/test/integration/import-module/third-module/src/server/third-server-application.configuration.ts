@@ -3,6 +3,6 @@ import { ThirdHelloController } from "./controller/third-hello.controller";
 
 @Configuration()
 export class ThirdServerApplicationConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public thirdHelloController: ThirdHelloController;
 }

@@ -1,10 +1,10 @@
 import { Scope } from "./scope-options.interface";
 import { Type } from "../type.interface";
-import { TProviderName } from "./provider.interface";
+import { ComponentName } from "./component.interface";
 import { Abstract } from "../abstract.interface";
 import { ApplicationContext } from "../../application-context";
 
-export type ProviderInfo = { name: TProviderName; type: Type | Abstract; scope: Scope };
+export type ProviderInfo = { name: ComponentName; type: Type | Abstract; scope: Scope };
 
 export interface IApplicationContextAware {
   setApplicationContext(coreContext: ApplicationContext): void;

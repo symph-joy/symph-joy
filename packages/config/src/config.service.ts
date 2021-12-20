@@ -1,6 +1,6 @@
 import {
-  Autowire,
-  AutowireHook,
+  Inject,
+  InjectHook,
   Component,
   HookType,
   IComponentLifecycle,
@@ -29,10 +29,10 @@ export interface ConfigServiceOptions {
 @Component()
 export class ConfigService<K = Record<string, any>> implements InjectorHookTaps, IComponentLifecycle {
   @Optional()
-  @Autowire()
+  @Inject()
   public configLoaderFactory?: ConfigLoaderFactory;
 
-  @AutowireHook({
+  @InjectHook({
     id: "addJoyConfigSchema",
     type: HookType.Waterfall,
     parallel: false,
@@ -40,7 +40,7 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
   })
   private addJoyConfigSchema: IHook;
 
-  @AutowireHook({
+  @InjectHook({
     id: "onJoyConfigChanged",
     type: HookType.Waterfall,
     parallel: false,
@@ -52,13 +52,13 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
 
   constructor(
     @Optional()
-    @Autowire(CONFIG_OPTIONS)
+    @Inject(CONFIG_OPTIONS)
     private configOptions: ConfigServiceOptions = { isAutoLoadConfig: true },
     @Optional()
-    @Autowire(CONFIG_DEFAULT_VALUE)
+    @Inject(CONFIG_DEFAULT_VALUE)
     private defaultConfig: Record<string, unknown> = {},
     @Optional()
-    @Autowire(CONFIG_INIT_VALUE)
+    @Inject(CONFIG_INIT_VALUE)
     private initConfig: Record<string, unknown> = {}
   ) {}
 

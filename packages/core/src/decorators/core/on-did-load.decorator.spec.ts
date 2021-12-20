@@ -1,6 +1,6 @@
 import { Component } from "./component.decorator";
 import { Configuration } from "./configuration/configuration.decorator";
-import { ProviderScanner } from "../../injector/provider-scanner";
+import { ComponentScanner } from "../../injector/component-scanner";
 import { getOnDidLoadMethodKey, OnDidLoad } from "./on-did-load.decorator";
 
 describe("on-did-load.decorator", () => {

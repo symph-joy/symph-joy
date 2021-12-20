@@ -1,12 +1,7 @@
-import { Configuration, Provider as ProviderType } from "@symph/core";
-import HotReloader from "./hot-reloader";
+import { Configuration } from "@symph/core";
 import { JoyReactDevConfiguration } from "../react/joy-react-dev.configuration";
-import { BuildDevConfiguration } from "../build/build-dev.configuration";
-import { JoyBuildConfiguration } from "./joy-build.configuration";
 import { JoyServerConfiguration } from "../joy-server/server/joy-server.configuration";
 import { BuildDevConfig } from "./build-dev-config";
-import { getConfigurationProviders } from "@symph/core/dist/decorators/core/configuration/provider.decorator";
-import { METADATA } from "@symph/core/dist/constants";
 import { JoyConfigDevConfiguration } from "./joy-config-dev.configuration";
 
 @Configuration()
@@ -14,16 +9,16 @@ import { JoyConfigDevConfiguration } from "./joy-config-dev.configuration";
 export class JoyDevConfiguration extends JoyServerConfiguration {
   // // ====== imports
 
-  // @Configuration.Provider()
+  // @Configuration.Component()
   // buildConfiguration: BuildDevConfiguration;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public buildConfig: BuildDevConfig;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   joyReactConfiguration: JoyReactDevConfiguration;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   configConfiguration: JoyConfigDevConfiguration;
 }
 

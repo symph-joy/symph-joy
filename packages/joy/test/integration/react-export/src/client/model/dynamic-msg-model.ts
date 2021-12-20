@@ -1,5 +1,5 @@
 import { BaseReactModel, ReactModel } from "@symph/react";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 import { ReactFetchService } from "@symph/joy";
 
 @ReactModel()

@@ -73,7 +73,7 @@ export default class HelloModel {
 ```javascript
 // /src/index.js
 import React, { Component } from "react";
-import { controller, autowire } from "@symph/joy/controller";
+import { controller, Inject } from "@symph/joy/controller";
 import HelloModel from "./models/HelloModel";
 
 @controller((store) => {
@@ -83,7 +83,7 @@ import HelloModel from "./models/HelloModel";
   };
 })
 export default class ThirdHelloController extends Component {
-  @autowire() // 声明依赖的Model
+  @Inject() // 声明依赖的Model
   helloModel: HelloModel;
 
   async componentDidMount() {

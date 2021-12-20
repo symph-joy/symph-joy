@@ -3,7 +3,7 @@ import { JoyReactContext } from "./react-app-container";
 import { ModelStateChangeHandler, ReactReduxService } from "./redux/react-redux.service";
 import { BaseReactModel } from "./base-react-model";
 import { bindRouteFromCompProps, getRouteMeta, IRouteMeta } from "./router/react-route.decorator";
-import { IApplicationContext, IInjectableDependency, Autowire } from "@symph/core";
+import { IApplicationContext, IInjectableDependency, Inject } from "@symph/core";
 import { JoyRouteInitState, ReactAppInitManager } from "./react-app-init-manager";
 import { ReactRouter } from "./router/react-router";
 import type { Location } from "history";
@@ -66,10 +66,10 @@ export abstract class BaseReactController<
   private hasInitInvoked = false;
   private hasInjectProps = false;
 
-  @Autowire()
+  @Inject()
   protected reactRouter: ReactRouter;
 
-  @Autowire()
+  @Inject()
   protected initManager: ReactAppInitManager;
 
   protected location: Location;
@@ -88,7 +88,7 @@ export abstract class BaseReactController<
     this.routeMeta = getRouteMeta(this.constructor);
 
     this.appContext = context;
-    this.reduxStore = this.appContext.syncGet(ReactReduxService)!;
+    this.reduxStore = this.appContext.getSync(ReactReduxService)!;
   }
 
   shouldComponentUpdate(nextProps: Readonly<TProps>, nextState: Readonly<TState>, nextContext: any): boolean {

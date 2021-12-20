@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, Route } from "@symph/react";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 
 @Route({ path: "/" })
 @ReactController()

@@ -1,14 +1,14 @@
 import path from "path";
 import {
-  AutowireHook,
+  InjectHook,
   Component,
   getComponentMeta,
   getConfigurationMeta,
   HookType,
   IHook,
-  Provider,
-  ProviderScanner,
-  TProviderName,
+  TComponent,
+  ComponentScanner,
+  ComponentName,
 } from "@symph/core";
 import { isFunction, isNil } from "@symph/core/dist/utils/shared.utils";
 import { ModuleContextTypeEnum } from "../../lib/constants";
@@ -20,7 +20,7 @@ import { SrcBuilder } from "../src-builder";
 import lodash from "lodash";
 import { FileGenerator } from "../file-generator";
 
-type TScanOutModuleProviders = Map<string, { type: "ClassProvider" | "Configuration"; providers: Provider[] }>;
+type TScanOutModuleProviders = Map<string, { type: "ClassProvider" | "Configuration"; providers: TComponent[] }>;
 
 export interface IScanOutModule {
   path: string; // build dist file path
@@ -64,19 +64,19 @@ export class FileScanner {
 
   constructor(
     private readonly joyAppConfig: JoyAppConfig,
-    private providerScanner: ProviderScanner,
+    private componentScanner: ComponentScanner,
     private srcBuilder: SrcBuilder,
     private fileGenerator: FileGenerator
   ) {
     this.isWatch = this.joyAppConfig.dev;
   }
 
-  @AutowireHook({ type: HookType.Waterfall, parallel: false, async: true })
+  @InjectHook({ type: HookType.Waterfall, parallel: false, async: true })
   private afterScanOutModuleHook: IHook;
 
   private cachedModules: Map<string, IScanOutModule> = new Map();
 
-  public getCacheModuleByProviderName(providerName: TProviderName | TProviderName[]): IScanOutModule | undefined {
+  public getCacheModuleByProviderName(providerName: ComponentName | ComponentName[]): IScanOutModule | undefined {
     const moduleKeys = new Array(...this.cachedModules.keys());
     for (let i = 0; i < moduleKeys.length; i++) {
       const key = moduleKeys[i];
@@ -251,7 +251,7 @@ export class FileScanner {
       isRemove,
       hash: emitHash,
     };
-    // const providers = await this.providerScanner.scan(moduleLoaded.module);
+    // const providers = await this.componentScanner.scan(moduleLoaded.module);
     scanOutModule.providerDefines = this.scanModule(scanOutModule.module);
 
     // todo 优化: 和cache比较，component没有变化则不用继续处理。
@@ -277,7 +277,7 @@ export class FileScanner {
       if (isNil(propValue)) return;
 
       if (isFunction(propValue)) {
-        const providers = this.providerScanner.scan(propValue as any);
+        const providers = this.componentScanner.scan(propValue as any);
         // 1.configuration class
         if (getConfigurationMeta(propValue)) {
           providerDefines.set(prop, { type: "Configuration", providers });

@@ -1,4 +1,4 @@
-import { Autowire, Component } from "@symph/core";
+import { Inject, Component } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import path, { join, sep } from "path";
 import { ensureFile, existsSync, rmSync, writeFile } from "fs-extra";
@@ -35,7 +35,7 @@ export class SrcBuilder {
   private buildManifest: Record<string, ISrcBuildModule>;
   public isWatch = false;
 
-  constructor(@Autowire() private joyAppConfig: JoyAppConfig) {
+  constructor(@Inject() private joyAppConfig: JoyAppConfig) {
     const clientDir = this.joyAppConfig.resolveAppDir("src/client");
     this.rootDir = this.joyAppConfig.resolveAppDir("src");
     if (existsSync(clientDir)) {

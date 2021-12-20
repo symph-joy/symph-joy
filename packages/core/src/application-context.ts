@@ -1,12 +1,12 @@
 import {
   Abstract,
-  ClassProvider,
+  ClassComponent,
   EntryType,
   EnuInjectBy,
   IApplicationContext,
-  Provider,
+  TComponent,
   Scope,
-  TProviderName,
+  ComponentName,
   Type,
   TypeOrTokenType,
 } from "./interfaces";
@@ -20,13 +20,13 @@ import { InstanceLoader } from "./injector/instance-loader";
 import { RuntimeException } from "./errors/exceptions/runtime.exception";
 import { ThenableResult } from "./utils/task-thenable";
 import { IInjectableDependency } from "./interfaces/injectable-dependency.interface";
-import { ProviderScanner } from "./injector/provider-scanner";
-import { providerNameGenerate } from "./injector/provider-name-generate";
+import { ComponentScanner } from "./injector/component-scanner";
+import { componentNameGenerate } from "./injector/component-name-generate";
 import { HookCenter } from "./hook/hook-center";
 import { HookResolver } from "./hook/hook-resolver";
 import { getComponentMeta } from "./decorators/core";
 import { ComponentWrapper } from "./injector";
-import { AutowireHook, HookType, IHook } from "./hook";
+import { InjectHook, HookType, IHook } from "./hook";
 
 interface ApplicationContextEventListener {
   onContextInitialized(): Promise<void>;
@@ -43,7 +43,7 @@ interface ApplicationContextEventListener {
  */
 export class ApplicationContext implements IApplicationContext {
   protected instanceLoader: InstanceLoader;
-  protected dependenciesScanner: ProviderScanner;
+  protected dependenciesScanner: ComponentScanner;
   protected readonly hookCenter: HookCenter;
   protected readonly hookResolver: HookResolver;
   public readonly injector;
@@ -66,7 +66,7 @@ export class ApplicationContext implements IApplicationContext {
     this.injector = this.instanceInjector();
     this.hookCenter.registerProviderHooks(this.injector);
 
-    this.dependenciesScanner = new ProviderScanner();
+    this.dependenciesScanner = new ComponentScanner();
     this.instanceLoader = new InstanceLoader(this.container, this.injector);
     this.hookResolver = new HookResolver(this.hookCenter);
     // this.registerHooks();
@@ -74,19 +74,19 @@ export class ApplicationContext implements IApplicationContext {
     this.registerCoreProviders();
   }
 
-  @AutowireHook({ type: HookType.Traverse, async: true })
+  @InjectHook({ type: HookType.Traverse, async: true })
   public onModuleAfterLoad: IHook;
 
-  @AutowireHook({ type: HookType.Traverse, async: true })
+  @InjectHook({ type: HookType.Traverse, async: true })
   public onContextInitialized: IHook;
 
-  @AutowireHook({ type: HookType.Traverse, async: true })
+  @InjectHook({ type: HookType.Traverse, async: true })
   public onContextBeforeDispose: IHook;
 
-  @AutowireHook({ type: HookType.Traverse, async: true })
+  @InjectHook({ type: HookType.Traverse, async: true })
   public onBeforeShutdownHook: IHook;
 
-  @AutowireHook({ type: HookType.Traverse, async: true })
+  @InjectHook({ type: HookType.Traverse, async: true })
   public onShutdownHook: IHook;
 
   protected instanceContainer(): ApplicationContainer {
@@ -141,8 +141,8 @@ export class ApplicationContext implements IApplicationContext {
         useValue: this,
       },
       {
-        name: Symbol("providerScanner"),
-        type: ProviderScanner,
+        name: Symbol("componentScanner"),
+        type: ComponentScanner,
         useValue: this.dependenciesScanner,
       },
       {
@@ -158,7 +158,7 @@ export class ApplicationContext implements IApplicationContext {
     return instanceWrapper;
   }
 
-  public tryGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined {
+  public getOptional<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined {
     let injectBy: EnuInjectBy, name: string | undefined, type: Type<any> | undefined;
     if (typeof typeOrToken === "function") {
       injectBy = EnuInjectBy.TYPE;
@@ -177,7 +177,7 @@ export class ApplicationContext implements IApplicationContext {
   }
 
   public get<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput {
-    const instance = this.tryGet<TInput>(typeOrToken, options);
+    const instance = this.getOptional<TInput>(typeOrToken, options);
     if (isNil(instance)) {
       const providerId = this.getProviderId(typeOrToken);
       throw new UnknownElementException(providerId);
@@ -185,15 +185,15 @@ export class ApplicationContext implements IApplicationContext {
     return instance as Promise<TInput> | TInput;
   }
 
-  public syncTryGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput | undefined {
-    const loadRst = this.tryGet<TInput>(typeOrToken, options);
+  public getOptionalSync<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput | undefined {
+    const loadRst = this.getOptional<TInput>(typeOrToken, options);
     if (loadRst instanceof Promise) {
       throw new RuntimeException("Its an async provider, can not load as sync");
     }
     return loadRst;
   }
 
-  public syncGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput {
+  public getSync<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput {
     const loadRst = this.get<TInput>(typeOrToken, options);
     if (loadRst instanceof Promise) {
       throw new RuntimeException("Its an async provider, can not load as sync");
@@ -209,11 +209,11 @@ export class ApplicationContext implements IApplicationContext {
     let instanceWrapper = this.container.getProvider(providerId);
     if (isNil(instanceWrapper)) {
       // 生成一个临时的wrapper，用于缓存注入信息
-      const provider: ClassProvider = {
+      const provider: ClassComponent = {
         name: providerId,
         type: typeOfInstance as Type,
         useClass: typeOfInstance as Type, // todo 限定为只能是类型
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
       };
       instanceWrapper = this.container.addProvider(provider);
     }
@@ -224,13 +224,13 @@ export class ApplicationContext implements IApplicationContext {
 
   protected async initContext(): Promise<void> {}
 
-  public registerModule(module: EntryType | Provider | (EntryType | Provider)[]): ComponentWrapper[] {
+  public registerModule(module: EntryType | TComponent | (EntryType | TComponent)[]): ComponentWrapper[] {
     const providers = this.dependenciesScanner.scan(module);
     const wrappers = this.container.addProviders(providers);
     return wrappers;
   }
 
-  public async loadModule(module: EntryType | Provider | (EntryType | Provider)[]): Promise<ComponentWrapper[]> {
+  public async loadModule(module: EntryType | TComponent | (EntryType | TComponent)[]): Promise<ComponentWrapper[]> {
     const providers = this.registerModule(module);
     await this.initProviders(providers);
     await this.onModuleAfterLoad.call(module, providers);
@@ -292,7 +292,7 @@ export class ApplicationContext implements IApplicationContext {
       if (meta?.name) {
         return meta.name.toString();
       } else {
-        return providerNameGenerate(typeOrToken);
+        return componentNameGenerate(typeOrToken);
       }
     } else {
       return typeOrToken as string;

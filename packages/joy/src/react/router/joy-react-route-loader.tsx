@@ -81,7 +81,7 @@ export function JoyReactRouteLoader({ route, match, history, component, loading,
   }, [matchUrl]);
 
   // prefetch Data
-  const router = joyAppContext.syncGet(ReactRouterClient);
+  const router = joyAppContext.getSync(ReactRouterClient);
   const href = location.pathname;
 
   /**

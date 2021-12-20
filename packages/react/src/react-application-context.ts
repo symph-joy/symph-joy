@@ -4,7 +4,7 @@ import { DOMElement, ReactElement } from "react";
 import reactDom from "react-dom";
 import { ReactReduxService } from "./redux/react-redux.service";
 import { IReactRoute } from "./interfaces/react-route.interface";
-import { ComponentWrapper, ApplicationContext, EntryType, FactoryProvider, IApplicationContext, Logger, Provider } from "@symph/core";
+import { ComponentWrapper, ApplicationContext, EntryType, FactoryComponent, IApplicationContext, Logger, TComponent } from "@symph/core";
 import { IReactApplication } from "./interfaces";
 import { TReactAppComponent } from "./react-app-component";
 import { MountModule } from "./mount/mount-module";
@@ -12,7 +12,7 @@ import { MountService } from "./mount/mount.service";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
 import { ReactRouter } from "./router/react-router";
 
-type ReactAPPEntryType = EntryType | Provider | MountModule | (EntryType | MountModule | Provider)[];
+type ReactAPPEntryType = EntryType | TComponent | MountModule | (EntryType | MountModule | TComponent)[];
 
 /**
  * @publicApi
@@ -51,21 +51,21 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
           return new ReactReduxService(applicationConfig, initState);
         },
         inject: [ReactApplicationConfig],
-      } as FactoryProvider,
+      } as FactoryComponent,
       ...this.dependenciesScanner.scan(this.reactApplicationConfiguration),
     ];
     const coreWrappers = this.container.addProviders(coreComps);
     await this.createInstancesOfDependencies(coreWrappers);
 
-    this.reduxStore = this.syncGet(ReactReduxService);
-    this.reactApplicationConfig = this.syncGet(ReactApplicationConfig);
-    this.router = this.syncGet(ReactRouter);
-    this.mountService = this.syncGet(MountService);
+    this.reduxStore = this.getSync(ReactReduxService);
+    this.reactApplicationConfig = this.getSync(ReactApplicationConfig);
+    this.router = this.getSync(ReactRouter);
+    this.mountService = this.getSync(MountService);
   }
 
   public async init(): Promise<this> {
     await super.init();
-    this.router = this.syncGet(ReactRouter);
+    this.router = this.getSync(ReactRouter);
 
     await this.registerMiddleware();
     // await this.registerRouter();
@@ -83,7 +83,7 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
     for (const md of modules) {
       let compWrappers: ComponentWrapper[];
       let mount = "";
-      let module: EntryType | Provider;
+      let module: EntryType | TComponent;
       if ((md as MountModule).mount) {
         mount = (md as MountModule).mount;
         module = (md as MountModule).module;
@@ -92,7 +92,7 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
           this.mountService.setMount(mount, compWrappers);
         }
       } else {
-        module = md as EntryType | Provider;
+        module = md as EntryType | TComponent;
         compWrappers = super.registerModule(module);
       }
       if (!compWrappers || compWrappers.length === 0) {
@@ -105,7 +105,11 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
     return wrappers;
   }
 
-  protected registerModuleRouter(mount: string, md: EntryType | Provider | MountModule, compWrappers: ComponentWrapper[]): IReactRoute[] | undefined {
+  protected registerModuleRouter(
+    mount: string,
+    md: EntryType | TComponent | MountModule,
+    compWrappers: ComponentWrapper[]
+  ): IReactRoute[] | undefined {
     let addedRoutes: IReactRoute[] | undefined;
     compWrappers.forEach((wrapper) => {
       const routes = this.router.addRouteProvider(wrapper, mount);

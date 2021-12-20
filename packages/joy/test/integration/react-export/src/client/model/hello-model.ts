@@ -1,12 +1,12 @@
 import { BaseReactModel, ReactModel } from "@symph/react";
-import { Autowire } from "@symph/core";
+import { Inject } from "@symph/core";
 import { ReactFetchService } from "@symph/joy";
 
 @ReactModel()
 export class HelloModel extends BaseReactModel<{
   message: string;
 }> {
-  constructor(@Autowire("joyFetchService") private fetchService: ReactFetchService) {
+  constructor(@Inject("joyFetchService") private fetchService: ReactFetchService) {
     super();
   }
   getInitState(): { message: string } {

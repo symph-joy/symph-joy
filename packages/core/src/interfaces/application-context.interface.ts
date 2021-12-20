@@ -4,10 +4,10 @@ import { Type } from "./type.interface";
 import { ThenableResult } from "../utils/task-thenable";
 import { IInjectableDependency } from "./injectable-dependency.interface";
 import { ComponentWrapper, ApplicationContainer, Injector } from "../injector";
-import { TProviderName } from "./context/provider.interface";
+import { ComponentName } from "./context/component.interface";
 
 export type EntryType = Record<string, unknown> | Type<unknown>;
-export type TypeOrTokenType<T = any> = Type<T> | Abstract<T> | TProviderName;
+export type TypeOrTokenType<T = any> = Type<T> | Abstract<T> | ComponentName;
 
 /**
  * Interface defining JoyApplicationContext.
@@ -28,11 +28,11 @@ export interface IApplicationContext {
 
   get<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput;
 
-  tryGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined;
+  getOptional<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined;
 
-  syncGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput;
+  getSync<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput;
 
-  syncTryGet<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput | undefined;
+  getOptionalSync<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput | undefined;
 
   /**
    * inject properties for instance

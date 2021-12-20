@@ -9,11 +9,11 @@ export interface IHookMeta {
   propKey: string | symbol;
 }
 
-export type AutowireHookOptions = Partial<Exclude<IHookMeta, "propKey">>;
+export type InjectHookOptions = Partial<Exclude<IHookMeta, "propKey">>;
 
 const HOOKS_META_KEY = Symbol("joy-hooks");
 
-export function AutowireHook(hookOptions?: AutowireHookOptions): PropertyDecorator {
+export function InjectHook(hookOptions?: InjectHookOptions): PropertyDecorator {
   return (target, propertyKey) => {
     const hook: IHookMeta = Object.assign(
       {

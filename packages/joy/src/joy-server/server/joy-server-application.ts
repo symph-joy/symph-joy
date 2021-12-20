@@ -1,4 +1,4 @@
-import { AutowireHook, Component, EntryType, HookType, IApplicationContext, IHook, RuntimeException } from "@symph/core";
+import { InjectHook, Component, EntryType, HookType, IApplicationContext, IHook, RuntimeException } from "@symph/core";
 import { MountModule, NestApplicationOptions, ServerApplication } from "@symph/server";
 import { pathToRegexp } from "path-to-regexp";
 import { IncomingMessage } from "http";
@@ -10,7 +10,7 @@ import { ServerConfiguration } from "@symph/server/dist/server.configuration";
 export class JoyServerApplication extends ServerApplication {
   protected config: JoyAppConfig;
 
-  @AutowireHook({ type: HookType.Traverse, async: true })
+  @InjectHook({ type: HookType.Traverse, async: true })
   public onDidServerInitialize: IHook;
 
   public reactServer: JoyReactServer | undefined;
@@ -29,7 +29,7 @@ export class JoyServerApplication extends ServerApplication {
 
   protected async initContext(): Promise<void> {
     await super.initContext();
-    this.reactServer = await this.tryGet(JoyReactServer);
+    this.reactServer = await this.getOptional(JoyReactServer);
 
     const { basePath } = this.config;
     const apiRoutePrefix = this.config.getGlobalPrefix();

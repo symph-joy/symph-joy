@@ -1,9 +1,9 @@
 import { RouteProps } from "react-router-dom";
-import { TProviderName } from "@symph/core";
+import { ComponentName } from "@symph/core";
 
 export interface IReactRoute extends RouteProps {
   path: string;
-  providerName?: TProviderName;
+  providerName?: ComponentName;
   providerPackage?: string;
   dynamic?: boolean;
   providerModule?: Record<string, any>;

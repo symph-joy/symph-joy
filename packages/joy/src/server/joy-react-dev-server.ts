@@ -22,7 +22,7 @@ import Router, { Params, route } from "../joy-server/server/router";
 import HotReloader from "./hot-reloader";
 import { findPageFile } from "./lib/find-page-file";
 import { withCoalescedInvoke } from "../lib/coalesced-function";
-import { Autowire, Component, EntryType } from "@symph/core";
+import { Inject, Component, EntryType } from "@symph/core";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 // import { FileScanner } from "../build/scanner/file-scanner";
 import { BuildDevConfig } from "./build-dev-config";
@@ -44,10 +44,10 @@ export class JoyReactDevServer extends JoyReactServer {
   private setDevReady?: Function;
   private webpackWatcher?: Watchpack | null;
 
-  // @Autowire()
+  // @Inject()
   // private fileScanner: FileScanner;
 
-  // @Autowire("fileGenerator")
+  // @Inject("fileGenerator")
   // private fileGenerator: FileGenerator;
 
   // private hotReloader?: HotReloader;

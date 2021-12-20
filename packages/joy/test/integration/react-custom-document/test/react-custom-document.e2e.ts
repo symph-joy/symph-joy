@@ -2,7 +2,7 @@ import "jest-playwright-preset";
 import * as path from "path";
 import { join } from "path";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { check, waitForMoment } from "../../../util/joy-test-utils";
+import { check, waitFor } from "../../../util/joy-test-utils";
 import { readFileSync, writeFileSync } from "fs";
 
 describe("react-custom-document", () => {
@@ -11,7 +11,7 @@ describe("react-custom-document", () => {
     beforeAll(async () => {
       const curPath = path.resolve(__dirname, "../");
       testContext = await JoyTestContext.createDevServerContext(curPath);
-      await waitForMoment();
+      // await waitFor();
     }, 999999);
 
     afterAll(async () => {

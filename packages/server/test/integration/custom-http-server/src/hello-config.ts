@@ -3,6 +3,6 @@ import { Configuration } from "@symph/core";
 
 @Configuration()
 export class HelloConfig {
-  @Configuration.Provider()
+  @Configuration.Component()
   helloController: HelloController;
 }

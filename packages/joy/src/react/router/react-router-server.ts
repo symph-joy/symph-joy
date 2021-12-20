@@ -1,4 +1,4 @@
-import { Autowire, Component, RuntimeException } from "@symph/core";
+import { Inject, Component, RuntimeException } from "@symph/core";
 import { IReactRoute, ReactRouter } from "@symph/react";
 
 @Component()
@@ -6,7 +6,7 @@ export class ReactRouterServer extends ReactRouter {
   protected scannedModules = [] as Record<string, unknown>[];
 
   constructor(
-    @Autowire("joyReactAutoGenRoutes")
+    @Inject("joyReactAutoGenRoutes")
     private joyReactAutoGenRoutes: IReactRoute[]
   ) {
     super();

@@ -17,7 +17,7 @@ export class JoyReactApplicationContext extends ReactApplicationContext {
 
   protected async initContext(): Promise<void> {
     await super.initContext();
-    const joyReactAutoGenRoutes = this.syncGet("joyReactAutoGenRoutes") as IReactRoute[];
+    const joyReactAutoGenRoutes = this.getSync("joyReactAutoGenRoutes") as IReactRoute[];
     this.scannedModules = [];
     const findRouteModule = (routes: IReactRoute[]) => {
       for (const route of routes) {

@@ -2,7 +2,7 @@
 // import { ModuleMetadata } from '@nestjs/common/interfaces';
 
 // import { ModuleMetadata } from "../../../../dist/interfaces/modules";
-import { Provider, Type } from "@symph/core";
+import { TComponent, Type } from "@symph/core";
 
 export interface ServeStaticOptions {
   /**
@@ -121,5 +121,5 @@ export interface ServeStaticModuleAsyncOptions {
   useClass?: Type<ServeStaticModuleOptionsFactory>;
   useFactory?: (...args: any[]) => Promise<ServeStaticOptions[]> | ServeStaticOptions[];
   inject?: any[];
-  extraProviders?: Provider[];
+  extraProviders?: TComponent[];
 }

@@ -8,13 +8,13 @@ export const COMPONENT_HTTP_ADAPTER = Symbol("httpAdapter");
 
 @Configuration()
 export class ServerConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public configConfiguration: NodeConfigConfiguration;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public applicationConfig: ApplicationConfig;
 
-  @Configuration.Provider({ name: COMPONENT_HTTP_ADAPTER })
+  @Configuration.Component({ name: COMPONENT_HTTP_ADAPTER })
   public httpAdapter(): AbstractHttpAdapter {
     return new FastifyAdapter();
   }

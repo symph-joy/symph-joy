@@ -5,9 +5,9 @@ import { JoyConfigConfiguration } from "./joy-server/server/joy-config.configura
 
 @Configuration()
 export class JoyBootConfiguration extends ServerConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public configConfiguration: JoyConfigConfiguration;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public commandConfiguration: CommandConfiguration;
 }

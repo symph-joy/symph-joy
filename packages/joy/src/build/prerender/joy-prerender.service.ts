@@ -1,4 +1,4 @@
-import { AutowireHook, ClassProvider, Component, ApplicationContext, HookType, IHook, RegisterTap, TProviderName } from "@symph/core";
+import { InjectHook, ClassComponent, Component, ApplicationContext, HookType, IHook, RegisterTap, ComponentName } from "@symph/core";
 import { getPrerenderMeta, PrerenderMeta, PrerenderMetaByProvider } from "./prerender.decorator";
 import { IJoyPrerender } from "./prerender.interface";
 import { IScanOutModule } from "../scanner/file-scanner";
@@ -22,7 +22,7 @@ export interface JoyPrerenderInfo {
 
 interface PrerenderModule {
   module: IScanOutModule;
-  names: TProviderName[];
+  names: ComponentName[];
 }
 
 @Component()
@@ -36,7 +36,7 @@ export class JoyPrerenderService {
   /**
    * 在服务端渲染html之前调用的hook
    */
-  @AutowireHook({ parallel: false, type: HookType.Waterfall })
+  @InjectHook({ parallel: false, type: HookType.Waterfall })
   private genPrerenderPath: IHook;
 
   private prerenderProviderIds: PrerenderModule[] = [];
@@ -49,13 +49,13 @@ export class JoyPrerenderService {
     }
     const { mount } = module;
     let hasPrerender = false;
-    const names = [] as TProviderName[];
+    const names = [] as ComponentName[];
     module.providerDefines.forEach((providerDefine, exportKey) => {
       providerDefine.providers.forEach((provider) => {
-        if (!(provider as ClassProvider).useClass) {
+        if (!(provider as ClassComponent).useClass) {
           return;
         }
-        const { useClass, name } = provider as ClassProvider;
+        const { useClass, name } = provider as ClassComponent;
         const prerenderMeta = getPrerenderMeta(useClass);
         if (!prerenderMeta) {
           return;
@@ -143,7 +143,7 @@ export class JoyPrerenderService {
     }
 
     const modules = [] as Record<string, any>[];
-    let names = [] as TProviderName[];
+    let names = [] as ComponentName[];
     this.prerenderProviderIds.forEach((it) => {
       modules.push(it.module.module);
       names = names.concat(it.names);

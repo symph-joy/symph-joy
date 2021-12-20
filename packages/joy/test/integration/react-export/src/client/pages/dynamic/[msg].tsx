@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
-import { Autowire, IApplicationContext } from "@symph/core";
+import { Inject, IApplicationContext } from "@symph/core";
 import { IJoyPrerender, Prerender } from "@symph/joy/react";
 import { DynamicMsgModel } from "../../model/dynamic-msg-model";
 
@@ -35,7 +35,7 @@ export default class DynamicRouteCtl extends BaseReactController {
   @RouteParam()
   private msg: string;
 
-  @Autowire()
+  @Inject()
   public dynamicMsgModel: DynamicMsgModel;
 
   onClickLink = (link: string) => {

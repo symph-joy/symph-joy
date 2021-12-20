@@ -2,7 +2,6 @@ import { ApplicationContextFactory } from "./application-context-factory";
 import { Component } from "../src/decorators/core";
 import React from "react";
 import { Configuration } from "./decorators/core/configuration/configuration.decorator";
-import { Provider } from "./decorators/core/configuration/provider.decorator";
 
 describe("temp-factory", () => {
   test("create", async () => {
@@ -16,7 +15,7 @@ describe("temp-factory", () => {
 
     @Configuration()
     class AppConfig {
-      @Provider()
+      @Configuration.Component()
       public helloProvider: HelloProvider;
     }
 

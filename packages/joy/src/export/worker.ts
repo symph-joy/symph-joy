@@ -13,7 +13,7 @@ import { ComponentType } from "react";
 import { GetStaticProps } from "../types";
 import { requireFontManifest } from "../joy-server/server/require";
 import { FontManifest } from "../joy-server/server/font-utils";
-import { Configuration, ApplicationContext, ValueProvider } from "@symph/core";
+import { Configuration, ApplicationContext, ValueComponent } from "@symph/core";
 import { ReactContextFactory } from "../react/react-context-factory";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
@@ -87,13 +87,13 @@ type ComponentModule = ComponentType<{}> & {
 
 @Configuration()
 export class JoyExportConfig {
-  @Configuration.Provider()
+  @Configuration.Component()
   public configConfiguration: JoyConfigConfiguration;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public joyAppConfig: JoyAppConfig;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public reactContextFactory: ReactContextFactory;
 }
 
@@ -109,7 +109,7 @@ export default async function start(options: ExportPageInput): Promise<ExportPag
           dir,
           dev: false,
         },
-      } as ValueProvider,
+      } as ValueComponent,
     },
   ]);
   await joyContext.init();

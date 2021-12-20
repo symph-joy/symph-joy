@@ -1,4 +1,4 @@
-import { Autowire, Component, Optional } from "../decorators/core";
+import { Inject, Component, Optional } from "../decorators/core";
 import { EntryType, IComponentLifecycle, IApplicationContext, Scope } from "../interfaces";
 import { ApplicationContainer } from "../injector";
 import { ComponentWrapper } from "./component-wrapper";
@@ -30,7 +30,7 @@ function createTestAppContext(entry?: EntryType[], parent?: IApplicationContext)
 describe("injector", () => {
   describe("loadProvider", () => {
     describe("Load class singleton component", () => {
-      @Component({ scope: Scope.DEFAULT })
+      @Component({ scope: Scope.SINGLETON })
       class SingProvider {}
 
       let singProviderWrapper: ComponentWrapper<SingProvider>, context: ApplicationContext, container: ApplicationContainer, injector: Injector;
@@ -41,7 +41,7 @@ describe("injector", () => {
           name: "singProvider",
           type: SingProvider,
           instance: Object.create(SingProvider.prototype),
-          scope: Scope.DEFAULT,
+          scope: Scope.SINGLETON,
           isResolved: false,
         });
         container.addWrapper(singProviderWrapper);
@@ -127,12 +127,12 @@ describe("injector", () => {
 
   describe("dependency inject", () => {
     test("Should inject singleton dependency components into the host component", async () => {
-      @Component({ scope: Scope.DEFAULT })
+      @Component({ scope: Scope.SINGLETON })
       class SingProvider {}
 
       @Component()
       class MainTest {
-        @Autowire()
+        @Inject()
         public prop: SingProvider;
         constructor(public singProvider: SingProvider) {}
       }
@@ -175,11 +175,11 @@ describe("injector", () => {
       @Component()
       class Main {
         @Optional()
-        @Autowire()
+        @Inject()
         public hello: Hello;
 
         @Optional()
-        @Autowire()
+        @Inject()
         public helloOptional: HelloOptional;
       }
 
@@ -200,7 +200,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        constructor(@Optional() @Autowire() public hello: Hello, @Optional() @Autowire() public helloOptional: HelloOptional) {}
+        constructor(@Optional() @Inject() public hello: Hello, @Optional() @Inject() public helloOptional: HelloOptional) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -259,12 +259,12 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        constructor(@Autowire("dep") public dep: Dep) {}
+        constructor(@Inject("dep") public dep: Dep) {}
       }
 
       @Component()
       class WrongMain {
-        constructor(@Autowire("thisIsWrong") public dep: Dep) {}
+        constructor(@Inject("thisIsWrong") public dep: Dep) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -293,7 +293,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        constructor(@Autowire("thisIsWrong") public dep: Dep) {}
+        constructor(@Inject("thisIsWrong") public dep: Dep) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -321,12 +321,12 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        constructor(@Autowire(Dep) public constructorDep: Dep, @Autowire(SubDep) public constructorSubDep: Dep) {}
+        constructor(@Inject(Dep) public constructorDep: Dep, @Inject(SubDep) public constructorSubDep: Dep) {}
 
-        @Autowire(Dep)
+        @Inject(Dep)
         public propDep: Dep;
 
-        @Autowire(SubDep)
+        @Inject(SubDep)
         public propSubDep: Dep;
       }
 
@@ -351,7 +351,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        constructor(@Autowire(Object) public constructorDep2: Dep) {}
+        constructor(@Inject(Object) public constructorDep2: Dep) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -382,7 +382,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        constructor(@Autowire(Dep1) public constructorDep2: Dep2) {}
+        constructor(@Inject(Dep1) public constructorDep2: Dep2) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -413,7 +413,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        constructor(@Autowire(BaseDep) public constructorDep2: Dep) {}
+        constructor(@Inject(BaseDep) public constructorDep2: Dep) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -439,7 +439,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        @Autowire()
+        @Inject()
         public subDep2: Dep;
       }
 
@@ -465,11 +465,11 @@ describe("injector", () => {
       @Component()
       class Dep2 {}
 
-      @Component({ scope: Scope.DEFAULT })
+      @Component({ scope: Scope.SINGLETON })
       class Main {
         constructor(public dep1: Dep1) {}
 
-        @Autowire()
+        @Inject()
         public dep2: Dep2;
       }
 
@@ -496,7 +496,7 @@ describe("injector", () => {
         inject: [],
         async: true,
         instance: undefined,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
         isResolved: false,
       });
       container.addWrapper(dep1ProviderWrapper);
@@ -512,7 +512,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        constructor(@Autowire() public dep1: Dep1) {}
+        constructor(@Inject() public dep1: Dep1) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -526,7 +526,7 @@ describe("injector", () => {
         inject: [],
         async: true,
         instance: undefined,
-        scope: Scope.DEFAULT,
+        scope: Scope.SINGLETON,
         isResolved: false,
       });
       container.addWrapper(dep1ProviderWrapper);
@@ -587,10 +587,10 @@ describe("injector", () => {
 
       @Component({ scope: Scope.PROTOTYPE })
       class Main {
-        @Autowire()
+        @Inject()
         public dep1: Dep1;
 
-        @Autowire()
+        @Inject()
         public dep2: Dep2;
       }
 
@@ -626,7 +626,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        @Autowire()
+        @Inject()
         public dep: Dep;
       }
 
@@ -645,7 +645,7 @@ describe("injector", () => {
 
       @Component()
       class Main {
-        @Autowire()
+        @Inject()
         public dep: Dep;
       }
 
@@ -787,7 +787,7 @@ describe("injector", () => {
 
       @Component()
       class GlobalComp {
-        constructor(@Autowire("publicComp") public publicComp: PublicComp) {}
+        constructor(@Inject("publicComp") public publicComp: PublicComp) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -809,7 +809,7 @@ describe("injector", () => {
 
       @Component()
       class GlobalComp {
-        constructor(@Autowire("privateComp") public dep: PrivateComp) {}
+        constructor(@Inject("privateComp") public dep: PrivateComp) {}
       }
 
       const [context, container, injector] = createTestAppContext();
@@ -842,7 +842,7 @@ describe("injector", () => {
       @helloPackage.Package()
       @Component({ name: "comp2" })
       class Comp2 {
-        constructor(@Autowire("comp1") public dep: Object) {}
+        constructor(@Inject("comp1") public dep: Object) {}
       }
 
       @Component({ name: "comp1" })
@@ -865,7 +865,7 @@ describe("injector", () => {
 
     @Component({ name: "comp2" })
     class Comp2 {
-      constructor(@Autowire("comp1") public dep: Object) {}
+      constructor(@Inject("comp1") public dep: Object) {}
     }
 
     @Component({ name: "comp1" })

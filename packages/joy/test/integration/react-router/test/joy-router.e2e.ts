@@ -1,7 +1,7 @@
 import * as path from "path";
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { waitForMoment } from "../../../util/joy-test-utils";
+import { waitFor } from "../../../util/joy-test-utils";
 
 describe("joy router", () => {
   let testContext: JoyTestContext;

@@ -9,9 +9,9 @@ import {
   EntryType,
   IApplicationContext,
   Logger,
-  Provider,
+  TComponent,
   Type,
-  ValueProvider,
+  ValueComponent,
 } from "@symph/core";
 import { ServerContainer } from "./server-container";
 import { Resolver } from "./router/interfaces/resolver.interface";
@@ -40,7 +40,7 @@ import { MountService } from "./mount/mount.service";
 import { MountModule } from "./mount/mount-module";
 import { CONFIG_INIT_VALUE } from "@symph/config";
 
-type ServerAPPEntryType = EntryType | Provider | MountModule | (EntryType | MountModule | Provider)[];
+type ServerAPPEntryType = EntryType | TComponent | MountModule | (EntryType | MountModule | TComponent)[];
 
 export class ServerApplication extends ApplicationContext implements INestApplication {
   private readonly logger = new Logger(ServerApplication.name, true);
@@ -75,7 +75,7 @@ export class ServerApplication extends ApplicationContext implements INestApplic
       {
         name: CONFIG_INIT_VALUE,
         useValue: this.appOptions,
-      } as ValueProvider,
+      } as ValueComponent,
       {
         name: Symbol("mountService"),
         type: MountService,
@@ -95,7 +95,7 @@ export class ServerApplication extends ApplicationContext implements INestApplic
   }
 
   protected async initHttp(): Promise<void> {
-    this.httpAdapter = this.syncGet(AbstractHttpAdapter);
+    this.httpAdapter = this.getSync(AbstractHttpAdapter);
     this.container.setHttpAdapter(this.httpAdapter);
     this.routesResolver = new RoutesResolver(this.container, this.config, this.injector, this.mountService);
     this.httpServer = this.createServer();
@@ -120,7 +120,7 @@ export class ServerApplication extends ApplicationContext implements INestApplic
           this.mountService.setMount(mount, providers);
         }
       } else {
-        providers = super.registerModule(md as EntryType | Provider);
+        providers = super.registerModule(md as EntryType | TComponent);
       }
       if (!providers || providers.length === 0) {
         continue;

@@ -6,12 +6,12 @@ import { BuildConfig } from "../../build/build-config";
 
 @Configuration()
 export class JoyServerConfiguration extends ServerConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public configConfiguration: JoyConfigConfiguration;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   applicationConfig: JoyAppConfig;
 
-  @Configuration.Provider()
+  @Configuration.Component()
   public buildConfig: BuildConfig;
 }

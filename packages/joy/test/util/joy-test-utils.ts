@@ -28,7 +28,7 @@ export async function findPort(): Promise<number> {
   // return 4000;
 }
 
-export async function waitForMoment(millisecond = 100000000): Promise<void> {
+export async function waitFor(millisecond = 1000 * 60 * 30): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, millisecond));
 }
 
@@ -54,9 +54,9 @@ export async function check(
         // found the content
         return content;
       }
-      await waitForMoment(1000);
+      await waitFor(1000);
     } catch (err) {
-      await waitForMoment(1000);
+      await waitFor(1000);
       lastErr = err;
     }
   }

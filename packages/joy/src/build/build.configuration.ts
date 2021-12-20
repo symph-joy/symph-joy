@@ -4,6 +4,6 @@ import { BuildCommonConfiguration } from "./build-common.configuration";
 
 @Configuration()
 export class BuildConfiguration extends BuildCommonConfiguration {
-  @Configuration.Provider()
+  @Configuration.Component()
   public buildService: JoyBuildService;
 }

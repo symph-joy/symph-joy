@@ -14,7 +14,7 @@ import { STATIC_CONTEXT } from "./constants";
 import { ComponentWrapper, ContextId, IComponentWrapper, InstancePerContext, PropertyMetadata } from "./component-wrapper";
 import { TaskThenable, ThenableResult } from "../utils/task-thenable";
 import { ApplicationContainer } from "./application-container";
-import { providerNameGenerate } from "./provider-name-generate";
+import { componentNameGenerate } from "./component-name-generate";
 import { getComponentMeta } from "../decorators/core";
 import { isComponentInfoAwareComp } from "../interfaces/context/component-info-aware.interface";
 import { InvalidDependencyTypeException } from "../errors/exceptions/invalid-dependency-type.exception";
@@ -23,7 +23,7 @@ import { NotUniqueMatchedProviderException } from "../errors/exceptions/not-uniq
 import { InjectCustomOptionsInterface } from "../interfaces/inject-custom-options.interface";
 import { isApplicationContextAwareComp } from "../interfaces/context/application-context-ware.interface";
 import { ApplicationContext } from "../application-context";
-import { AutowireHook } from "../hook";
+import { InjectHook } from "../hook";
 // const SyncThenable = Promise
 // type SyncThenable<T> = Promise<T>
 /**
@@ -69,9 +69,9 @@ export interface InjectorHookTaps {
 }
 
 export class Injector {
-  @AutowireHook({ async: false, parallel: false, type: HookType.Waterfall })
+  @InjectHook({ async: false, parallel: false, type: HookType.Waterfall })
   private componentAfterInitialize: IHook;
-  @AutowireHook({ async: false, parallel: false, type: HookType.Waterfall })
+  @InjectHook({ async: false, parallel: false, type: HookType.Waterfall })
   private componentAfterPropertiesSet: IHook;
 
   constructor(public container: ApplicationContainer, protected parentInjector?: Injector) {
@@ -113,7 +113,7 @@ export class Injector {
       }
     }
 
-    if (wrapper.scope === Scope.DEFAULT && instanceHost.loadTask) {
+    if (wrapper.scope === Scope.SINGLETON && instanceHost.loadTask) {
       return instanceHost.loadTask;
     }
 
@@ -304,7 +304,7 @@ export class Injector {
       }
       return {
         index,
-        name: providerNameGenerate(paramType),
+        name: componentNameGenerate(paramType),
         type: paramType,
         injectBy: EnuInjectBy.TYPE,
       } as IInjectableDependency;

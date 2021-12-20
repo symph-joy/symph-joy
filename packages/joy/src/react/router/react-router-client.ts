@@ -1,4 +1,4 @@
-import { Autowire, Component } from "@symph/core";
+import { Inject, Component } from "@symph/core";
 import { IReactRoute, JoyRouteInitState, ReactAppInitManager, ReactRouter } from "@symph/react";
 import { parseRelativeUrl } from "../../joy-server/lib/router/utils/parse-relative-url";
 import getAssetPathFromRoute from "../../joy-server/lib/router/utils/get-asset-path-from-route";
@@ -27,7 +27,7 @@ export class ReactRouterClient extends ReactRouter {
   private _cachedSSgManifest: Set<string> | undefined;
 
   constructor(
-    @Autowire("joyReactAutoGenRoutes")
+    @Inject("joyReactAutoGenRoutes")
     private joyReactAutoGenRoutes: IReactRoute[],
     private joyClientConfig: JoyClientConfig,
     private reactAppInitManager: ReactAppInitManager

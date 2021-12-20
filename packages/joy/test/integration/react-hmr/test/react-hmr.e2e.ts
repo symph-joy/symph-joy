@@ -1,7 +1,7 @@
 import * as path from "path";
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { pollGetText, waitForMoment } from "../../../util/joy-test-utils";
+import { pollGetText, waitFor } from "../../../util/joy-test-utils";
 import { existsSync, mkdirpSync, readFileSync, rmSync, writeFileSync } from "fs-extra";
 
 describe("react hmr", () => {
