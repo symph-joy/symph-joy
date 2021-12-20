@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { Layout, Menu, AutoComplete, Button } from "antd";
+import { Layout, Menu, AutoComplete, Button, Input} from "antd";
 import { Inject } from "@symph/core";
 import { DocsModel } from "../model/docs.model";
 import _ from "lodash";

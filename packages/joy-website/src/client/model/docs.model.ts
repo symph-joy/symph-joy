@@ -1,5 +1,6 @@
 import { BaseReactModel, ReactModel } from "@symph/react";
 import { ReactFetchService } from "@symph/joy";
+import { Inject } from "@symph/core";
 
 export interface DocMenuItem {
   title: string;
