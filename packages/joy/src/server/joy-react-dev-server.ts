@@ -487,9 +487,7 @@ export class JoyReactDevServer extends JoyReactServer {
     return !snippet.includes("data-amp-development-mode-only");
   }
 
-  protected async getStaticPaths(
-    pathname: string
-  ): Promise<{
+  protected async getStaticPaths(pathname: string): Promise<{
     staticPaths: string[] | undefined;
     fallbackMode: false | "static" | "blocking";
   }> {

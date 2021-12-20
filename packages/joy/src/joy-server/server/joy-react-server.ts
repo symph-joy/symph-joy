@@ -881,9 +881,7 @@ export class JoyReactServer implements IComponentLifecycle {
     return ErrorComponent.default || ErrorComponent;
   }
 
-  protected async getStaticPaths(
-    pathname: string
-  ): Promise<{
+  protected async getStaticPaths(pathname: string): Promise<{
     staticPaths: string[] | undefined;
     fallbackMode: "static" | "blocking" | false;
   }> {

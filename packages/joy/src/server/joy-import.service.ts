@@ -88,7 +88,12 @@ export class JoyImportService {
       } else if (/\.json$/i.test(extname)) {
         let packageInfo: Record<string, unknown> = require(fromFile);
         const joyExports = packageInfo.joyExports;
-        const { serverModule: pkgServerModule, reactModule: pkgReactModule, imports: pkgImports, mount: pkgMount } = joyExports as {
+        const {
+          serverModule: pkgServerModule,
+          reactModule: pkgReactModule,
+          imports: pkgImports,
+          mount: pkgMount,
+        } = joyExports as {
           serverModule?: string | boolean;
           reactModule?: string | boolean;
           imports?: ImportConfigSchema[];
