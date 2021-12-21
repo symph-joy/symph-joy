@@ -32,7 +32,7 @@ $ mkdir myapp && cd myapp
 
 创建应用内目录和文件，目录结构如下：
 
-```yaml
+```shell
 myapp
   src  # 源代码目录
     pages  # 约定React路由目录
@@ -98,7 +98,7 @@ $ yarn export
 
 构建产物默认生成到 ./out 下，目录结构类似于：
 
-```yaml
+```shell
 ./out
 index.html
 404.html
