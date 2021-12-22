@@ -9,7 +9,6 @@ import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
 
 const { Content } = Layout;
-const { Option } = AutoComplete;
 const { Item: MenuItem } = Menu;
 const SunSvg = () => (
   <svg viewBox="0 0 1024 1024" fill="currentColor" width="1em" height="1em">
@@ -50,6 +49,8 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
   componentDidMount() {
     super.componentDidMount();
 
+    console.log('componentDidMount')
+
     const { theme } = this.layoutModel.state;
     const oBtn = document.getElementById("collapseBtn");
     const oBody = document.getElementsByTagName("body")[0];
@@ -59,7 +60,7 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     const observer = new IntersectionObserver(([entry]) => {
       const { intersectionRatio } = entry;
 
-      if (intersectionRatio === 1) {
+      if (intersectionRatio > 0) {
         this.layoutModel.changeIsMobile(true);
         oBody.setAttribute("data-is-mobile", "true");
       } else {

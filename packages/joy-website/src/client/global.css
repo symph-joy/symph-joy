@@ -2,15 +2,13 @@
 
 body {
   --blue: #086dc3;
+  --orange: hsl(39, 100%, 50%);
+  --deep-orange: hsl(39, 100%, 45%);
   --font-color: #191e1e;
   --border-color: #ebf2f2;
   --background-color: #fff;
   --font-reverse-color: #fff;
-  /**  header**/
-  --header-border-color: #fff;
-  --header-background-color: #fff;
-  /**  banner**/
-  --banner-background-color: #ebf2f2;
+  --sub-background-color: #ebf2f2;
 
   --break-point: 920px;
   --bigger-than-break-point: calc(100vw - var(--break-point));
@@ -25,13 +23,9 @@ body[data-theme="dark"] {
   --blue: #1f98ff;
   --font-color: #fff;
   --border-color: #2b2f33;
-  --font-reverse-color: #fff;
+  --font-reverse-color: #191e1e;
   --background-color: #191e1e;
-  /**  header**/
-  --header-border-color: #000;
-  --header-background-color: #1b1f23;
-  /**  banner**/
-  --banner-background-color: #262a2d;
+  --sub-background-color: #262a2d;
 }
 
 /* 覆盖antd的背景颜色，便于主题切换 */

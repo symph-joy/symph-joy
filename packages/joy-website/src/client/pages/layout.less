@@ -12,8 +12,8 @@
 
 .nav() {
   padding: 8px 0;
-  background-color: var(--header-background-color);
-  border-bottom: 1px solid var(--header-border-color);
+  background-color: var(--background-color);
+  border-bottom: 1px solid var(--border-color);
   transition: all 0.3s;
 
   &__inner {
@@ -84,35 +84,10 @@ body[data-is-mobile="false"] {
       }
     }
   }
-
-  &[data-theme="dark"] {
-    .nav {
-      .theme__switch {
-        span[role="img"] {
-          &:nth-child(1) {
-            opacity: 0;
-            transform: translate(18px, -50%);
-          }
-
-          &:nth-child(2) {
-            opacity: 1;
-            transform: translate(18px, -50%);
-          }
-        }
-      }
-    }
-  }
 }
 
 // 移动端样式
 body[data-is-mobile="true"] {
-  .header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1;
-  }
-
   .nav {
     .nav();
 
@@ -156,5 +131,36 @@ body[data-is-mobile="true"] {
         }
       }
     }
+  }
+}
+
+// 暗黑主题
+body[data-theme="dark"] {
+  .nav {
+    .theme__switch {
+      span[role="img"] {
+        &:nth-child(1) {
+          opacity: 0;
+          transform: translate(18px, -50%);
+        }
+
+        &:nth-child(2) {
+          opacity: 1;
+          transform: translate(18px, -50%);
+        }
+      }
+    }
+  }
+}
+
+// 这里需要特殊处理下，要始终确保在移动端时，header定位为fixed
+// 这样才可以确保menu__collapseBtn始终显示在页面上，
+// 这样调整窗口大小的时候才可以正常被IntersectionOvserver观察到
+@media screen and (max-width: 947px) {
+  .header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 10;
   }
 }
