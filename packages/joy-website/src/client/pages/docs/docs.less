@@ -1,9 +1,14 @@
-.docMenus {
-  padding: 12px 0;
-  :global {
-    .ant-menu-sub.ant-menu-inline {
-      background: #fff !important;
+&[data-theme="light"] {
+  .docMenus {
+    padding: 12px 0;
+    :global {
+      .ant-menu-sub.ant-menu-inline {
+        background: #fff !important;
+      }
     }
+  }
+  .row{
+    background: #fff;
   }
 }
 .docContent {
@@ -23,7 +28,6 @@
 }
 .menuIcon {
   display: none;
-
 }
 @media screen and (max-width: 947px) {
   .menu {

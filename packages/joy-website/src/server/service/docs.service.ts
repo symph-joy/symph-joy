@@ -18,6 +18,7 @@ export class Doc {
   file: string;
   htmlContent?: string;
   children?: Doc[];
+  hasMenu?: boolean;
 }
 
 export class DocJoyConfig {
@@ -97,7 +98,7 @@ export class DocsService implements IComponentLifecycle {
       return [];
     }
     const dirs = typeof dir === "string" ? [dir] : dir;
-    this.menus = this.scanDir(dirs);
+    this.menus = await this.scanDir(dirs);
     return this.fmtMenus(this.menus);
   }
 
@@ -106,19 +107,25 @@ export class DocsService implements IComponentLifecycle {
     if (!doc) {
       throw new NotFoundException(docPath, `Doc was not found, path: ${docPath}`);
     }
+    return await this.getDocHtmlContent(doc, docPath);
+  }
+
+  async getDocHtmlContent(doc, docPath) {
     if (doc.htmlContent === undefined) {
       if (!doc.file) {
         throw new Error(`Doc file is not defined. doc Path: ${docPath}`);
       }
       const mdContent = fs.readFileSync(doc.file, { encoding: "utf-8" });
       doc.htmlContent = this.markdownToHtml(mdContent);
+      if (!doc.hasMenu) {
+        const title = await this.getDetailHtmlContentTree(mdContent, 1, 0);
+        doc.title = title && title[0].text;
+      }
     }
     return doc;
   }
 
-  public async getTree(docPath: string, max: number, min: number): Promise<TreeItem[] | []> {
-    const doc = this.getDoc(docPath);
-    const mdContent = fs.readFileSync((await doc).file, { encoding: "utf-8" });
+  public async getDetailHtmlContentTree(mdContent, max: number, min: number) {
     const trees = marked.lexer(mdContent);
     const titleTree = [];
     for (const tree of trees) {
@@ -137,6 +144,12 @@ export class DocsService implements IComponentLifecycle {
     } else {
       return [];
     }
+  }
+
+  public async getTree(docPath: string, max: number, min: number): Promise<TreeItem[] | []> {
+    const doc = this.getDoc(docPath);
+    const mdContent = fs.readFileSync((await doc).file, { encoding: "utf-8" });
+    return this.getDetailHtmlContentTree(mdContent, max, min);
   }
 
   public async getTitleTree(docPath: string): Promise<TreeItem[] | []> {
@@ -210,7 +223,7 @@ export class DocsService implements IComponentLifecycle {
     return menus;
   }
 
-  public scanDir(dirs: string[]): Doc[] {
+  public async scanDir(dirs: string[]): Promise<Doc[]> {
     const docs = [] as Doc[];
     for (const dir of dirs) {
       if (!fs.existsSync(dir)) {
@@ -222,7 +235,7 @@ export class DocsService implements IComponentLifecycle {
         throw new Error(`Document root path(${dir}) is a file, expect is a directory.`);
       }
 
-      const doc = this.recursiveFindDoc(dir, "", dir);
+      const doc = await this.recursiveFindDoc(dir, "", dir);
 
       doc?.children && docs.push(...doc.children);
     }
@@ -246,53 +259,121 @@ export class DocsService implements IComponentLifecycle {
     findDoc(docs);
   }
 
-  private recursiveFindDoc(dir: string, parentPath: string, rootDir): Doc {
+  getMenuJsonTitleName(children, path) {
+    for (const child of children) {
+      if (child.path === path) {
+        return child.title;
+      } else {
+        if (Array.isArray(child.children)) {
+          this.getMenuJsonTitleName(child.children, path);
+        }
+      }
+    }
+  }
+  compareFile(first, second) {
+    for (let i = 0; i < first.length; i++) {
+      if (second[i] === undefined) {
+        return true;
+      }
+      if (first[i] !== second[i]) {
+        if (isNaN(first[i]) && !isNaN(second[i])) {
+          return true;
+        }
+        if (!isNaN(first[i]) && isNaN(second[i])) {
+          return false;
+        }
+        return first[i] > second[i];
+      }
+    }
+  }
+  // 按照数字、字母排序
+  sortMenu(menus) {
+    if (menus.children.length > 1) {
+      let arr = menus.children;
+      for (let i = arr.length - 1; i > 0; i--) {
+        for (let j = 0; j < i; j++) {
+          let first = arr[j].file.split("/");
+          first = first[first.length - 1].split(".")[0].split("-");
+          let second = arr[j + 1].file.split("/");
+          second = second[second.length - 1].split(".")[0].split("-");
+          if (this.compareFile(first, second)) {
+            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+          }
+        }
+      }
+    } else {
+      return menus;
+    }
+  }
+
+  private async recursiveFindDoc(dir: string, parentPath: string, rootDir): Promise<Doc> {
     const baseName = path.basename(dir);
     const menuItemConfig = this.tryGetMenuConfig(dir);
     const nodePath = menuItemConfig?.path || baseName;
     const menuPath = parentPath + "/" + nodePath;
     const menuTitle = menuItemConfig?.title || nodePath;
-
     let children: Doc[] | undefined;
-    if (menuItemConfig?.children) {
-      children = menuItemConfig.children;
-    } else {
-      children = [];
-      const childPaths = fs.readdirSync(dir);
-      childPaths.forEach((filePath: string) => {
-        if (filePath.startsWith(".") || filePath.startsWith("_")) {
+    children = [];
+    const childPaths = fs.readdirSync(dir);
+    childPaths.forEach(async (filePath: string) => {
+      if (filePath.startsWith(".") || filePath.startsWith("_")) {
+        return;
+      }
+      const absolutePath = join(dir, filePath);
+      const pathStat = fs.statSync(absolutePath);
+      if (pathStat.isDirectory()) {
+        const child = await this.recursiveFindDoc(absolutePath, menuPath, rootDir);
+        // this.sortMenu(child);
+        if (child) {
+          children.push(child);
+        }
+      } else {
+        if (!/\.md$/i.test(absolutePath)) {
           return;
         }
-        const absolutePath = join(dir, filePath);
-        const pathStat = fs.statSync(absolutePath);
-        if (pathStat.isDirectory()) {
-          const child = this.recursiveFindDoc(absolutePath, menuPath, rootDir);
-          if (child) {
-            children.push(child);
-          }
-        } else {
-          if (!/\.md$/i.test(absolutePath)) {
-            return;
-          }
-          let baseName = path.basename(absolutePath);
-          const childNodePath = baseName.slice(0, baseName.indexOf("."));
-          const childPath = `${parentPath}/${childNodePath}`;
-          const childTitle = childNodePath;
-          children.push({
-            title: childTitle,
-            path: childPath,
-            file: absolutePath,
-          } as Doc);
+        let baseName = path.basename(absolutePath);
+        const childNodePath = baseName.slice(0, baseName.indexOf("."));
+        let childPath = `${parentPath}/${childNodePath}`;
+        const childTitle = childNodePath;
+        let title;
+        // 不支持menu.json中嵌套多个children，只支持一级children
+        if (menuItemConfig?.children) {
+          title = this.getMenuJsonTitleName(menuItemConfig?.children, childPath);
         }
-      });
-    }
-
-    return {
+        // 去掉path前的数字
+        childPath = this.deletePathNumber(childPath);
+        let doc = {
+          title: title || childTitle,
+          path: childPath,
+          file: absolutePath,
+          hasMenu: title ? true : false,
+        };
+        doc = await this.getDocHtmlContent(doc, childPath);
+        children.push(doc as Doc);
+      }
+    });
+    return (await {
       title: menuTitle,
       path: menuPath,
       file: dir,
       children,
-    } as Doc;
+    }) as Doc;
+  }
+
+  deletePathNumber(path) {
+    const array = path.split("/");
+    const result = [];
+    for (const arr of array) {
+      const temArr = arr.split("-");
+      let res = [];
+      for (const tem of temArr) {
+        if (isNaN(tem)) {
+          res.push(tem);
+        }
+      }
+      result.push(res.join("-"));
+    }
+    return result.join("/");
   }
 
   private tryGetMenuConfig(absDirPath: string): Doc | undefined {

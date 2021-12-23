@@ -1,8 +1,7 @@
 import React, { ReactNode } from "react";
-import { Layout, Menu, AutoComplete, Button, Input} from "antd";
+import { Layout, Menu, AutoComplete, Button } from "antd";
 import { Inject } from "@symph/core";
 import { DocsModel } from "../model/docs.model";
-import _ from "lodash";
 import { BaseReactController, ReactController, RouteSwitch } from "@symph/react";
 import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
@@ -76,7 +75,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
   }
 
   onChange = async (value) => {
-    console.log("onChange:", value);
     this.setState({
       search: value,
     });
@@ -87,14 +85,17 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     }
   };
 
-  onSelect = (v, option) => {
+  onSelect = async (v, option) => {
     const value = this.docsModel.state.result[option.key];
-    console.log("onSelect:", value);
     if (value.children) {
       this.pushHistory(`/docs${value.path}${value.children[0].id}`);
     } else {
       this.pushHistory(`/docs${value.path}`);
     }
+    this.setState({
+      search: this.state.search,
+    });
+    await this.docsModel.getSearch(this.state.search);
   };
 
   componentWillUnmount() {
@@ -141,8 +142,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     const { result } = this.docsModel.state;
     const { collapsed, isMobile, theme } = this.layoutModel.state;
     const themeUrl = theme === "dark" ? "/static/antd.dark.css" : "/static/antd.css";
-    console.log("result:", result);
-
     return (
       <Layout className={styles.layout}>
         <link id="theme-style" rel="stylesheet" href={themeUrl} />
@@ -182,28 +181,24 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                   </MenuItem>,
                   <MenuItem key="7">
                     <AutoComplete
-                      // value={this.state.search}
                       allowClear
+                      value={this.state.search}
                       placeholder="搜索"
                       onSelect={this.onSelect}
-                      onChange={_.debounce(this.onChange, 100)}
+                      onChange={this.onChange}
                       style={{ width: 200 }}
-                      options={result.map((value, key) => ({
-                        label: (
-                          <>
-                            {value.children ? (
-                              <a className={styles.selectOption}>
-                                {value.text} &gt; {value.children[0].text}
-                              </a>
-                            ) : (
-                              <a className={styles.selectOption}>{value.text}</a>
-                            )}
-                          </>
-                        ),
-                        value: value.text,
-                      }))}
                     >
-                      <Input value={this.state.search}></Input>
+                      {result.map((value, key) => (
+                        <Option key={key} value={value.children ? `${value.text} &gt; ${value.children[0].text}` : value.text}>
+                          {value.children ? (
+                            <a className={styles.selectOption}>
+                              {value.text} &gt; {value.children[0].text}
+                            </a>
+                          ) : (
+                            <a className={styles.selectOption}>{value.text}</a>
+                          )}
+                        </Option>
+                      ))}
                     </AutoComplete>
                   </MenuItem>,
                 ]}

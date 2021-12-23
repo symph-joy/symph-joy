@@ -1,101 +1,26 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactComponent, ReactController, RouteParam } from "@symph/react";
+import { BaseReactController, RouteSwitch, ReactController, RouteParam } from "@symph/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
-import { Inject, IApplicationContext } from "@symph/core";
-import { Affix, Col, Menu, Row, Spin, Anchor, Drawer } from "antd";
+import { Inject } from "@symph/core";
+import { Affix, Col, Menu, Row, Anchor, Drawer } from "antd";
 import styles from "./docs.less";
-import { Prerender, IJoyPrerender, TJoyPrerenderApi } from "@symph/joy/react";
 import { MenuUnfoldOutlined } from "@ant-design/icons";
-
 const { Link } = Anchor;
 
-@Prerender()
-@ReactComponent()
-export class DocsPrerenderGenerator implements IJoyPrerender {
-  @Inject()
-  public docsModel: DocsModel;
-
-  getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
-    return "/docs/:path";
-  }
-
-  isFallback(): Promise<boolean> | boolean {
-    return false;
-  }
-
-  async getPaths(): Promise<Array<string>> {
-    console.log(" this.docsModel:", this.docsModel.state);
-    console.log(" this.docsModel:", this);
-    const menus = await this.docsModel.getDocMenus();
-    const paths = [] as string[];
-    const addChildren = (menus: DocMenuItem[]) => {
-      (menus || []).forEach((menu) => {
-        if (menu.children?.length) {
-          addChildren(menu.children);
-        } else {
-          paths.push(`/docs${menu.path}`);
-        }
-      });
-    };
-    addChildren(menus || []);
-    return paths;
-    // return ["/docs/docs/build-css", "/docs/docs/introduce"];
-  }
-
-  async getApis?(): Promise<Array<TJoyPrerenderApi>> {
-    let paths = await this.docsModel.getPreDocMenus();
-    paths = paths.map((value) => {
-      return {
-        path: value.detail,
-      };
-    });
-    return [
-      {
-        path: "/docs/menus",
-      },
-      ...paths,
-    ];
-  }
-}
-
 @ReactController()
-export default class DocsIndexController extends BaseReactController {
+export default class DocsLayout extends BaseReactController {
   @RouteParam({ name: "path" })
   docPath: string;
+
+  @Inject()
+  public docsModel: DocsModel;
 
   state = {
     showDrawer: false,
   };
 
-  @Inject()
-  public docsModel: DocsModel;
-
-  async initialModelStaticState(): Promise<void | number> {
-    let path = this.docPath || "/docs/docs/build-css";
-    await this.docsModel.getDocMenus();
-    await this.fetchPageDocData(path);
-  }
-
-  async fetchPageDocData(path) {
-    if (!path.startsWith("/")) {
-      path = "/" + path;
-    }
-    await this.docsModel.getDoc(path);
-  }
-
-  // shouldComponentUpdate(pre: any, next: any, nextContext: any) {
-  //   const oldPath = this.docPath;
-  //   super.shouldComponentUpdate(pre, next, nextContext);
-  //   const newPath = this.docPath;
-  //   if (oldPath !== newPath) {
-  //     this.fetchPageDocData("/" + newPath);
-  //   }
-  //   return true;
-  // }
-
   private async showDoc(menu: DocMenuItem) {
     this.props.history.push(`/docs${menu.path}`);
-    // await this.docsModel.getDoc(menu.path);
   }
 
   private renderMenuItem(items: DocMenuItem[] | undefined) {
@@ -123,10 +48,10 @@ export default class DocsIndexController extends BaseReactController {
   }
 
   renderView(): ReactNode {
-    const { docMenus, defaultOption, titleTrees, currentDoc, loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
-    console.log(this);
+    const { docMenus, defaultOption, titleTrees, currentDoc } = this.docsModel.state;
+    const { route } = this.props;
     return (
-      <Row style={{ minHeight: "calc(100vh - 64px)", position: "relative", background: "#fff" }}>
+      <Row className="={styles.row" style={{ minHeight: "calc(100vh - 64px)", position: "relative" }}>
         <Col className={styles.menu} sm={24} md={5} lg={5} xl={4} xxl={3}>
           <Affix>
             <Menu
@@ -170,15 +95,7 @@ export default class DocsIndexController extends BaseReactController {
           </Menu>
         </Drawer>
         <Col style={{ flex: 1 }}>
-          <Spin delay={200} spinning={loadingCurrentDoc}>
-            {loadCurrentDocErr ? (
-              <div>
-                {" "}
-                {loadCurrentDocErr.code}:{loadCurrentDocErr.message}
-              </div>
-            ) : undefined}
-            {currentDoc ? <div className={styles.docContent} dangerouslySetInnerHTML={{ __html: currentDoc.htmlContent }} /> : undefined}
-          </Spin>
+          <RouteSwitch routes={route?.routes || []} extraProps={null} />
         </Col>
         <Col sm={24} md={3} lg={3} xl={3} xxl={3}>
           {titleTrees ? (

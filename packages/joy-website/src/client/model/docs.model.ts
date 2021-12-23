@@ -56,35 +56,37 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     const resp = await this.fetchService.fetchApi("/docs/titleArray");
     const respJson = await resp.json();
     const titleArray = respJson.data;
-    for (const h1 of titleArray) {
-      if (h1.text.includes(value) || this.handleString(h1.text).includes(this.handleString(value))) {
-        const temp = res.find((value) => value.path === h1.path);
-        if (!temp) {
-          let obj = {
-            text: h1.text,
-            id: h1.id,
-            path: h1.path,
-            file: h1.file,
-          };
-          res.push(obj);
-        }
-      }
-      if (h1.children) {
-        for (const h2 of h1.children) {
-          if (h2.text.includes(value) || this.handleString(h2.text).includes(this.handleString(value))) {
+    if (value) {
+      for (const h1 of titleArray) {
+        if (h1.text.includes(value) || this.handleString(h1.text).includes(this.handleString(value))) {
+          const temp = res.find((value) => value.path === h1.path);
+          if (!temp) {
             let obj = {
               text: h1.text,
               id: h1.id,
               path: h1.path,
               file: h1.file,
-              children: [
-                {
-                  text: h2.text,
-                  id: h2.id,
-                },
-              ],
             };
             res.push(obj);
+          }
+        }
+        if (h1.children) {
+          for (const h2 of h1.children) {
+            if (h2.text.includes(value) || this.handleString(h2.text).includes(this.handleString(value))) {
+              let obj = {
+                text: h1.text,
+                id: h1.id,
+                path: h1.path,
+                file: h1.file,
+                children: [
+                  {
+                    text: h2.text,
+                    id: h2.id,
+                  },
+                ],
+              };
+              res.push(obj);
+            }
           }
         }
       }
