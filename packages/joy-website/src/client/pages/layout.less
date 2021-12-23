@@ -26,8 +26,28 @@
   }
 }
 
-// web端样式
-body[data-is-mobile="false"] {
+// 暗黑主题
+body[data-theme="dark"] {
+  .nav {
+    .theme__switch {
+      span[role="img"] {
+        &:nth-child(1) {
+          opacity: 0;
+          transform: translate(18px, -50%);
+        }
+
+        &:nth-child(2) {
+          opacity: 1;
+          transform: translate(18px, -50%);
+        }
+      }
+    }
+  }
+}
+
+// 因为data-is-mobile需要js执行完成后才会有值，所以对页面header栏做特殊样式处理，
+// 不适用其它页面样式的那种规则
+@media screen and (min-width: 947px) {
   .nav {
     .nav();
     padding: 12px 0;
@@ -86,8 +106,17 @@ body[data-is-mobile="false"] {
   }
 }
 
-// 移动端样式
-body[data-is-mobile="true"] {
+// 这里需要特殊处理下，要始终确保在移动端时，header定位为fixed
+// 这样才可以确保menu__collapseBtn始终显示在页面上，
+// 这样调整窗口大小的时候才可以正常被IntersectionOvserver观察到
+@media screen and (max-width: 947px) {
+  .header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+  }
+
   .nav {
     .nav();
 
@@ -131,36 +160,5 @@ body[data-is-mobile="true"] {
         }
       }
     }
-  }
-}
-
-// 暗黑主题
-body[data-theme="dark"] {
-  .nav {
-    .theme__switch {
-      span[role="img"] {
-        &:nth-child(1) {
-          opacity: 0;
-          transform: translate(18px, -50%);
-        }
-
-        &:nth-child(2) {
-          opacity: 1;
-          transform: translate(18px, -50%);
-        }
-      }
-    }
-  }
-}
-
-// 这里需要特殊处理下，要始终确保在移动端时，header定位为fixed
-// 这样才可以确保menu__collapseBtn始终显示在页面上，
-// 这样调整窗口大小的时候才可以正常被IntersectionOvserver观察到
-@media screen and (max-width: 947px) {
-  .header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 10;
   }
 }

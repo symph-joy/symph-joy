@@ -141,6 +141,7 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     const { result } = this.docsModel.state;
     const { collapsed, isMobile, theme } = this.layoutModel.state;
     const themeUrl = theme === "dark" ? "/static/antd.dark.css" : "/static/antd.css";
+
     return (
       <Layout className={styles.layout}>
         <link id="theme-style" rel="stylesheet" href={themeUrl} />
