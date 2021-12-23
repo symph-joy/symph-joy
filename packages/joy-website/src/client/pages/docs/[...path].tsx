@@ -68,36 +68,13 @@ export default class Path extends BaseReactController {
     let path = this.docPath || "/docs/docs/style-css";
     await this.docsModel.getDocMenus();
     await this.fetchPageDocData(path);
-    // if (typeof window !== "undefined") {
-    //   console.log("关闭服务端渲染 执行，但是会跳回");
-    //   // const hash = decodeURIComponent(this.props.location.hash);
-    //   // const ele = global.document.querySelector(hash);
-    //   // ele.scrollIntoView();
-    // }
-    // const hash = decodeURIComponent(this.props.location.hash);
-    // const ele = global.document.querySelector(hash);
-    // ele.scrollIntoView();
   }
-
-  // shouldComponentUpdate(nextProps: Readonly<Record<string, unknown>>, nextState: Readonly<Record<string, unknown>>, nextContext: any): boolean {
-  //   super.shouldComponentUpdate(nextProps, nextState, nextContext);
-  //   console.log("nextProps:", nextProps);
-  //   console.log("nextState:", nextState);
-  // }
 
   async fetchPageDocData(path) {
     if (!path.startsWith("/")) {
       path = "/" + path;
     }
     await this.docsModel.getDoc(path);
-  }
-
-  componentDidMount(): void {
-    super.componentDidMount();
-    // const hash = decodeURIComponent(this.props.location.hash);
-    // const ele = document.querySelector(hash);
-    // ele.scrollIntoView();
-    // console.log("componentDidMount");
   }
 
   renderView(): ReactNode {

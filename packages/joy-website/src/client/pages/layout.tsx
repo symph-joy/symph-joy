@@ -6,7 +6,7 @@ import { BaseReactController, ReactController, RouteSwitch } from "@symph/react"
 import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
-
+const { Option } = AutoComplete;
 const { Content } = Layout;
 const { Item: MenuItem } = Menu;
 const SunSvg = () => (
@@ -47,8 +47,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
 
   componentDidMount() {
     super.componentDidMount();
-
-    console.log('componentDidMount')
 
     const { theme } = this.layoutModel.state;
     const oBtn = document.getElementById("collapseBtn");
