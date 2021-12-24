@@ -20,7 +20,7 @@ myapp
 
 ```js
 [
-  { exact: true, path: "/", providerName: "index", providerModule: "src/client/pages/index" },
-  { exact: true, path: "/", providerName: "about", providerModule: require("src/client/pages/about") },
+  { exact: true, path: "/", componentName: "index", componentModule: "src/client/pages/index" },
+  { exact: true, path: "/", componentName: "about", componentModule: require("src/client/pages/about") },
 ];
 ```

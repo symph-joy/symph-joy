@@ -90,7 +90,7 @@ describe("react hmr", () => {
       writeFileSync(newCtlFilePath, updatedSource, { encoding: "utf-8" });
       await pollGetText(testContext.getUrl("/hello2"), undefined, /\*message2\*/);
       await page.goto(testContext.getUrl("/hello2"));
-      await page.waitForFunction(() => document?.getElementById("message")?.innerHTML === "*message2*");
+      await page.waitForFunction(() => document?.getElementById("message")?.innerHTML === "*message2*", undefined, { timeout: 60000 });
 
       // then remove
       rmSync(newCtlFilePath);

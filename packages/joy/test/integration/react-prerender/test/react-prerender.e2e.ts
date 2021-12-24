@@ -1,7 +1,7 @@
 import "jest-playwright-preset";
 import * as path from "path";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { renderViaHTTP } from "../../../util/joy-test-utils";
+import { renderViaHTTP, waitFor } from "../../../util/joy-test-utils";
 import { promises } from "fs";
 import { getDomInnerHtml } from "../../../util/html-utils";
 import { JoyRouteInitState } from "@symph/react";

@@ -1,14 +1,14 @@
-import { RouteProps } from "react-router-dom";
+import { RouteObject, RouteProps } from "react-router-dom";
 import { ComponentName } from "@symph/core";
 
-export interface IReactRoute extends RouteProps {
+export interface IReactRoute extends RouteObject {
   path: string;
-  providerName?: ComponentName;
-  providerPackage?: string;
+  componentName?: ComponentName;
+  componentPackage?: string;
   dynamic?: boolean;
-  providerModule?: Record<string, any>;
+  componentModule?: Record<string, any>;
   hasState?: boolean;
   hasStaticState?: boolean;
   isContainer?: boolean;
-  routes?: IReactRoute[];
+  children?: IReactRoute[];
 }

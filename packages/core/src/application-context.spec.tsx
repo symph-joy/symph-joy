@@ -1,6 +1,5 @@
 import React from "react";
 import { Configuration } from "./decorators/core/configuration/configuration.decorator";
-import { Component } from "./decorators/core/configuration/configuration-component.decorator";
 import { ApplicationContext } from "./application-context";
 import { ComponentWrapper, ApplicationContainer } from "./injector";
 import { RegisterTap } from "./hook";
@@ -23,7 +22,7 @@ describe("core-context", () => {
 
     @Configuration()
     class AppConfig {
-      @Component()
+      @Configuration.Component()
       public helloProvider: HelloProvider;
     }
 
@@ -67,7 +66,7 @@ describe("core-context", () => {
 
     @Configuration()
     class AppConfig {
-      @Component()
+      @Configuration.Component()
       public helloProvider: HelloProvider;
     }
 
@@ -100,7 +99,7 @@ describe("core-context", () => {
 
       @Configuration()
       class AppConfig {
-        @Component()
+        @Configuration.Component()
         public helloProvider: HelloProvider;
       }
 
@@ -131,7 +130,7 @@ describe("core-context", () => {
 
       @Configuration()
       class AppConfig {
-        @Component()
+        @Configuration.Component()
         public helloProvider: HelloProvider;
       }
 

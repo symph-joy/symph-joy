@@ -3,19 +3,18 @@ import {MountModule} from "@symph/react/dist/mount/mount-module";
 
 {{#*inline "renderRoutes"}}
   [
-  {{#routes}}
+  {{#children}}
     {
     path: "{{path}}",
-    {{#if exact}}exact: {{json exact}},{{/if}}
-    {{#if sensitive}}sensitive: {{json sensitive}},{{/if}}
-    {{#if strict}}strict: {{json strict}},{{/if}}
+    {{#if index}}index: {{json index}},{{/if}}
+    {{#if caseSensitive}}caseSensitive: {{json caseSensitive}},{{/if}}
     {{#if dynamic}}dynamic: {{json dynamic}},{{/if}}
-    providerName: "{{providerName}}",
-    {{#if providerPackage}}providerPackage: "{{providerPackage}}",{{/if}}
-    providerModule: {{#if mount}}{mount:"{{mount}}", module:require({{json srcPath}})}{{else}}require({{json srcPath}}){{/if}},
-    routes: {{> renderRoutes this}}
+    componentName: "{{componentName}}",
+    {{#if componentPackage}}componentPackage: "{{componentPackage}}",{{/if}}
+    componentModule: {{#if mount}}{mount:"{{mount}}", module:require({{json srcPath}})}{{else}}require({{json srcPath}}){{/if}},
+    children: {{> renderRoutes this}}
     },
-  {{/routes}}
+  {{/children}}
   ]
 {{/inline}}
 

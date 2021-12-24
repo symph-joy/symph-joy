@@ -1,5 +1,5 @@
 import React, { Component, ReactNode } from "react";
-import { JoyReactContext } from "./react-app-container";
+import { ReactApplicationReactContext } from "./react-app-container";
 import { ModelStateChangeHandler, ReactReduxService } from "./redux/react-redux.service";
 import { BaseReactModel } from "./base-react-model";
 import { bindRouteFromCompProps, getRouteMeta, IRouteMeta } from "./router/react-route.decorator";
@@ -9,8 +9,9 @@ import { ReactRouter } from "./router/react-router";
 import type { Location } from "history";
 import { EnumReactAppInitStage } from "./react-app-init-stage.enum";
 import { IReactRoute } from "./interfaces";
-import { match } from "react-router";
+import { PathMatch } from "react-router";
 import * as H from "history";
+import { NavigateFunction } from "react-router-dom";
 
 export type ControllerBaseStateType = {
   _modelStateVersion: number;
@@ -32,9 +33,9 @@ export interface BaseReactController {
 
 interface ControllerProps {
   route?: IReactRoute;
-  match?: match;
+  match?: PathMatch;
   location?: Location;
-  history?: H.History;
+  navigate?: NavigateFunction;
 }
 
 /**
@@ -54,7 +55,7 @@ export abstract class BaseReactController<
    */
   async componentPrepare(context: any): Promise<void> {}
 
-  static contextType = JoyReactContext;
+  static contextType = ReactApplicationReactContext;
 
   protected appContext: IApplicationContext;
   protected reduxStore: ReactReduxService;
@@ -260,7 +261,7 @@ export abstract class BaseReactController<
       if (!this.props.match) {
         return false;
       }
-      const matchedUrl = this.props.match.url;
+      const matchedUrl = this.props.match.pathname;
       const nextUrlState = (nextModelState as ReactAppInitManager["state"])[matchedUrl];
       const preUrlState = (preModelState as ReactAppInitManager["state"])[matchedUrl];
       return nextUrlState?.initStatic !== preUrlState?.initStatic || nextUrlState?.init !== preUrlState?.init;

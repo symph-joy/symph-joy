@@ -10,17 +10,15 @@ export class ReactRouterServer extends ReactRouter {
     private joyReactAutoGenRoutes: IReactRoute[]
   ) {
     super();
-    const routeTrees = joyReactAutoGenRoutes.map((it: any) => {
-      return {
-        ...it,
-        component: it.component?.default,
-      };
-    });
+    const routeTrees = joyReactAutoGenRoutes;
 
     this.traverseTree(routeTrees, (route) => {
-      this.routesMap.set(route.path, route);
-      if (route.providerModule) {
-        this.scannedModules.push(route.providerModule);
+      if (route.componentModule) {
+        this.scannedModules.push(route.componentModule);
+      }
+      this.addRouteCache(route);
+      if (route.componentName && !route.element) {
+        route.element = this.createRouteElement(route);
       }
       return false;
     });

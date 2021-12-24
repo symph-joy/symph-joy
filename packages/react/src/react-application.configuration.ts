@@ -1,4 +1,5 @@
-import { StaticRouter, BrowserRouter, HashRouter, MemoryRouter } from "react-router-dom";
+import { BrowserRouter, HashRouter, MemoryRouter } from "react-router-dom";
+import { StaticRouter } from "react-router-dom/server";
 import { ReactRouter } from "./router/react-router";
 import { Configuration } from "@symph/core";
 import { ReactAppInitManager } from "./react-app-init-manager";

@@ -1,7 +1,8 @@
 type Route = {
   path: string;
   isContainer?: boolean;
-  routes?: Route[];
+  children?: Route[];
+  index?: boolean;
 };
 
 export class RoutePathNode<T extends Route> {
@@ -13,7 +14,11 @@ export class RoutePathNode<T extends Route> {
   route: T;
 
   insertRoute(route: T): void {
-    const routePath = route.path;
+    let routePath = route.path;
+    if (route.index) {
+      routePath = routePath + (routePath.endsWith("/") ? "$index" : "/$index");
+    }
+
     this._insert(route, routePath.split("/").filter(Boolean), [], false);
   }
 
@@ -56,10 +61,12 @@ export class RoutePathNode<T extends Route> {
     if (!this.placeholder) {
       const r = prefix === "/" ? "/" : prefix.slice(0, -1);
       if (this.optionalRestSlugName != null) {
-        throw new Error(`You cannot define a route with the same specificity as a optional catch-all route ("${r}" and "${r}:${this.optionalRestSlugName}*").`);
+        throw new Error(
+          `You cannot define a route with the same specificity as a optional catch-all route ("${r}" and "${r}:${this.optionalRestSlugName}*").`
+        );
       }
       if (this.route.isContainer) {
-        this.route.routes = childrenRoutes;
+        this.route.children = childrenRoutes;
         routes.push(this.route);
       } else {
         routes.push(this.route, ...childrenRoutes);
@@ -126,7 +133,9 @@ export class RoutePathNode<T extends Route> {
           }
 
           if (slug.replace(/\W/g, "") === nextSegment.replace(/\W/g, "")) {
-            throw new Error(`You cannot have the slug names "${slug}" and "${nextSlug}" differ only by non-word symbols within a single dynamic path`);
+            throw new Error(
+              `You cannot have the slug names "${slug}" and "${nextSlug}" differ only by non-word symbols within a single dynamic path`
+            );
           }
         });
 
@@ -136,7 +145,9 @@ export class RoutePathNode<T extends Route> {
       if (isCatchAll) {
         if (isOptional) {
           if (this.restSlugName != null) {
-            throw new Error(`You cannot use both an required and optional catch-all route at the same level (":${this.restSlugName}+" and "${routePaths[0]}" ).`);
+            throw new Error(
+              `You cannot use both an required and optional catch-all route at the same level (":${this.restSlugName}+" and "${routePaths[0]}" ).`
+            );
           }
 
           handleSlug(this.optionalRestSlugName, segmentName);
@@ -146,7 +157,9 @@ export class RoutePathNode<T extends Route> {
           nextSegment = "[[...]]";
         } else {
           if (this.optionalRestSlugName != null) {
-            throw new Error(`You cannot use both an optional and required catch-all route at the same level (":${this.optionalRestSlugName}*" and "${routePaths[0]}").`);
+            throw new Error(
+              `You cannot use both an optional and required catch-all route at the same level (":${this.optionalRestSlugName}*" and "${routePaths[0]}").`
+            );
           }
 
           handleSlug(this.restSlugName, segmentName);

@@ -1,6 +1,7 @@
 import { ReactRouterServer } from "./router/react-router-server";
 import { Inject, Configuration } from "@symph/core";
-import { BrowserRouter, HashRouter, MemoryRouter, StaticRouter } from "react-router-dom";
+import { BrowserRouter, HashRouter, MemoryRouter } from "react-router-dom";
+import { StaticRouter } from "react-router-dom/server";
 import { IReactRoute, ReactApplicationConfiguration } from "@symph/react";
 import { ReactFetchServerService } from "./service/react-fetch-server.service";
 import path from "path";

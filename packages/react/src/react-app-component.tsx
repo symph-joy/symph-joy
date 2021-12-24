@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
 import { IReactApplication } from "./interfaces";
 import { ReactRouter } from "./router/react-router";
-import { RouteSwitch } from "./router/route-switch";
-import { JoyReactContext } from "./react-app-container";
+import { ReactApplicationReactContext } from "./react-app-container";
+import { useRoutes } from "react-router-dom";
 
 // export type TReactAppComponentProps = {
 //   // appContext: IReactApplication;
@@ -15,12 +15,12 @@ export type TReactAppComponent = React.ComponentType<{
 }>;
 
 export default function ReactAppComponent() {
-  const appContext = useContext(JoyReactContext);
+  const appContext = useContext(ReactApplicationReactContext);
   if (!appContext) {
     throw new Error("React App Context not found.");
   }
   const reactRouter = appContext.getSync<ReactRouter>("reactRouter");
   const routes = reactRouter.getRoutes() || [];
-
-  return <RouteSwitch routes={routes} extraProps={{}} />;
+  return useRoutes(routes);
+  // return <RouteSwitch routes={routes} extraProps={{}} />;
 }

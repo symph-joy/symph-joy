@@ -83,22 +83,40 @@ describe("route-sorter", () => {
     });
 
     it("disallows optional params", () => {
-      expect(() => getSortedRoutes(["/:blog?"])).toThrowErrorMatchingInlineSnapshot(`"Optional route parameters are not yet supported (\\":blog?\\")."`);
-      expect(() => getSortedRoutes(["/abc/:blog?"])).toThrowErrorMatchingInlineSnapshot(`"Optional route parameters are not yet supported (\\":blog?\\")."`);
-      expect(() => getSortedRoutes(["/abc/:blog?/def"])).toThrowErrorMatchingInlineSnapshot(`"Optional route parameters are not yet supported (\\":blog?\\")."`);
+      expect(() => getSortedRoutes(["/:blog?"])).toThrowErrorMatchingInlineSnapshot(
+        `"Optional route parameters are not yet supported (\\":blog?\\")."`
+      );
+      expect(() => getSortedRoutes(["/abc/:blog?"])).toThrowErrorMatchingInlineSnapshot(
+        `"Optional route parameters are not yet supported (\\":blog?\\")."`
+      );
+      expect(() => getSortedRoutes(["/abc/:blog?/def"])).toThrowErrorMatchingInlineSnapshot(
+        `"Optional route parameters are not yet supported (\\":blog?\\")."`
+      );
     });
 
     it("disallows mixing required catch all and optional catch all", () => {
-      expect(() => getSortedRoutes(["/:one+", "/:one*"])).toThrowErrorMatchingInlineSnapshot(`"You cannot use both an required and optional catch-all route at the same level (\\":one+\\" and \\":one*\\" )."`);
-      expect(() => getSortedRoutes(["/:one*", "/:one+"])).toThrowErrorMatchingInlineSnapshot(`"You cannot use both an optional and required catch-all route at the same level (\\":one*\\" and \\":one+\\")."`);
+      expect(() => getSortedRoutes(["/:one+", "/:one*"])).toThrowErrorMatchingInlineSnapshot(
+        `"You cannot use both an required and optional catch-all route at the same level (\\":one+\\" and \\":one*\\" )."`
+      );
+      expect(() => getSortedRoutes(["/:one*", "/:one+"])).toThrowErrorMatchingInlineSnapshot(
+        `"You cannot use both an optional and required catch-all route at the same level (\\":one*\\" and \\":one+\\")."`
+      );
     });
 
     it("disallows apex and optional catch all", () => {
-      expect(() => getSortedRoutes(["/", "/:all*"])).toThrowErrorMatchingInlineSnapshot(`"You cannot define a route with the same specificity as a optional catch-all route (\\"/\\" and \\"/:all*\\")."`);
-      expect(() => getSortedRoutes(["/:all*", "/"])).toThrowErrorMatchingInlineSnapshot(`"You cannot define a route with the same specificity as a optional catch-all route (\\"/\\" and \\"/:all*\\")."`);
+      expect(() => getSortedRoutes(["/", "/:all*"])).toThrowErrorMatchingInlineSnapshot(
+        `"You cannot define a route with the same specificity as a optional catch-all route (\\"/\\" and \\"/:all*\\")."`
+      );
+      expect(() => getSortedRoutes(["/:all*", "/"])).toThrowErrorMatchingInlineSnapshot(
+        `"You cannot define a route with the same specificity as a optional catch-all route (\\"/\\" and \\"/:all*\\")."`
+      );
 
-      expect(() => getSortedRoutes(["/sub", "/sub/:all*"])).toThrowErrorMatchingInlineSnapshot(`"You cannot define a route with the same specificity as a optional catch-all route (\\"/sub\\" and \\"/sub:all*\\")."`);
-      expect(() => getSortedRoutes(["/sub/:all*", "/sub"])).toThrowErrorMatchingInlineSnapshot(`"You cannot define a route with the same specificity as a optional catch-all route (\\"/sub\\" and \\"/sub:all*\\")."`);
+      expect(() => getSortedRoutes(["/sub", "/sub/:all*"])).toThrowErrorMatchingInlineSnapshot(
+        `"You cannot define a route with the same specificity as a optional catch-all route (\\"/sub\\" and \\"/sub:all*\\")."`
+      );
+      expect(() => getSortedRoutes(["/sub/:all*", "/sub"])).toThrowErrorMatchingInlineSnapshot(
+        `"You cannot define a route with the same specificity as a optional catch-all route (\\"/sub\\" and \\"/sub:all*\\")."`
+      );
     });
 
     it("catches param names differing only by non-word characters", () => {
@@ -126,7 +144,7 @@ describe("route-sorter", () => {
         {
           path: "/blog",
           isContainer: true,
-          routes: [
+          children: [
             {
               path: "/blog/posts",
             },
@@ -164,7 +182,7 @@ describe("route-sorter", () => {
         {
           path: "/blog/:id",
           isContainer: true,
-          routes: [
+          children: [
             {
               path: "/blog/:id/posts",
               isContainer: true,

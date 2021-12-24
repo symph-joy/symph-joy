@@ -76,7 +76,7 @@ export class FileScanner {
 
   private cachedModules: Map<string, IScanOutModule> = new Map();
 
-  public getCacheModuleByProviderName(providerName: ComponentName | ComponentName[]): IScanOutModule | undefined {
+  public getCacheModuleByCompName(componentName: ComponentName | ComponentName[]): IScanOutModule | undefined {
     const moduleKeys = new Array(...this.cachedModules.keys());
     for (let i = 0; i < moduleKeys.length; i++) {
       const key = moduleKeys[i];
@@ -85,7 +85,7 @@ export class FileScanner {
         continue;
       }
       for (const providerDefine of cacheModule.providerDefines.values()) {
-        const findOutProvider = providerDefine.providers?.find((p) => p.name === providerName);
+        const findOutProvider = providerDefine.providers?.find((p) => p.name === componentName);
         if (findOutProvider) {
           return cacheModule;
         }
@@ -95,7 +95,7 @@ export class FileScanner {
   }
 
   public getSourceFileByProviderId(providerId: string): string | undefined {
-    const cacheModule = this.getCacheModuleByProviderName(providerId);
+    const cacheModule = this.getCacheModuleByCompName(providerId);
     if (cacheModule) {
       return cacheModule.resource;
     }

@@ -15,7 +15,7 @@ describe("joy router", () => {
   });
 
   test("render the index route", async () => {
-    // waitForMoment()
+    // await waitFor();
     await page.goto(testContext.getUrl("/blog"));
     const main = await page.$eval("#main", (el: any) => el.innerHTML);
     const index = await page.$eval("#index", (el: any) => el.innerHTML);

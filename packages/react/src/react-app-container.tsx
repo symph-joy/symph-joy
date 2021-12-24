@@ -5,7 +5,7 @@ import { IReactApplication } from "./interfaces";
 import { RuntimeException } from "@symph/core";
 import ReactAppComponent, { TReactAppComponent } from "./react-app-component";
 
-export const JoyReactContext = createContext<IReactApplication | undefined>(undefined);
+export const ReactApplicationReactContext = createContext<IReactApplication | undefined>(undefined);
 
 interface ApplicationComponentProps {
   appContext: IReactApplication;
@@ -36,13 +36,13 @@ export function ReactAppContainer({ appContext, App }: ApplicationComponentProps
   // const routes =  [{path: '/', providerName: 'main'}]
   App = App || ReactAppComponent;
   return (
-    <JoyReactContext.Provider value={appContext}>
+    <ReactApplicationReactContext.Provider value={appContext}>
       <ReduxProvider store={reduxStore.store}>
         <ReactRouterComponent {...(reactRouterProps || {})}>
           <App appContext={appContext} />
         </ReactRouterComponent>
       </ReduxProvider>
-    </JoyReactContext.Provider>
+    </ReactApplicationReactContext.Provider>
   );
 }
 

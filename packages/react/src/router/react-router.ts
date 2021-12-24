@@ -1,15 +1,37 @@
 import { IReactRoute } from "../interfaces";
-import { matchPath } from "react-router";
+import { matchPath, PathMatch, PathPattern } from "react-router";
 import { ClassComponent, isClassComponent, TComponent, ComponentName, Type } from "@symph/core";
 import { getRouteMeta, IRouteMeta } from "./react-route.decorator";
 import * as H from "history";
 import { RoutePathNode } from "./route-sorter";
+import React from "react";
+import { ReactRouteLoader } from "./react-route-loader";
+import { any, object } from "prop-types";
+import { keys } from "object-hash";
 
 export class ReactRouter<T extends IReactRoute = IReactRoute> {
   protected routesMap: Map<string, T> = new Map<string, T>(); // store all routes
   protected routeTrees: T[] = []; // routes as be formatted as tree
 
   private rootRouteNode = new RoutePathNode<T>();
+
+  protected getRoutePathCacheKey({ path, index }: Pick<T, "index" | "path">): string {
+    if (index) {
+      return path + (path.endsWith("/") ? "" : "/") + "$$index";
+    } else {
+      return path;
+    }
+  }
+
+  protected addRouteCache(route: T) {
+    const cacheKey = this.getRoutePathCacheKey(route);
+    this.routesMap.set(cacheKey, route);
+  }
+
+  protected getRouteCache(routePattern: Pick<T, "index" | "path">): T | undefined {
+    const cacheKey = this.getRoutePathCacheKey(routePattern);
+    return this.routesMap.get(cacheKey);
+  }
 
   public getRoutes(): T[] {
     return this.routeTrees;
@@ -18,7 +40,8 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
   public setRoutes(routes: T[]): void {
     this.routesMap = new Map();
     this.traverseTree(routes, (r) => {
-      this.routesMap.set(r.path, r);
+      this.addRouteCache(r);
+      // this.routesMap.set(r.path, r);
       return false;
     });
     this.refreshTree();
@@ -34,23 +57,30 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     this.curLocation = location;
   }
 
-  public hasRouteByPath(path: string): T | undefined {
-    return this.routesMap.get(path);
+  public hasRouteByPath(route: T): T | undefined {
+    return this.getRouteCache(route);
   }
 
   public addRoute(route: T) {
-    const existRoute = this.hasRouteByPath(route.path);
+    const existRoute = this.getRouteCache(route);
     if (existRoute) {
       console.debug(
-        `Overriding route {path:${existRoute.path}}, replacing {providerName: ${String(existRoute.providerName)} with {providerName: ${String(
-          route.providerName
+        `Overriding route {path:${existRoute.path}}, replacing {providerName: ${String(existRoute.componentName)} with {providerName: ${String(
+          route.componentName
         )}`
       );
     }
-
-    this.routesMap.set(route.path, route);
+    if (route.componentName && !route.element) {
+      route.element = this.createRouteElement(route);
+    }
+    this.addRouteCache(route);
+    // this.routesMap.set(route.path, route);
     this.rootRouteNode.insertRoute(route);
     this.routeTrees = this.rootRouteNode.smooth();
+  }
+
+  protected createRouteElement(route: T) {
+    return React.createElement<any>(ReactRouteLoader, { route });
   }
 
   /**
@@ -77,7 +107,8 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
       return undefined;
     }
     for (const route of removedRoutes) {
-      this.routesMap.delete(route.path);
+      const cacheKey = this.getRoutePathCacheKey(route);
+      this.routesMap.delete(cacheKey);
     }
     // 重建整个routeTree, 可以优化为：只摘除PathNode中的节点，然后生成树。
     this.refreshTree();
@@ -98,8 +129,8 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     for (const route of routes) {
       if (predicate(route)) {
         previousValue.push(route);
-        if (route.routes) {
-          this._filterRoute(route.routes as T[], predicate, previousValue);
+        if (route.children) {
+          this._filterRoute(route.children as T[], predicate, previousValue);
         }
       }
     }
@@ -110,8 +141,8 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     for (const route of routes) {
       if (predicate(route)) {
         previousValue.push(route);
-        if (route.routes) {
-          this.find(route.routes as T[], predicate, previousValue);
+        if (route.children) {
+          this.find(route.children as T[], predicate, previousValue);
         }
         break;
       }
@@ -128,12 +159,11 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
       if (visitor(route)) {
         return true;
       }
-      if (route.routes) {
-        if (this.traverseTree(route.routes as T[], visitor)) {
+      if (route.children) {
+        if (this.traverseTree(route.children as T[], visitor)) {
           return true;
         }
       }
-      return false;
     }
     return false;
   }
@@ -144,12 +174,14 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
    */
   public getMatchedRoutes(pathname: string): T[] | undefined {
     const rst = this.find(this.getRoutes(), (route) => {
-      let matchProps = route;
-      if (route.path.endsWith("/index")) {
-        matchProps = { ...route, path: [route.path, route.path.slice(0, -6)] };
-      }
-      const matched = matchPath(pathname, matchProps);
-
+      let matched: PathMatch | null = matchPath({ path: route.path, end: !route.children?.length }, pathname);
+      // if (route.path.endsWith("/index")) {
+      //   const indexPath = route.path.slice(0, -6);
+      //   matched = matchPath(indexPath, pathname);
+      // }
+      // if (!matched) {
+      //   matched = matchPath(route.path, pathname);
+      // }
       return !!matched;
     });
     return rst;
@@ -187,7 +219,7 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
 
   public replaceRouteProvider(nextProvider: ClassComponent, preProviderName: string): { added: T[]; removed: T[]; modified: T[] } {
     const nextRoutes = this.scanProvider(nextProvider) || [];
-    const preProviders = this.filterRoutes((route) => route.providerName === preProviderName);
+    const preProviders = this.filterRoutes((route) => route.componentName === preProviderName);
 
     const added: T[] = [];
     const removed: T[] = [];
@@ -234,8 +266,8 @@ export class ReactRouter<T extends IReactRoute = IReactRoute> {
     return {
       ...meta,
       path,
-      providerName,
-      providerPackage,
+      componentName: providerName,
+      componentPackage: providerPackage,
       hasStaticState,
       hasState,
     } as T;

@@ -3,12 +3,11 @@ import { BaseReactController, ReactController, Route } from "@symph/react";
 import { Prerender } from "@symph/joy/react";
 
 @Prerender()
-@Route({ path: "/links", exact: true })
+@Route({ path: "/links" })
 @ReactController()
 export default class IndexController extends BaseReactController {
   onClickLink = (link: string) => {
-    // @ts-ignore
-    this.props.history.push(link);
+    this.props.navigate && this.props.navigate(link);
   };
 
   renderView(): ReactNode {

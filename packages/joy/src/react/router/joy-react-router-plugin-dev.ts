@@ -24,12 +24,12 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
 
   protected createFromMeta(
     path: string,
-    providerName: ComponentName,
+    componentName: ComponentName,
     providerPackage: string | undefined,
     meta: IRouteMeta,
     useClass: Type
   ): IReactRouteBuildDev {
-    const route = super.createFromMeta(path, providerName, providerPackage, meta, useClass);
+    const route = super.createFromMeta(path, componentName, providerPackage, meta, useClass);
     return {
       ...route,
       isAdd: false,
@@ -48,8 +48,8 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
       }
       for (const route of rootRoutes) {
         plainRoutes.push(route);
-        if (route.routes?.length) {
-          getFromRoutes(route.routes);
+        if (route.children?.length) {
+          getFromRoutes(route.children);
         }
       }
     };
@@ -58,21 +58,22 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
   }
 
   protected getClientRoutes(): IReactRouteBuildDev[] {
-    function addedFilter(routes: IReactRouteBuildDev[]): IReactRouteBuildDev[] {
-      const rst = [] as IReactRouteBuildDev[];
-      for (const route of routes) {
-        if (route.isAdd) {
-          const copyRoute = { ...route };
-          rst.push(copyRoute);
-          if (route.routes) {
-            copyRoute.routes = addedFilter(route.routes as IReactRouteBuildDev[]);
-          }
-        }
-      }
-      return rst;
-    }
-    const routes = this.getRoutes();
-    return addedFilter(routes);
+    return super.getClientRoutes();
+    // function addedFilter(routes: IReactRouteBuildDev[]): IReactRouteBuildDev[] {
+    //   const rst = [] as IReactRouteBuildDev[];
+    //   for (const route of routes) {
+    //     if (route.isAdd) {
+    //       const copyRoute = { ...route };
+    //       rst.push(copyRoute);
+    //       if (route.children) {
+    //         copyRoute.children = addedFilter(route.children as IReactRouteBuildDev[]);
+    //       }
+    //     }
+    //   }
+    //   return rst;
+    // }
+    // const routes = this.getRoutes();
+    // return addedFilter(routes);
   }
 
   @RegisterTap()

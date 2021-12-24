@@ -9,38 +9,6 @@ export function isDynamicRoute(route: string): boolean {
   return TEST_ROUTE_1.test(route) || TEST_ROUTE.test(route);
 }
 
-export function getMatchedRoutes(pathname: string, routes?: IReactRoute[], matchContext: IReactRoute[] = []): IReactRoute[] {
-  routes = routes || [];
-  if (!routes?.length) {
-    return matchContext;
-  }
-  for (let i = 0; i < routes.length; i++) {
-    const route = routes[i];
-    const m = matchPath(pathname, route);
-    if (!m) {
-      continue;
-    }
-    const matchedRoute = { ...route };
-    matchContext.push(matchedRoute);
-    if (route.routes?.length) {
-      matchedRoute.routes = getMatchedRoutes(pathname, route.routes, matchContext);
-    }
-  }
-  return matchContext;
-}
-
-function parseParameter(param: string) {
-  const optional = param.startsWith("[") && param.endsWith("]");
-  if (optional) {
-    param = param.slice(1, -1);
-  }
-  const repeat = param.startsWith("...");
-  if (repeat) {
-    param = param.slice(3);
-  }
-  return { key: param, repeat, optional };
-}
-
 /**
  * 转换示例：
  * [a] -> :a

@@ -11,7 +11,7 @@ export default class IndexController extends BaseReactController {
       <div>
         <div id="msg">Hello Index!</div>
         <div>
-          link to: <a onClick={() => (this.props.history as any).push("/hello")}>/hello</a>
+          link to: <a onClick={() => this.props.navigate("/hello")}>/hello</a>
         </div>
       </div>
     );

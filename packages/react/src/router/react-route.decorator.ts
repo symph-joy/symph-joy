@@ -26,7 +26,7 @@ export type IRouteMeta = {
   path: string | string[];
   dynamic?: boolean;
   isContainer?: boolean;
-} & Pick<IReactRoute, "exact" | "sensitive" | "strict">;
+} & Pick<IReactRoute, "caseSensitive">;
 
 export type RouteOptions = Omit<IReactRoute, "isContainer">;
 

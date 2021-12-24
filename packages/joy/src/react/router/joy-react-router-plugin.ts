@@ -40,18 +40,18 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
   //   meta: IRouteMeta,
   //   useClass: Type
   // ): T {
-  //   const routeObj = super.fromRouteMeta(path, providerName, meta, useClass);
+  //   const routeObj = super.fromRouteMeta(path, componentName, meta, useClass);
   //
   //   let filePath: string | undefined;
   //   let exportKey: string | undefined
-  //   if (providerName) {
-  //     const scanModule = this.fileScanner.getCacheModuleByProviderName(providerName);
+  //   if (componentName) {
+  //     const scanModule = this.fileScanner.getCacheModuleByComponentName(componentName);
   //     filePath = scanModule?.resource;
   //   }
   //
   //   // if (!filePath) {
   //   //   throw new Error(
-  //   //     `Route can't found src file, route path:${path}, providerId:${String(providerName)}. `
+  //   //     `Route can't found src file, route path:${path}, providerId:${String(componentName)}. `
   //   //   );
   //   // }
   //   const buildRoute: IJoyReactRouteBuild = {
@@ -132,7 +132,6 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     if (!filePath.startsWith(pagesDir)) {
       return undefined;
     }
-    let exact = true;
     let routePath = filePath.substr(pagesDir.length);
     const pathSegments = routePath.split(sep).filter(Boolean);
     let lastSeg = pathSegments[pathSegments.length - 1];
@@ -142,20 +141,25 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     }
     const isContainer = lastSeg === "layout";
     if (isContainer) {
-      exact = false;
       pathSegments.pop();
     }
+    const isIndex = lastSeg === "index";
+    if (isIndex) {
+      pathSegments.pop();
+    }
+
     routePath = "/" + pathSegments.join("/");
     if (basePath) {
       routePath = basePath + routePath;
     }
+
     routePath = normalizeConventionRoute(routePath);
     const fsRoute = {
       path: routePath,
       isContainer,
-      exact,
-      providerName: provider?.name,
-      providerPackage: provider?.package,
+      index: isIndex,
+      componentName: provider?.name,
+      componentPackage: provider?.package,
     } as T;
 
     return fsRoute;
@@ -180,14 +184,14 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
   @RegisterTap()
   protected async onGenerateFiles(genFiles: IGenerateFiles) {
     const clientRoutes = this.getClientRoutes();
-    const clientFileContent = this.routesTemplate({ routes: clientRoutes });
+    const clientFileContent = this.routesTemplate({ children: clientRoutes });
     if (this.lastClientRoutesContent.length !== clientFileContent.length || this.lastClientRoutesContent !== clientFileContent) {
       genFiles["./react/client/routes.js"] = clientFileContent;
       this.lastClientRoutesContent = clientFileContent;
     }
 
     const serverFileContent = this.routesServerTemplate({
-      routes: clientRoutes,
+      children: clientRoutes,
     });
     if (this.lastServerRoutesContent.length !== serverFileContent.length || this.lastServerRoutesContent !== serverFileContent) {
       genFiles["./react/server/routes.js"] = serverFileContent;

@@ -22,7 +22,8 @@ describe("error-client-import-server-class", () => {
       });
       expect(response.statusCode).toBe(500);
       const html = response.body.trim();
-      expect(html).toContain('Error import { JoyBoot } from \\"@symph/joy\\",');
+      // expect(html).toContain('Error import { JoyBoot } from \\"@symph/joy\\",');
+      expect(html).toContain("Internal Server Error");
     });
   });
 

@@ -7,6 +7,9 @@ import { normalizePathTrailingSlash } from "../../client/normalize-trailing-slas
 import { JoyClientConfig } from "../../client/joy-client-config";
 import { isDynamicRoute } from "../../joy-server/lib/router/utils";
 import { matchPath } from "react-router";
+import React from "react";
+import { ReactRouteLoader } from "@symph/react/dist/router/react-route-loader";
+import { JoyReactRouteLoader } from "./joy-react-route-loader";
 
 type ClientRouteSSG = string[];
 
@@ -33,25 +36,20 @@ export class ReactRouterClient extends ReactRouter {
     private reactAppInitManager: ReactAppInitManager
   ) {
     super();
-    this.routeTrees = joyReactAutoGenRoutes.map((it: any) => {
-      return {
-        ...it,
-        component: it.component?.default,
-      };
-    });
-
-    const routeTrees = joyReactAutoGenRoutes.map((it: any) => {
-      return {
-        ...it,
-        component: it.component?.default,
-      };
-    });
+    const routeTrees = joyReactAutoGenRoutes;
 
     this.traverseTree(routeTrees, (route) => {
-      this.routesMap.set(route.path, route);
+      this.addRouteCache(route);
+      if (route.componentName && !route.element) {
+        route.element = this.createRouteElement(route);
+      }
       return false;
     });
     this.routeTrees = routeTrees;
+  }
+
+  protected createRouteElement(route: IReactRoute): React.FunctionComponentElement<any> {
+    return React.createElement<any>(JoyReactRouteLoader, { route });
   }
 
   public getSSGManifest(path: string): Promise<boolean> | boolean {
@@ -65,7 +63,7 @@ export class ReactRouterClient extends ReactRouter {
       for (const ssgRoute of ssgManifest.values()) {
         if (ssgRoute === path) {
           return true;
-        } else if (isDynamicRoute(ssgRoute) && matchPath(path, { path: ssgRoute })) {
+        } else if (isDynamicRoute(ssgRoute) && matchPath({ path: ssgRoute, end: false }, path)) {
           return true;
         }
       }

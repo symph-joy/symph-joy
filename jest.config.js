@@ -11,4 +11,5 @@ module.exports = {
     "<rootDir>/packages/joy/jest.config.e2e.js",
   ],
   globalSetup: "./test/lib/jest-setup.js",
+  testTimeout: 60000,
 };

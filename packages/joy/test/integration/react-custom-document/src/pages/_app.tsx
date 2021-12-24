@@ -1,6 +1,6 @@
 import React from "react";
 import { App } from "@symph/joy/react";
-import { RouteSwitch } from "@symph/react";
+import { RoutesRenderer } from "@symph/react";
 
 export default class MyApp extends App {
   render() {
@@ -9,7 +9,8 @@ export default class MyApp extends App {
       <div>
         <p id="hello-app">Hello App</p>
         <p id="hello-app-hmr">Hello App HMR</p>
-        <RouteSwitch routes={routes} extraProps={{}} />
+        <RoutesRenderer routes={routes} />
+        {/*<RouteSwitch routes={routes} extraProps={{}} />*/}
       </div>
     );
   }

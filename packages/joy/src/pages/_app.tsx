@@ -1,5 +1,5 @@
 import React from "react";
-import { IReactApplication, ReactRouter, RouteSwitch } from "@symph/react";
+import { IReactApplication, ReactRouter, RoutesRenderer } from "@symph/react";
 
 export type ReactAppProps = {
   appContext: IReactApplication;
@@ -14,7 +14,7 @@ export class App extends React.Component<ReactAppProps, any> {
   }
   render() {
     const routes = this.reactRouter.getRoutes() || [];
-    return <RouteSwitch routes={routes} extraProps={{}} />;
+    return <RoutesRenderer routes={routes} />;
   }
 }
 

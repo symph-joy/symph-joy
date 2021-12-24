@@ -34,8 +34,7 @@ export default class DynamicRouteCtl extends BaseReactController {
   private msg: string;
 
   onClickLink = (link: string) => {
-    // @ts-ignore
-    this.props.history.push(link);
+    this.props.navigate(link);
   };
 
   renderView(): ReactNode {

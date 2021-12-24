@@ -11,6 +11,7 @@ import NestLayout from "./fixtures/router/pages/nest/layout";
 import NestAbc from "./fixtures/router/pages/nest/abc";
 import NestIndex from "./fixtures/router/pages/nest";
 import NestChildAbc from "./fixtures/router/pages/nest/child/abc";
+import CatchAllPage from "./fixtures/router/pages/catch-all-page";
 
 describe("react-router", () => {
   test("should render the hello route", async () => {
@@ -64,7 +65,8 @@ describe("react-router", () => {
     const appContent = app.start();
     const reactRouter = await app.get(ReactRouter);
     const matchedRoutes = reactRouter.getMatchedRoutes("/nest");
-    expect(matchedRoutes).toMatchObject([{ path: "/nest" }, { path: "/nest/index" }]);
+    const routes = reactRouter.getRoutes();
+    expect(matchedRoutes).toMatchObject([{ path: "/nest" }, { path: "/nest", index: true }]);
     const { getByTestId, container, rerender, getByText } = render(appContent);
     expect(getByTestId("nestLayout").innerHTML).toBe("Nest Layout");
     expect(getByTestId("nestIndex").innerHTML).toBe("Nest Index");
@@ -104,5 +106,19 @@ describe("react-router", () => {
     expect(getByTestId("count").innerHTML).toBe("100");
     expect(getByTestId("hasCount").innerHTML).toBe("true");
     expect(getByTestId("countTrans").innerHTML).toBe("101");
+  });
+
+  test("should render the catch all route", async () => {
+    const app = await ReactApplicationFactory.create(ReactApplicationConfiguration, undefined, [
+      {
+        name: "reactRouterProps",
+        type: Object,
+        useValue: { initialEntries: ["/catch-all/a/b/c"] },
+      },
+      CatchAllPage,
+    ]);
+    const appContent = app.start();
+    const { getByTestId, container, rerender, getByText } = render(appContent);
+    expect(getByTestId("message").innerHTML).toBe("a/b/c");
   });
 });

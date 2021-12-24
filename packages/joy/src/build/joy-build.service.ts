@@ -44,7 +44,7 @@ import { InjectHook, Component, ApplicationContext, HookType, IHook } from "@sym
 import { FileGenerator } from "./file-generator";
 import { FileScanner } from "./scanner/file-scanner";
 import { Worker } from "jest-worker";
-import { ReactRouter } from "@symph/react";
+import { IReactRoute, ReactRouter } from "@symph/react";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
 import { getWebpackConfigForApi } from "./webpack-config-for-api";
@@ -162,9 +162,9 @@ export class JoyBuildService {
 
     await Promise.all(
       reactRoutes.map(async (reactRoute) => {
-        const { path: _pathname, providerName: providerName, hasState, hasStaticState } = reactRoute;
+        const { path: _pathname, componentName, hasState, hasStaticState } = reactRoute;
         const path: string = _pathname as string;
-        if (!providerName) {
+        if (!componentName) {
           throw new Error(`The route${path} is not a provider.`);
         }
 
@@ -710,7 +710,20 @@ export class JoyBuildService {
 
     const analysisBegin = process.hrtime();
 
-    const reactRoutes = this.joyReactRoute.getRoutes();
+    let reactRoutes = this.joyReactRoute.getRoutes();
+    function fmtRoute(routes: IReactRoute[] = []): IReactRoute[] {
+      const rst = [] as IReactRoute[];
+      for (const route of routes) {
+        rst.push({
+          ...route,
+          children: route.children ? fmtRoute(route.children) : undefined,
+          element: undefined, // react element不能被序列化，所以排除掉。
+        });
+      }
+      return rst;
+    }
+    reactRoutes = fmtRoute(reactRoutes);
+
     const pageInfos: Map<string, PageInfo> = await this.analysisBuild();
     pageInfos.forEach((pageInfo, route) => {
       if (pageInfo.isSsg) {

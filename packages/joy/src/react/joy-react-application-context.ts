@@ -21,11 +21,11 @@ export class JoyReactApplicationContext extends ReactApplicationContext {
     this.scannedModules = [];
     const findRouteModule = (routes: IReactRoute[]) => {
       for (const route of routes) {
-        if (route.providerModule) {
-          this.scannedModules.push(route.providerModule);
+        if (route.componentModule) {
+          this.scannedModules.push(route.componentModule);
         }
-        if (route.routes && route.routes.length > 0) {
-          findRouteModule(route.routes);
+        if (route.children && route.children.length > 0) {
+          findRouteModule(route.children);
         }
       }
     };

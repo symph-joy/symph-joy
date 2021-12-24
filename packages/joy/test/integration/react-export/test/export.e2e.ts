@@ -96,7 +96,7 @@ describe("joy export", () => {
   }, 999999);
 
   test("Should export with styles.", async () => {
-    await page.goto(testContext.getUrl("/style/with-style"));
+    await page.goto(testContext.getUrl("/style/with-style"), {waitUntil: "networkidle"});
     const cssStyleColor = await page.$eval("#msg", (e: any) => getComputedStyle(e).color);
     expect(cssStyleColor).toBe("rgb(255, 0, 0)");
   }, 999999);

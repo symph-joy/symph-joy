@@ -1,83 +1,48 @@
 import React, { ComponentType, useContext, useEffect, useMemo, useState } from "react";
-import { IReactRoute, JoyReactContext, JoyRouteInitState, MountModule, ReactAppInitManager } from "@symph/react";
+import { IReactRoute, ReactApplicationReactContext, JoyRouteInitState, MountModule, ReactAppInitManager } from "@symph/react";
 import { ReactRouterClient } from "./react-router-client";
 import * as H from "history";
-import { match } from "react-router-dom";
+import { PathMatch, useLocation, useMatch, useNavigate } from "react-router-dom";
 import { DynamicLoading, Loader } from "../../joy-server/lib/dynamic";
 import { RuntimeException } from "@symph/core";
 import { isDynamicRoute } from "./router-utils";
+import { getRouteElement } from "@symph/react/dist/router/react-route-loader";
 
 type JoyReactRouteLoaderOptions = {
-  match: match;
-  location: H.Location;
-  history: H.History;
+  // match: PathMatch;
+  // location: H.Location;
+  // history: H.History;
   extraProps: Record<string, any>;
   route: IReactRoute;
 
-  component: ComponentType | { default: ComponentType };
+  // component: ComponentType | { default: ComponentType };
   loader?: Loader;
   loading?: DynamicLoading;
 
-  providerName: string;
-  providerModule: Record<string, unknown> | (() => Promise<Record<string, unknown>>);
+  // componentName: string;
+  // componentModule: Record<string, unknown> | (() => Promise<Record<string, unknown>>);
 };
 
-export function JoyReactRouteLoader({ route, match, history, component, loading, extraProps, location }: JoyReactRouteLoaderOptions) {
+const DefaultLoadingComp = ({ match, location, route }: { match: PathMatch; location: H.Location; route: IReactRoute }) => (
+  <div>{match.pathname} loading...</div>
+);
+
+export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptions) {
   const { ssr, joyExport } = window.__JOY_DATA__;
-  const { url: matchUrl } = match;
-  const joyAppContext = useContext(JoyReactContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const match = useMatch({ path: route.path, end: !route.children?.length });
+  if (!match) {
+    throw new RuntimeException(`React route load error: Route ${route.path} is not match location: ${location.pathname}`);
+  }
+  const { pathname: matchUrl } = match;
+  const joyAppContext = useContext(ReactApplicationReactContext);
   if (!joyAppContext) {
     throw new Error("react app context is not initialed");
   }
-  const { providerName, providerPackage, providerModule } = route;
 
-  const LoadingComp =
-    loading || (({ match, location, route }: { match: match; location: H.Location; route: IReactRoute }) => <div>{match.url} loading...</div>);
-
-  let RouteComponent: ComponentType | Promise<ComponentType> = useMemo(() => {
-    function wrapperComp(Comp: ComponentType) {
-      // 当是叶子路由且是动态路由时，url地址发生后，新地址依然匹配当前路由时，界面重新加载。
-      if (!route.routes?.length && isDynamicRoute(route.path)) {
-        return (props: any) => {
-          return <Comp {...props} />;
-        };
-      } else {
-        return Comp;
-      }
-    }
-
-    if (component) {
-      const Comp = (component as any).default || component;
-      return wrapperComp(Comp);
-    } else if (typeof providerName !== "undefined") {
-      const getComponent = (pModule: Record<string, unknown>) => {
-        let info = joyAppContext.getProviderDefinition(providerName, providerPackage);
-        if (info === undefined) {
-          try {
-            joyAppContext.registerModule(pModule);
-          } catch (e) {
-            console.log(e);
-          }
-        }
-        // try get again
-        info = joyAppContext.getProviderDefinition(providerName, providerPackage);
-        if (!info) {
-          throw new RuntimeException(`Joy can not find the route controller component(providerName:${String(providerName)})`);
-        }
-        const Comp = info.useClass as ComponentType;
-        return wrapperComp(Comp);
-      };
-      if (typeof providerModule === "function") {
-        // dynamic lazy load
-        return providerModule().then((module: any) => {
-          return getComponent(module);
-        });
-      } else {
-        return getComponent(providerModule as any);
-      }
-    } else {
-      throw new RuntimeException("Joy react route loader can not get content component.");
-    }
+  let routeElement: React.ReactElement | Promise<React.ReactElement> = useMemo(() => {
+    return getRouteElement(joyAppContext, route, match, location, navigate);
   }, [matchUrl]);
 
   // prefetch Data
@@ -100,7 +65,7 @@ export function JoyReactRouteLoader({ route, match, history, component, loading,
       return true;
     };
 
-    const ssgInfo = router.getSSGManifest(match.path);
+    const ssgInfo = router.getSSGManifest(match.pathname);
     if (ssgInfo instanceof Promise) {
       return ssgInfo.then(check);
     } else {
@@ -110,7 +75,7 @@ export function JoyReactRouteLoader({ route, match, history, component, loading,
 
   const [loadingState, setLoadingStat] = useState({
     isDataLoading: false,
-    isCompLoading: RouteComponent instanceof Promise,
+    isCompLoading: routeElement instanceof Promise,
   });
 
   // fetch page data
@@ -147,7 +112,7 @@ export function JoyReactRouteLoader({ route, match, history, component, loading,
       }
     });
 
-    Promise.resolve(RouteComponent).then((Ctl) => {
+    Promise.resolve(routeElement).then((Ctl) => {
       if (loadingState.isCompLoading) {
         setLoadingStat({ isDataLoading: loadingState.isDataLoading, isCompLoading: false });
       }
@@ -156,9 +121,11 @@ export function JoyReactRouteLoader({ route, match, history, component, loading,
 
   const props = { match, location, history, route };
 
+  const LoadingComp = loading || DefaultLoadingComp;
+
   if (loadingState.isDataLoading || loadingState.isCompLoading) {
-    return <LoadingComp {...props} />;
+    return <LoadingComp {...props} match={match} location={location} />;
   }
   // @ts-ignore
-  return <RouteComponent {...props} {...extraProps} route={route} />;
+  return routeElement as React.ReactElement;
 }

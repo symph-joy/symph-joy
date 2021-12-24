@@ -27,7 +27,7 @@ export default class HelloController extends BaseReactController {
 等效于以下路由配置：
 
 ```js
-[{ exact: true, path: "/hello", providerName: "helloController", providerModule: "src/client/pages/hello.tsx" }]``;
+[{ exact: true, path: "/hello", componentName: "helloController", componentModule: "src/client/pages/hello.tsx" }]``;
 ```
 
 ### 路由组件参数
