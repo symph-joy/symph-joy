@@ -1,7 +1,7 @@
 import React from "react";
-import { ReactController, BaseReactController, Route } from "../../../../index";
+import { ReactController, BaseReactController, ReactRoute } from "../../../../index";
 
-@Route({ path: "/hello" })
+@ReactRoute({ path: "/hello" })
 @ReactController()
 export default class Hello extends BaseReactController {
   renderView() {

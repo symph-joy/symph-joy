@@ -30,7 +30,7 @@ export type IRouteMeta = {
 
 export type RouteOptions = Omit<IReactRoute, "isContainer">;
 
-export function Route(options: RouteOptions): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
+export function ReactRoute(options: RouteOptions): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
   return (constructor) => {
     const injectableMeta = getComponentMeta(constructor);
     if (!injectableMeta) {
@@ -43,7 +43,7 @@ export function Route(options: RouteOptions): <TFunction extends Function>(const
   };
 }
 
-export function RouteContainer(options: RouteOptions): ClassDecorator {
+export function ReactRouteContainer(options: RouteOptions): ClassDecorator {
   return (constructor) => {
     const injectableMeta = getComponentMeta(constructor);
     if (!injectableMeta) {

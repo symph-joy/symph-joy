@@ -10,7 +10,7 @@ import { TReactAppComponent } from "./react-app-component";
 import { MountModule } from "./mount/mount-module";
 import { MountService } from "./mount/mount.service";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
-import { ReactRouter } from "./router/react-router";
+import { ReactRouterService } from "./router/react-router-service";
 
 type ReactAPPEntryType = EntryType | TComponent | MountModule | (EntryType | MountModule | TComponent)[];
 
@@ -22,7 +22,7 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
   protected reduxStore: ReactReduxService;
   protected routes: IReactRoute[];
   public mountService: MountService;
-  public router: ReactRouter;
+  public reactRouterService: ReactRouterService;
   public reactApplicationConfig: ReactApplicationConfig;
 
   constructor(
@@ -59,13 +59,13 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
 
     this.reduxStore = this.getSync(ReactReduxService);
     this.reactApplicationConfig = this.getSync(ReactApplicationConfig);
-    this.router = this.getSync(ReactRouter);
+    this.reactRouterService = this.getSync(ReactRouterService);
     this.mountService = this.getSync(MountService);
   }
 
   public async init(): Promise<this> {
     await super.init();
-    this.router = this.getSync(ReactRouter);
+    this.reactRouterService = this.getSync(ReactRouterService);
 
     await this.registerMiddleware();
     // await this.registerRouter();
@@ -112,7 +112,7 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
   ): IReactRoute[] | undefined {
     let addedRoutes: IReactRoute[] | undefined;
     compWrappers.forEach((wrapper) => {
-      const routes = this.router.addRouteProvider(wrapper, mount);
+      const routes = this.reactRouterService.addRouteProvider(wrapper, mount);
       if (routes && routes.length > 0) {
         if (!addedRoutes) {
           addedRoutes = routes;

@@ -662,10 +662,10 @@ export default async function getBaseWebpackConfig(
 
     let isJoyExternal = false;
     if (isLocal) {
-      // we need to process joy-server/lib/router/router so that
+      // we need to process joy-server/lib/reactRouterService/reactRouterService so that
       // the DefinePlugin can inject process.env values
-      // isJoyExternal = /joy([/\\]dist)?[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(
-      isJoyExternal = /joy[/\\]dist[/\\]joy-server[/\\](?!lib[/\\]router[/\\]router)/.test(res);
+      // isJoyExternal = /joy([/\\]dist)?[/\\]joy-server[/\\](?!lib[/\\]reactRouterService[/\\]reactRouterService)/.test(
+      isJoyExternal = /joy[/\\]dist[/\\]joy-server[/\\](?!lib[/\\]reactRouterService[/\\]reactRouterService)/.test(res);
 
       if (!isJoyExternal) {
         return callback();
@@ -1032,13 +1032,15 @@ export default async function getBaseWebpackConfig(
         (() => {
           const { JoyEsmPlugin: JoyEsmPlugin } = require("./webpack/plugins/joy-esm-plugin");
           return new JoyEsmPlugin({
-            filename: (getFileName: Function | string) => (...args: any[]) => {
-              const name = typeof getFileName === "function" ? getFileName(...args) : getFileName;
+            filename:
+              (getFileName: Function | string) =>
+              (...args: any[]) => {
+                const name = typeof getFileName === "function" ? getFileName(...args) : getFileName;
 
-              return name.includes(".js")
-                ? name.replace(/\.js$/, ".module.js")
-                : escapePathVariables(args[0].chunk.name.replace(/\.js$/, ".module.js"));
-            },
+                return name.includes(".js")
+                  ? name.replace(/\.js$/, ".module.js")
+                  : escapePathVariables(args[0].chunk.name.replace(/\.js$/, ".module.js"));
+              },
             chunkFilename: (inputChunkName: string) => inputChunkName.replace(/\.js$/, ".module.js"),
           });
         })(),
@@ -1071,7 +1073,7 @@ export default async function getBaseWebpackConfig(
       //   }),
       new WellKnownErrorsPlugin(),
       // isServer && new EmitSrcPlugin({path: path.join(outDir, 'dist')})
-    ].filter((Boolean as any) as ExcludesFalse),
+    ].filter(Boolean as any as ExcludesFalse),
   };
 
   // Support tsconfig and jsconfig baseUrl

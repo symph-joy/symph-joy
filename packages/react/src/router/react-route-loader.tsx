@@ -1,6 +1,6 @@
 import React, { ComponentType, useContext, useEffect, useMemo, useState } from "react";
 import * as H from "history";
-import { NavigateFunction, PathMatch, useLocation, useMatch, useNavigate } from "react-router-dom";
+import { NavigateFunction, PathMatch, useLocation, useMatch, useNavigate } from "react-router";
 import { RuntimeException } from "@symph/core";
 import { ReactApplicationReactContext } from "../react-app-container";
 import { IReactApplication, IReactRoute } from "../interfaces";
@@ -92,6 +92,11 @@ export function ReactRouteLoader({ route, loading }: ReactRouteLoaderOptions): R
   const appContext = useContext(ReactApplicationReactContext);
   if (!appContext) {
     throw new Error("react app context is not initialed");
+  }
+  if (route.catchAllParam) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore 特殊处理，填入catchAllParam的值。
+    match.params[route.catchAllParam] = match.params["*"];
   }
 
   let routeElement: React.ReactElement | Promise<React.ReactElement> = useMemo(() => {

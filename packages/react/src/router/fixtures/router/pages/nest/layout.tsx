@@ -1,8 +1,8 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
-import { BaseReactController, ReactController, RouteContainer } from "../../../../../index";
+import { Outlet } from "react-router";
+import { BaseReactController, ReactController, ReactRouteContainer } from "../../../../../index";
 
-@RouteContainer({ path: "/nest" })
+@ReactRouteContainer({ path: "/nest" })
 @ReactController()
 export default class NestLayout extends BaseReactController {
   renderView() {

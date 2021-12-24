@@ -6,10 +6,9 @@ import { BaseReactController } from "./base-react-controller";
 import { render } from "@testing-library/react";
 import { ReactModel } from "./react-model.decorator";
 import { ReactController } from "./react-controller.decorator";
-import { matchPath, MemoryRouter, useLocation } from "react-router-dom";
 import "reflect-metadata";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
-import { Configuration, Inject, ApplicationContainer } from "@symph/core";
+import { Configuration, Inject } from "@symph/core";
 import { ReactApplicationFactory } from "./react-application-factory";
 import { ReactComponent } from "./react-component.decorator";
 

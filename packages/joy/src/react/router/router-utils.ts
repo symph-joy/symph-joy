@@ -53,3 +53,34 @@ export function normalizeConventionRoute(routePath: string): string {
     })
     .join("");
 }
+
+/**
+ * 转换示例：
+ * [a] -> :a
+ * [...a] => /*;
+ * @param routePath
+ */
+export function normalizeConventionRouteV6(routePath: string): { path: string; catchAllParam?: string } {
+  let catchAllParam: string | undefined = undefined;
+  const path = routePath
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => {
+      let isCatchAll = false;
+      if (segment.startsWith("[") && segment.endsWith("]")) {
+        segment = segment.slice(1, -1);
+        if (segment.startsWith("...")) {
+          isCatchAll = true;
+          segment = segment.slice(3);
+        }
+        if (isCatchAll) {
+          catchAllParam = segment;
+          return `/*`;
+        }
+      } else {
+        return `/${segment}`;
+      }
+    })
+    .join("");
+  return { path, catchAllParam };
+}

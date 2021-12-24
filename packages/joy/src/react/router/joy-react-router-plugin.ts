@@ -1,5 +1,5 @@
 import { ClassComponent, Component, TComponent, RegisterTap } from "@symph/core";
-import { IReactRoute, ReactRouter } from "@symph/react";
+import { IReactRoute, ReactRouterService } from "@symph/react";
 import { IScanOutModule } from "../../build/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join, sep } from "path";
@@ -8,7 +8,7 @@ import { IGenerateFiles } from "../../build/file-generator";
 import { handlebars } from "../../lib/handlebars";
 import { ModuleContextTypeEnum } from "../../lib/constants";
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
-import { normalizeConventionRoute } from "./router-utils";
+import { normalizeConventionRoute, normalizeConventionRouteV6 } from "./router-utils";
 
 export interface IJoyReactRouteBuild extends IReactRoute {
   // staticPathGenerator?: IRouteMeta["staticPathGenerator"];
@@ -20,7 +20,7 @@ export interface IJoyReactRouteBuild extends IReactRoute {
  * used in build phase
  */
 @Component()
-export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRouteBuild> extends ReactRouter<T> {
+export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRouteBuild> extends ReactRouterService<T> {
   protected routesTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes-client.handlebars"), "utf-8"));
 
   protected routesServerTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes-server.handlebars"), "utf-8"));
@@ -153,14 +153,15 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
       routePath = basePath + routePath;
     }
 
-    routePath = normalizeConventionRoute(routePath);
+    const { path: norRoutePath, catchAllParam } = normalizeConventionRouteV6(routePath);
     const fsRoute = {
-      path: routePath,
+      path: norRoutePath,
       isContainer,
       index: isIndex,
+      catchAllParam,
       componentName: provider?.name,
       componentPackage: provider?.package,
-    } as T;
+    } as IJoyReactRouteBuild as T;
 
     return fsRoute;
   }

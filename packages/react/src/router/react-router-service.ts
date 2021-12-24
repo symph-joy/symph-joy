@@ -1,15 +1,13 @@
 import { IReactRoute } from "../interfaces";
-import { matchPath, PathMatch, PathPattern } from "react-router";
-import { ClassComponent, isClassComponent, TComponent, ComponentName, Type } from "@symph/core";
+import { matchPath, PathMatch } from "react-router";
+import { ClassComponent, ComponentName, isClassComponent, TComponent, Type } from "@symph/core";
 import { getRouteMeta, IRouteMeta } from "./react-route.decorator";
 import * as H from "history";
 import { RoutePathNode } from "./route-sorter";
 import React from "react";
 import { ReactRouteLoader } from "./react-route-loader";
-import { any, object } from "prop-types";
-import { keys } from "object-hash";
 
-export class ReactRouter<T extends IReactRoute = IReactRoute> {
+export class ReactRouterService<T extends IReactRoute = IReactRoute> {
   protected routesMap: Map<string, T> = new Map<string, T>(); // store all routes
   protected routeTrees: T[] = []; // routes as be formatted as tree
 

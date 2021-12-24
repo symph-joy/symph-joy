@@ -1,7 +1,7 @@
 import React from "react";
-import { ReactController, BaseReactController, Route, RouteParam } from "../../../../index";
+import { ReactController, BaseReactController, ReactRoute, RouteParam } from "../../../../index";
 
-@Route({ path: "/dynamic/:message/:count" })
+@ReactRoute({ path: "/dynamic/:message/:count" })
 @ReactController()
 export default class DynamicRoutePath extends BaseReactController {
   @RouteParam()

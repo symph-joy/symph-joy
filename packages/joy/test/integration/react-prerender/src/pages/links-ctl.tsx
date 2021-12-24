@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, ReactRoute } from "@symph/react";
 import { Prerender } from "@symph/joy/react";
 
 @Prerender()
-@Route({ path: "/links" })
+@ReactRoute({ path: "/links" })
 @ReactController()
 export default class LinksCtl extends BaseReactController {
   onClickLink = (link: string) => {

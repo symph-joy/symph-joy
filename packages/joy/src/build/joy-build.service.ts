@@ -44,7 +44,7 @@ import { InjectHook, Component, ApplicationContext, HookType, IHook } from "@sym
 import { FileGenerator } from "./file-generator";
 import { FileScanner } from "./scanner/file-scanner";
 import { Worker } from "jest-worker";
-import { IReactRoute, ReactRouter } from "@symph/react";
+import { IReactRoute, ReactRouterService } from "@symph/react";
 import { JoyPrerenderService } from "./prerender/joy-prerender.service";
 import { JoyExportAppService } from "../export/joy-export-app.service";
 import { getWebpackConfigForApi } from "./webpack-config-for-api";
@@ -95,7 +95,7 @@ export class JoyBuildService {
     private buildConfig: BuildConfig,
     private fileGenerator: FileGenerator,
     private fileScanner: FileScanner,
-    private joyReactRoute: ReactRouter,
+    private joyReactRoute: ReactRouterService,
     private joyPrerenderServer: JoyPrerenderServer,
     private joyPrerenderService: JoyPrerenderService,
     public joyExportAppService: JoyExportAppService,

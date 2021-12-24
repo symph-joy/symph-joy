@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, ReactRoute } from "@symph/react";
 import { IndexModel } from "../model/index.model";
 import { Inject } from "@symph/core";
 
-@Route({ path: "/" })
+@ReactRoute({ path: "/" })
 @ReactController()
 export default class HelloReactController extends BaseReactController {
   @Inject()

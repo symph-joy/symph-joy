@@ -11,24 +11,24 @@ Joy 使用`App`来包装和初始化整个界面，我们可以自定它来控�
 
 ```tsx
 import React from "react";
-import { IReactApplication, ReactRouter, RouteSwitch } from "@symph/react";
+import { IReactApplication, ReactRouterService, RouteSwitch } from "@symph/react";
 import { ReactAppProps } from "@symph/joy";
 
 export default class App extends React.Component<ReactAppProps, any> {
-  protected reactRouter: ReactRouter;
+  protected reactRouterService: ReactRouterService;
   constructor(props: ReactAppProps, context?: any) {
     super(props, context);
     const appContext = props.appContext;
-    this.reactRouter = appContext.getSync<ReactRouter>("reactRouter");
+    this.reactRouterService = appContext.getSync<ReactRouterService>("reactRouterService");
   }
   render() {
-    const routes = this.reactRouter.getRoutes() || [];
+    const routes = this.reactRouterService.getRoutes() || [];
     return <RouteSwitch routes={routes} extraProps={{}} />;
   }
 }
 ```
 
-`App` 的`props`中包含了`IReactApplication`实例，我们可以通过它获取到整个 React 应用的业务组件，例如上面例子中的`reactRouter`路由组件。
+`App` 的`props`中包含了`IReactApplication`实例，我们可以通过它获取到整个 React 应用的业务组件，例如上面例子中的`reactRouterService`路由组件。
 `render()`中使用的`RouteSwitch`组件来渲染应用中注册的路由，包括文件约定路由。
 
 ## 注意事项：

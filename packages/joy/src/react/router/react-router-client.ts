@@ -1,5 +1,5 @@
 import { Inject, Component } from "@symph/core";
-import { IReactRoute, JoyRouteInitState, ReactAppInitManager, ReactRouter } from "@symph/react";
+import { IReactRoute, JoyRouteInitState, ReactAppInitManager, ReactRouterService } from "@symph/react";
 import { parseRelativeUrl } from "../../joy-server/lib/router/utils/parse-relative-url";
 import getAssetPathFromRoute from "../../joy-server/lib/router/utils/get-asset-path-from-route";
 import { addBasePath } from "../../joy-server/lib/router/router";
@@ -26,7 +26,7 @@ function normalizeRoute(route: string) {
 }
 
 @Component()
-export class ReactRouterClient extends ReactRouter {
+export class ReactRouterClient extends ReactRouterService {
   private _cachedSSgManifest: Set<string> | undefined;
 
   constructor(

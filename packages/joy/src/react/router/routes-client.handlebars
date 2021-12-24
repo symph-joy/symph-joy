@@ -8,6 +8,7 @@ import {JoyReactRouteLoader} from '@symph/joy/dist/react/router/joy-react-route-
       {{#if dynamic}}dynamic: {{json dynamic}},{{/if}}
       {{#if index}}index: {{json index}},{{/if}}
       {{#if caseSensitive}}caseSensitive: {{json caseSensitive}},{{/if}}
+      {{#if catchAllParam}}catchAllParam: {{json catchAllParam}},{{/if}}
       componentName: "{{componentName}}",
       {{#if componentPackage}}componentPackage: "{{componentPackage}}",{{/if}}
       componentModule: {{#if dynamic}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}},
@@ -25,3 +26,4 @@ export const joyReactAutoGenRoutes = {
   type: Array,
   useValue: {{> renderRoutes this }}
 }
+//aaa

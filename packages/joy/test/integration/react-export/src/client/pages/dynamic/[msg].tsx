@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
+import { BaseReactController, ReactController, ReactRoute, RouteParam } from "@symph/react";
 import { Inject, IApplicationContext } from "@symph/core";
 import { IJoyPrerender, Prerender } from "@symph/joy/react";
 import { DynamicMsgModel } from "../../model/dynamic-msg-model";
@@ -20,7 +20,7 @@ export class DynamicStaticPathGenerator implements IJoyPrerender {
   }
 }
 
-@Route({ path: "/dynamic/:msg" })
+@ReactRoute({ path: "/dynamic/:msg" })
 @ReactController()
 export default class DynamicRouteCtl extends BaseReactController {
   async initialModelStaticState(): Promise<void> {

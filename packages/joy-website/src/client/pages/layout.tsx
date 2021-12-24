@@ -2,7 +2,8 @@ import React, { ReactNode } from "react";
 import { Layout, Menu, AutoComplete, Button } from "antd";
 import { Inject } from "@symph/core";
 import { DocsModel } from "../model/docs.model";
-import { BaseReactController, ReactController, RouteSwitch } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
+import { Outlet } from "@symph/react/router-dom";
 import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
@@ -132,8 +133,8 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
   };
 
   pushHistory = (url) => {
-    const { history } = this.props;
-    history.push(url);
+    const { navigate } = this.props;
+    navigate(url);
   };
 
   renderView(): ReactNode {
@@ -207,7 +208,7 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
           </nav>
         </header>
         <Content className={styles.appContent}>
-          <RouteSwitch routes={route?.routes || []} extraProps={null} />
+          <Outlet />
         </Content>
       </Layout>
     );

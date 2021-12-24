@@ -1,10 +1,10 @@
 import React, { ReactNode } from "react";
-import { ReactController, BaseReactController, Route } from "@symph/react";
+import { ReactController, BaseReactController, ReactRoute } from "@symph/react";
 import { Inject } from "@symph/core";
 import { BasicReactView } from "./basic-react-view";
 import { BasicReactModel } from "./basic-react.model";
 
-@Route({ path: "/react-mvc" })
+@ReactRoute({ path: "/react-mvc" })
 @ReactController()
 export default class BasicReactController extends BaseReactController {
   @Inject()

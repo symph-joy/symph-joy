@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, Route, RouteParam } from "@symph/react";
+import { BaseReactController, ReactController, ReactRoute, RouteParam } from "@symph/react";
 import { EntityModel } from "../model/entity.model";
 import { Inject, IApplicationContext } from "@symph/core";
 import { Prerender, IJoyPrerender } from "@symph/joy/react";
@@ -24,7 +24,7 @@ export class EntityPrerenderGenerator implements IJoyPrerender {
   }
 }
 
-@Route({ path: "/entity/:id" })
+@ReactRoute({ path: "/entity/:id" })
 @ReactController()
 export default class EntityDetail extends BaseReactController {
   @RouteParam()

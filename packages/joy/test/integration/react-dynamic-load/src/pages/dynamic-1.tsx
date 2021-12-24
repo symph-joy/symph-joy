@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
-import { ReactController, BaseReactController, Route } from "@symph/react";
+import { ReactController, BaseReactController, ReactRoute } from "@symph/react";
 
-@Route({ path: "/dynamic-1" })
+@ReactRoute({ path: "/dynamic-1" })
 @ReactController()
 export default class Dynamic1 extends BaseReactController {
   renderView(): ReactNode {

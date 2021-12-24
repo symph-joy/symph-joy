@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, RouteSwitch, ReactController, RouteParam } from "@symph/react";
+import { BaseReactController, ReactController, RouteParam } from "@symph/react";
+import { Outlet } from "@symph/react/router-dom";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Inject } from "@symph/core";
 import { Affix, Col, Menu, Row, Anchor, Drawer } from "antd";
@@ -20,7 +21,7 @@ export default class DocsLayout extends BaseReactController {
   };
 
   private async showDoc(menu: DocMenuItem) {
-    this.props.history.push(`/docs${menu.path}`);
+    this.props.navigate(`/docs${menu.path}`);
   }
 
   private renderMenuItem(items: DocMenuItem[] | undefined) {
@@ -95,7 +96,7 @@ export default class DocsLayout extends BaseReactController {
           </Menu>
         </Drawer>
         <Col style={{ flex: 1 }}>
-          <RouteSwitch routes={route?.routes || []} extraProps={null} />
+          <Outlet />
         </Col>
         <Col sm={24} md={3} lg={3} xl={3} xxl={3}>
           {titleTrees ? (

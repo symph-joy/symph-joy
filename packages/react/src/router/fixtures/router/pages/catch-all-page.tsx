@@ -1,7 +1,7 @@
 import React from "react";
-import { ReactController, BaseReactController, Route, RouteParam } from "../../../../index";
+import { ReactController, BaseReactController, ReactRoute, RouteParam } from "../../../../index";
 
-@Route({ path: "/catch-all/*" })
+@ReactRoute({ path: "/catch-all/*" })
 @ReactController()
 export default class CatchAllPage extends BaseReactController {
   @RouteParam({ name: "*" })

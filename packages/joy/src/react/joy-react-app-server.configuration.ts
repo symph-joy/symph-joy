@@ -11,12 +11,12 @@ import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 @Configuration()
 export class JoyReactAppServerConfiguration extends ReactApplicationConfiguration {
   @Configuration.Component()
-  public reactRouterComponent(): typeof StaticRouter | typeof BrowserRouter | typeof MemoryRouter | typeof HashRouter {
+  public reactRouterComponent(): (props: any) => JSX.Element {
     return StaticRouter;
   }
 
   @Configuration.Component()
-  public reactRouter: ReactRouterServer;
+  public reactRouterService: ReactRouterServer;
 
   @Configuration.Component()
   public joyReactAutoGenModules(joyAppConfig: JoyAppConfig): Record<string, unknown>[] {

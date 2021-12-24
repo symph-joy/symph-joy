@@ -5,13 +5,11 @@ import { BaseReactModel } from "./base-react-model";
 import { bindRouteFromCompProps, getRouteMeta, IRouteMeta } from "./router/react-route.decorator";
 import { IApplicationContext, IInjectableDependency, Inject } from "@symph/core";
 import { JoyRouteInitState, ReactAppInitManager } from "./react-app-init-manager";
-import { ReactRouter } from "./router/react-router";
+import { ReactRouterService } from "./router/react-router-service";
 import type { Location } from "history";
 import { EnumReactAppInitStage } from "./react-app-init-stage.enum";
 import { IReactRoute } from "./interfaces";
-import { PathMatch } from "react-router";
-import * as H from "history";
-import { NavigateFunction } from "react-router-dom";
+import { PathMatch, NavigateFunction } from "react-router";
 
 export type ControllerBaseStateType = {
   _modelStateVersion: number;
@@ -60,7 +58,6 @@ export abstract class BaseReactController<
   protected appContext: IApplicationContext;
   protected reduxStore: ReactReduxService;
   protected isCtlMounted: boolean;
-  protected routeMeta?: IRouteMeta;
 
   protected _models: Array<BaseReactModel<unknown>>;
 
@@ -68,7 +65,7 @@ export abstract class BaseReactController<
   private hasInjectProps = false;
 
   @Inject()
-  protected reactRouter: ReactRouter;
+  protected reactRouterService: ReactRouterService;
 
   @Inject()
   protected initManager: ReactAppInitManager;
@@ -85,8 +82,6 @@ export abstract class BaseReactController<
     // this.hasInitInvoked = false;
     // this.hasInjectProps = false;
     this.isCtlMounted = false;
-
-    this.routeMeta = getRouteMeta(this.constructor);
 
     this.appContext = context;
     this.reduxStore = this.appContext.getSync(ReactReduxService)!;

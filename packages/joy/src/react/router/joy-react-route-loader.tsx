@@ -7,13 +7,14 @@ import { DynamicLoading, Loader } from "../../joy-server/lib/dynamic";
 import { RuntimeException } from "@symph/core";
 import { isDynamicRoute } from "./router-utils";
 import { getRouteElement } from "@symph/react/dist/router/react-route-loader";
+import { IJoyReactRouteBuild } from "./joy-react-router-plugin";
 
 type JoyReactRouteLoaderOptions = {
   // match: PathMatch;
   // location: H.Location;
   // history: H.History;
   extraProps: Record<string, any>;
-  route: IReactRoute;
+  route: IJoyReactRouteBuild;
 
   // component: ComponentType | { default: ComponentType };
   loader?: Loader;
@@ -39,6 +40,11 @@ export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptio
   const joyAppContext = useContext(ReactApplicationReactContext);
   if (!joyAppContext) {
     throw new Error("react app context is not initialed");
+  }
+  if (route.catchAllParam) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore 特殊处理，填入catchAllParam的值。
+    match.params[route.catchAllParam] = match.params["*"];
   }
 
   let routeElement: React.ReactElement | Promise<React.ReactElement> = useMemo(() => {

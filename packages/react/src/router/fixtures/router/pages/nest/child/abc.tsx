@@ -1,7 +1,7 @@
 import React from "react";
-import { ReactController, BaseReactController, Route } from "../../../../../../index";
+import { ReactController, BaseReactController, ReactRoute } from "../../../../../../index";
 
-@Route({ path: "/nest/child/abc" })
+@ReactRoute({ path: "/nest/child/abc" })
 @ReactController()
 export default class NestChildAbc extends BaseReactController {
   renderView() {

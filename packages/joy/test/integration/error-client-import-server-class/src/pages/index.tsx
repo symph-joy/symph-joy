@@ -1,8 +1,8 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, ReactRoute } from "@symph/react";
 import { JoyBoot } from "@symph/joy";
 
-@Route({ path: "/" })
+@ReactRoute({ path: "/" })
 @ReactController()
 export default class IndexController extends BaseReactController {
   renderView(): ReactNode {

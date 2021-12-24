@@ -72,7 +72,7 @@ describe("react hmr", () => {
     test("Add file, then should rend new page.", async () => {
       await pollGetText(testContext.getUrl("/hello1"), undefined, /\*message1\*/);
       await page.goto(testContext.getUrl("/hello1"));
-      await page.waitForFunction(() => document?.getElementById("message")?.innerHTML === "*message1*");
+      await page.waitForFunction(() => document?.getElementById("message")?.innerHTML === "*message1*", undefined, { timeout: 60000 });
       let msg = await page.$eval("#message", (el: any) => el.innerHTML);
       expect(msg).toContain("*message1*");
     }, 999999);

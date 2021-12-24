@@ -176,10 +176,10 @@ export class BasicConfig {
 
   // 配置是一个负责对象数组，类型和验证规则声明在对象的类上。
   @Value()
-  public routes: Route[];
+  public routes: ReactRoute[];
 }
 
-class Route {
+class ReactRoute {
   @Required()
   public path: string;
 

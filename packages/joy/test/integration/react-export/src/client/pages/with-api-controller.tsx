@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, Route } from "@symph/react";
+import { BaseReactController, ReactController, ReactRoute } from "@symph/react";
 import { HelloModel } from "../model/hello-model";
 import { Inject, IApplicationContext } from "@symph/core";
 import { IJoyPrerender, Prerender, TJoyPrerenderApi } from "@symph/joy";
@@ -27,7 +27,7 @@ export class EntityPrerenderGenerator implements IJoyPrerender {
   }
 }
 
-@Route({ path: "/with-api" })
+@ReactRoute({ path: "/with-api" })
 @ReactController()
 export default class WithApiController extends BaseReactController {
   @Inject()

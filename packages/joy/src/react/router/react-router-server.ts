@@ -1,8 +1,8 @@
 import { Inject, Component, RuntimeException } from "@symph/core";
-import { IReactRoute, ReactRouter } from "@symph/react";
+import { IReactRoute, ReactRouterService } from "@symph/react";
 
 @Component()
-export class ReactRouterServer extends ReactRouter {
+export class ReactRouterServer extends ReactRouterService {
   protected scannedModules = [] as Record<string, unknown>[];
 
   constructor(

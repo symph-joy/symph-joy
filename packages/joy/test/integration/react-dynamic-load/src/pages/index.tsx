@@ -1,8 +1,8 @@
 import React, { ReactNode } from "react";
-import { ReactController, BaseReactController, Route, RouteSwitch, RouteContainer } from "@symph/react";
+import { ReactController, BaseReactController, ReactRoute, RouteSwitch, ReactRouteContainer } from "@symph/react";
 import { Outlet } from "react-router-dom";
 
-@RouteContainer({ path: "/" })
+@ReactRouteContainer({ path: "/" })
 @ReactController()
 export default class HelloReactController extends BaseReactController {
   renderView(): ReactNode {

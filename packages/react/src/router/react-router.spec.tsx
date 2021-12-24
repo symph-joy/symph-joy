@@ -3,7 +3,7 @@ import { render } from "@testing-library/react";
 import "reflect-metadata";
 
 import { ReactApplicationConfiguration } from "../react-application.configuration";
-import { ReactRouter } from "./react-router";
+import { ReactRouterService } from "./react-router-service";
 import DynamicRoutePath from "./fixtures/router/pages/dynamic-route-path";
 import { ReactApplicationFactory } from "../react-application-factory";
 import Hello from "./fixtures/router/pages/hello";
@@ -45,7 +45,7 @@ describe("react-router", () => {
       NestLayout,
       NestAbc,
     ]);
-    const reactRouter = await app.get(ReactRouter);
+    const reactRouter = await app.get(ReactRouterService);
     const appContent = app.start();
     const { getByTestId, container, rerender, getByText } = render(appContent);
     expect(getByTestId("nestLayout").innerHTML).toBe("Nest Layout");
@@ -63,7 +63,7 @@ describe("react-router", () => {
       NestIndex,
     ]);
     const appContent = app.start();
-    const reactRouter = await app.get(ReactRouter);
+    const reactRouter = await app.get(ReactRouterService);
     const matchedRoutes = reactRouter.getMatchedRoutes("/nest");
     const routes = reactRouter.getRoutes();
     expect(matchedRoutes).toMatchObject([{ path: "/nest" }, { path: "/nest", index: true }]);
@@ -84,7 +84,7 @@ describe("react-router", () => {
       NestIndex,
       NestChildAbc,
     ]);
-    const reactRouter = await app.get(ReactRouter);
+    const reactRouter = await app.get(ReactRouterService);
     const appContent = app.start();
     const { getByTestId, container, rerender, getByText } = render(appContent);
     expect(getByTestId("nestLayout").innerHTML).toBe("Nest Layout");

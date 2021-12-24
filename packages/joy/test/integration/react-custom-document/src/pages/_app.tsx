@@ -1,6 +1,6 @@
 import React from "react";
 import { App } from "@symph/joy/react";
-import { RoutesRenderer } from "@symph/react";
+import { RoutesRenderer } from "@symph/react/router-dom";
 
 export default class MyApp extends App {
   render() {

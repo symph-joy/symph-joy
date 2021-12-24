@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ReactModel, BaseReactController, ReactController, BaseReactModel, Route } from "@symph/react";
+import { ReactModel, BaseReactController, ReactController, BaseReactModel, ReactRoute } from "@symph/react";
 import { Inject } from "@symph/core";
 import { Prerender } from "@symph/joy/react";
 
@@ -50,7 +50,7 @@ export class StatefulModel extends BaseReactModel<{
 }
 
 @Prerender()
-@Route({ path: "/stateful" })
+@ReactRoute({ path: "/stateful" })
 @ReactController()
 export default class StatefulCtl extends BaseReactController {
   @Inject()
