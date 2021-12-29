@@ -45,7 +45,6 @@ export function getRouteElement(
       }
       return <InstComp route={route} match={match} location={location} navigate={navigate} />;
     } else {
-      //   console.log(">>>> wrapperComp，Comp", Comp.displayName, match.pathname);
       return <Comp route={route} match={match} location={location} navigate={navigate} />;
     }
   }

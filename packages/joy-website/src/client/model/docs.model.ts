@@ -115,8 +115,8 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
 
   changeOpenKeys(openKeys) {
     this.setState({
-      openKeys
-    })
+      openKeys,
+    });
   }
 
   async getAllDocsMenus(): Promise<DocMenuItem[]> {
