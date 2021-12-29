@@ -1,13 +1,13 @@
-import React, { ComponentType, useContext, useEffect, useMemo, useState } from "react";
-import { IReactRoute, ReactApplicationReactContext, JoyRouteInitState, MountModule, ReactAppInitManager } from "@symph/react";
-import { ReactRouterClient } from "./react-router-client";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { IReactRoute, ReactApplicationReactContext } from "@symph/react";
 import * as H from "history";
 import { PathMatch, useLocation, useMatch, useNavigate } from "react-router-dom";
 import { DynamicLoading, Loader } from "../../joy-server/lib/dynamic";
 import { RuntimeException } from "@symph/core";
-import { isDynamicRoute } from "./router-utils";
 import { getRouteElement } from "@symph/react/dist/router/react-route-loader";
 import { IJoyReactRouteBuild } from "./joy-react-router-plugin";
+import { JoyReactAppInitManagerClient } from "../joy-react-app-init-manager-client";
+import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 
 type JoyReactRouteLoaderOptions = {
   // match: PathMatch;
@@ -36,85 +36,55 @@ export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptio
   if (!match) {
     throw new RuntimeException(`React route load error: Route ${route.path} is not match location: ${location.pathname}`);
   }
-  const { pathname: matchUrl } = match;
+  const { pathname: matchPathname } = match;
   const joyAppContext = useContext(ReactApplicationReactContext);
   if (!joyAppContext) {
     throw new Error("react app context is not initialed");
   }
   if (route.catchAllParam) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore 特殊处理，填入catchAllParam的值。
-    match.params[route.catchAllParam] = match.params["*"];
+    // 特殊处理，填入catchAllParam的值。
+    Object.defineProperty(match.params, route.catchAllParam, {
+      value: match.params["*"],
+    });
   }
 
   let routeElement: React.ReactElement | Promise<React.ReactElement> = useMemo(() => {
     return getRouteElement(joyAppContext, route, match, location, navigate);
-  }, [matchUrl]);
+  }, [matchPathname]);
 
   // prefetch Data
-  const router = joyAppContext.getSync(ReactRouterClient);
-  const href = location.pathname;
+  const initManager = joyAppContext.getSync(JoyReactAppInitManagerClient);
 
   /**
    * 是否采用ssg数据的条件：
    * 1. 预渲染的静态路由页面，revalidate为false。
    * 2. 预渲染的动态路由页面，fallback为false，revalidate为false。
    */
-  const isUseSSGData = useMemo(() => {
+  const ssgPage = useMemo(() => {
     if (!ssr) {
-      return false;
+      return undefined;
     }
-    const check = (ssgInfo: boolean) => {
-      if (!ssgInfo) {
-        return false;
-      }
-      return true;
-    };
-
-    const ssgInfo = router.getSSGManifest(match.pathname);
-    if (ssgInfo instanceof Promise) {
-      return ssgInfo.then(check);
-    } else {
-      return check(ssgInfo);
-    }
-  }, [matchUrl]);
+    const ssgInfo = initManager.getPageSSGState(match.pathname, match.pattern.path);
+    return ssgInfo;
+  }, [matchPathname]);
 
   const [loadingState, setLoadingStat] = useState({
-    isDataLoading: false,
+    isDataLoading: ssgPage instanceof Promise,
     isCompLoading: routeElement instanceof Promise,
   });
-
   // fetch page data
   useEffect(() => {
-    Promise.resolve(isUseSSGData).then((isUseSSG) => {
-      if (isUseSSG) {
-        if (loadingState.isDataLoading) {
-          return;
-        }
-        setLoadingStat({ isDataLoading: true, isCompLoading: loadingState.isCompLoading });
+    Promise.resolve(ssgPage).then((ssgPage) => {
+      if (!ssr) {
+        return undefined;
+      }
 
-        router
-          .fetchSSGData(href)
-          .then((ssgData: Array<any>) => {
-            // todo merge store state
-            if (ssgData && ssgData.length) {
-              for (const data of ssgData) {
-                joyAppContext.dispatch(data);
-              }
-            }
-          })
-          .catch((e) => {
-            console.error(e);
-            // });
-          })
-          .finally(() => {
-            setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
-          });
-        return;
-      } else {
-        if (loadingState.isDataLoading) {
-          setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
-        }
+      if (ssgPage?.ssgData?.length) {
+        const reduxService = joyAppContext.getSync(ReactReduxService);
+        reduxService.dispatchBatch(ssgPage.ssgData);
+      }
+      if (loadingState.isDataLoading) {
+        setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
       }
     });
 
@@ -123,12 +93,12 @@ export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptio
         setLoadingStat({ isDataLoading: loadingState.isDataLoading, isCompLoading: false });
       }
     });
-  }, [matchUrl]);
+    return () => {};
+  }, [matchPathname]);
 
   const props = { match, location, history, route };
 
   const LoadingComp = loading || DefaultLoadingComp;
-
   if (loadingState.isDataLoading || loadingState.isCompLoading) {
     return <LoadingComp {...props} match={match} location={location} />;
   }

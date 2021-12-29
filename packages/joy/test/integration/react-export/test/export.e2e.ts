@@ -4,7 +4,7 @@ import { JoyTestContext } from "../../../util/joy-test-context";
 import { promises } from "fs";
 import { findPort, joyBuild, joyExport, killApp, runHttpServer, waitFor } from "../../../util/joy-test-utils";
 import { getDomInnerHtml } from "../../../util/html-utils";
-import { JoyRouteInitState } from "@symph/react";
+import { ReactRouteInitStatus } from "@symph/react";
 import * as child_process from "child_process";
 
 async function checkHtmlFile(filePath: string, domId: string, checkContent: string) {
@@ -65,9 +65,9 @@ describe("joy export", () => {
     await checkHtmlFile(helloHtml, "msg", "Hello World!");
 
     const indexData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/index.json`);
-    await checkDataFile(indexData, "reactAppInitManager/__SET_STATE", "state./.initStatic", JoyRouteInitState.SUCCESS);
+    await checkDataFile(indexData, "reactAppInitManager/__SET_STATE", "state./.initStatic", ReactRouteInitStatus.SUCCESS);
     const helloData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/hello.json`);
-    await checkDataFile(helloData, "reactAppInitManager/__SET_STATE", "state./hello.initStatic", JoyRouteInitState.SUCCESS);
+    await checkDataFile(helloData, "reactAppInitManager/__SET_STATE", "state./hello.initStatic", ReactRouteInitStatus.SUCCESS);
   }, 999999);
 
   test("Should export out fs route page.", async () => {
@@ -76,7 +76,7 @@ describe("joy export", () => {
     await checkHtmlFile(indexHtml, "msg", "hello fs route");
 
     const indexData = testContext.joyAppConfig.resolveAppDir(`out/_joy/data/${testContext.getBuildId()}/sub-route/fs-route.json`);
-    await checkDataFile(indexData, "reactAppInitManager/__SET_STATE", "state./sub-route/fs-route.initStatic", JoyRouteInitState.SUCCESS);
+    await checkDataFile(indexData, "reactAppInitManager/__SET_STATE", "state./sub-route/fs-route.initStatic", ReactRouteInitStatus.SUCCESS);
   }, 999999);
 
   test("Should pre fetch api data and write to file.", async () => {
@@ -96,7 +96,7 @@ describe("joy export", () => {
   }, 999999);
 
   test("Should export with styles.", async () => {
-    await page.goto(testContext.getUrl("/style/with-style"), {waitUntil: "networkidle"});
+    await page.goto(testContext.getUrl("/style/with-style"), { waitUntil: "networkidle" });
     const cssStyleColor = await page.$eval("#msg", (e: any) => getComputedStyle(e).color);
     expect(cssStyleColor).toBe("rgb(255, 0, 0)");
   }, 999999);

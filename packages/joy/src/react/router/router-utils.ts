@@ -62,7 +62,7 @@ export function normalizeConventionRoute(routePath: string): string {
  */
 export function normalizeConventionRouteV6(routePath: string): { path: string; catchAllParam?: string } {
   let catchAllParam: string | undefined = undefined;
-  const path = routePath
+  let path = routePath
     .split("/")
     .filter(Boolean)
     .map((segment) => {
@@ -82,5 +82,8 @@ export function normalizeConventionRouteV6(routePath: string): { path: string; c
       }
     })
     .join("");
+  if (path === "") {
+    path = "/";
+  }
   return { path, catchAllParam };
 }

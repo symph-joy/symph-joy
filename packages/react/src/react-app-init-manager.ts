@@ -1,22 +1,19 @@
 import { BaseReactModel } from "./base-react-model";
 import { EnumReactAppInitStage } from "./react-app-init-stage.enum";
 
-export enum JoyRouteInitState {
+export enum ReactRouteInitStatus {
   NONE,
   LOADING,
   SUCCESS,
   ERROR,
 }
 
-export class ReactAppInitManager extends BaseReactModel<
-  Record<
-    string,
-    {
-      init: JoyRouteInitState;
-      initStatic: JoyRouteInitState;
-    }
-  >
-> {
+export interface ReactPageInitState {
+  init: ReactRouteInitStatus;
+  initStatic: ReactRouteInitStatus;
+}
+
+export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitState> extends BaseReactModel<{ [pathname: string]: T }> {
   public initStage: EnumReactAppInitStage = EnumReactAppInitStage.DEFAULT;
 
   public initTasks: Record<string, Promise<any>[]> = {};
@@ -25,7 +22,7 @@ export class ReactAppInitManager extends BaseReactModel<
     super();
   }
 
-  getInitState(): Record<string, { init: JoyRouteInitState; initStatic: JoyRouteInitState }> {
+  getInitState() {
     return {};
   }
 
@@ -62,11 +59,11 @@ export class ReactAppInitManager extends BaseReactModel<
     };
   }
 
-  setInitState(pathname: string, { initStatic, init }: { initStatic?: JoyRouteInitState; init?: JoyRouteInitState }): void {
+  setInitState(pathname: string, { initStatic, init }: { initStatic?: ReactRouteInitStatus; init?: ReactRouteInitStatus }): void {
     const nextState = Object.assign(
       {
-        initStatic: JoyRouteInitState.NONE,
-        init: JoyRouteInitState.NONE,
+        // initStatic: ReactRouteInitStatus.NONE,
+        // init: ReactRouteInitStatus.NONE,
       },
       this.state[pathname]
     );
@@ -81,17 +78,18 @@ export class ReactAppInitManager extends BaseReactModel<
     });
   }
 
-  getPathState(pathname: string): { initStatic: JoyRouteInitState; init: JoyRouteInitState } {
+  getPathState(pathname: string): T {
     return (
-      this.state[pathname] || {
-        initStatic: JoyRouteInitState.NONE,
-        init: JoyRouteInitState.NONE,
+      this.state[pathname] ||
+      {
+        // initStatic: ReactRouteInitStatus.NONE,
+        // init: ReactRouteInitStatus.NONE,
       }
     );
   }
 
   resetInitState(pathname: string): void {
-    this.setInitState(pathname, { init: JoyRouteInitState.NONE });
+    this.setInitState(pathname, { init: undefined });
     delete this.initTasks[pathname];
   }
 }

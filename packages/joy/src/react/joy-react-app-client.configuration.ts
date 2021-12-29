@@ -1,8 +1,9 @@
 import { ReactRouterClient } from "./router/react-router-client";
 import { Configuration } from "@symph/core";
 import { BrowserRouter } from "react-router-dom";
-import { ReactApplicationConfiguration } from "@symph/react";
+import { ReactAppInitManager, ReactApplicationConfiguration } from "@symph/react";
 import { ReactFetchClientService } from "./service/react-fetch.client.service";
+import { JoyReactAppInitManagerClient } from "./joy-react-app-init-manager-client";
 
 @Configuration({
   imports: {
@@ -22,4 +23,7 @@ export class JoyReactAppClientConfiguration extends ReactApplicationConfiguratio
 
   @Configuration.Component()
   public joyFetchService: ReactFetchClientService;
+
+  @Configuration.Component()
+  public reactAppInitManager: JoyReactAppInitManagerClient;
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { IReactApplication, ReactRouterService } from "@symph/react";
+import { IReactApplication, IReactRoute, ReactRouterService } from "@symph/react";
 import { RoutesRenderer } from "@symph/react/router-dom";
 
 export type ReactAppProps = {
@@ -13,8 +13,13 @@ export class App extends React.Component<ReactAppProps, any> {
     const appContext = props.appContext;
     this.reactRouter = appContext.getSync<ReactRouterService>("reactRouterService");
   }
+
+  public getRoutes(): IReactRoute[] {
+    return this.reactRouter.getRoutes() || [];
+  }
+
   render() {
-    const routes = this.reactRouter.getRoutes() || [];
+    const routes = this.getRoutes();
     return <RoutesRenderer routes={routes} />;
   }
 }

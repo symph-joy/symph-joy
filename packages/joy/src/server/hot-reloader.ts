@@ -416,7 +416,6 @@ export default class HotReloader {
     //   await this.fileGenerator.generate();
     //   this.reactClientCompiler.watching.invalidate();
     //   this.reactServerCompiler.watching.invalidate();
-    //   console.log(">>>> reactClientCompiler.watching.invalidate()", process.uptime());
     // });
 
     // This plugin watches for changes to _document.js and notifies the client side that it should reload the page
