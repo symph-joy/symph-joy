@@ -4,7 +4,7 @@ import { JoyTestContext } from "../../../util/joy-test-context";
 import { renderViaHTTP, waitFor } from "../../../util/joy-test-utils";
 import { promises } from "fs";
 import { getDomInnerHtml } from "../../../util/html-utils";
-import { JoyRouteInitState } from "@symph/react";
+import { ReactRouteInitStatus } from "@symph/react";
 import { JOY_DATA } from "../../../../src/joy-server/lib/utils";
 
 describe("react-prerender", () => {
@@ -56,8 +56,8 @@ describe("react-prerender", () => {
         console.log(date);
         const setStateAction = (date as any[]).find((it) => it.type === "reactAppInitManager/__SET_STATE");
         expect(setStateAction).toBeTruthy();
-        expect(setStateAction).toHaveProperty("state./static.initStatic", JoyRouteInitState.SUCCESS);
-        expect(setStateAction).toHaveProperty("state./static.init", JoyRouteInitState.NONE);
+        expect(setStateAction).toHaveProperty("state./static.initStatic", ReactRouteInitStatus.SUCCESS);
+        expect(setStateAction).toHaveProperty("state./static.init", ReactRouteInitStatus.NONE);
       }, 999999);
 
       test("should response the static html file，which was prerendered out during ssg.", async () => {

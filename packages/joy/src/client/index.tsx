@@ -81,6 +81,17 @@ if (hasBasePath(asPath)) {
   asPath = delBasePath(asPath);
 }
 
+const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppClientConfiguration, hydrateInitState);
+reactApplicationContext.container.addProviders([
+  {
+    name: "joyClientConfig",
+    type: JoyClientConfig,
+    useFactory: () => {
+      return JoyClientConfig.fromJoyData(data);
+    },
+  },
+]);
+
 type RegisterFn = (input: [string, () => void]) => void;
 
 const pageLoader = new PageLoader(buildId, prefix, page);
@@ -215,7 +226,7 @@ export default async (opts: { webpackHMR?: any } = {}) => {
     // ;({
     //   page: CachedComponent,
     //   styleSheets: cachedStyleSheets,
-    // } = await pageLoader.loadPage(page)) // todo 重构改功能，不在需要从服务端下载页面的chunk了
+    // } = await pageLoader.loadPage(page)) // todo 重构该功能，不在需要从服务端下载页面的chunk了
     //
     CachedComponent = () => <div>aaa</div>;
 
@@ -300,16 +311,6 @@ export default async (opts: { webpackHMR?: any } = {}) => {
       });
   }
 
-  const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppClientConfiguration, hydrateInitState);
-  reactApplicationContext.container.addProviders([
-    {
-      name: "joyClientConfig",
-      type: JoyClientConfig,
-      useFactory: () => {
-        return JoyClientConfig.fromJoyData(data);
-      },
-    },
-  ]);
   await reactApplicationContext.init();
 
   const renderCtx = {

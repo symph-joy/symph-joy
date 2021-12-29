@@ -57,6 +57,5 @@ export class RouterPlugin implements IJoyPlugin {
 
   // @Tap()
   // private async afterModuleLoadHook(moduleLoaded: any) {
-  //   console.log('>>>> RouterPlugin. afterModuleLoad', moduleLoaded)
   // }
 }

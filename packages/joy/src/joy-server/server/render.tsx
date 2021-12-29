@@ -14,14 +14,12 @@ import postProcess from "../lib/post-process";
 import { JoyRouter } from "../lib/router/router";
 import { isDynamicRoute } from "../lib/router/utils/is-dynamic";
 import {
-  AppType,
   ComponentsEnhancer,
   DocumentInitialProps,
   DocumentProps,
   DocumentType,
   getDisplayName,
   isResSent,
-  JoyComponentType,
   loadGetInitialProps,
   RenderPage,
 } from "../lib/utils";
@@ -31,7 +29,7 @@ import { FontManifest, getFontDefinitionFromManifest } from "./font-utils";
 import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
-import { JoyRouteInitState, ReactAppContainer, ReactAppInitManager, ReactApplicationContext, TReactAppComponent } from "@symph/react";
+import { ReactAppContainer, ReactAppInitManager, ReactApplicationContext, ReactRouteInitStatus, TReactAppComponent } from "@symph/react";
 import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 
@@ -493,16 +491,16 @@ export async function renderToHTML(
     try {
       const initRst = await initManager.waitAllFinished(pathname);
       revalidate = initRst.revalidate;
-      let { initStatic, init } = initManager.getPathState(pathname);
-      if (initStage >= EnumReactAppInitStage.STATIC && (initStatic === JoyRouteInitState.NONE || initStatic === JoyRouteInitState.LOADING)) {
-        initStatic = JoyRouteInitState.SUCCESS;
-      }
-      if ((initStage >= EnumReactAppInitStage.DYNAMIC && init === JoyRouteInitState.NONE) || init === JoyRouteInitState.LOADING) {
-        init = JoyRouteInitState.SUCCESS;
-      }
-      initManager.setInitState(pathname, { initStatic, init });
+      // let { initStatic, init } = initManager.getPathState(pathname);
+      // if (initStage >= EnumReactAppInitStage.STATIC && (initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.LOADING)) {
+      //   initStatic = ReactRouteInitStatus.SUCCESS;
+      // }
+      // if ((initStage >= EnumReactAppInitStage.DYNAMIC && init === ReactRouteInitStatus.NONE) || init === ReactRouteInitStatus.LOADING) {
+      //   init = ReactRouteInitStatus.SUCCESS;
+      // }
+      // initManager.setInitState(pathname, { initStatic, init });
     } catch (e) {
-      initManager.setInitState(pathname, { initStatic: JoyRouteInitState.ERROR });
+      initManager.setInitState(pathname, { initStatic: ReactRouteInitStatus.ERROR });
     }
 
     const reduxStateHistories = reduxService.stopRecordState();

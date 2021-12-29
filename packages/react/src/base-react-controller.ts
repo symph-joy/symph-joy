@@ -2,14 +2,14 @@ import React, { Component, ReactNode } from "react";
 import { ReactApplicationReactContext } from "./react-app-container";
 import { ModelStateChangeHandler, ReactReduxService } from "./redux/react-redux.service";
 import { BaseReactModel } from "./base-react-model";
-import { bindRouteFromCompProps, getRouteMeta, IRouteMeta } from "./router/react-route.decorator";
+import { bindRouteFromCompProps } from "./router/react-route.decorator";
 import { IApplicationContext, IInjectableDependency, Inject } from "@symph/core";
-import { JoyRouteInitState, ReactAppInitManager } from "./react-app-init-manager";
+import { ReactAppInitManager, ReactRouteInitStatus } from "./react-app-init-manager";
 import { ReactRouterService } from "./router/react-router-service";
 import type { Location } from "history";
 import { EnumReactAppInitStage } from "./react-app-init-stage.enum";
 import { IReactRoute } from "./interfaces";
-import { PathMatch, NavigateFunction } from "react-router";
+import { NavigateFunction, PathMatch } from "react-router";
 
 export type ControllerBaseStateType = {
   _modelStateVersion: number;
@@ -88,7 +88,7 @@ export abstract class BaseReactController<
   }
 
   shouldComponentUpdate(nextProps: Readonly<TProps>, nextState: Readonly<TState>, nextContext: any): boolean {
-    this.bindProps();
+    this.bindProps(nextProps);
     return true;
   }
 
@@ -98,18 +98,19 @@ export abstract class BaseReactController<
 
   componentWillUnmount(): void {
     this.isCtlMounted = false;
+    let pathname: string = this.props.match?.pathname || this.location.pathname;
     if (this._models) {
       this.reduxStore.rmModelStateListener(
         this._models.map((it) => it.getNamespace()),
         this.modelStateListener
       );
     }
-    this.initManager.resetInitState(this.location.pathname);
+    this.initManager.resetInitState(pathname);
   }
 
-  protected bindProps() {
+  protected bindProps(props: TProps) {
     this.location = (this.props as any).location || window.location;
-    bindRouteFromCompProps(this, this.props);
+    bindRouteFromCompProps(this, props);
   }
 
   protected async init(): Promise<void> {
@@ -119,48 +120,67 @@ export abstract class BaseReactController<
     this.hasInitInvoked = true;
 
     this.injectProps();
-    this.bindProps();
+    this.bindProps(this.props);
 
     this.state = {
       ...this.state,
       _modelStateVersion: 1,
     };
-
-    const { pathname } = this.location;
+    let pathname: string = this.props.match?.pathname || this.location.pathname;
     const initStage = this.initManager.initStage;
     const { initStatic, init } = this.initManager.getPathState(pathname);
 
     if (initStage >= EnumReactAppInitStage.STATIC) {
-      if (initStatic === JoyRouteInitState.NONE || initStatic === JoyRouteInitState.ERROR) {
+      if (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.ERROR) {
         if (this.initialModelStaticState) {
-          const initStaticTask = Promise.resolve(this.initialModelStaticState({})).catch((e) => {
-            console.error(e);
-            this.initManager.setInitState(pathname, {
-              initStatic: JoyRouteInitState.ERROR,
+          const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
+            .then((rst) => {
+              this.initManager.setInitState(pathname, {
+                initStatic: ReactRouteInitStatus.SUCCESS,
+              });
+              return rst;
+            })
+            .catch((e) => {
+              console.error(e);
+              this.initManager.setInitState(pathname, {
+                initStatic: ReactRouteInitStatus.ERROR,
+              });
             });
-          });
           if (typeof window === "undefined" && initStaticTask) {
             // only on server side
             this.initManager.addTask(pathname, initStaticTask);
           }
         } else {
+          this.initManager.setInitState(pathname, {
+            initStatic: ReactRouteInitStatus.SUCCESS,
+          });
         }
       }
     }
 
     if (initStage >= EnumReactAppInitStage.DYNAMIC) {
-      if (init === JoyRouteInitState.NONE || init === JoyRouteInitState.ERROR) {
+      if (init === undefined || init === ReactRouteInitStatus.NONE || init === ReactRouteInitStatus.ERROR) {
         if (this.initialModelState) {
-          const initTask = Promise.resolve(this.initialModelState({})).catch((e) => {
-            this.initManager.setInitState(pathname, {
-              init: JoyRouteInitState.ERROR,
+          const initTask = Promise.resolve(this.initialModelState({}))
+            .then((rst) => {
+              this.initManager.setInitState(pathname, {
+                init: ReactRouteInitStatus.SUCCESS,
+              });
+              return rst;
+            })
+            .catch((e) => {
+              this.initManager.setInitState(pathname, {
+                init: ReactRouteInitStatus.ERROR,
+              });
             });
-          });
           if (typeof window == "undefined" && initTask) {
             // only on server side
             this.initManager.addTask(pathname, initTask);
           }
         } else {
+          this.initManager.setInitState(pathname, {
+            init: ReactRouteInitStatus.SUCCESS,
+          });
         }
       }
     }
@@ -275,20 +295,20 @@ export abstract class BaseReactController<
   };
 
   render(): ReactNode {
-    const { initStatic, init } = this.initManager.getPathState(this.location.pathname);
+    const pathname = this.props.match?.pathname || this.location.pathname;
+    const { initStatic, init } = this.initManager.getPathState(pathname);
 
     // reset model state dep props
     this.modelStateDeps = {};
     this.isRendingView = true;
-
-    if (!this.hasInjectProps || initStatic === JoyRouteInitState.LOADING) {
+    if (!this.hasInjectProps || initStatic === ReactRouteInitStatus.LOADING) {
       return "loading...";
     }
-    if (initStatic === JoyRouteInitState.ERROR) {
+    if (initStatic === ReactRouteInitStatus.ERROR) {
       return `controller ${this.constructor.name} init static model state failed`;
     }
 
-    if (init === JoyRouteInitState.ERROR) {
+    if (init === ReactRouteInitStatus.ERROR) {
       console.warn(`controller${this.constructor.name} init model state failed`);
     }
 
