@@ -6,9 +6,15 @@ export class DocsController {
   constructor(private docsService: DocsService) {}
 
   @Get("menus")
-  public async getMenus() {
+  public async getMenus(@Query("path") path: any) {
     return {
-      data: await this.docsService.getMenus(),
+      data: await this.docsService.getMenus(path),
+    };
+  }
+  @Get("allMenus")
+  public async getAllMenus() {
+    return {
+      data: await this.docsService.getAllMenus(),
     };
   }
 

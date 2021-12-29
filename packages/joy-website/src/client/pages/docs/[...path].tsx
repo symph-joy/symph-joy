@@ -21,7 +21,7 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
   }
 
   async getPaths(): Promise<Array<string>> {
-    const menus = await this.docsModel.getDocMenus();
+    const menus = await this.docsModel.getAllDocsMenus();
     const paths = [] as string[];
     const addChildren = (menus: DocMenuItem[]) => {
       (menus || []).forEach((menu) => {
@@ -33,6 +33,8 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
       });
     };
     addChildren(menus || []);
+    console.log("paths:", paths);
+
     return paths;
   }
 
@@ -64,9 +66,11 @@ export default class Path extends BaseReactController {
     showDrawer: false,
   };
 
-  async initialModelStaticState(): Promise<void | number> {
-    let path = this.docPath || "/docs/docs/style-css";
-    await this.docsModel.getDocMenus();
+  async initialModelStaticState(): Promise<void | number> {    
+    console.log('123123123');
+    
+    let path = this.docPath || "/docs/docs/introduce";  
+    await this.docsModel.getDocMenus(`/${this.docPath.split("/")[0]}`);
     await this.fetchPageDocData(path);
   }
 

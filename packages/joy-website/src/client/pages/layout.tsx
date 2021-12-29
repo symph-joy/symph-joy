@@ -3,7 +3,7 @@ import { Layout, Menu, AutoComplete, Button } from "antd";
 import { Inject } from "@symph/core";
 import { DocsModel } from "../model/docs.model";
 import { BaseReactController, ReactController } from "@symph/react";
-import { Outlet } from "@symph/react/router-dom";
+import { Outlet, Link } from "@symph/react/router-dom";
 import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
@@ -163,14 +163,26 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                   </MenuItem>
                 )}
                 <MenuItem key="1">
-                  <a href={"/docs"} onClick={this.pushHistory.bind(this, "/docs")}>
-                    开始
-                  </a>
+                  <a onClick={this.pushHistory.bind(this, "/docs/docs/introduce")}>开始</a>
                 </MenuItem>
-                <MenuItem key="2">配置</MenuItem>
-                <MenuItem key="3">API</MenuItem>
+                <MenuItem key="2">
+                  <Link to="/docs/config/introduce">配置</Link>
+                </MenuItem>
+                <MenuItem key="3">
+                  <Link to="/docs/api/introduce">API</Link>
+                </MenuItem>
                 <MenuItem key="4">指南</MenuItem>
                 <MenuItem key="5">插件</MenuItem>
+                <MenuItem key="8">
+                  <a target="_blank" href="https://lnlfps.github.io/symph-joy/#/readme">
+                    v1
+                  </a>
+                </MenuItem>
+                <MenuItem key="9">
+                  <a target="_blank" href="https://github.com/lnlfps/symph-joy">
+                    Github
+                  </a>
+                </MenuItem>
                 {!isMobile && [
                   <MenuItem key="6">
                     <a id="change-theme" className={styles.theme__switch} onClick={this.handleToggleThemeClick}>

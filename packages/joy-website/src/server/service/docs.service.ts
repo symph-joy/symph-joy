@@ -54,12 +54,12 @@ export class DocsService implements IComponentLifecycle {
 
   // 获取所有能搜索到的树结构
   public async getAllDocs() {
-    await this.getMenus();
-    const res = [];
-    for (const menu of this.menus) {
-      await this.getOneSeachTree(menu, res);
-    }
-    this.titleArray = res;
+    // await this.getMenus();
+    // const res = [];
+    // for (const menu of this.menus) {
+    //   await this.getOneSeachTree(menu, res);
+    // }
+    // this.titleArray = res;
   }
 
   public async getOneSeachTree(menu, res) {
@@ -91,12 +91,23 @@ export class DocsService implements IComponentLifecycle {
     return this.titleArray;
   }
 
-  public async getMenus(): Promise<DocMenu[]> {
+  public async getMenus(path: string): Promise<DocMenu[]> {
+    let { dir } = this.configDocs || {};
+    dir += path;
+    return this.getMenusByDir(dir);
+  }
+
+  public async getAllMenus(): Promise<DocMenu[]> {
     const { dir } = this.configDocs || {};
+    return this.getMenusByDir(dir);
+  }
+
+  public async getMenusByDir(dir): Promise<DocMenu[]> {
     if (!dir) {
       console.warn("Warning: Doc dir is not config.");
       return [];
     }
+
     const dirs = typeof dir === "string" ? [dir] : dir;
     this.menus = await this.scanDir(dirs);
     return this.fmtMenus(this.menus);
