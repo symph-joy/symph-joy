@@ -7,6 +7,7 @@ import { Outlet, Link } from "@symph/react/router-dom";
 import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
+import { getTheme, changeTheme } from "../utils/theme";
 const { Option } = AutoComplete;
 const { Content } = Layout;
 const { Item: MenuItem } = Menu;
@@ -48,13 +49,11 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
 
   componentDidMount() {
     super.componentDidMount();
-
-    const { theme } = this.layoutModel.state;
+    const theme = getTheme();
     const oBtn = document.getElementById("collapseBtn");
     const oBody = document.getElementsByTagName("body")[0];
 
     oBody.setAttribute("data-theme", theme);
-
     const observer = new IntersectionObserver(([entry]) => {
       const { intersectionRatio } = entry;
 
@@ -107,22 +106,9 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     observer && observer.unobserve(oBtn);
   }
 
-  // 切换样式文件
-  changeBodyTheme = () => {
-    const { theme } = this.layoutModel.state;
-    const oBody = document.getElementsByTagName("body")[0];
-
-    oBody.setAttribute("data-theme", theme);
-  };
-
   // 处理切换主题按钮点击事件
   handleToggleThemeClick = (): void => {
-    const { theme } = this.layoutModel.state;
-    const newTheme = theme === "dark" ? "light" : "dark";
-
-    this.layoutModel.changeTheme(newTheme);
-
-    this.changeBodyTheme();
+    changeTheme();
   };
 
   // 处理移动端展示时，菜单展示收缩按钮点击事件
@@ -140,12 +126,10 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
   renderView(): ReactNode {
     const { route } = this.props;
     const { result } = this.docsModel.state;
-    const { collapsed, isMobile, theme } = this.layoutModel.state;
-    const themeUrl = theme === "dark" ? "/static/antd.dark.css" : "/static/antd.css";
+    const { collapsed, isMobile } = this.layoutModel.state;
 
     return (
       <Layout className={styles.layout}>
-        <link id="theme-style" rel="stylesheet" href={themeUrl} />
         <header className={styles.header}>
           <nav id="nav" className={styles.nav}>
             <div id="nav-inner" className={styles.nav__inner}>
