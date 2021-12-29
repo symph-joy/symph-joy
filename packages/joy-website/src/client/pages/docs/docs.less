@@ -1,41 +1,100 @@
-&[data-theme="light"] {
+.layoutContent {
+  display: flex;
   .docMenus {
+    width: 285px;
     padding: 12px 0;
     :global {
-      .ant-menu-sub.ant-menu-inline {
-        background: #fff !important;
+      .ant-menu-title-content {
+        color: #717484 !important;
       }
     }
   }
-  .row{
-    background: #fff;
+  .center {
+    overflow: hidden;
+    flex: 1 !important;
+    .docContent {
+      padding: 50px 40px;
+      font-size: 15px;
+      h1 {
+        font-size: 32px;
+        margin-bottom: 32px;
+      }
+      h2 {
+        font-size: 24px;
+        margin: 41px 0 18px;
+      }
+      h3 {
+        font-size: 20px;
+        margin: 41px 0 18px;
+      }
+      p {
+        margin: 16px 0;
+        code {
+          padding: 2px 5px;
+          color: #d56161;
+          background: #f6f7f9;
+        }
+      }
+    }
   }
-}
-.docContent {
-  padding: 50px 40px;
-}
-.titleTree {
-  position: absolute;
-  right: 20px;
-  top: 8px;
-  max-width: 170px;
-  text-overflow: ellipsis;
-}
-@media screen and (max-width: 1120px) {
   .titleTree {
-    display: none;
+    margin: 50px 24px 0 0;
+    width: 136px;
+    text-overflow: ellipsis;
+    :global {
+      .ant-anchor-link-title {
+        font-size: 13px;
+        color: #454d64;
+      }
+    }
   }
 }
+&[data-theme="light"] {
+  .docMenus {
+    :global {
+      .ant-menu-sub.ant-menu-inline {
+        background: #fff;
+      }
+    }
+  }
+}
+&[data-theme="dark"] {
+  .docContent {
+    :global{
+      .hljs {
+        color: hsla(0, 0%, 100%, 0.85);
+        background: #262626;
+      }
+    }
+    p {
+      code {
+        color: #ff7875 !important;
+        background: hsla(0, 0%, 100%, 0.08) !important;
+      }
+    }
+  }
+}
+
 .menuIcon {
   display: none;
 }
 @media screen and (max-width: 947px) {
-  .menu {
+  .docContent {
+    padding: 107px 40px 50px !important;
+  }
+  .titleTree,
+  .docMenus {
+    padding-top: 57px !important;
+  }
+}
+@media screen and (max-width: 768px) {
+  .titleTree {
+    display: none;
+  }
+  .docMenus {
     display: none !important;
   }
-  .docContent {
-    padding: 107px 40px 50px;
-  }
+
   .menuIcon {
     display: block;
     position: absolute;

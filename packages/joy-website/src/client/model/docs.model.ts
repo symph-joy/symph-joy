@@ -27,7 +27,7 @@ export type DocsModelState = {
   loadingCurrentDoc: boolean;
   loadCurrentDocErr?: { code: number; message: string };
   currentDoc: DocMenuItem & { htmlContent };
-  defaultOption: Array<string>;
+  openKeys: Array<string>;
 };
 
 @ReactModel()
@@ -43,7 +43,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
       titleTrees: [],
       currentDoc: undefined,
       result: [],
-      defaultOption: [],
+      openKeys: [],
     };
   }
 
@@ -105,23 +105,26 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
   async getDocMenus(path: string): Promise<DocMenuItem[]> {
     const resp = await this.fetchService.fetchApi("/docs/menus?path=" + encodeURIComponent(path));
     const respJson = await resp.json();
-    const defaultOption = await this.getDefaultOpenKeys(respJson.data);
+    const openKeys = await this.getDefaultOpenKeys(respJson.data);
     this.setState({
       docMenus: respJson.data,
-      defaultOption,
+      openKeys,
     });
     return respJson.data;
+  }
+
+  changeOpenKeys(openKeys) {
+    this.setState({
+      openKeys
+    })
   }
 
   async getAllDocsMenus(): Promise<DocMenuItem[]> {
     const resp = await this.fetchService.fetchApi("/docs/allMenus");
     const respJson = await resp.json();
-    const defaultOption = await this.getDefaultOpenKeys(respJson.data);
     // this.setState({
     //   docMenus: respJson.data,
-    //   defaultOption,
     // });
-    // console.log('respJson:', respJson.data, defaultOption);
     return respJson.data;
   }
 

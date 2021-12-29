@@ -124,7 +124,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
   };
 
   renderView(): ReactNode {
-    const { route } = this.props;
     const { result } = this.docsModel.state;
     const { collapsed, isMobile } = this.layoutModel.state;
 
@@ -134,7 +133,7 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
           <nav id="nav" className={styles.nav}>
             <div id="nav-inner" className={styles.nav__inner}>
               <a id="logo" href="/" className={styles.logo}>
-                <img alt="logo" src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                {/* <img alt="logo" src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" /> */}
                 Symph Joy
               </a>
               <Button id="collapseBtn" className={styles.menu__collapseBtn} type="text" size="large" onClick={this.handleToggleCollapsed}>

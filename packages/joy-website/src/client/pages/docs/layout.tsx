@@ -3,7 +3,7 @@ import { BaseReactController, ReactController, RouteParam } from "@symph/react";
 import { Outlet } from "@symph/react/router-dom";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Inject } from "@symph/core";
-import { Affix, Col, Menu, Row, Anchor, Drawer } from "antd";
+import { Affix, Menu, Anchor, Drawer } from "antd";
 import styles from "./docs.less";
 import { MenuUnfoldOutlined } from "@ant-design/icons";
 const { Link } = Anchor;
@@ -53,26 +53,26 @@ export default class DocsLayout extends BaseReactController {
     }
     return views;
   }
+  onOpenChange = (openKeys) => {
+    this.docsModel.changeOpenKeys(openKeys);
+  };
 
   renderView(): ReactNode {
-    const { docMenus, defaultOption, titleTrees, currentDoc } = this.docsModel.state;
-    console.log("docMenus:", docMenus);
-
+    const { docMenus, openKeys, titleTrees, currentDoc } = this.docsModel.state;
     return (
-      <Row className="={styles.row" style={{ minHeight: "calc(100vh - 64px)", position: "relative" }}>
-        <Col className={styles.menu} sm={24} md={5} lg={5} xl={4} xxl={3}>
-          <Affix>
-            <Menu
-              selectedKeys={[currentDoc?.path]}
-              mode="inline"
-              openKeys={defaultOption}
-              style={{ height: "calc(100vh - 64px)" }}
-              className={styles.docMenus}
-            >
-              {this.renderMenuItem(docMenus)}
-            </Menu>
-          </Affix>
-        </Col>
+      <div className={styles.layoutContent}>
+        <Affix>
+          <Menu
+            selectedKeys={[currentDoc?.path]}
+            mode="inline"
+            openKeys={openKeys}
+            style={{ height: "calc(100vh - 64px)" }}
+            className={styles.docMenus}
+            onOpenChange={this.onOpenChange}
+          >
+            {this.renderMenuItem(docMenus)}
+          </Menu>
+        </Affix>
         <div
           className={styles.menuIcon}
           onClick={() => {
@@ -92,22 +92,16 @@ export default class DocsLayout extends BaseReactController {
           }}
           visible={this.state.showDrawer}
         >
-          <Menu
-            selectedKeys={[currentDoc?.path]}
-            mode="inline"
-            openKeys={defaultOption}
-            style={{ height: "calc(100vh - 64px)" }}
-            className={styles.docMenus}
-          >
+          <Menu selectedKeys={[currentDoc?.path]} mode="inline" openKeys={openKeys} style={{ height: "calc(100vh - 64px)" }}>
             {this.renderMenuItem(docMenus)}
           </Menu>
         </Drawer>
-        <Col style={{ flex: 1 }}>
+        <div className={styles.center}>
           <Outlet />
-        </Col>
-        <Col sm={24} md={3} lg={3} xl={3} xxl={3}>
+        </div>
+        <div className={styles.titleTree}>
           {titleTrees ? (
-            <Anchor className={styles.titleTree}>
+            <Anchor>
               {titleTrees.map((value, key) => {
                 if (value.children) {
                   return (
@@ -123,8 +117,8 @@ export default class DocsLayout extends BaseReactController {
               })}
             </Anchor>
           ) : undefined}
-        </Col>
-      </Row>
+        </div>
+      </div>
     );
   }
 }
