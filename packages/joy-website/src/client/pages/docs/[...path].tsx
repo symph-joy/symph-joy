@@ -66,10 +66,10 @@ export default class Path extends BaseReactController {
     showDrawer: false,
   };
 
-  async initialModelStaticState(): Promise<void | number> {    
-    console.log('123123123');
-    
-    let path = this.docPath || "/docs/docs/introduce";  
+  async initialModelStaticState(): Promise<void | number> {
+    console.log("123123123");
+
+    let path = this.docPath || "/docs/docs/introduce";
     await this.docsModel.getDocMenus(`/${this.docPath.split("/")[0]}`);
     await this.fetchPageDocData(path);
   }

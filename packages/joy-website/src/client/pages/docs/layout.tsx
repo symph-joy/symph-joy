@@ -22,7 +22,7 @@ export default class DocsLayout extends BaseReactController {
 
   async initialModelStaticState(): Promise<void | number> {
     // let path = this.docPath || "/docs/docs/style-css";
-    console.log('props:', this.props);
+    console.log("props:", this.props);
     // await this.docsModel.getDocMenus(`/${this.props.location.pathname.split("/")[1]}`);
   }
 
@@ -56,8 +56,8 @@ export default class DocsLayout extends BaseReactController {
 
   renderView(): ReactNode {
     const { docMenus, defaultOption, titleTrees, currentDoc } = this.docsModel.state;
-    console.log('docMenus:', docMenus);
-    
+    console.log("docMenus:", docMenus);
+
     return (
       <Row className="={styles.row" style={{ minHeight: "calc(100vh - 64px)", position: "relative" }}>
         <Col className={styles.menu} sm={24} md={5} lg={5} xl={4} xxl={3}>
