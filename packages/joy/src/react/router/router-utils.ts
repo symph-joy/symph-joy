@@ -4,9 +4,10 @@ import { matchPath } from "react-router";
 const TEST_ROUTE = /\/\[[^/]+?\](?=\/|$)/;
 
 const TEST_ROUTE_1 = /\/:[^/]+?(?=\/|$)/;
+const TEST_ROUTE_2 = /\*$/;
 
 export function isDynamicRoute(route: string): boolean {
-  return TEST_ROUTE_1.test(route) || TEST_ROUTE.test(route);
+  return TEST_ROUTE_1.test(route) || TEST_ROUTE_2.test(route) || TEST_ROUTE.test(route);
 }
 
 /**
@@ -76,6 +77,8 @@ export function normalizeConventionRouteV6(routePath: string): { path: string; c
         if (isCatchAll) {
           catchAllParam = segment;
           return `/*`;
+        } else {
+          return `/:${segment}`;
         }
       } else {
         return `/${segment}`;

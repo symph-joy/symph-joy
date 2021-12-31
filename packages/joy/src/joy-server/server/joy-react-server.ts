@@ -47,10 +47,7 @@ import getRouteFromAssetPath from "../lib/router/utils/get-route-from-asset-path
 import { FontManifest } from "./font-utils";
 import { HookType, Component, IComponentLifecycle, InjectHook, IHook } from "@symph/core";
 import { JoyAppConfig } from "./joy-app-config";
-// import { ServerConfig } from "./server-config";
-// import { JoyReactAppServerConfig } from "../lib/joy-react-app-server-config";
-import { ReactApplicationContext } from "@symph/react";
-import React from "react";
+import { ReactApplicationContext, ReactRouterService } from "@symph/react";
 import { ReactContextFactory } from "../../react/react-context-factory";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 import { REACT_OUT_DIR } from "../../react/react-const";
@@ -871,16 +868,6 @@ export class JoyReactServer implements IComponentLifecycle {
     return null;
   }
 
-  protected async findErrorComponent(): Promise<React.ComponentType<{ error: Error }>> {
-    const ErrorComponent = loadComponent(this.outDir, "/_error");
-    return ErrorComponent.default || ErrorComponent;
-  }
-
-  protected async find404ErrorComponent(): Promise<React.ComponentType<{ error: Error }>> {
-    const ErrorComponent = loadComponent(this.outDir, "/_error");
-    return ErrorComponent.default || ErrorComponent;
-  }
-
   protected async getStaticPaths(pathname: string): Promise<{
     staticPaths: string[] | undefined;
     fallbackMode: "static" | "blocking" | false;
@@ -1171,48 +1158,59 @@ export class JoyReactServer implements IComponentLifecycle {
 
   public async renderToHTML(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery = {}): Promise<string | null> {
     const reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, pathname, query);
-
+    const routeService = reactAppContext.getSync(ReactRouterService);
     try {
-      const result = await this.findPageComponents(pathname, query);
+      const matchRoutes = routeService.getMatchedRoutes(pathname);
+      if (matchRoutes?.length) {
+        const result = await this.findPageComponents("/_app", query);
 
-      await this.onBeforeRender.call({ req, res, pathname, query, reactAppContext, components: result?.components, renderOptions: this.renderOpts });
-      if (res.writableEnded) {
-        // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
-      }
+        await this.onBeforeRender.call({
+          req,
+          res,
+          pathname,
+          query,
+          reactAppContext,
+          components: result?.components,
+          renderOptions: this.renderOpts,
+        });
+        if (res.writableEnded) {
+          // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
+        }
 
-      if (result) {
-        try {
-          return await this.renderToHTMLWithComponents(req, res, pathname, reactAppContext, result, { ...this.renderOpts });
-        } catch (err) {
-          if (!(err instanceof NoFallbackError)) {
-            throw err;
+        if (result) {
+          try {
+            return await this.renderToHTMLWithComponents(req, res, pathname, reactAppContext, result, { ...this.renderOpts });
+          } catch (err) {
+            if (!(err instanceof NoFallbackError)) {
+              throw err;
+            }
           }
         }
-      }
 
-      if (this.dynamicRoutes) {
-        // todo 使用react-routes 4 之后的动态路由后，该路由是否还有必要存在？
-        throw new Error("使用react-routes 4 之后的动态路由后，dynamicRoutes路由不在需要" + JSON.stringify(this.dynamicRoutes));
-        // for (const dynamicRoute of this.dynamicRoutes) {
-        //   const params = dynamicRoute.match(pathname);
-        //   if (!params) {
-        //     continue;
-        //   }
-        //
-        //   const dynamicRouteResult = await this.findPageComponents(dynamicRoute.page, query, params);
-        //   if (dynamicRouteResult) {
-        //     try {
-        //       return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, {
-        //         ...this.renderOpts,
-        //         params,
-        //       });
-        //     } catch (err) {
-        //       if (!(err instanceof NoFallbackError)) {
-        //         throw err;
-        //       }
-        //     }
-        //   }
-        // }
+        if (this.dynamicRoutes?.length) {
+          // todo 使用react-routes 4 之后的动态路由后，该路由是否还有必要存在？
+          throw new Error("使用react-routes 4 之后的动态路由后，dynamicRoutes路由不在需要" + JSON.stringify(this.dynamicRoutes));
+          // for (const dynamicRoute of this.dynamicRoutes) {
+          //   const params = dynamicRoute.match(pathname);
+          //   if (!params) {
+          //     continue;
+          //   }
+          //
+          //   const dynamicRouteResult = await this.findPageComponents(dynamicRoute.page, query, params);
+          //   if (dynamicRouteResult) {
+          //     try {
+          //       return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, {
+          //         ...this.renderOpts,
+          //         params,
+          //       });
+          //     } catch (err) {
+          //       if (!(err instanceof NoFallbackError)) {
+          //         throw err;
+          //       }
+          //     }
+          //   }
+          // }
+        }
       }
     } catch (err) {
       this.logError(err);
@@ -1250,28 +1248,22 @@ export class JoyReactServer implements IComponentLifecycle {
 
   public async renderErrorToHTML(err: Error | null, req: IncomingMessage, res: ServerResponse, _pathname: string, query: ParsedUrlQuery = {}) {
     let result: null | FindComponentsResult = null;
-    result = await this.findPageComponents("/_error", query);
-    let ErrorComponent = null;
 
-    const is404 = res.statusCode === 404;
-    // let using404Page = false;
+    const is404 = res.statusCode === 404 || (err as any).statusCode === 404;
+    let using404Page = false;
 
     // use static 404 page if available and is 404 response
     if (is404) {
-      ErrorComponent = await this.find404ErrorComponent();
-    } else {
-      ErrorComponent = await this.findErrorComponent();
+      using404Page = result !== null;
     }
 
-    //
-    // if (
-    //   process.env.NODE_ENV !== "production" &&
-    //   !using404Page &&
-    //   (await this.hasPage("/_error")) &&
-    //   !(await this.hasPage("/404"))
-    // ) {
-    //   this.customErrorNo404Warn();
-    // }
+    if (!result) {
+      result = await this.findPageComponents("/_error", query);
+    }
+
+    if (process.env.NODE_ENV !== "production" && !using404Page && (await this.hasPage("/_error")) && !(await this.hasPage("/404"))) {
+      this.customErrorNo404Warn();
+    }
 
     let reactAppContext: ReactApplicationContext | undefined;
     if (!err) {
@@ -1283,10 +1275,11 @@ export class JoyReactServer implements IComponentLifecycle {
     let html: string | null;
     try {
       try {
-        html = await this.renderToHTMLWithComponents(req, res, is404 ? "/404" : "/_error", reactAppContext, result!, {
+        html = await this.renderToHTMLWithComponents(req, res, using404Page ? "/404" : "/_error", reactAppContext, result!, {
+          ...result,
           ...this.renderOpts,
           err,
-          ErrorComponent,
+          // ErrorComponent,
         });
       } catch (maybeFallbackError) {
         if (maybeFallbackError instanceof NoFallbackError) {

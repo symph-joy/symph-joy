@@ -6,7 +6,7 @@ import { DynamicLoading, Loader } from "../../joy-server/lib/dynamic";
 import { RuntimeException } from "@symph/core";
 import { getRouteElement } from "@symph/react/dist/router/react-route-loader";
 import { IJoyReactRouteBuild } from "./joy-react-router-plugin";
-import { JoyReactAppInitManagerClient } from "../joy-react-app-init-manager-client";
+import { JoyReactAppInitManagerClient, JoySSGPage } from "../joy-react-app-init-manager-client";
 import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 
 type JoyReactRouteLoaderOptions = {
@@ -64,7 +64,12 @@ export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptio
     if (!ssr) {
       return undefined;
     }
-    const ssgInfo = initManager.getPageSSGState(match.pathname, match.pattern.path);
+    // const ssgInfo = initManager.getPageSSGState(match.pathname, match.pattern.path);
+    let ssgInfo: Promise<JoySSGPage | undefined> | JoySSGPage | undefined = undefined;
+    if (match.pathname === location.pathname) {
+      // 暂时只处理叶子路由。
+      ssgInfo = initManager.getPageSSGState(location.pathname);
+    }
     return ssgInfo;
   }, [matchPathname]);
 

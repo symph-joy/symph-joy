@@ -305,11 +305,11 @@ export abstract class BaseReactController<
       return "loading...";
     }
     if (initStatic === ReactRouteInitStatus.ERROR) {
-      return `controller ${this.constructor.name} init static model state failed`;
+      return `controller ${this.constructor.prototype.name} init static model state failed`;
     }
 
     if (init === ReactRouteInitStatus.ERROR) {
-      console.warn(`controller${this.constructor.name} init model state failed`);
+      console.warn(`controller${this.constructor.prototype.name} init model state failed`);
     }
 
     const view = this.renderView();

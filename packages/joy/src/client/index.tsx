@@ -191,13 +191,15 @@ class Container extends React.Component<{
 }
 
 export const emitter = mitt();
+const errorPages = ["/_error", "/404"];
 
 export default async (opts: { webpackHMR?: any } = {}) => {
   // This makes sure this specific lines are removed in production
   if (process.env.NODE_ENV === "development") {
     webpackHMR = opts.webpackHMR;
   }
-  const { page: app, mod } = await pageLoader.loadPage("/_app");
+  const appRootComp = errorPages.includes(page) ? "/_error" : "/_app";
+  const { page: app, mod } = await pageLoader.loadPage(appRootComp);
   CachedApp = app as AppComponent;
 
   if (mod && mod.reportWebVitals) {
@@ -223,12 +225,7 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   let initialErr = hydrateErr;
 
   try {
-    // ;({
-    //   page: CachedComponent,
-    //   styleSheets: cachedStyleSheets,
-    // } = await pageLoader.loadPage(page)) // todo 重构该功能，不在需要从服务端下载页面的chunk了
-    //
-    CachedComponent = () => <div>aaa</div>;
+    CachedComponent = () => <div>Should not render this component</div>;
 
     if (process.env.NODE_ENV !== "production") {
       const { isValidElementType } = require("react-is");
@@ -510,7 +507,7 @@ const wrapApp = (App: AppComponent) => (wrappedAppProps: Record<string, any>) =>
   };
   return (
     <AppContainer>
-      <App {...appProps} />
+      <App appContext={reactApplicationContext} {...appProps} />
     </AppContainer>
   );
 };
@@ -636,7 +633,9 @@ function doRender({ App, props, err, styleSheets, reactApplicationContext }: Ren
   const elem = (
     <Root callback={onCommit}>
       <AppContainer>
-        <ReactAppContainer appContext={reactApplicationContext} App={App as any} />
+        <ReactAppContainer appContext={reactApplicationContext}>
+          <App appContext={reactApplicationContext} />
+        </ReactAppContainer>
       </AppContainer>
     </Root>
   );

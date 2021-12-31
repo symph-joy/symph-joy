@@ -106,7 +106,7 @@ describe("joy export", () => {
     let msg = await page.innerHTML("#message");
     expect(msg).toBe("hello1");
     const [res] = await Promise.all([
-      page.waitForResponse((response) => response.url().includes("/dynamic/hello2.json")),
+      page.waitForResponse((response) => response.url().includes("/dynamic/hello2.json"), { timeout: 50000 }),
       page.click("#link-hello2"),
     ]);
 

@@ -52,7 +52,8 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
         resolve((window as any).__SSG_MANIFEST);
       } else {
         (window as any).__SSG_MANIFEST_CB = () => {
-          resolve((window as any).__SSG_MANIFEST);
+          this.ssgManifest = (window as any).__SSG_MANIFEST;
+          resolve(this.ssgManifest as ClientSsgManifest);
         };
       }
     });
@@ -101,10 +102,11 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
   // }
 
   public getPageSSGState(pathname: string, routePath?: string): Promise<JoySSGPage | undefined> | JoySSGPage | undefined {
-    // this.ssgManifest = new Set(["/docs/*"]);
+    // this.ssgManifest = new Set(["/", "/docs/*"]);
 
     const cache = this.ssgPages.get(pathname);
     if (cache) {
+      this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });
       return cache;
     }
     const task = new TaskThenable((resolve, reject) => {
@@ -125,7 +127,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
         for (const ssgRoute of ssgManifest.values()) {
           if (ssgRoute === pathname || ssgRoute === routePath) {
             ssgRoutePath = ssgRoute;
-          } else if (isDynamicRoute(ssgRoute) && matchPath({ path: ssgRoute, end: false }, pathname)) {
+          } else if (isDynamicRoute(ssgRoute) && matchPath({ path: ssgRoute, end: true }, pathname)) {
             ssgRoutePath = ssgRoute;
           }
           if (ssgRoutePath) {
@@ -147,6 +149,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
           const initState = this.getPathState(pathname);
           if (!ssgPage.ssgData) {
             if (initState.initStatic !== 2) {
+              this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });
               return new Promise<JoySSGPage>((resolve, reject) => {
                 this.fetchSSGData(pathname).then((data) => {
                   ssgPage.ssgData = data;
@@ -154,6 +157,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
                 }, reject);
               });
             } else {
+              // 首次加载页面，html中已经包含了数据了，所以异步加载。
               this.fetchSSGData(pathname).then((data) => {
                 ssgPage.ssgData = data;
               });

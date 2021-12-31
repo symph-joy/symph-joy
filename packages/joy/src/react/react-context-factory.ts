@@ -55,6 +55,16 @@ export class ReactContextFactory {
         type: Object,
         useValue: { location: pathname },
       },
+      // {
+      //   name: "joySSRRequest",
+      //   type: IncomingMessage,
+      //   useValue: req,
+      // },
+      // {
+      //   name: "joySSRResponse",
+      //   type: ServerResponse,
+      //   useValue: res,
+      // },
     ];
     container.addProviders(components);
   }

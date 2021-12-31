@@ -32,6 +32,7 @@ import optimizeAmp from "./optimize-amp";
 import { ReactAppContainer, ReactAppInitManager, ReactApplicationContext, ReactRouteInitStatus, TReactAppComponent } from "@symph/react";
 import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
+import { JoySSRContext, JoySSRContextType } from "../lib/joy-ssr-react-context";
 
 function noRouter() {
   const message =
@@ -86,10 +87,10 @@ class ServerRouter implements JoyRouter {
 
 function enhanceComponents(
   options: ComponentsEnhancer,
-  App: TReactAppComponent
+  App: React.ComponentType<any>
   // Component: JoyComponentType
 ): {
-  App: TReactAppComponent;
+  App: React.ComponentType<any>;
   // Component: JoyComponentType;
 } {
   // For backwards compatibility
@@ -121,7 +122,7 @@ export type RenderOptsPartial = {
   ampPath?: string;
   inAmpMode?: boolean;
   hybridAmp?: boolean;
-  ErrorComponent?: React.ComponentType<{ error: Error }>;
+  ErrorDebug?: React.ComponentType<{ error: Error }>;
   ampValidator?: (html: string, pathname: string) => Promise<void>;
   ampSkipValidation?: boolean;
   ampOptimizerConfig?: { [key: string]: any };
@@ -272,14 +273,14 @@ export async function renderToHTML(
     err,
     dev = false,
     ampPath = "",
-    App,
+    // App,
+    Component,
     Document,
     pageConfig = {},
-    // Component,
     buildManifest,
     fontManifest,
     reactLoadableManifest,
-    ErrorComponent,
+    ErrorDebug,
     // getStaticProps,
     // getStaticPaths,
     // getServerSideProps,
@@ -343,9 +344,9 @@ export async function renderToHTML(
   if (dev) {
     const { isValidElementType } = require("react-is");
 
-    if (!isValidElementType(App)) {
-      throw new Error(`The default export is not a React Component in page: "/_app"`);
-    }
+    // if (!isValidElementType(Component)) {
+    //   throw new Error(`The default export is not a React Component in page: "/_app"`);
+    // }
 
     if (!isValidElementType(Document)) {
       throw new Error(`The default export is not a React Component in page: "/_document"`);
@@ -363,10 +364,6 @@ export async function renderToHTML(
       req.url = pathname;
       renderOpts.joyExport = true;
     }
-    // 404 可以获取数据，所以不需要下面的判断
-    // if (pathname === '/404' && (hasPageGetInitialProps || getServerSideProps)) {
-    //   throw new Error(PAGES_404_GET_INITIAL_PROPS_ERROR)
-    // }
   }
   if (isAutoExport) renderOpts.autoExport = true;
   if (isSSG) renderOpts.joyExport = false;
@@ -414,23 +411,32 @@ export async function renderToHTML(
 
   const reactLoadableModules: string[] = [];
 
-  let head: JSX.Element[] = defaultHead(inAmpMode);
+  let head: JSX.Element[] = defaultHead(false);
 
-  let AppContainer = ({ App }: { App: TReactAppComponent }) => {
+  const ssrContext = { req, res, err, pathname, asPath, query } as JoySSRContextType;
+  let AppContainer = ({
+    children,
+  }: {
+    // Component: TReactAppComponent
+    children: JSX.Element;
+  }) => {
     return (
       <AmpStateContext.Provider value={ampState}>
-        <HeadManagerContext.Provider
-          value={{
-            updateHead: (state) => {
-              head = state;
-            },
-            mountedInstances: new Set(),
-          }}
-        >
-          <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
-            <ReactAppContainer appContext={reactApplicationContext!} App={App} />
-          </LoadableContext.Provider>
-        </HeadManagerContext.Provider>
+        <JoySSRContext.Provider value={ssrContext}>
+          <HeadManagerContext.Provider
+            value={{
+              updateHead: (state) => {
+                head = state;
+              },
+              mountedInstances: new Set(),
+            }}
+          >
+            <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
+              {/*<ReactAppContainer appContext={reactApplicationContext!}>{children}</ReactAppContainer>*/}
+              {children}
+            </LoadableContext.Provider>
+          </HeadManagerContext.Provider>
+        </JoySSRContext.Provider>
       </AmpStateContext.Provider>
     );
   };
@@ -486,7 +492,13 @@ export async function renderToHTML(
      * 执行一次页面渲染，触发页面的initialStaticModelState()方法，获取页面的数据，然后用数据在重新绘制一次页面
      * 相当于一次页面请求，服务端需要执行两次 React 渲染
      */
-    renderToStaticMarkup(<AppContainer App={App} />);
+    renderToStaticMarkup(
+      <AppContainer>
+        <ReactAppContainer appContext={reactApplicationContext!}>
+          <Component appContext={reactApplicationContext} />
+        </ReactAppContainer>
+      </AppContainer>
+    );
     let revalidate: number | undefined;
     try {
       const initRst = await initManager.waitAllFinished(pathname);
@@ -519,8 +531,19 @@ export async function renderToHTML(
     if (!isSSR) {
       return { html: "", head };
     }
-    if (ctx.err && ErrorComponent) {
-      return { html: renderToString(<ErrorComponent error={ctx.err} />), head };
+    if (ctx.err) {
+      if (ErrorDebug) {
+        return { html: renderToString(<ErrorDebug error={ctx.err} />), head };
+      } else {
+        return {
+          html: renderToString(
+            <AppContainer>
+              <Component err={err} />
+            </AppContainer>
+          ),
+          head,
+        };
+      }
     }
 
     // if (dev && (props.router || props.Component)) {
@@ -532,9 +555,15 @@ export async function renderToHTML(
     const {
       App: EnhancedApp,
       // Component: EnhancedComponent,
-    } = enhanceComponents(options, App);
+    } = enhanceComponents(options, Component);
 
-    const html = renderToString(<AppContainer App={EnhancedApp} />);
+    const html = renderToString(
+      <AppContainer>
+        <ReactAppContainer appContext={reactApplicationContext!}>
+          <EnhancedApp appContext={reactApplicationContext!} />
+        </ReactAppContainer>
+      </AppContainer>
+    );
 
     return { html, head };
   };

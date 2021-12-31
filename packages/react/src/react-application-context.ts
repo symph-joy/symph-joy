@@ -1,6 +1,6 @@
 import { ReactApplicationConfig } from "./react-application-config";
 import { renderComponent } from "./react-app-container";
-import { DOMElement, ReactElement } from "react";
+import React, { DOMElement, ReactElement } from "react";
 import reactDom from "react-dom";
 import { ReactReduxService } from "./redux/react-redux.service";
 import { IReactRoute } from "./interfaces/react-route.interface";
@@ -146,7 +146,7 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
     // return createApplicationComponent(this);
     const appContent = renderComponent({
       appContext: this,
-      App: rootComponent,
+      children: rootComponent ? React.createElement(rootComponent, { appContext: this }) : undefined,
     });
 
     if (domContainer) {

@@ -17,7 +17,7 @@ export class ReactRouterServer extends ReactRouterService {
         this.scannedModules.push(route.componentModule);
       }
       this.addRouteCache(route);
-      if (route.componentName && !route.element) {
+      if (!route.element) {
         route.element = this.createRouteElement(route);
       }
       return false;

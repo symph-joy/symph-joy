@@ -9,7 +9,7 @@ import {JoyReactRouteLoader} from '@symph/joy/dist/react/router/joy-react-route-
       {{#if index}}index: {{json index}},{{/if}}
       {{#if caseSensitive}}caseSensitive: {{json caseSensitive}},{{/if}}
       {{#if catchAllParam}}catchAllParam: {{json catchAllParam}},{{/if}}
-      componentName: "{{componentName}}",
+      {{#if componentName}}componentName: "{{componentName}}",{{/if}}
       {{#if componentPackage}}componentPackage: "{{componentPackage}}",{{/if}}
       componentModule: {{#if dynamic}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}},
       render: (routeProps) => {

@@ -53,6 +53,7 @@ import { trace } from "../trace";
 import { SrcBuilder } from "./src-builder";
 import { JoyServerApplication } from "../joy-server/server/joy-server-application";
 import { JoyPrerenderServer } from "./prerender/joy-prerender-server";
+import { findPageFile } from "../server/lib/find-page-file";
 
 export type SsgRoute = {
   initialRevalidateSeconds: number | false;
@@ -445,7 +446,14 @@ export class JoyBuildService {
     //   pagesDir,
     //   config.pageExtensions
     // );
-    const pagePaths: string[] = [];
+    // const pagePaths: string[] = [];
+    const pagePaths = (
+      await Promise.all([
+        findPageFile(pagesDir, "/_app", this.joyConfig.pageExtensions),
+        findPageFile(pagesDir, "/_document", this.joyConfig.pageExtensions),
+        findPageFile(pagesDir, "/_error", this.joyConfig.pageExtensions),
+      ])
+    ).filter((i) => i) as string[];
 
     // needed for static exporting since we want to replace with HTML
     // files

@@ -75,10 +75,18 @@ export function getRouteElement(
     } else {
       return getComponent(componentModule as any);
     }
+  } else if (componentModule) {
+    if (typeof componentModule === "function") {
+      return componentModule().then((resolvedMod: any) => {
+        return wrapperComp(resolvedMod.default || resolvedMod);
+      });
+    } else {
+      return wrapperComp(componentModule.default || componentModule);
+    }
   } else if (element) {
-    return element;
+    throw new RuntimeException(`React route "${route.path}" has element, should not be loaded by ReactRouteLoader, try to render element directly.`);
   } else {
-    throw new RuntimeException(`React route loader can not load route${route.path}.`);
+    throw new RuntimeException(`React route loader can not load route "${route.path}".`);
   }
 }
 

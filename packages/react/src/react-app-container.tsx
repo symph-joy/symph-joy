@@ -9,11 +9,12 @@ export const ReactApplicationReactContext = createContext<IReactApplication | un
 
 interface ApplicationComponentProps {
   appContext: IReactApplication;
-  // children?: JSX.Element;
-  App?: TReactAppComponent;
+  children?: JSX.Element;
+  // Component?: TReactAppComponent;
+  err?: Error | null;
 }
 
-export function ReactAppContainer({ appContext, App }: ApplicationComponentProps): React.ComponentElement<any, any> {
+export function ReactAppContainer({ appContext, children, err }: ApplicationComponentProps): React.ComponentElement<any, any> {
   const [reduxStore, ReactRouterComponent, reactRouterProps] = useMemo(() => {
     return [
       appContext.getSync(ReactReduxService),
@@ -21,25 +22,21 @@ export function ReactAppContainer({ appContext, App }: ApplicationComponentProps
       appContext.getOptionalSync<Record<string, any>>("reactRouterProps"),
     ];
   }, []);
-  // const ReactRouterComponent = useMemo(() => appContext.getSync("reactRouterComponent") as { new (...args: any): any }, []);
-  // const reactRouterProps =  useMemo(() => appContext.getOptionalSync<Record<string, any>>("reactRouterProps"), []);
-  // const reactRouter = appContext.getSync<ReactRouter>("reactRouter", {
-  //   optional: true,
-  // });
+
   if (!reduxStore) {
     throw new RuntimeException("ReactReduxService has not registered in context");
   }
   if (!ReactRouterComponent) {
     throw new RuntimeException("reactRouter has not registered in context");
   }
-  // const routes = reactRouter?.getRoutes() || [];
-  // const routes =  [{path: '/', providerName: 'main'}]
-  App = App || ReactAppComponent;
+
+  children = children || <ReactAppComponent />;
   return (
     <ReactApplicationReactContext.Provider value={appContext}>
       <ReduxProvider store={reduxStore.store}>
         <ReactRouterComponent {...(reactRouterProps || {})}>
-          <App appContext={appContext} />
+          {/*<Component appContext={appContext} err={err} />*/}
+          {children}
         </ReactRouterComponent>
       </ReduxProvider>
     </ReactApplicationReactContext.Provider>
@@ -49,16 +46,3 @@ export function ReactAppContainer({ appContext, App }: ApplicationComponentProps
 export function renderComponent(props: ApplicationComponentProps): ReactElement {
   return <ReactAppContainer {...props} />;
 }
-
-// function createApplicationComponent(
-//   appContext: IReactApplication
-// ): React.ComponentType<ApplicationComponentProps> {
-//   return function (props: Omit<ApplicationComponentProps, "appContext">) {
-//     return <ReactAppContainer appContext={appContext} {...props} />;
-//   };
-// }
-//
-// /**
-//  * Left for backward-compatibility reasons
-//  */
-// export default createApplicationComponent;

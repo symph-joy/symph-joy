@@ -4,7 +4,7 @@ import { Outlet } from "react-router-dom";
 
 @ReactRouteContainer({ path: "/blog" })
 @ReactController()
-export default class Main extends BaseReactController {
+export default class Layout extends BaseReactController {
   renderView() {
     const { location, route } = this.props;
     return (

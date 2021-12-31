@@ -9,7 +9,7 @@ import {MountModule} from "@symph/react/dist/mount/mount-module";
     {{#if caseSensitive}}caseSensitive: {{json caseSensitive}},{{/if}}
     {{#if dynamic}}dynamic: {{json dynamic}},{{/if}}
     {{#if catchAllParam}}catchAllParam: {{json catchAllParam}},{{/if}}
-    componentName: "{{componentName}}",
+    {{#if componentName}}componentName: "{{componentName}}",{{/if}}
     {{#if componentPackage}}componentPackage: "{{componentPackage}}",{{/if}}
     componentModule: {{#if mount}}{mount:"{{mount}}", module:require({{json srcPath}})}{{else}}require({{json srcPath}}){{/if}},
     children: {{> renderRoutes this}}

@@ -1,6 +1,6 @@
 import React from "react";
-import { JoyPageContext } from "../joy-server/lib/utils";
 import { Head } from "../joy-server/lib/head";
+import { JoySSRContext } from "../joy-server/lib/joy-ssr-react-context";
 
 const statusCodes: { [code: number]: string } = {
   400: "Bad Request",
@@ -14,24 +14,24 @@ export type ErrorProps = {
   title?: string;
 };
 
-function _getInitialProps({ res, err }: JoyPageContext): Promise<ErrorProps> | ErrorProps {
-  const statusCode = res && res.statusCode ? res.statusCode : err ? err.statusCode! : 404;
-  return { statusCode };
-}
-
 /**
  * `Error` component used for handling errors.
  */
 export default class Error<P = {}> extends React.Component<P & ErrorProps> {
   static displayName = "ErrorPage";
 
-  static getInitialProps = _getInitialProps;
-  static origGetInitialProps = _getInitialProps;
+  static contextType = JoySSRContext;
+
+  getErrorObject() {
+    const statusCode = this.context?.res?.statusCode || this.context?.err?.statusCode || 404;
+    const title = this.context?.err?.message;
+    return { statusCode, title };
+  }
 
   render() {
-    const { statusCode } = this.props;
-    const title = this.props.title || statusCodes[statusCode] || "An unexpected error has occurred";
-
+    const errObj = this.getErrorObject();
+    const { statusCode } = errObj;
+    let title = errObj.title || statusCodes[statusCode] || "An unexpected error has occurred";
     return (
       <div style={styles.error}>
         <Head>

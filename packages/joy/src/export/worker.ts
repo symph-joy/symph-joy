@@ -2,7 +2,7 @@ import { dirname, extname, join, sep } from "path";
 import { renderToHTML } from "../joy-server/server/render";
 import { promises } from "fs";
 import AmpHtmlValidator from "amphtml-validator";
-import { loadComponents } from "../joy-server/server/load-components";
+import { loadComponents, LoadComponentsReturnType } from "../joy-server/server/load-components";
 import { isDynamicRoute } from "../joy-server/lib/router/utils/is-dynamic";
 import { getRouteMatcher } from "../joy-server/lib/router/utils/route-matcher";
 import { getRouteRegex } from "../joy-server/lib/router/utils/route-regex";
@@ -288,7 +288,15 @@ export async function exportPage(
     //   //   throw new Error(`Failed to render serverless page`)
     //   // }
     // } else {
-    const components = await loadComponents(distDir, page, serverless);
+    let components: LoadComponentsReturnType;
+    if (["/_error", "/404"].includes(path)) {
+      if ("/404" === path) {
+        res.statusCode = 404;
+      }
+      components = await loadComponents(distDir, "/_error", serverless);
+    } else {
+      components = await loadComponents(distDir, "/_app", serverless);
+    }
 
     // for non-dynamic SSG pages we should have already
     // prerendered the file

@@ -19,12 +19,12 @@ export type ManifestItem = {
 type ReactLoadableManifest = { [moduleId: string]: ManifestItem[] };
 
 export type LoadComponentsReturnType = {
-  // Component: React.ComponentType
+  Component: React.ComponentType<any>;
   pageConfig?: PageConfig;
   buildManifest: BuildManifest;
   reactLoadableManifest: ReactLoadableManifest;
   Document: DocumentType;
-  App: TReactAppComponent;
+  // App: TReactAppComponent;
   // getStaticProps?: GetStaticProps
   // getStaticPaths?: GetStaticPaths
   // getServerSideProps?: GetServerSideProps
@@ -49,30 +49,30 @@ export async function loadComponents(distDir: string, pathname: string, serverle
   // }
 
   const DocumentMod = requirePage("/_document", distDir);
-  const AppMod = requirePage("/_app", distDir);
-  // const ComponentMod = requirePage(pathname, outDir, serverless) // todo 不在需要加载页面组件了，去掉该操作
+  // const AppMod = requirePage("/_app", distDir);
+  const ComponentMod = requirePage(pathname, distDir); // todo 不在需要加载页面组件了，去掉该操作
   // const ComponentMod = requirePage('/_app', outDir, serverless) // todo 不在需要加载页面组件了，去掉该操作。 先用_app占位， 后续流程中已经不在需要ComponentMod了
 
   const [
     buildManifest,
     reactLoadableManifest,
-    // Component,
+    Component,
     Document,
-    App,
+    // App,
   ] = await Promise.all([
     require(join(distDir, BUILD_MANIFEST)),
     require(join(distDir, REACT_LOADABLE_MANIFEST)),
-    // interopDefault(ComponentMod),
+    interopDefault(ComponentMod),
     interopDefault(DocumentMod),
-    interopDefault(AppMod),
+    // interopDefault(AppMod),
   ]);
 
   // const { getServerSideProps, getStaticProps, getStaticPaths } = ComponentMod
 
   return {
-    App,
+    // App,
     Document,
-    // Component,
+    Component,
     buildManifest,
     reactLoadableManifest,
     // pageConfig: ComponentMod.config || {},

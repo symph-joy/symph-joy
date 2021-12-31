@@ -89,7 +89,7 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
   }
 
   resetInitState(pathname: string): void {
-    this.setInitState(pathname, { init: undefined });
+    delete this.state[pathname];
     delete this.initTasks[pathname];
   }
 }

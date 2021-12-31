@@ -57,7 +57,7 @@ describe("react-prerender", () => {
         const setStateAction = (date as any[]).find((it) => it.type === "reactAppInitManager/__SET_STATE");
         expect(setStateAction).toBeTruthy();
         expect(setStateAction).toHaveProperty("state./static.initStatic", ReactRouteInitStatus.SUCCESS);
-        expect(setStateAction).toHaveProperty("state./static.init", ReactRouteInitStatus.NONE);
+        expect(setStateAction).toHaveProperty("state./static.init", undefined);
       }, 999999);
 
       test("should response the static html file，which was prerendered out during ssg.", async () => {

@@ -96,7 +96,7 @@ describe("react hmr", () => {
       rmSync(newCtlFilePath);
       console.log("deleted file:,", newCtlFilePath);
       newCtlFilePath = undefined;
-      await page.waitForFunction(() => document?.getElementById("__joy")?.innerHTML === "");
+      await page.waitForFunction(() => document?.getElementById("__joy")?.innerHTML.includes("404"), undefined, { timeout: 500000 });
       await page.goto(testContext.getUrl("/hello2"));
     } finally {
       if (newCtlFilePath && existsSync(newCtlFilePath)) {

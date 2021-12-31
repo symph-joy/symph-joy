@@ -13,7 +13,7 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
   public docsModel: DocsModel;
 
   getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
-    return "/docs/:path";
+    return "/docs/*";
   }
 
   isFallback(): Promise<boolean> | boolean {
@@ -28,7 +28,7 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
         if (menu.children?.length) {
           addChildren(menu.children);
         } else {
-          paths.push(`/docs${menu.path}`);
+          paths.push(`${menu.path}`);
         }
       });
     };

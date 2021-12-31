@@ -1,13 +1,12 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { ParsedUrlQuery } from "querystring";
-import { ComponentType } from "react";
+import React, { ComponentType } from "react";
 import { UrlObject } from "url";
 import { formatUrl } from "./router/utils/format-url";
 import { ManifestItem } from "../server/load-components";
 import { JoyRouter } from "./router/router";
 import { Env } from "../../lib/load-env-config";
 import { BuildManifest } from "../server/get-page-files";
-import { TReactAppComponent } from "@symph/react";
 
 /**
  * Types used by both joy and joy-server
@@ -45,10 +44,10 @@ export type Enhancer<C> = (Component: C) => C;
 
 export type ComponentsEnhancer =
   | {
-      enhanceApp?: Enhancer<TReactAppComponent>;
+      enhanceApp?: Enhancer<React.ComponentType>;
       // enhanceComponent?: Enhancer<JoyComponentType>;
     }
-  | Enhancer<JoyComponentType>;
+  | Enhancer<React.ComponentType>;
 
 export type RenderPageResult = {
   html: string;

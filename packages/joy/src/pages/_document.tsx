@@ -3,7 +3,11 @@ import React, { Component, ReactNode, useContext } from "react";
 import flush from "styled-jsx/server";
 import { AMP_RENDER_TARGET, OPTIMIZED_FONT_PROVIDERS } from "../joy-server/lib/constants";
 import { DocumentContext as DocumentComponentContext } from "../joy-server/lib/document-context";
-import { DocumentContext as _DocumentContext, DocumentInitialProps as _DocumentInitialProps, DocumentProps as _DocumentProps } from "../joy-server/lib/utils";
+import {
+  DocumentContext as _DocumentContext,
+  DocumentInitialProps as _DocumentInitialProps,
+  DocumentProps as _DocumentProps,
+} from "../joy-server/lib/utils";
 import { BuildManifest, getPageFiles } from "../joy-server/server/get-page-files";
 import { cleanAmpPath } from "../joy-server/server/utils";
 import { htmlEscapeJsonString } from "../server/htmlescape";
@@ -136,7 +140,14 @@ export class Head extends Component<OriginProps & React.DetailedHTMLProps<React.
       const isSharedFile = sharedFiles.has(file);
 
       cssLinkElements.push(
-        <link key={`${file}-preload`} nonce={this.props.nonce} rel="preload" href={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`} as="style" crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} />,
+        <link
+          key={`${file}-preload`}
+          nonce={this.props.nonce}
+          rel="preload"
+          href={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`}
+          as="style"
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+        />,
         <link
           key={file}
           nonce={this.props.nonce}
@@ -164,7 +175,16 @@ export class Head extends Component<OriginProps & React.DetailedHTMLProps<React.
             return null;
           }
 
-          return <link rel="preload" key={bundle.file} href={`${assetPrefix}/_joy/${encodeURI(bundle.file)}${devOnlyCacheBusterQueryString}`} as="script" nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} />;
+          return (
+            <link
+              rel="preload"
+              key={bundle.file}
+              href={`${assetPrefix}/_joy/${encodeURI(bundle.file)}${devOnlyCacheBusterQueryString}`}
+              as="script"
+              nonce={this.props.nonce}
+              crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+            />
+          );
         })
         // Filter out nulled scripts
         .filter(Boolean)
@@ -180,7 +200,18 @@ export class Head extends Component<OriginProps & React.DetailedHTMLProps<React.
       return file.endsWith(getOptionalModernScriptVariant(".js"));
     });
 
-    return !preloadFiles.length ? null : preloadFiles.map((file: string) => <link key={file} nonce={this.props.nonce} rel="preload" href={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`} as="script" crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} />);
+    return !preloadFiles.length
+      ? null
+      : preloadFiles.map((file: string) => (
+          <link
+            key={file}
+            nonce={this.props.nonce}
+            rel="preload"
+            href={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`}
+            as="script"
+            crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+          />
+        ));
   }
 
   makeStylesheetInert(node: ReactNode): ReactNode {
@@ -244,7 +275,10 @@ export class Head extends Component<OriginProps & React.DetailedHTMLProps<React.
           // 1. it has a src and isn't pointing to ampproject's CDN
           // 2. it is using dangerouslySetInnerHTML without a type or
           // a type of text/javascript
-          if ((props.src && props.src.indexOf("ampproject") < -1) || (props.dangerouslySetInnerHTML && (!props.type || props.type === "text/javascript"))) {
+          if (
+            (props.src && props.src.indexOf("ampproject") < -1) ||
+            (props.dangerouslySetInnerHTML && (!props.type || props.type === "text/javascript"))
+          ) {
             badProp = "<script";
             Object.keys(props).forEach((prop) => {
               badProp += ` ${prop}="${props[prop]}"`;
@@ -404,7 +438,16 @@ export class JoyScript extends Component<OriginProps> {
 
       if (!bundle.file.endsWith(".js") || files.allFiles.includes(bundle.file)) return null;
 
-      return <script async={!isDevelopment} key={bundle.file} src={`${assetPrefix}/_joy/${encodeURI(bundle.file)}${devOnlyCacheBusterQueryString}`} nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} {...modernProps} />;
+      return (
+        <script
+          async={!isDevelopment}
+          key={bundle.file}
+          src={`${assetPrefix}/_joy/${encodeURI(bundle.file)}${devOnlyCacheBusterQueryString}`}
+          nonce={this.props.nonce}
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+          {...modernProps}
+        />
+      );
     });
   }
 
@@ -420,7 +463,16 @@ export class JoyScript extends Component<OriginProps> {
         modernProps = file.endsWith(".module.js") ? { type: "module" } : { noModule: true };
       }
 
-      return <script key={file} src={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`} nonce={this.props.nonce} async={!isDevelopment} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} {...modernProps} />;
+      return (
+        <script
+          key={file}
+          src={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`}
+          nonce={this.props.nonce}
+          async={!isDevelopment}
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+          {...modernProps}
+        />
+      );
     });
   }
 
@@ -431,7 +483,15 @@ export class JoyScript extends Component<OriginProps> {
 
     return buildManifest.polyfillFiles
       .filter((polyfill) => polyfill.endsWith(".js") && !polyfill.endsWith(".module.js"))
-      .map((polyfill) => <script key={polyfill} nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} noModule={true} src={`${assetPrefix}/_joy/${polyfill}${devOnlyCacheBusterQueryString}`} />);
+      .map((polyfill) => (
+        <script
+          key={polyfill}
+          nonce={this.props.nonce}
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+          noModule={true}
+          src={`${assetPrefix}/_joy/${polyfill}${devOnlyCacheBusterQueryString}`}
+        />
+      ));
   }
 
   static getInlineScriptSource(documentProps: DocumentProps): string {
@@ -475,7 +535,13 @@ export class JoyScript extends Component<OriginProps> {
             />
           )}
           {ampDevFiles.map((file) => (
-            <script key={file} src={`${assetPrefix}/_joy/${file}${devOnlyCacheBusterQueryString}`} nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} data-ampdevmode />
+            <script
+              key={file}
+              src={`${assetPrefix}/_joy/${file}${devOnlyCacheBusterQueryString}`}
+              nonce={this.props.nonce}
+              crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+              data-ampdevmode
+            />
           ))}
         </>
       );
@@ -489,7 +555,14 @@ export class JoyScript extends Component<OriginProps> {
     return (
       <>
         {!disableRuntimeJS && buildManifest.devFiles
-          ? buildManifest.devFiles.map((file: string) => <script key={file} src={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`} nonce={this.props.nonce} crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN} />)
+          ? buildManifest.devFiles.map((file: string) => (
+              <script
+                key={file}
+                src={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`}
+                nonce={this.props.nonce}
+                crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+              />
+            ))
           : null}
         {disableRuntimeJS ? null : (
           <script

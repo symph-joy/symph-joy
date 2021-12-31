@@ -1,5 +1,5 @@
 import { IReactRoute } from "../interfaces";
-import { matchPath, PathMatch } from "react-router";
+import { matchRoutes } from "react-router";
 import { ClassComponent, ComponentName, isClassComponent, TComponent, Type } from "@symph/core";
 import { getRouteMeta, IRouteMeta } from "./react-route.decorator";
 import * as H from "history";
@@ -68,7 +68,7 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
         )}`
       );
     }
-    if (route.componentName && !route.element) {
+    if (!route.element) {
       route.element = this.createRouteElement(route);
     }
     this.addRouteCache(route);
@@ -171,18 +171,20 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
    * @param pathname
    */
   public getMatchedRoutes(pathname: string): T[] | undefined {
-    const rst = this.find(this.getRoutes(), (route) => {
-      let matched: PathMatch | null = matchPath({ path: route.path, end: !route.children?.length }, pathname);
-      // if (route.path.endsWith("/index")) {
-      //   const indexPath = route.path.slice(0, -6);
-      //   matched = matchPath(indexPath, pathname);
-      // }
-      // if (!matched) {
-      //   matched = matchPath(route.path, pathname);
-      // }
-      return !!matched;
-    });
-    return rst;
+    const matches = matchRoutes(this.getRoutes(), pathname);
+    return matches?.map((it) => it.route) as T[];
+    // const rst = this.find(this.getRoutes(), (route) => {
+    //   let matched: PathMatch | null = matchPath({ path: route.path, end: !route.children?.length }, pathname);
+    //   // if (route.path.endsWith("/index")) {
+    //   //   const indexPath = route.path.slice(0, -6);
+    //   //   matched = matchPath(indexPath, pathname);
+    //   // }
+    //   // if (!matched) {
+    //   //   matched = matchPath(route.path, pathname);
+    //   // }
+    //   return !!matched;
+    // });
+    // return rst;
   }
 
   protected mergeRouteExtendState(to: T, from: T): void {
