@@ -25,7 +25,7 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
     const paths = [] as string[];
     const addChildren = (menus: DocMenuItem[]) => {
       (menus || []).forEach((menu) => {
-        if (menu.children?.length) {
+        if (menu.children.length) {
           addChildren(menu.children);
         } else {
           paths.push(`${menu.path}`);
@@ -33,23 +33,14 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
       });
     };
     addChildren(menus || []);
-    console.log("paths:", paths);
-
     return paths;
   }
 
   async getApis?(): Promise<Array<TJoyPrerenderApi>> {
-    let paths = await this.docsModel.getPreDocMenus();
-    paths = paths.map((value) => {
-      return {
-        path: value.detail,
-      };
-    });
     return [
       {
-        path: "/docs/menus",
+        path: "/docs/titleArray",
       },
-      ...paths,
     ];
   }
 }

@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query } from "@symph/server";
-import { Doc, DocsService } from "../service/docs.service";
+import { DocsService } from "../service/docs.service";
 
 @Controller("/docs")
 export class DocsController {
