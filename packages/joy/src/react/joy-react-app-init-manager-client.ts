@@ -102,7 +102,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
   // }
 
   public getPageSSGState(pathname: string, routePath?: string): Promise<JoySSGPage | undefined> | JoySSGPage | undefined {
-    // this.ssgManifest = new Set(["/", "/docs/*"]);
+    this.ssgManifest = new Set(["/", "/docs/*"]);
 
     const cache = this.ssgPages.get(pathname);
     if (cache) {
