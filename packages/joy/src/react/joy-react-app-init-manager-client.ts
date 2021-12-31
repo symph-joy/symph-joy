@@ -106,7 +106,10 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
 
     const cache = this.ssgPages.get(pathname);
     if (cache) {
-      this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });
+      const initState = this.getPathState(pathname);
+      if (initState.initStatic !== ReactRouteInitStatus.SUCCESS) {
+        this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });
+      }
       return cache;
     }
     const task = new TaskThenable((resolve, reject) => {
@@ -148,7 +151,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
         if (ssgPage) {
           const initState = this.getPathState(pathname);
           if (!ssgPage.ssgData) {
-            if (initState.initStatic !== 2) {
+            if (initState.initStatic !== ReactRouteInitStatus.SUCCESS) {
               this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });
               return new Promise<JoySSGPage>((resolve, reject) => {
                 this.fetchSSGData(pathname).then((data) => {

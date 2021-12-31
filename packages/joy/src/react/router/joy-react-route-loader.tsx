@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { IReactRoute, ReactApplicationReactContext } from "@symph/react";
+import { IReactRoute, ReactApplicationReactContext, ReactRouteInitStatus } from "@symph/react";
 import * as H from "history";
 import { PathMatch, useLocation, useMatch, useNavigate } from "react-router-dom";
 import { DynamicLoading, Loader } from "../../joy-server/lib/dynamic";
@@ -83,11 +83,12 @@ export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptio
       if (!ssr) {
         return undefined;
       }
-
-      if (ssgPage?.ssgData?.length) {
+      const initState = initManager.getPathState(location.pathname);
+      if (initState?.initStatic !== ReactRouteInitStatus.SUCCESS && ssgPage?.ssgData?.length) {
         const reduxService = joyAppContext.getSync(ReactReduxService);
         reduxService.dispatchBatch(ssgPage.ssgData);
       }
+
       if (loadingState.isDataLoading) {
         setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
       }

@@ -40,7 +40,6 @@ export function getRouteElement(
     // 当是叶子路由且是动态路由时，url地址发生后，新地址依然匹配当前路由时，界面重新加载。
     if (!route.children?.length && isDynamicRoute(route.path)) {
       function InstComp(props: any) {
-        console.log(">>>> wrapperComp InstComp");
         return <Comp {...props} />;
       }
       return <InstComp route={route} match={match} location={location} navigate={navigate} />;
