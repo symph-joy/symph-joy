@@ -44,6 +44,8 @@ export class DocsService implements IComponentLifecycle {
 
   public menus: Doc[];
 
+  public allMenus: Doc[];
+
   public menusCache: Map<string, Doc> = new Map<string, Doc>();
 
   public titleArray: TreeItem[];
@@ -54,12 +56,12 @@ export class DocsService implements IComponentLifecycle {
 
   // 获取所有能搜索到的树结构
   public async getAllDocs() {
-    // await this.getMenus();
-    // const res = [];
-    // for (const menu of this.menus) {
-    //   await this.getOneSeachTree(menu, res);
-    // }
-    // this.titleArray = res;
+    await this.getAllMenus();
+    const res = [];
+    for (const menu of this.allMenus) {
+      await this.getOneSeachTree(menu, res);
+    }
+    this.titleArray = res;
   }
 
   public async getOneSeachTree(menu, res) {
@@ -87,30 +89,42 @@ export class DocsService implements IComponentLifecycle {
     }
   }
 
+  // 为搜索框获取所有menu
+  public async getAllMenus(): Promise<DocMenu[]> {
+    const { dir } = this.configDocs || {};
+    return this.getMenusByDir(dir, "allMenus");
+  }
+
+  // 搜索框获取
   public getTitleArray() {
     return this.titleArray;
   }
 
+  // 当前页面的menu
   public async getMenus(path: string): Promise<DocMenu[]> {
     let { dir } = this.configDocs || {};
     dir += path;
-    return this.getMenusByDir(dir);
+    return this.getMenusByDir(dir, "menus");
   }
 
-  public async getAllMenus(): Promise<DocMenu[]> {
-    const { dir } = this.configDocs || {};
-    return this.getMenusByDir(dir);
+  public async getMenusByDir(dir, key): Promise<DocMenu[]> {
+    if (!dir) {
+      console.warn("Warning: Doc dir is not config.");
+      return [];
+    }
+    const dirs = typeof dir === "string" ? [dir] : dir;
+    this[key] = await this.scanDir(dirs);
+    return this.fmtMenus(this[key]);
   }
 
-  public async getMenusByDir(dir): Promise<DocMenu[]> {
+  public async returnMenusByDir(dir): Promise<DocMenu[]> {
     if (!dir) {
       console.warn("Warning: Doc dir is not config.");
       return [];
     }
 
     const dirs = typeof dir === "string" ? [dir] : dir;
-    this.menus = await this.scanDir(dirs);
-    return this.fmtMenus(this.menus);
+    return this.scanDir(dirs);
   }
 
   public async getDoc(docPath: string): Promise<Doc> {

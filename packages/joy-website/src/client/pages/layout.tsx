@@ -87,9 +87,9 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
   onSelect = async (v, option) => {
     const value = this.docsModel.state.result[option.key];
     if (value.children) {
-      this.pushHistory(`/docs${value.path}${value.children[0].id}`);
+      this.pushHistory(`${value.path}${value.children[0].id}`);
     } else {
-      this.pushHistory(`/docs${value.path}`);
+      this.pushHistory(`${value.path}`);
     }
     this.setState({
       search: this.state.search,
@@ -132,10 +132,10 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
         <header className={styles.header}>
           <nav id="nav" className={styles.nav}>
             <div id="nav-inner" className={styles.nav__inner}>
-              <a id="logo" href="/" className={styles.logo}>
+              <Link id="logo" to="/" className={styles.logo}>
                 {/* <img alt="logo" src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" /> */}
                 Symph Joy
-              </a>
+              </Link>
               <Button id="collapseBtn" className={styles.menu__collapseBtn} type="text" size="large" onClick={this.handleToggleCollapsed}>
                 {React.createElement(collapsed ? MenuUnfoldOutlined : MenuFoldOutlined)}
               </Button>

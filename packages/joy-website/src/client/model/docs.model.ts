@@ -56,6 +56,8 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     const resp = await this.fetchService.fetchApi("/docs/titleArray");
     const respJson = await resp.json();
     const titleArray = respJson.data;
+    console.log("titleArray:", titleArray);
+
     if (value) {
       for (const h1 of titleArray) {
         if (h1.text.includes(value) || this.handleString(h1.text).includes(this.handleString(value))) {
@@ -91,6 +93,8 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
         }
       }
     }
+    console.log("res:", res);
+
     this.setState({
       result: res,
     });
