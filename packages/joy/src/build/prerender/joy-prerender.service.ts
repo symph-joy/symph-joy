@@ -1,5 +1,5 @@
-import { InjectHook, ClassComponent, Component, ApplicationContext, HookType, IHook, RegisterTap, ComponentName } from "@symph/core";
-import { getPrerenderMeta, PrerenderMeta, PrerenderMetaByProvider } from "./prerender.decorator";
+import { ApplicationContext, ClassComponent, Component, HookType, IHook, InjectHook, RegisterTap } from "@symph/core";
+import { getPrerenderMeta, PrerenderMeta } from "./prerender.decorator";
 import { IJoyPrerender } from "./prerender.interface";
 import { IScanOutModule } from "../scanner/file-scanner";
 import { JoyReactAppServerConfiguration } from "../../react/joy-react-app-server.configuration";
@@ -7,6 +7,8 @@ import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { JoyReactApplicationContext } from "../../react/joy-react-application-context";
 import { getRouteMeta, MountService } from "@symph/react";
 import { JoyReactRouterPlugin } from "../../react/router/joy-react-router-plugin";
+import { IGenerateFiles } from "../file-generator";
+import { handlebars } from "../../lib/handlebars";
 
 export interface JoyPrerenderInfo {
   route: string;
@@ -22,14 +24,17 @@ export interface JoyPrerenderInfo {
 
 interface PrerenderModule {
   module: IScanOutModule;
-  names: ComponentName[];
+  metas: {
+    component: ClassComponent;
+    prerenderMeta: PrerenderMeta;
+  }[];
 }
 
 @Component()
 export class JoyPrerenderService {
   constructor(
     private readonly coreContext: ApplicationContext,
-    private readonly joyAppConfig: JoyAppConfig,
+    private readonly joyConfig: JoyAppConfig,
     private readonly joyReactRouteBuild: JoyReactRouterPlugin
   ) {}
 
@@ -39,7 +44,7 @@ export class JoyPrerenderService {
   @InjectHook({ parallel: false, type: HookType.Waterfall })
   private genPrerenderPath: IHook;
 
-  private prerenderProviderIds: PrerenderModule[] = [];
+  private prerenderCompModules: PrerenderModule[] = [];
 
   private prerenderList: PrerenderMeta[] = [];
 
@@ -49,7 +54,10 @@ export class JoyPrerenderService {
     }
     const { mount } = module;
     let hasPrerender = false;
-    const names = [] as ComponentName[];
+    const metas = [] as {
+      component: ClassComponent;
+      prerenderMeta: PrerenderMeta;
+    }[];
     module.providerDefines.forEach((providerDefine, exportKey) => {
       providerDefine.providers.forEach((provider) => {
         if (!(provider as ClassComponent).useClass) {
@@ -61,12 +69,11 @@ export class JoyPrerenderService {
           return;
         }
 
-        if ((prerenderMeta as PrerenderMetaByProvider).byProvider) {
-          if (Array.isArray(name)) {
-            names.push(...name);
-          } else {
-            names.push(name);
-          }
+        if (prerenderMeta.routeComponent) {
+          metas.push({
+            component: provider as ClassComponent,
+            prerenderMeta: prerenderMeta,
+          });
         } else {
           let { route, paths, isFallback } = prerenderMeta as PrerenderMeta;
           if (!route) {
@@ -102,9 +109,9 @@ export class JoyPrerenderService {
         hasPrerender = hasPrerender || !!prerenderMeta;
       });
     });
-    if (names.length > 0) {
-      this.prerenderProviderIds.push({
-        names: names,
+    if (metas.length > 0) {
+      this.prerenderCompModules.push({
+        metas,
         module,
       });
     }
@@ -137,16 +144,19 @@ export class JoyPrerenderService {
   //   }
   // }
 
-  public async getPrerenderList(): Promise<JoyPrerenderInfo[]> {
-    if (this.prerenderProviderIds.length === 0 && this.prerenderList.length === 0) {
+  public async getPrerenderList(isGetPaths = true): Promise<JoyPrerenderInfo[]> {
+    if (this.prerenderCompModules.length === 0 && this.prerenderList.length === 0) {
       return [];
     }
 
     const modules = [] as Record<string, any>[];
-    let names = [] as ComponentName[];
-    this.prerenderProviderIds.forEach((it) => {
+    let mates = [] as {
+      component: ClassComponent;
+      prerenderMeta: PrerenderMeta;
+    }[];
+    this.prerenderCompModules.forEach((it) => {
       modules.push(it.module.module);
-      names = names.concat(it.names);
+      mates = mates.concat(it.metas);
     });
 
     // const applicationConfig = new ApplicationConfig();
@@ -156,7 +166,7 @@ export class JoyPrerenderService {
       {
         name: "joyAppConfig",
         type: JoyAppConfig,
-        useValue: this.joyAppConfig,
+        useValue: this.joyConfig,
       },
     ]);
     await reactApplicationContext.init();
@@ -164,20 +174,22 @@ export class JoyPrerenderService {
     reactApplicationContext.registerModule(modules);
     const mountService = await reactApplicationContext.get(MountService);
 
-    const tasks = names.map(async (prerenderId) => {
-      const provider: IJoyPrerender = await reactApplicationContext.get(prerenderId);
-      const route = provider.getRoute() as string;
+    const tasks = mates.map(async (m) => {
+      const { component, prerenderMeta } = m;
+      const componentName = component.name;
+      const provider: IJoyPrerender = await reactApplicationContext.get(componentName);
+      let route: string = this.getComponentRoute(prerenderMeta);
       const isFallback = await provider.isFallback();
-      const paths = await provider.getPaths();
+      const paths = isGetPaths ? await provider.getPaths() : undefined;
       const prerenderApis = provider.getApis && (await provider.getApis());
       const apis = [] as string[];
       if (prerenderApis?.length) {
         for (const prerenderApi of prerenderApis) {
           let apiFullPath: string;
           if (prerenderApi.isModuleApi === false) {
-            apiFullPath = `${this.joyAppConfig.basePath}${this.joyAppConfig.getGlobalPrefix()}${prerenderApi.path}`;
+            apiFullPath = `${this.joyConfig.basePath}${this.joyConfig.getGlobalPrefix()}${prerenderApi.path}`;
           } else {
-            apiFullPath = `${this.joyAppConfig.basePath}${this.joyAppConfig.getGlobalPrefix()}${mountService.getMount(prerenderId) || ""}${
+            apiFullPath = `${this.joyConfig.basePath}${this.joyConfig.getGlobalPrefix()}${mountService.getMount(componentName) || ""}${
               prerenderApi.path
             }`;
           }
@@ -190,4 +202,56 @@ export class JoyPrerenderService {
     const generateList = await Promise.all(tasks);
     return [...this.prerenderList, ...generateList];
   }
+
+  public async getPrerenderRoutes(): Promise<string[]> {
+    const routes = new Set<string>();
+    if (this.prerenderList.length) {
+      for (const it of this.prerenderList) {
+        routes.add(it.route);
+      }
+    }
+    if (this.prerenderCompModules?.length) {
+      for (const md of this.prerenderCompModules) {
+        if (md.metas?.length) {
+          for (const meta of md.metas) {
+            const { prerenderMeta } = meta;
+            const route = this.getComponentRoute(prerenderMeta);
+            routes.add(route);
+          }
+        }
+      }
+    }
+    return Array.from(routes.values());
+  }
+
+  private getComponentRoute(prerenderMeta: PrerenderMeta): string {
+    let route: string = prerenderMeta.route;
+    if (!route && prerenderMeta.routeComponent) {
+      const routeMeta = getRouteMeta(prerenderMeta.routeComponent);
+      if (routeMeta) {
+        if (Array.isArray(routeMeta.path)) {
+          route = routeMeta.path[0];
+        } else {
+          route = routeMeta.path;
+        }
+      }
+    }
+    return route;
+  }
+
+  @RegisterTap()
+  protected async onGenerateFiles(genFiles: IGenerateFiles) {
+    const prerenderRoutes = await this.getPrerenderRoutes();
+    genFiles["./react/client/joyPrerenderRoutes.js"] = templet({
+      routes: prerenderRoutes,
+    });
+    return genFiles;
+  }
 }
+
+const templet = handlebars.compile(`
+          export const joyPrerenderRoutes = {
+            name: "joyPrerenderRoutes",
+            useValue: {{json routes}}
+          }
+    `);

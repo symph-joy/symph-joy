@@ -4,22 +4,6 @@ import { Inject, IApplicationContext } from "@symph/core";
 import { IJoyPrerender, Prerender } from "@symph/joy/react";
 import { DynamicMsgModel } from "../../model/dynamic-msg-model";
 
-@Prerender()
-export class DynamicStaticPathGenerator implements IJoyPrerender {
-  getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
-    return "/dynamic/:id";
-  }
-
-  isFallback(): Promise<boolean> | boolean {
-    return false;
-  }
-
-  async getPaths(): Promise<Array<string>> {
-    // return [{params: {id: '1'}}, {params: {id: '2'}}];
-    return ["/dynamic/hello1", "/dynamic/hello2"];
-  }
-}
-
 @ReactRoute({ path: "/dynamic/:msg" })
 @ReactController()
 export default class DynamicRouteCtl extends BaseReactController {
@@ -54,5 +38,21 @@ export default class DynamicRouteCtl extends BaseReactController {
         </div>
       </>
     );
+  }
+}
+
+@Prerender({ routeComponent: DynamicRouteCtl })
+export class DynamicStaticPathGenerator implements IJoyPrerender {
+  // getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
+  //   return "/dynamic/:id";
+  // }
+
+  isFallback(): Promise<boolean> | boolean {
+    return false;
+  }
+
+  async getPaths(): Promise<Array<string>> {
+    // return [{params: {id: '1'}}, {params: {id: '2'}}];
+    return ["/dynamic/hello1", "/dynamic/hello2"];
   }
 }

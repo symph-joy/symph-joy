@@ -4,26 +4,6 @@ import { EntityModel } from "../model/entity.model";
 import { Inject, IApplicationContext } from "@symph/core";
 import { Prerender, IJoyPrerender } from "@symph/joy/react";
 
-@Prerender()
-export class EntityPrerenderGenerator implements IJoyPrerender {
-  constructor(private entityModel: EntityModel) {}
-
-  getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
-    return "/entity/:id";
-  }
-
-  isFallback(): Promise<boolean> | boolean {
-    return false;
-  }
-
-  async getPaths(): Promise<Array<string>> {
-    // return ["/entity/1", "/entity/2"];
-    const entities = await this.entityModel.getAllEntities();
-    const paths = entities.map((entity) => `/entity/${entity.id}`);
-    return paths;
-  }
-}
-
 @ReactRoute({ path: "/entity/:id" })
 @ReactController()
 export default class EntityDetail extends BaseReactController {
@@ -49,5 +29,25 @@ export default class EntityDetail extends BaseReactController {
         <div id="msg">{msg}</div>
       </div>
     );
+  }
+}
+
+@Prerender({ routeComponent: EntityDetail })
+export class EntityPrerenderGenerator implements IJoyPrerender {
+  constructor(private entityModel: EntityModel) {}
+
+  getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
+    return "/entity/:id";
+  }
+
+  isFallback(): Promise<boolean> | boolean {
+    return false;
+  }
+
+  async getPaths(): Promise<Array<string>> {
+    // return ["/entity/1", "/entity/2"];
+    const entities = await this.entityModel.getAllEntities();
+    const paths = entities.map((entity) => `/entity/${entity.id}`);
+    return paths;
   }
 }

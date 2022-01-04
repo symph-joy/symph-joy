@@ -8,6 +8,7 @@ import { JoyClientConfig } from "../client/joy-client-config";
 import { ClientSsgManifest } from "../build/joy-build.service";
 import { ClientBuildManifest } from "../build/webpack/plugins/build-manifest-plugin";
 import { TaskThenable } from "@symph/core/dist/utils/task-thenable";
+import { Inject } from "@symph/core";
 
 const PAGE_LOAD_ERROR = Symbol("PAGE_LOAD_ERROR");
 
@@ -34,7 +35,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
   private promisedBuildManifest?: Promise<ClientBuildManifest>;
   private promisedSsgManifest: Promise<ClientSsgManifest>;
 
-  constructor(private joyClientConfig: JoyClientConfig) {
+  constructor(private joyClientConfig: JoyClientConfig, @Inject("joyPrerenderRoutes") private joyPrerenderRoutes: string[]) {
     super();
 
     this.promisedBuildManifest = new Promise((resolve) => {
@@ -48,13 +49,20 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
     });
 
     this.promisedSsgManifest = new Promise((resolve) => {
-      if ((window as any).__SSG_MANIFEST) {
-        resolve((window as any).__SSG_MANIFEST);
+      if (joyClientConfig.joyExport) {
+        // 导出后运行的版本
+        if ((window as any).__SSG_MANIFEST) {
+          resolve((window as any).__SSG_MANIFEST);
+        } else {
+          (window as any).__SSG_MANIFEST_CB = () => {
+            this.ssgManifest = (window as any).__SSG_MANIFEST;
+            resolve(this.ssgManifest as ClientSsgManifest);
+          };
+        }
       } else {
-        (window as any).__SSG_MANIFEST_CB = () => {
-          this.ssgManifest = (window as any).__SSG_MANIFEST;
-          resolve(this.ssgManifest as ClientSsgManifest);
-        };
+        // node运行模式或者开发模式
+        this.ssgManifest = new Set(this.joyPrerenderRoutes);
+        resolve(this.ssgManifest);
       }
     });
   }
@@ -106,7 +114,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
 
     const cache = this.ssgPages.get(pathname);
     if (cache) {
-      const initState = this.getPathState(pathname);
+      const initState = this.getRouteInitState(pathname);
       if (initState.initStatic !== ReactRouteInitStatus.SUCCESS) {
         this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });
       }
@@ -149,7 +157,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
       })
       .then((ssgPage) => {
         if (ssgPage) {
-          const initState = this.getPathState(pathname);
+          const initState = this.getRouteInitState(pathname);
           if (!ssgPage.ssgData) {
             if (initState.initStatic !== ReactRouteInitStatus.SUCCESS) {
               this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });

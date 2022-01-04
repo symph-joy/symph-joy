@@ -38,6 +38,7 @@ export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptio
   }
   const { pathname: matchPathname } = match;
   const joyAppContext = useContext(ReactApplicationReactContext);
+
   if (!joyAppContext) {
     throw new Error("react app context is not initialed");
   }
@@ -53,50 +54,53 @@ export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptio
   }, [matchPathname]);
 
   // prefetch Data
-  const initManager = joyAppContext.getSync(JoyReactAppInitManagerClient);
-
-  /**
-   * 是否采用ssg数据的条件：
-   * 1. 预渲染的静态路由页面，revalidate为false。
-   * 2. 预渲染的动态路由页面，fallback为false，revalidate为false。
-   */
-  const ssgPage = useMemo(() => {
-    if (!ssr) {
-      return undefined;
-    }
-    // const ssgInfo = initManager.getPageSSGState(match.pathname, match.pattern.path);
-    let ssgInfo: Promise<JoySSGPage | undefined> | JoySSGPage | undefined = undefined;
-    if (match.pathname === location.pathname) {
-      // 暂时只处理叶子路由。
-      ssgInfo = initManager.getPageSSGState(location.pathname);
-    }
-    return ssgInfo;
-  }, [matchPathname]);
+  // const initManager = joyAppContext.getSync(JoyReactAppInitManagerClient);
+  //
+  // /**
+  //  * 是否采用ssg数据的条件：
+  //  * 1. 预渲染的静态路由页面，revalidate为false。
+  //  * 2. 预渲染的动态路由页面，fallback为false，revalidate为false。
+  //  */
+  // const ssgPage = useMemo(() => {
+  //   if (!ssr) {
+  //     return undefined;
+  //   }
+  //   // const ssgInfo = initManager.getPageSSGState(match.pathname, match.pattern.path);
+  //   let ssgInfo: Promise<JoySSGPage | undefined> | JoySSGPage | undefined = undefined;
+  //   if (match.pathname === location.pathname) {
+  //     // 暂时只处理叶子路由。
+  //     ssgInfo = initManager.getPageSSGState(location.pathname);
+  //   }
+  //   return ssgInfo;
+  // }, [matchPathname]);
 
   const [loadingState, setLoadingStat] = useState({
-    isDataLoading: ssgPage instanceof Promise,
+    // isDataLoading: ssgPage instanceof Promise,
     isCompLoading: routeElement instanceof Promise,
   });
   // fetch page data
   useEffect(() => {
-    Promise.resolve(ssgPage).then((ssgPage) => {
-      if (!ssr) {
-        return undefined;
-      }
-      const initState = initManager.getPathState(location.pathname);
-      if (initState?.initStatic !== ReactRouteInitStatus.SUCCESS && ssgPage?.ssgData?.length) {
-        const reduxService = joyAppContext.getSync(ReactReduxService);
-        reduxService.dispatchBatch(ssgPage.ssgData);
-      }
-
-      if (loadingState.isDataLoading) {
-        setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
-      }
-    });
+    // Promise.resolve(ssgPage).then((ssgPage) => {
+    //   if (!ssr) {
+    //     return undefined;
+    //   }
+    //   const initState = initManager.getRouteInitState(location.pathname);
+    //   if (initState?.initStatic !== ReactRouteInitStatus.SUCCESS && ssgPage?.ssgData?.length) {
+    //     const reduxService = joyAppContext.getSync(ReactReduxService);
+    //     reduxService.dispatchBatch(ssgPage.ssgData);
+    //   }
+    //
+    //   if (loadingState.isDataLoading) {
+    //     setLoadingStat({ isDataLoading: false, isCompLoading: loadingState.isCompLoading });
+    //   }
+    // });
 
     Promise.resolve(routeElement).then((Ctl) => {
       if (loadingState.isCompLoading) {
-        setLoadingStat({ isDataLoading: loadingState.isDataLoading, isCompLoading: false });
+        setLoadingStat({
+          // isDataLoading: loadingState.isDataLoading,
+          isCompLoading: false,
+        });
       }
     });
     return () => {};
@@ -105,7 +109,7 @@ export function JoyReactRouteLoader({ route, loading }: JoyReactRouteLoaderOptio
   const props = { match, location, history, route };
 
   const LoadingComp = loading || DefaultLoadingComp;
-  if (loadingState.isDataLoading || loadingState.isCompLoading) {
+  if (loadingState.isCompLoading) {
     return <LoadingComp {...props} match={match} location={location} />;
   }
   // @ts-ignore

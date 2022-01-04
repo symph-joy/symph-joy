@@ -128,18 +128,18 @@ export abstract class BaseReactController<
     };
     let pathname: string = this.props.match?.pathname || this.location.pathname;
     const initStage = this.initManager.initStage;
-    const { initStatic, init } = this.initManager.getPathState(pathname);
+    const { initStatic, init } = this.initManager.getRouteInitState(pathname);
 
     if (initStage >= EnumReactAppInitStage.STATIC) {
       if (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.ERROR) {
         if (this.initialModelStaticState) {
           const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
-            .then((rst) => {
-              this.initManager.setInitState(pathname, {
-                initStatic: ReactRouteInitStatus.SUCCESS,
-              });
-              return rst;
-            })
+            // .then((rst) => {
+            //   this.initManager.setInitState(pathname, {
+            //     initStatic: ReactRouteInitStatus.SUCCESS,
+            //   });
+            //   return rst;
+            // })
             .catch((e) => {
               console.error(e);
               this.initManager.setInitState(pathname, {
@@ -151,9 +151,9 @@ export abstract class BaseReactController<
             this.initManager.addTask(pathname, initStaticTask);
           }
         } else {
-          this.initManager.setInitState(pathname, {
-            initStatic: ReactRouteInitStatus.SUCCESS,
-          });
+          // this.initManager.setInitState(pathname, {
+          //   initStatic: ReactRouteInitStatus.SUCCESS,
+          // });
         }
       }
     }
@@ -162,12 +162,12 @@ export abstract class BaseReactController<
       if (init === undefined || init === ReactRouteInitStatus.NONE || init === ReactRouteInitStatus.ERROR) {
         if (this.initialModelState) {
           const initTask = Promise.resolve(this.initialModelState({}))
-            .then((rst) => {
-              this.initManager.setInitState(pathname, {
-                init: ReactRouteInitStatus.SUCCESS,
-              });
-              return rst;
-            })
+            // .then((rst) => {
+            //   this.initManager.setInitState(pathname, {
+            //     init: ReactRouteInitStatus.SUCCESS,
+            //   });
+            //   return rst;
+            // })
             .catch((e) => {
               this.initManager.setInitState(pathname, {
                 init: ReactRouteInitStatus.ERROR,
@@ -178,9 +178,9 @@ export abstract class BaseReactController<
             this.initManager.addTask(pathname, initTask);
           }
         } else {
-          this.initManager.setInitState(pathname, {
-            init: ReactRouteInitStatus.SUCCESS,
-          });
+          // this.initManager.setInitState(pathname, {
+          //   init: ReactRouteInitStatus.SUCCESS,
+          // });
         }
       }
     }
@@ -296,7 +296,7 @@ export abstract class BaseReactController<
 
   render(): ReactNode {
     const pathname = this.props.match?.pathname || this.location.pathname;
-    const { initStatic, init } = this.initManager.getPathState(pathname);
+    const { initStatic, init } = this.initManager.getRouteInitState(pathname);
 
     // reset model state dep props
     this.modelStateDeps = {};

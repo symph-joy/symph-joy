@@ -11,13 +11,11 @@ export class JoyTestContext {
   public port = 80;
   public host = "localhost";
   public serverProcess?: child_process.ChildProcess;
-  public dev = false;
-
   private isInit = false;
 
   private cachedBuildId: string;
 
-  constructor(public workDir: string) {}
+  constructor(public workDir: string, public dev = false) {}
 
   async init(): Promise<this> {
     this.isInit = true;
@@ -29,7 +27,7 @@ export class JoyTestContext {
   async start(port?: number, buildArgs?: any[], buildOpts?: RunOptions, startOpts?: RunOptions) {
     const workDir = this.workDir;
     await this.init();
-    this.dev = true;
+    this.dev = false;
 
     if (!this.isInit) {
       await this.init();
@@ -53,6 +51,7 @@ export class JoyTestContext {
     if (!this.isInit) {
       await this.init();
     }
+    this.dev = true;
     port = port || (await findPort());
     this.port = port;
     const serverProcess = await joyDev(workDir, port, runOpts);
@@ -64,7 +63,13 @@ export class JoyTestContext {
     if (this.cachedBuildId) {
       return this.cachedBuildId;
     }
-    this.cachedBuildId = fs.readFileSync(this.joyAppConfig.resolveBuildOutDir("react/BUILD_ID"), "utf8").trim();
+    const buildIdFile = this.joyAppConfig.resolveBuildOutDir("react/BUILD_ID");
+    if (fs.existsSync(buildIdFile)) {
+      this.cachedBuildId = fs.readFileSync(buildIdFile, "utf8").trim();
+    } else {
+      this.cachedBuildId = "development";
+    }
+
     return this.cachedBuildId;
   }
 

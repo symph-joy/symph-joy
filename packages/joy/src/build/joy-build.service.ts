@@ -287,7 +287,9 @@ export class JoyBuildService {
 
     // const combinedPages = [...staticPages, ...ssgPages];
     const combinedPages = prerenderInfos.reduce<string[]>((value, info, infoIndex) => {
-      value.push(...info.paths);
+      if (info.paths?.length) {
+        value.push(...info.paths);
+      }
       return value;
     }, []);
     // const {exportApp} = require("../export");

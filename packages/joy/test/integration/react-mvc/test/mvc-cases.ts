@@ -9,8 +9,8 @@ export function mvcCases(testContext: JoyTestContext) {
       const res = await fetchViaHTTP(testContext.port, "/react-mvc");
       expect(res.status).toBe(200);
       const htmlContent = await res.text();
-      const message = getDomInnerHtml(htmlContent, "message", "span");
-      const count = getDomInnerHtml(htmlContent, "count", "span");
+      const message = getDomInnerHtml(htmlContent, "#message");
+      const count = getDomInnerHtml(htmlContent, "#count");
       expect(message).toBe("hello joy");
       expect(count).toBe("1");
     });

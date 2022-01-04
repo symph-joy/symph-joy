@@ -10,7 +10,7 @@ import * as child_process from "child_process";
 async function checkHtmlFile(filePath: string, domId: string, checkContent: string) {
   expect((await promises.stat(filePath)).isFile()).toBe(true);
   const content = await promises.readFile(filePath, { encoding: "utf-8" });
-  expect(getDomInnerHtml(content, "msg")).toBe(checkContent);
+  expect(getDomInnerHtml(content, "#msg")).toBe(checkContent);
 }
 
 async function checkDataFile(filePath: string, actionType: string, actionPropName: string, actionPropValue: any) {
