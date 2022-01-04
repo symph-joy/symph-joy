@@ -76,7 +76,7 @@ export default class Path extends BaseReactController {
     if (hash) {
       // 用setInterval判断ele是否存在
       this.observe(hash, function (element) {
-        console.log('13:', element);
+        console.log("13:", element);
         element.scrollIntoView();
       });
     }
