@@ -47,17 +47,23 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     };
   }
 
-  handleString(string) {
+  titleArrays = [];
+
+  handleString(string: string) {
     return string.toLowerCase().replace(/\s/g, "");
   }
 
-  async getSearch(value) {
+  async getSearch(value: string) {
     const res = [];
-    const resp = await this.fetchService.fetchApi("/docs/titleArray");
-    const respJson = await resp.json();
-    const titleArray = respJson.data;
-    console.log("titleArray:", titleArray);
-
+    let titleArray: TreeItem[];
+    if (this.titleArrays.length === 0) {
+      const resp = await this.fetchService.fetchApi("/docs/titleArray");
+      const respJson = await resp.json();
+      titleArray = respJson.data;
+      this.titleArrays = titleArray;
+    } else {
+      titleArray = this.titleArrays;
+    }
     if (value) {
       for (const h1 of titleArray) {
         if (h1.text.includes(value) || this.handleString(h1.text).includes(this.handleString(value))) {
@@ -93,7 +99,6 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
         }
       }
     }
-    console.log("res:", res);
 
     this.setState({
       result: res,
@@ -149,7 +154,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     return res;
   }
 
-  async recurrencePreDocMenus(menu, res) {
+  async recurrencePreDocMenus(menu: DocMenuItem[], res: object[]) {
     for (const arr of menu) {
       if (arr.children) {
         if (arr.children.length > 0) {
