@@ -20,6 +20,7 @@ import { JoyReactAppClientConfiguration } from "../react/joy-react-app-client.co
 import { ReactAppContainer, ReactApplicationContext } from "@symph/react";
 import { JoyClientConfig } from "./joy-client-config";
 import { JoyReactApplicationContext } from "../react/joy-react-application-context";
+import { JoyPageSSGDataLoader } from "../react/router/joy-page-ssg-data-loader";
 
 /// <reference types="react-dom/experimental" />
 
@@ -634,7 +635,9 @@ function doRender({ App, props, err, styleSheets, reactApplicationContext }: Ren
     <Root callback={onCommit}>
       <AppContainer>
         <ReactAppContainer appContext={reactApplicationContext}>
-          <App appContext={reactApplicationContext} />
+          <JoyPageSSGDataLoader>
+            <App appContext={reactApplicationContext} />
+          </JoyPageSSGDataLoader>
         </ReactAppContainer>
       </AppContainer>
     </Root>

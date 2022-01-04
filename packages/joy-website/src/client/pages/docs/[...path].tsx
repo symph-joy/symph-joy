@@ -4,55 +4,7 @@ import { Spin } from "antd";
 import styles from "./docs.less";
 import { Prerender, IJoyPrerender, TJoyPrerenderApi } from "@symph/joy/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
-import { Inject, IApplicationContext } from "@symph/core";
-
-@Prerender()
-@ReactComponent()
-export class DocsPrerenderGenerator implements IJoyPrerender {
-  @Inject()
-  public docsModel: DocsModel;
-
-  getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
-    return "/docs/*";
-  }
-
-  isFallback(): Promise<boolean> | boolean {
-    return false;
-  }
-
-  async getPaths(): Promise<Array<string>> {
-    const menus = await this.docsModel.getAllDocsMenus();
-    const paths = [] as string[];
-    const addChildren = (menus: DocMenuItem[]) => {
-      (menus || []).forEach((menu) => {
-        if (menu.children?.length) {
-          addChildren(menu.children);
-        } else {
-          paths.push(`${menu.path}`);
-        }
-      });
-    };
-    addChildren(menus || []);
-    console.log("paths:", paths);
-
-    return paths;
-  }
-
-  async getApis?(): Promise<Array<TJoyPrerenderApi>> {
-    let paths = await this.docsModel.getPreDocMenus();
-    paths = paths.map((value) => {
-      return {
-        path: value.detail,
-      };
-    });
-    return [
-      {
-        path: "/docs/menus",
-      },
-      ...paths,
-    ];
-  }
-}
+import { Inject } from "@symph/core";
 
 @ReactController()
 export default class Path extends BaseReactController {
@@ -94,5 +46,52 @@ export default class Path extends BaseReactController {
         {currentDoc ? <div className={styles.docContent} dangerouslySetInnerHTML={{ __html: currentDoc.htmlContent }} /> : undefined}
       </Spin>
     );
+  }
+}
+
+@Prerender({ routeComponent: Path })
+export class DocsPrerenderGenerator implements IJoyPrerender {
+  @Inject()
+  public docsModel: DocsModel;
+
+  // getRoute(): string | BaseReactController<Record<string, unknown>, Record<string, unknown>, IApplicationContext> {
+  //   return "/docs/*";
+  // }
+
+  isFallback(): Promise<boolean> | boolean {
+    return false;
+  }
+
+  async getPaths(): Promise<Array<string>> {
+    const menus = await this.docsModel.getAllDocsMenus();
+    const paths = [] as string[];
+    const addChildren = (menus: DocMenuItem[]) => {
+      (menus || []).forEach((menu) => {
+        if (menu.children?.length) {
+          addChildren(menu.children);
+        } else {
+          paths.push(`${menu.path}`);
+        }
+      });
+    };
+    addChildren(menus || []);
+    console.log("paths:", paths);
+
+    return paths;
+  }
+
+  async getApis?(): Promise<Array<TJoyPrerenderApi>> {
+    let paths = await this.docsModel.getPreDocMenus();
+    paths = paths.map((value) => {
+      return {
+        path: value.detail,
+      };
+    });
+    return [
+      {
+        path: "/docs/menus",
+      },
+      ...paths,
+    ];
   }
 }

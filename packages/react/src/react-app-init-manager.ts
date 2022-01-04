@@ -9,6 +9,7 @@ export enum ReactRouteInitStatus {
 }
 
 export interface ReactPageInitState {
+  pathname: string; // 和路由匹配的pathname部分。
   init: ReactRouteInitStatus;
   initStatic: ReactRouteInitStatus;
 }
@@ -62,6 +63,7 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
   setInitState(pathname: string, { initStatic, init }: { initStatic?: ReactRouteInitStatus; init?: ReactRouteInitStatus }): void {
     const nextState = Object.assign(
       {
+        pathname,
         // initStatic: ReactRouteInitStatus.NONE,
         // init: ReactRouteInitStatus.NONE,
       },
@@ -78,7 +80,19 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
     });
   }
 
-  getPathState(pathname: string): T {
+  getRouteTreeInitState(pathname: string) {
+    const state = this.state;
+    const paths = Object.keys(state);
+    const mathed = [];
+    for (const p of paths) {
+      if (pathname.startsWith(p)) {
+        mathed.push(state[p]);
+      }
+    }
+    return mathed.sort((a, b) => (a.pathname >= b.pathname ? 1 : -1));
+  }
+
+  getRouteInitState(pathname: string): T {
     return (
       this.state[pathname] ||
       {

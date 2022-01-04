@@ -503,14 +503,20 @@ export async function renderToHTML(
     try {
       const initRst = await initManager.waitAllFinished(pathname);
       revalidate = initRst.revalidate;
-      // let { initStatic, init } = initManager.getPathState(pathname);
-      // if (initStage >= EnumReactAppInitStage.STATIC && (initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.LOADING)) {
-      //   initStatic = ReactRouteInitStatus.SUCCESS;
-      // }
-      // if ((initStage >= EnumReactAppInitStage.DYNAMIC && init === ReactRouteInitStatus.NONE) || init === ReactRouteInitStatus.LOADING) {
-      //   init = ReactRouteInitStatus.SUCCESS;
-      // }
-      // initManager.setInitState(pathname, { initStatic, init });
+      let { initStatic, init } = initManager.getRouteInitState(pathname);
+      if (
+        initStage >= EnumReactAppInitStage.STATIC &&
+        (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.LOADING)
+      ) {
+        initStatic = ReactRouteInitStatus.SUCCESS;
+      }
+      if (
+        (initStage >= EnumReactAppInitStage.DYNAMIC && (init === undefined || init === ReactRouteInitStatus.NONE)) ||
+        init === ReactRouteInitStatus.LOADING
+      ) {
+        init = ReactRouteInitStatus.SUCCESS;
+      }
+      initManager.setInitState(pathname, { initStatic, init });
     } catch (e) {
       initManager.setInitState(pathname, { initStatic: ReactRouteInitStatus.ERROR });
     }

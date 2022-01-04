@@ -1,5 +1,3 @@
-import { BaseReactController } from "@symph/react";
-
 export type TJoyPrerenderApi = {
   /**
    * not include api prefix
@@ -13,8 +11,6 @@ export type TJoyPrerenderApi = {
 };
 
 export interface IJoyPrerender {
-  getRoute(): string | BaseReactController;
-
   isFallback(): Promise<boolean> | boolean;
 
   getPaths(): Promise<Array<string>>;
@@ -23,5 +19,5 @@ export interface IJoyPrerender {
 }
 
 export function isPrerenderClazz(constructor: Function): constructor is { new (): IJoyPrerender } {
-  return constructor.prototype.getRoute && constructor.prototype.isFallback && constructor.prototype.getPaths;
+  return constructor.prototype.isFallback && constructor.prototype.getPaths;
 }

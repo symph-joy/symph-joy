@@ -24,7 +24,7 @@ describe("prerender-with-api", () => {
     const fileContext = await promises.readFile(staticOutputHtml, {
       encoding: "utf-8",
     });
-    expect(getDomInnerHtml(fileContext, "msg")).toBe("Hello 1.");
+    expect(getDomInnerHtml(fileContext, "#msg")).toBe("Hello 1.");
 
     const staticOutputData = testContext.joyAppConfig.resolveSSGOutDir("./entity/1.json");
     const dataFileState = await promises.stat(staticOutputData);
