@@ -2,8 +2,23 @@ import React, { ReactNode } from "react";
 import { BaseReactController, ReactController } from "@symph/react";
 import { Layout, Typography, Button, Row, Input, Checkbox } from "antd";
 import styles from "./homepage.scss";
-import { AndroidOutlined, AppleOutlined, WindowsOutlined, IeOutlined, ChromeOutlined, GithubOutlined, GitlabOutlined } from "@ant-design/icons";
+import {
+  AndroidOutlined,
+  AppleOutlined,
+  WindowsOutlined,
+  IeOutlined,
+  ChromeOutlined,
+  GithubOutlined,
+  GitlabOutlined,
+  ClusterOutlined,
+  ApartmentOutlined,
+  FundOutlined,
+  CloudServerOutlined,
+  ApiOutlined,
+} from "@ant-design/icons";
 import { Prerender } from "@symph/joy";
+import { DocsModel } from "../model/docs.model";
+import { Inject } from "@symph/core";
 
 const { Content } = Layout;
 const { Paragraph } = Typography;
@@ -11,6 +26,13 @@ const { Paragraph } = Typography;
 @Prerender()
 @ReactController()
 export default class HelloController extends BaseReactController {
+  @Inject()
+  public docModel: DocsModel;
+
+  async initialModelStaticState(urlParams: any): Promise<void | number> {
+    await this.docModel.getSnippet("/snippets/hello-react-controller");
+  }
+
   renderView(): ReactNode {
     return (
       <Layout className={styles.layout}>
@@ -19,47 +41,47 @@ export default class HelloController extends BaseReactController {
           <section role="banner" className={styles.banner}>
             <Paragraph className={styles.banner__paragraph}>
               <h1>
-                <div>Symph Joy makes JavaScript</div>
+                <div>@symph/joy 让 JS/TS 应用</div>
                 <div className={styles.banner__wordWrap}>
                   <div style={{ "--j": 0 }}>
-                    <span style={{ "--i": 1 }}>m</span>
-                    <span style={{ "--i": 2 }}>o</span>
-                    <span style={{ "--i": 3 }}>r</span>
-                    <span style={{ "--i": 4 }}>d</span>
-                    <span style={{ "--i": 5 }}>e</span>
-                    <span style={{ "--i": 6 }}>n</span>
-                    <span style={{ "--i": 7 }}>.</span>
+                    <span style={{ "--i": 1 }}>现</span>
+                    <span style={{ "--i": 2 }}>代</span>
+                    <span style={{ "--i": 3 }}>工</span>
+                    <span style={{ "--i": 4 }}>程</span>
+                    <span style={{ "--i": 5 }}>化</span>
+                    {/*<span style={{ "--i": 6 }}>n</span>*/}
+                    {/*<span style={{ "--i": 7 }}>.</span>*/}
                   </div>
                   <div style={{ "--j": 1 }}>
-                    <span style={{ "--i": 1 }}>r</span>
-                    <span style={{ "--i": 2 }}>e</span>
-                    <span style={{ "--i": 3 }}>a</span>
-                    <span style={{ "--i": 4 }}>c</span>
-                    <span style={{ "--i": 5 }}>t</span>
-                    <span style={{ "--i": 6 }}>i</span>
-                    <span style={{ "--i": 7 }}>v</span>
-                    <span style={{ "--i": 8 }}>e</span>
-                    <span style={{ "--i": 9 }}>.</span>
+                    <span style={{ "--i": 1 }}>快</span>
+                    <span style={{ "--i": 2 }}>速</span>
+                    <span style={{ "--i": 3 }}>响</span>
+                    <span style={{ "--i": 4 }}>应</span>
+                    <span style={{ "--i": 5 }}>变</span>
+                    <span style={{ "--i": 6 }}>化</span>
+                    {/*<span style={{ "--i": 7 }}>v</span>*/}
+                    {/*<span style={{ "--i": 8 }}>e</span>*/}
+                    {/*<span style={{ "--i": 9 }}>.</span>*/}
                   </div>
                   <div style={{ "--j": 2 }}>
-                    <span style={{ "--i": 1 }}>p</span>
-                    <span style={{ "--i": 2 }}>r</span>
-                    <span style={{ "--i": 3 }}>o</span>
-                    <span style={{ "--i": 4 }}>d</span>
-                    <span style={{ "--i": 5 }}>u</span>
-                    <span style={{ "--i": 6 }}>c</span>
-                    <span style={{ "--i": 7 }}>t</span>
-                    <span style={{ "--i": 8 }}>i</span>
-                    <span style={{ "--i": 9 }}>v</span>
-                    <span style={{ "--i": 10 }}>e</span>
-                    <span style={{ "--i": 11 }}>.</span>
+                    <span style={{ "--i": 1 }}>高</span>
+                    <span style={{ "--i": 2 }}>效</span>
+                    <span style={{ "--i": 3 }}>发</span>
+                    <span style={{ "--i": 4 }}>布</span>
+                    <span style={{ "--i": 5 }}>产</span>
+                    <span style={{ "--i": 6 }}>品</span>
+                    {/*<span style={{ "--i": 7 }}>t</span>*/}
+                    {/*<span style={{ "--i": 8 }}>i</span>*/}
+                    {/*<span style={{ "--i": 9 }}>v</span>*/}
+                    {/*<span style={{ "--i": 10 }}>e</span>*/}
+                    {/*<span style={{ "--i": 11 }}>.</span>*/}
                   </div>
                 </div>
               </h1>
 
               <Row justify="center">
-                <Button>WHY SYMPH JOY</Button>
-                <Button>QUICKSTART</Button>
+                <Button>了解 JOY</Button>
+                <Button>快速开始</Button>
               </Row>
             </Paragraph>
           </section>
@@ -79,45 +101,45 @@ export default class HelloController extends BaseReactController {
           <section role="function" className={styles.function}>
             <div className={styles.container}>
               <header>
-                <h1 className={styles.function__title}>What Smyph Joy can do</h1>
+                <h1 className={styles.function__title}>JOY 可以做什么</h1>
               </header>
               <div>
                 <ul className={styles.function__list}>
                   <li>
-                    <AndroidOutlined />
-                    <h2>Microservices</h2>
-                    <p>Lorem dolor elit exercitation amet eu occaecat ipsum enim cupidatat adipisicing elit Lorem minim.</p>
+                    <ApartmentOutlined />
+                    <h2>面向对象设计</h2>
+                    <p>将面向对象的设计思想运用到 JS/TS 应用，从 Joy 底层架构到业务领域，从React到Node，一次学习，多端适用。</p>
                   </li>
                   <li>
-                    <AppleOutlined />
-                    <h2>Reactive</h2>
-                    <p>Id Lorem voluptate qui tempor incididunt.</p>
+                    <FundOutlined />
+                    <h2>React 应用</h2>
+                    <p>提供完整的 React 应用解决方案，封装底层技术细节，快速编写页面和管理全局状态，能够快速构建和启动开发服务器，方便调试和打包。</p>
                   </li>
                   <li>
-                    <WindowsOutlined />
-                    <h2>Cloud</h2>
-                    <p>Sit culpa culpa reprehenderit consectetur ea ea reprehenderit proident cupidatat sit occaecat voluptate ullamco.</p>
+                    <CloudServerOutlined />
+                    <h2>Node 应用</h2>
+                    <p>类似 Spring Boot ，基于IoC，自动扫描业务组件，注册接口和中间件等，并提供数据库、缓存、安全等组件。（开发中）</p>
                   </li>
+                  {/*<li>*/}
+                  {/*  <ClusterOutlined />*/}
+                  {/*  <h2>多端应用</h2>*/}
+                  {/*  <p>可用于开发 Node 应用和浏览器应用，以及混合同构应用，适应多业务场景产品研发。</p>*/}
+                  {/*</li>*/}
                   <li>
-                    <IeOutlined />
-                    <h2>Web apps</h2>
-                    <p>Nisi exercitation sit id id sint ipsum aute qui nulla.</p>
+                    <ClusterOutlined />
+                    <h2>多部署方案</h2>
+                    <p>前后端可独立发布和运行，可将前端导出静态部署，或者运行为Node.js应用，实时渲染页面和提供数据服务。de3de</p>
                   </li>
-                  <li>
-                    <ChromeOutlined />
-                    <h2>Serverless</h2>
-                    <p>Elit veniam ad dolore fugiat cillum ad incididunt laborum.</p>
-                  </li>
-                  <li>
-                    <GithubOutlined />
-                    <h2>Event Driven</h2>
-                    <p>Dolore nisi ex sunt cillum nulla ad laboris minim laborum consequat cillum.</p>
-                  </li>
-                  <li>
-                    <GitlabOutlined />
-                    <h2>Batch</h2>
-                    <p>Sunt in veniam commodo anim.</p>
-                  </li>
+                  {/*<li>*/}
+                  {/*  <GithubOutlined />*/}
+                  {/*  <h2>Event Driven</h2>*/}
+                  {/*  <p>Dolore nisi ex sunt cillum nulla ad laboris minim laborum consequat cillum.</p>*/}
+                  {/*</li>*/}
+                  {/*<li>*/}
+                  {/*  <GitlabOutlined />*/}
+                  {/*  <h2>Batch</h2>*/}
+                  {/*  <p>Sunt in veniam commodo anim.</p>*/}
+                  {/*</li>*/}
                 </ul>
 
                 <div className={styles.function__description}>

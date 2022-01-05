@@ -67,7 +67,7 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
     const paths = [] as string[];
     const addChildren = (menus: DocMenuItem[]) => {
       (menus || []).forEach((menu) => {
-        if (menu.children.length) {
+        if (menu.children?.length) {
           addChildren(menu.children);
         } else {
           paths.push(`${menu.path}`);

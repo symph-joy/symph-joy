@@ -1,5 +1,5 @@
 import { BaseReactModel, ReactModel } from "@symph/react";
-import { ReactFetchService } from "@symph/joy";
+import { FetchError, ReactFetchService } from "@symph/joy";
 import { Inject } from "@symph/core";
 
 export interface DocMenuItem {
@@ -28,6 +28,7 @@ export type DocsModelState = {
   loadCurrentDocErr?: { code: number; message: string };
   currentDoc: DocMenuItem & { htmlContent };
   openKeys: Array<string>;
+  snippets: Record<string, DocMenuItem & { htmlContent }>;
 };
 
 @ReactModel()
@@ -44,6 +45,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
       currentDoc: undefined,
       result: [],
       openKeys: [],
+      snippets: {},
     };
   }
 
@@ -170,7 +172,28 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     return res;
   }
 
-  async getDoc(path: string) {
+  async getSnippet(path: string) {
+    try {
+      const respJson = await this.fetchDocDetail(path);
+      const doc = respJson.data;
+      const titleTrees = respJson.treeData;
+      this.setState({
+        snippets: {
+          ...this.state.snippets,
+          [path]: doc,
+        },
+      });
+    } catch (e) {
+      this.setState({
+        snippets: {
+          ...this.state.snippets,
+          [path]: e,
+        },
+      });
+    }
+  }
+
+  private async fetchDocDetail(path: string) {
     this.setState({
       loadingCurrentDoc: true,
     });
@@ -181,25 +204,35 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     if (resp.status === 404) {
       message = "文档不存在。";
     }
-    if (code >= 400) {
+
+    if (code < 200 && code > 300) {
+      throw new FetchError(code, message || "服务器错误，请重试。");
+    }
+
+    return respJson;
+  }
+
+  async getDoc(path: string) {
+    this.setState({
+      loadingCurrentDoc: true,
+    });
+
+    try {
+      const respJson = await this.fetchDocDetail(path);
+      const doc = respJson.data;
+      const titleTrees = respJson.treeData;
       this.setState({
-        loadCurrentDocErr: {
-          code,
-          message: message || "服务器错误，请重试。",
-        },
+        loadCurrentDocErr: undefined,
+        currentDoc: doc,
+        titleTrees,
+        loadingCurrentDoc: false,
+      });
+    } catch (e) {
+      this.setState({
+        loadCurrentDocErr: e,
         currentDoc: undefined,
         loadingCurrentDoc: false,
       });
-      return;
     }
-
-    const doc = respJson.data;
-    const titleTrees = respJson.treeData;
-    this.setState({
-      loadCurrentDocErr: undefined,
-      currentDoc: doc,
-      titleTrees,
-      loadingCurrentDoc: false,
-    });
   }
 }

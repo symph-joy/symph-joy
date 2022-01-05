@@ -1,3 +1,11 @@
+import { RuntimeException } from "@symph/core";
+
+export class FetchError extends Error {
+  constructor(public code: string | number, public message: string) {
+    super(message);
+  }
+}
+
 export abstract class ReactFetchService {
   static regHttpPrefix = new RegExp(`^https?:\/\/`, "i");
   static regHostPrefix = new RegExp(`^\/\/`, "i");
