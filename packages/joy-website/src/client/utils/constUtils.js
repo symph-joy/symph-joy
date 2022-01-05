@@ -1,1 +1,1 @@
-export const hashReg = /\/|\@|\./
+export const hashReg = /\/|\@|\./;

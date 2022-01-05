@@ -45,7 +45,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
       currentDoc: undefined,
       result: [],
       openKeys: [],
-      defaultOpenKeys: []
+      defaultOpenKeys: [],
     };
   }
 

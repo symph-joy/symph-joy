@@ -63,7 +63,13 @@ export default class DocsLayout extends BaseReactController {
     return (
       <div className={styles.layoutContent}>
         <Affix>
-          <Menu selectedKeys={[currentDoc?.path]} mode="inline" openKeys={defaultOpenKeys} className={styles.docMenus} onOpenChange={this.onOpenChange}>
+          <Menu
+            selectedKeys={[currentDoc?.path]}
+            mode="inline"
+            openKeys={defaultOpenKeys}
+            className={styles.docMenus}
+            onOpenChange={this.onOpenChange}
+          >
             {this.renderMenuItem(docMenus)}
           </Menu>
         </Affix>
