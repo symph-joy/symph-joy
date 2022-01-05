@@ -5,6 +5,7 @@ export default class MyDocument extends Document {
     return (
       <html>
         <Head>
+          <link href="/static/antd.css" rel="stylesheet"></link>
           {/* add custom style */}
           <script
             dangerouslySetInnerHTML={{

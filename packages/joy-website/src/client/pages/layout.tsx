@@ -49,27 +49,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     hash: "",
   };
 
-  static getDerivedStateFromProps(nextProps, prevState) {
-    const { type } = nextProps;
-    const hash = decodeURIComponent(prevState.hash?.split(/\/|\@|\#/).join(""));
-    if (hash) {
-      const ele = document.getElementById(hash);
-      if (ele) {
-        console.log("123:", ele);
-
-        ele.scrollIntoView();
-      }
-    }
-    // 当传入的type发生变化的时候，更新state
-    if (type !== prevState.type) {
-      return {
-        type,
-      };
-    }
-    // 否则，对于state不进行任何操作
-    return null;
-  }
-
   onChange = async (value) => {
     this.setState({
       search: value,
@@ -83,11 +62,12 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
 
   onSelect = async (v) => {
     const value = JSON.parse(v);
+    const prePath = window.location.pathname;
     if (value?.children) {
       this.pushHistory(`${value.path}${value.children[0]?.id}`);
-      this.setState({
-        hash: value.children[0]?.id,
-      });
+      if (prePath === value.path) {
+        this.scrollEle();
+      }
     } else {
       this.pushHistory(`${value.path}`);
     }
@@ -97,6 +77,14 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     });
     await this.docsModel.getSearch(this.state.search);
   };
+
+  scrollEle() {
+    const hash = window.location.hash?.slice(1);
+    const ele = document.getElementById(hash);
+    if (ele) {
+      ele.scrollIntoView();
+    }
+  }
 
   componentWillUnmount() {
     super.componentWillUnmount();

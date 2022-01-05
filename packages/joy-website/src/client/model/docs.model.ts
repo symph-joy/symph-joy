@@ -28,6 +28,7 @@ export type DocsModelState = {
   loadCurrentDocErr?: { code: number; message: string };
   currentDoc: DocMenuItem & { htmlContent };
   openKeys: Array<string>;
+  defaultOpenKeys: Array<string>;
 };
 
 @ReactModel()
@@ -44,6 +45,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
       currentDoc: undefined,
       result: [],
       openKeys: [],
+      defaultOpenKeys: []
     };
   }
 
@@ -122,9 +124,15 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     return respJson.data;
   }
 
+  initialSetOpenKeys() {
+    this.setState({
+      defaultOpenKeys: this.state.openKeys,
+    });
+  }
+
   changeOpenKeys(openKeys) {
     this.setState({
-      openKeys,
+      defaultOpenKeys: openKeys,
     });
   }
 

@@ -1,10 +1,11 @@
 import { Component, IComponentLifecycle, RuntimeException } from "@symph/core";
 import * as fs from "fs";
 import * as path from "path";
-import { join, sep } from "path";
+import { join } from "path";
 import { Value } from "@symph/config";
 import { NotFoundException } from "@symph/server/dist/exceptions-common";
 import { marked } from "marked";
+import { hashReg } from "../../client/utils/constUtils";
 
 export interface DocMenu {
   title: string;
@@ -150,12 +151,25 @@ export class DocsService implements IComponentLifecycle {
     return doc;
   }
 
+  regId(id: string): string {
+    return encodeURIComponent(id.replace(hashReg, "").replace(new RegExp(/( )/g), "-").toLowerCase());
+  }
+
   public async getDetailHtmlContentTree(mdContent, max: number, min: number) {
     const trees = marked.lexer(mdContent);
+    const renderer = {
+      heading: (text, level, raw) => {
+        return `
+                <h${level} id="${this.regId(raw)}">
+                  ${text}
+                </h${level}>`;
+      },
+    };
+    marked.use({ renderer });
     const titleTree = [];
     for (const tree of trees) {
       if (tree.type === "heading" && tree.depth <= max && tree.depth > min) {
-        let id = "#" + tree.text.replace(new RegExp(/( )/g), "-").toLowerCase();
+        let id = "#" + this.regId(tree.text);
         titleTree.push({
           ...tree,
           id,

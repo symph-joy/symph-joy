@@ -13,7 +13,7 @@ export default class Path extends BaseReactController {
 
   @Inject()
   public docsModel: DocsModel;
-
+  hash: string;
   state = {
     showDrawer: false,
   };
@@ -31,15 +31,23 @@ export default class Path extends BaseReactController {
     await this.docsModel.getDoc(path);
   }
 
-  componentDidMount(): void {
-    super.componentDidMount();
-    const hash = decodeURIComponent(this.props.location.hash?.split(/\/|\@/).join(""));
-    if (hash) {
-      // 用setInterval判断ele是否存在
-      this.observe(hash, function (element) {
-        console.log("13:", element);
-        element.scrollIntoView();
-      });
+  componentDidUpdate() {
+    this.scrollEle();
+  }
+
+  scrollEle() {
+    const hash = window.location.hash?.slice(1);
+    if (!hash) {
+      window.scrollTo(0, 0);
+      this.hash = "";
+    } else {
+      if (this.hash !== hash) {
+        const ele = document.getElementById(hash);
+        if (ele) {
+          this.hash = hash;
+          ele.scrollIntoView();
+        }
+      }
     }
   }
 
@@ -64,7 +72,7 @@ export default class Path extends BaseReactController {
         return;
       }
 
-      let element = document.querySelector(selector);
+      let element = document.getElementById(selector);
 
       // 如果没值, 则 return
       if (!element) {
@@ -112,7 +120,7 @@ export class DocsPrerenderGenerator implements IJoyPrerender {
     const paths = [] as string[];
     const addChildren = (menus: DocMenuItem[]) => {
       (menus || []).forEach((menu) => {
-        if (menu.children.length) {
+        if (menu.children?.length) {
           addChildren(menu.children);
         } else {
           paths.push(`${menu.path}`);
