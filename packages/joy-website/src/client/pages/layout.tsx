@@ -7,7 +7,7 @@ import { Outlet, Link } from "@symph/react/router-dom";
 import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
-import { getTheme, changeTheme } from "../utils/theme";
+import { changeTheme } from "../utils/theme";
 const { Option } = AutoComplete;
 const { Content } = Layout;
 const { Item: MenuItem } = Menu;
@@ -32,6 +32,7 @@ interface IStateProps {
   search: string;
   // 观察菜单展开收缩按钮，根据按钮是否显示决定当前是移动端还是web端
   observer: IntersectionObserver;
+  hash: string;
 }
 
 @ReactController()
@@ -45,33 +46,8 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
   state: IStateProps = {
     search: "",
     observer: undefined,
+    hash: "",
   };
-
-  componentDidMount() {
-    super.componentDidMount();
-    const theme = getTheme();
-    const oBtn = document.getElementById("collapseBtn");
-    const oBody = document.getElementsByTagName("body")[0];
-
-    oBody.setAttribute("data-theme", theme);
-    const observer = new IntersectionObserver(([entry]) => {
-      const { intersectionRatio } = entry;
-
-      if (intersectionRatio > 0) {
-        this.layoutModel.changeIsMobile(true);
-        oBody.setAttribute("data-is-mobile", "true");
-      } else {
-        this.layoutModel.changeIsMobile(false);
-        oBody.setAttribute("data-is-mobile", "false");
-      }
-    });
-
-    observer.observe(oBtn);
-
-    this.setState({
-      observer,
-    });
-  }
 
   onChange = async (value) => {
     this.setState({
@@ -84,18 +60,31 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     }
   };
 
-  onSelect = async (v, option) => {
-    const value = this.docsModel.state.result[option.key];
-    if (value.children) {
-      this.pushHistory(`${value.path}${value.children[0].id}`);
+  onSelect = async (v) => {
+    const value = JSON.parse(v);
+    const prePath = window.location.pathname;
+    if (value?.children) {
+      this.pushHistory(`${value.path}${value.children[0]?.id}`);
+      if (prePath === value.path) {
+        this.scrollEle();
+      }
     } else {
       this.pushHistory(`${value.path}`);
     }
+    // 将前一个值赋值给当前search
     this.setState({
       search: this.state.search,
     });
     await this.docsModel.getSearch(this.state.search);
   };
+
+  scrollEle() {
+    const hash = window.location.hash?.slice(1);
+    const ele = document.getElementById(hash);
+    if (ele) {
+      ele.scrollIntoView();
+    }
+  }
 
   componentWillUnmount() {
     super.componentWillUnmount();
@@ -156,11 +145,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                 </MenuItem>
                 <MenuItem key="4">指南</MenuItem>
                 <MenuItem key="5">插件</MenuItem>
-                <MenuItem key="8">
-                  <a target="_blank" href="https://lnlfps.github.io/symph-joy/#/readme">
-                    v1
-                  </a>
-                </MenuItem>
                 <MenuItem key="9">
                   <a target="_blank" href="https://github.com/lnlfps/symph-joy">
                     Github
@@ -185,13 +169,13 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                       style={{ width: 200 }}
                     >
                       {result.map((value, key) => (
-                        <Option key={key} value={value.children ? `${value.text} &gt; ${value.children[0].text}` : value.text}>
+                        <Option key={key} value={JSON.stringify(value)}>
                           {value.children ? (
-                            <a className={styles.selectOption}>
+                            <a>
                               {value.text} &gt; {value.children[0].text}
                             </a>
                           ) : (
-                            <a className={styles.selectOption}>{value.text}</a>
+                            <a>{value.text}</a>
                           )}
                         </Option>
                       ))}
