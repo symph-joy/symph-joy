@@ -26,6 +26,11 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
     this.routesMap.set(cacheKey, route);
   }
 
+  protected removeRouteCache(route: T) {
+    const cacheKey = this.getRoutePathCacheKey(route);
+    this.routesMap.delete(cacheKey);
+  }
+
   protected getRouteCache(routePattern: Pick<T, "index" | "path">): T | undefined {
     const cacheKey = this.getRoutePathCacheKey(routePattern);
     return this.routesMap.get(cacheKey);
@@ -86,15 +91,23 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
    * @param routePath 匹配的路由路径，和注册的路由路径对比。
    * @param rmChildren 是否同时删除其子路由
    */
-  public removeRoute(routePath: string, rmChildren = false): T[] | undefined {
+  public removeRoute(rmRoute: T, rmChildren = false): T[] | undefined {
     let removedRoutes = [] as T[];
     for (const route of this.routesMap.values()) {
       if (rmChildren) {
-        if (route.path.startsWith(routePath)) {
+        if (route.path.startsWith(rmRoute.path)) {
+          if (route.path === rmRoute.path) {
+            if (rmRoute.index && !route.index) {
+              continue;
+            }
+          }
           removedRoutes.push(route);
         }
       } else {
-        if (route.path === routePath) {
+        if (route.path === rmRoute.path) {
+          if (rmRoute.index && !route.index) {
+            continue;
+          }
           removedRoutes.push(route);
           break;
         }
@@ -105,8 +118,7 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
       return undefined;
     }
     for (const route of removedRoutes) {
-      const cacheKey = this.getRoutePathCacheKey(route);
-      this.routesMap.delete(cacheKey);
+      this.removeRouteCache(route);
     }
     // 重建整个routeTree, 可以优化为：只摘除PathNode中的节点，然后生成树。
     this.refreshTree();
@@ -235,7 +247,7 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
       //     break
       //   }
       // }
-      this.removeRoute(route.path as string);
+      this.removeRoute(route);
       if (next) {
         this.mergeRouteExtendState(next, route);
         modified.push(next);

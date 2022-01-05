@@ -106,7 +106,7 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
       return undefined;
     }
     for (const rmRoute of rmRoutes) {
-      this.routesMap.delete(rmRoute.path);
+      this.removeRoute(rmRoute, false);
     }
     this.refreshTree();
     return rmRoutes;
