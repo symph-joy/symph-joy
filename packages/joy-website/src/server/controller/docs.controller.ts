@@ -6,30 +6,30 @@ export class DocsController {
   constructor(private docsService: DocsService) {}
 
   @Get("menus")
-  public async getMenus(@Query("path") path: any) {
+  public getMenus(@Query("path") path: string) {
     return {
-      data: await this.docsService.getMenus(path),
+      data: this.docsService.getMenus(path),
     };
   }
+  
   @Get("allMenus")
-  public async getAllMenus() {
+  public getAllMenus() {
     return {
-      data: await this.docsService.getAllMenus(),
+      data: this.docsService.getAllMenus(),
     };
   }
 
   @Get("/detail/**")
-  public async getDoc(@Param("*") path) {
+  public getDoc(@Param("*") path: string) {
     return {
-      data: await this.docsService.getDoc("/" + path),
-      treeData: await this.docsService.getTitleTree("/" + path),
+      data: this.docsService.getDoc("/" + path),
     };
   }
 
   @Get("/titleArray")
-  public async getTitleArray() {
+  public getTitleArray() {
     return {
-      data: await this.docsService.getTitleArray(),
+      data: this.docsService.getTitleArray(),
     };
   }
 }

@@ -1,4 +1,4 @@
-import { Component, IComponentLifecycle, RuntimeException } from "@symph/core";
+import { Component, IComponentLifecycle } from "@symph/core";
 import * as fs from "fs";
 import * as path from "path";
 import { join } from "path";
@@ -18,8 +18,10 @@ export class Doc {
   path: string;
   file: string;
   htmlContent?: string;
+  mdContent?: string;
   children?: Doc[];
   hasMenu?: boolean;
+  anchor?: TreeItem[] | [];
 }
 
 export class DocJoyConfig {
@@ -43,46 +45,56 @@ export class DocsService implements IComponentLifecycle {
   @Value({ configKey: "docs" })
   public configDocs: DocJoyConfig;
 
+  public allMenus: Doc[];
+
   public menus: Doc[];
 
-  public allMenus: Doc[];
+  public searchDoc: Doc[];
 
   public menusCache: Map<string, Doc> = new Map<string, Doc>();
 
   public titleArray: TreeItem[];
 
-  async initialize() {
-    await this.getAllDocs();
+  initialize() {
+    this.getAllDocs();
   }
 
-  // 获取所有能搜索到的树结构
-  public async getAllDocs() {
-    await this.getAllMenus();
+  // 获取所有menus、文档、所有搜索需要的树结构
+  private getAllDocs(): void {
+    this.getAllMenus();
+    // 用除去@的menus获取
     const res = [];
-    for (const menu of this.allMenus) {
-      await this.getOneSeachTree(menu, res);
+    for (const menu of this.searchDoc) {
+      this.getOneSearchTree(menu, res);
     }
     this.titleArray = res;
   }
 
-  public async getOneSeachTree(menu, res) {
+  // 所有搜索需要的树结构
+  public getTitleArray(): TreeItem[] {
+    return this.titleArray;
+  }
+
+  private getOneSearchTree(menu: Doc, res: unknown[]): void {
     if (menu.children) {
       for (const child of menu.children) {
-        await this.getOneSeachTree(child, res);
+        this.getOneSearchTree(child, res);
       }
     } else {
-      const doc = await this.getTree(menu.path, 2, 0);
+      // 此时mdContent一定存在
+      const doc = this.getDocTitleByLevel(menu.mdContent, 2, 0);
       const obj = {
+        text: menu.path,
         ...doc[0],
         path: menu.path,
         file: menu.file,
       };
       res.push(obj);
-      const doc2 = await this.getTree(menu.path, 3, 2);
+      const doc2 = this.getDocTitleByLevel(menu.mdContent, 3, 2);
       const obj1 = {
         path: menu.path,
         file: menu.file,
-        text: doc[0].text,
+        text: doc[0]?.text || menu.path,
         depth: 1,
         children: doc2,
       };
@@ -90,82 +102,153 @@ export class DocsService implements IComponentLifecycle {
     }
   }
 
-  // 为搜索框获取所有menu
-  public async getAllMenus(): Promise<DocMenu[]> {
+  // 获取所有menus和文档
+  public getAllMenus(): DocMenu[] {
     const { dir } = this.configDocs || {};
     return this.getMenusByDir(dir, "allMenus");
   }
 
-  // 搜索框获取
-  public getTitleArray() {
-    return this.titleArray;
-  }
-
   // 当前页面的menu
-  public async getMenus(path: string): Promise<DocMenu[]> {
+  public getMenus(path: string): DocMenu[] {
     let { dir } = this.configDocs || {};
     dir += path;
     return this.getMenusByDir(dir, "menus");
   }
 
-  public async getMenusByDir(dir, key): Promise<DocMenu[]> {
+  private getMenusByDir(dir: string | string[], key: string): DocMenu[] {
     if (!dir) {
       console.warn("Warning: Doc dir is not config.");
       return [];
     }
     const dirs = typeof dir === "string" ? [dir] : dir;
-    this[key] = await this.scanDir(dirs);
+    this[key] = this.scanDir(dirs, key);
     return this.fmtMenus(this[key]);
   }
 
-  public async returnMenusByDir(dir): Promise<DocMenu[]> {
-    if (!dir) {
-      console.warn("Warning: Doc dir is not config.");
-      return [];
+  private scanDir(dirs: string[], key: string): Doc[] {
+    const docs = [] as Doc[];
+    const docsSearch = [] as Doc[];
+    for (const dir of dirs) {
+      if (!fs.existsSync(dir)) {
+        console.warn(`Warning: Document root dir(${dir}) is not exists.`);
+        return [];
+      }
+      const dirState = fs.statSync(dir);
+      if (dirState.isFile()) {
+        throw new Error(`Document root path(${dir}) is a file, expect is a directory.`);
+      }
+      const { doc, searchDoc } = this.recursiveFindDoc(dir, "", dir);
+      doc?.children && docs.push(...doc.children);
+      // 除去@开头文件的doc
+      searchDoc?.children && docsSearch.push(...searchDoc.children);
+      this.searchDoc = docsSearch;
     }
-
-    const dirs = typeof dir === "string" ? [dir] : dir;
-    return this.scanDir(dirs);
+    if (key === "allMenus") {
+      this.setCache(docs);
+    }
+    return docs;
   }
 
-  public async getDoc(docPath: string): Promise<Doc> {
-    const doc = this.menusCache.get(docPath);
-    if (!doc) {
-      throw new NotFoundException(docPath, `Doc was not found, path: ${docPath}`);
-    }
-    return await this.getDocHtmlContent(doc, docPath);
+  private recursiveFindDoc(dir: string, parentPath: string, rootDir: string): { doc: Doc; searchDoc: Doc } {
+    const baseName = path.basename(dir);
+    const menuItemConfig = this.tryGetMenuConfig(dir);
+    const nodePath = menuItemConfig?.path || baseName;
+    const menuPath = parentPath + "/" + nodePath;
+    const menuTitle = menuItemConfig?.title || nodePath;
+    let children: Doc[] | undefined;
+    // 除去@开头的文件
+    let childrenSearch: Doc[] | undefined;
+    children = [];
+    childrenSearch = [];
+    const childPaths = fs.readdirSync(dir);
+    childPaths.forEach((filePath: string) => {
+      if (filePath.startsWith(".") || filePath.startsWith("_")) {
+        return;
+      }
+      const absolutePath = join(dir, filePath);
+      const pathStat = fs.statSync(absolutePath);
+      if (pathStat.isDirectory()) {
+        const child = this.recursiveFindDoc(absolutePath, menuPath, rootDir);
+        // this.sortMenu(child);
+        if (child) {
+          if (!filePath.startsWith("@")) {
+            childrenSearch.push(child.searchDoc);
+          }
+          children.push(child.doc);
+        }
+      } else {
+        if (!/\.md$/i.test(absolutePath)) {
+          return;
+        }
+        let baseName = path.basename(absolutePath);
+        const childNodePath = baseName.slice(0, baseName.indexOf("."));
+        let childPath = `${parentPath}/${childNodePath}`;
+        const childTitle = childNodePath;
+        let title;
+        // 不支持menu.json中嵌套多个children，只支持一级children
+        if (menuItemConfig?.children) {
+          title = this.getMenuJsonTitleName(menuItemConfig?.children, childPath);
+        }
+        // 去掉path前的数字
+        childPath = this.deletePathNumber(childPath);
+        let doc = {
+          title: title || childTitle,
+          path: childPath,
+          file: absolutePath,
+          hasMenu: title ? true : false,
+        } as Doc;
+        doc = this.getDocHtmlContent(doc, childPath);
+        children.push(doc as Doc);
+        if (!this.fileStartWithSymbol(dir, "@")) {
+          childrenSearch.push({
+            ...doc,
+            title: title || childTitle,
+            path: childPath,
+            file: absolutePath,
+          });
+        }
+      }
+    });
+    return {
+      doc: { title: menuTitle, path: menuPath, file: dir, children },
+      searchDoc: {
+        title: menuTitle,
+        path: menuPath,
+        file: dir,
+        children: childrenSearch,
+      },
+    };
   }
 
-  async getDocHtmlContent(doc, docPath) {
+  private fileStartWithSymbol(file: string, symbol: string): boolean {
+    for (const arr of file.split("/")) {
+      if (arr.startsWith(symbol)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // 处理有关HtmlContent的所有，包含anchor和title
+  private getDocHtmlContent(doc: Doc, docPath: string): Doc {
     if (doc.htmlContent === undefined) {
       if (!doc.file) {
         throw new Error(`Doc file is not defined. doc Path: ${docPath}`);
       }
-      const mdContent = fs.readFileSync(doc.file, { encoding: "utf-8" });
-      doc.htmlContent = this.markdownToHtml(mdContent);
+      doc.mdContent = fs.readFileSync(doc.file, { encoding: "utf-8" });
+      doc.htmlContent = this.markdownToHtml(doc.mdContent);
+      doc.anchor = this.getDocTitleByLevel(doc.mdContent, 3, 1);
       if (!doc.hasMenu) {
-        const title = await this.getDetailHtmlContentTree(mdContent, 1, 0);
-        doc.title = title && title[0].text;
+        const title = this.getDocTitleByLevel(doc.mdContent, 1, 0);
+        doc.title = title && title[0]?.text;
       }
     }
     return doc;
   }
 
-  regId(id: string): string {
-    return encodeURIComponent(id.replace(hashReg, "").replace(new RegExp(/( )/g), "-").toLowerCase());
-  }
-
-  public async getDetailHtmlContentTree(mdContent, max: number, min: number) {
+  // 获取指定区间的heading
+  private getDocTitleByLevel(mdContent: string, max: number, min: number): TreeItem[] | [] {
     const trees = marked.lexer(mdContent);
-    const renderer = {
-      heading: (text, level, raw) => {
-        return `
-                <h${level} id="${this.regId(raw)}">
-                  ${text}
-                </h${level}>`;
-      },
-    };
-    marked.use({ renderer });
     const titleTree = [];
     for (const tree of trees) {
       if (tree.type === "heading" && tree.depth <= max && tree.depth > min) {
@@ -185,17 +268,35 @@ export class DocsService implements IComponentLifecycle {
     }
   }
 
-  public async getTree(docPath: string, max: number, min: number): Promise<TreeItem[] | []> {
-    const doc = this.getDoc(docPath);
-    const mdContent = fs.readFileSync((await doc).file, { encoding: "utf-8" });
-    return this.getDetailHtmlContentTree(mdContent, max, min);
+  private setCache(docs: Doc[]): void {
+    this.menusCache.clear();
+    const findDoc = (children: Doc[]) => {
+      for (const child of children) {
+        const { file, children, path } = child;
+        if (file) {
+          this.menusCache.set(path, child);
+        }
+        if (children) {
+          findDoc(children);
+        }
+      }
+    };
+    findDoc(docs);
   }
 
-  public async getTitleTree(docPath: string): Promise<TreeItem[] | []> {
-    return await this.getTree(docPath, 3, 1);
+  public getDoc(docPath: string): Doc {
+    let doc = this.menusCache.get(docPath);
+    if (!doc) {
+      throw new NotFoundException(docPath, `Doc was not found, path: ${docPath}`);
+    }
+    return this.getDocHtmlContent(doc, docPath);
   }
 
-  public getParent = (index: number, res: TreeItem, markdown: TreeItem[]): TreeItem => {
+  private regId(id: string): string {
+    return encodeURIComponent(id.replace(hashReg, "").replace(new RegExp(/( )/g), "-").toLowerCase());
+  }
+
+  private getParent = (index: number, res: TreeItem, markdown: TreeItem[]): TreeItem => {
     const i = index;
     if (markdown[i].depth - 1 === 1) {
       return res;
@@ -207,7 +308,7 @@ export class DocsService implements IComponentLifecycle {
     }
   };
 
-  public getMarkdownTree = (index: number, ele: TreeItem, res: TreeItem, markdown: TreeItem[]): TreeItem => {
+  private getMarkdownTree = (index: number, ele: TreeItem, res: TreeItem, markdown: TreeItem[]): TreeItem => {
     ele.children = ele.children || [];
     if (index === markdown.length - 1) {
       ele.children.unshift(markdown[index]);
@@ -233,15 +334,16 @@ export class DocsService implements IComponentLifecycle {
         return hljs.highlight(code, { language }).value;
       },
       langPrefix: "hljs language-", // highlight.js css expects a top-level 'hljs' class.
-      // pedantic: false,
-      // gfm: true,
-      // breaks: false,
-      // sanitize: false,
-      // smartLists: true,
-      // smartypants: false,
-      // xhtml: false
     });
-
+    const renderer = {
+      heading: (text, level, raw) => {
+        return `
+                <h${level} id="${this.regId(raw)}">
+                  ${text}
+                </h${level}>`;
+      },
+    };
+    marked.use({ renderer });
     const htmlContent = marked.parse(mdContent);
     return htmlContent;
   }
@@ -249,7 +351,7 @@ export class DocsService implements IComponentLifecycle {
   private fmtMenus(docs: Doc[]): DocMenu[] {
     const menus = [] as DocMenu[];
     for (const doc of docs) {
-      const { file, children, ...menu } = doc;
+      const { children, ...menu } = doc;
       let menuChildren: DocMenu[] | undefined;
       if (children) {
         menuChildren = this.fmtMenus(children);
@@ -262,43 +364,7 @@ export class DocsService implements IComponentLifecycle {
     return menus;
   }
 
-  public async scanDir(dirs: string[]): Promise<Doc[]> {
-    const docs = [] as Doc[];
-    for (const dir of dirs) {
-      if (!fs.existsSync(dir)) {
-        console.warn(`Warning: Document root dir(${dir}) is not exists.`);
-        return [];
-      }
-      const dirState = fs.statSync(dir);
-      if (dirState.isFile()) {
-        throw new Error(`Document root path(${dir}) is a file, expect is a directory.`);
-      }
-
-      const doc = await this.recursiveFindDoc(dir, "", dir);
-
-      doc?.children && docs.push(...doc.children);
-    }
-    this.setCache(docs);
-    return docs;
-  }
-
-  private setCache(docs: Doc[]): void {
-    this.menusCache.clear();
-    const findDoc = (children: Doc[]) => {
-      for (const child of children) {
-        const { file, children, path } = child;
-        if (file) {
-          this.menusCache.set(path, child);
-        }
-        if (children) {
-          findDoc(children);
-        }
-      }
-    };
-    findDoc(docs);
-  }
-
-  getMenuJsonTitleName(children, path) {
+  private getMenuJsonTitleName(children: Doc[], path: string): string {
     for (const child of children) {
       if (child.path === path) {
         return child.title;
@@ -309,7 +375,8 @@ export class DocsService implements IComponentLifecycle {
       }
     }
   }
-  compareFile(first, second) {
+
+  private compareFile(first, second) {
     for (let i = 0; i < first.length; i++) {
       if (second[i] === undefined) {
         return true;
@@ -326,7 +393,7 @@ export class DocsService implements IComponentLifecycle {
     }
   }
   // 按照数字、字母排序
-  sortMenu(menus) {
+  private sortMenu(menus: Doc): DocMenu {
     if (menus.children.length > 1) {
       let arr = menus.children;
       for (let i = arr.length - 1; i > 0; i--) {
@@ -345,68 +412,14 @@ export class DocsService implements IComponentLifecycle {
     }
   }
 
-  private async recursiveFindDoc(dir: string, parentPath: string, rootDir): Promise<Doc> {
-    const baseName = path.basename(dir);
-    const menuItemConfig = this.tryGetMenuConfig(dir);
-    const nodePath = menuItemConfig?.path || baseName;
-    const menuPath = parentPath + "/" + nodePath;
-    const menuTitle = menuItemConfig?.title || nodePath;
-    let children: Doc[] | undefined;
-    children = [];
-    const childPaths = fs.readdirSync(dir);
-    childPaths.forEach(async (filePath: string) => {
-      if (filePath.startsWith(".") || filePath.startsWith("_")) {
-        return;
-      }
-      const absolutePath = join(dir, filePath);
-      const pathStat = fs.statSync(absolutePath);
-      if (pathStat.isDirectory()) {
-        const child = await this.recursiveFindDoc(absolutePath, menuPath, rootDir);
-        // this.sortMenu(child);
-        if (child) {
-          children.push(child);
-        }
-      } else {
-        if (!/\.md$/i.test(absolutePath)) {
-          return;
-        }
-        let baseName = path.basename(absolutePath);
-        const childNodePath = baseName.slice(0, baseName.indexOf("."));
-        let childPath = `${parentPath}/${childNodePath}`;
-        const childTitle = childNodePath;
-        let title;
-        // 不支持menu.json中嵌套多个children，只支持一级children
-        if (menuItemConfig?.children) {
-          title = this.getMenuJsonTitleName(menuItemConfig?.children, childPath);
-        }
-        // 去掉path前的数字
-        childPath = this.deletePathNumber(childPath);
-        let doc = {
-          title: title || childTitle,
-          path: childPath,
-          file: absolutePath,
-          hasMenu: title ? true : false,
-        };
-        doc = await this.getDocHtmlContent(doc, childPath);
-        children.push(doc as Doc);
-      }
-    });
-    return (await {
-      title: menuTitle,
-      path: menuPath,
-      file: dir,
-      children,
-    }) as Doc;
-  }
-
-  deletePathNumber(path) {
+  private deletePathNumber(path: string): string {
     const array = path.split("/");
     const result = [];
     for (const arr of array) {
       const temArr = arr.split("-");
       let res = [];
       for (const tem of temArr) {
-        if (isNaN(tem)) {
+        if (isNaN(+tem)) {
           res.push(tem);
         }
       }
@@ -423,22 +436,4 @@ export class DocsService implements IComponentLifecycle {
     const data = fs.readFileSync(configFilePath, { encoding: "utf-8" });
     return JSON.parse(data);
   }
-
-  // private getMenuPath(absPath: string): string {
-  //   const relPath = absPath.replace(this.rootDir, "");
-  //
-  //   const pathSegments = relPath.split(sep).filter(Boolean);
-  //   let lastSeg = pathSegments[pathSegments.length - 1];
-  //   if (lastSeg) {
-  //     const indexOfDot = lastSeg.indexOf('.')
-  //     if (indexOfDot === 0) {
-  //       throw new Error('File name should not start with "."')
-  //     } else if (indexOfDot > 0) {
-  //       lastSeg = lastSeg.substr(0, lastSeg.indexOf('.'))
-  //       pathSegments[pathSegments.length - 1] = lastSeg
-  //     }
-  //   }
-  //   return "/" + pathSegments.join('/')
-  // }
-  //
 }
