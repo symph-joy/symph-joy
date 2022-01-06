@@ -108,6 +108,9 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
           if (rmRoute.index && !route.index) {
             continue;
           }
+          if (rmRoute.isContainer && !route.isContainer) {
+            continue;
+          }
           removedRoutes.push(route);
           break;
         }

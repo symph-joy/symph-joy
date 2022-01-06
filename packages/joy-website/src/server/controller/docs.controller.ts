@@ -11,7 +11,7 @@ export class DocsController {
       data: this.docsService.getMenus(path),
     };
   }
-  
+
   @Get("allMenus")
   public getAllMenus() {
     return {
