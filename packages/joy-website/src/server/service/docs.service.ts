@@ -24,6 +24,13 @@ export class Doc {
   anchor?: TreeItem[] | [];
 }
 
+export class MenuJsonType {
+  title: string;
+  path?: string;
+  search?: boolean;
+  children?: MenuJsonType[];
+}
+
 export class DocJoyConfig {
   dir: string | string[];
 }
@@ -155,6 +162,7 @@ export class DocsService implements IComponentLifecycle {
     const nodePath = menuItemConfig?.path || baseName;
     const menuPath = parentPath + "/" + nodePath;
     const menuTitle = menuItemConfig?.title || nodePath;
+    const menuSearch = menuItemConfig && menuItemConfig.hasOwnProperty("search") ? menuItemConfig.search : true;
     let children: Doc[] | undefined;
     // 除去@开头的文件
     let childrenSearch: Doc[] | undefined;
@@ -171,7 +179,7 @@ export class DocsService implements IComponentLifecycle {
         const child = this.recursiveFindDoc(absolutePath, menuPath, rootDir);
         // this.sortMenu(child);
         if (child) {
-          if (!filePath.startsWith("@")) {
+          if (!filePath.startsWith("@") && menuSearch) {
             childrenSearch.push(child.searchDoc);
           }
           children.push(child.doc);
@@ -199,7 +207,7 @@ export class DocsService implements IComponentLifecycle {
         } as Doc;
         doc = this.getDocHtmlContent(doc, childPath);
         children.push(doc as Doc);
-        if (!this.fileStartWithSymbol(dir, "@")) {
+        if (!this.fileStartWithSymbol(dir, "@") && menuSearch) {
           childrenSearch.push({
             ...doc,
             title: title || childTitle,
@@ -364,7 +372,7 @@ export class DocsService implements IComponentLifecycle {
     return menus;
   }
 
-  private getMenuJsonTitleName(children: Doc[], path: string): string {
+  private getMenuJsonTitleName(children: MenuJsonType[], path: string): string {
     for (const child of children) {
       if (child.path === path) {
         return child.title;
@@ -428,7 +436,7 @@ export class DocsService implements IComponentLifecycle {
     return result.join("/");
   }
 
-  private tryGetMenuConfig(absDirPath: string): Doc | undefined {
+  private tryGetMenuConfig(absDirPath: string): MenuJsonType | undefined {
     const configFilePath = path.join(absDirPath, "menu.json");
     if (!fs.existsSync(configFilePath)) {
       return undefined;
