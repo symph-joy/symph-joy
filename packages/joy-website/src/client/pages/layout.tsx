@@ -49,18 +49,18 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     hash: "",
   };
 
-  onChange = async (value) => {
+  onChange = (value: string) => {
     this.setState({
       search: value,
     });
     if (value) {
-      await this.docsModel.getSearch(value);
+      this.docsModel.getSearch(value);
     } else {
-      await this.docsModel.clearSearch();
+      this.docsModel.clearSearch();
     }
   };
 
-  onSelect = async (v) => {
+  onSelect = (v) => {
     const value = JSON.parse(v);
     const prePath = window.location.pathname;
     if (value?.children) {
@@ -75,7 +75,7 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     this.setState({
       search: this.state.search,
     });
-    await this.docsModel.getSearch(this.state.search);
+    this.docsModel.getSearch(this.state.search);
   };
 
   scrollEle() {

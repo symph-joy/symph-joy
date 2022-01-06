@@ -26,7 +26,7 @@ export default class Path extends BaseReactController {
 
   async fetchPageDocData(path) {
     if (!path.startsWith("/")) {
-      path = "/" + path;
+      path = "/docs/" + path;
     }
     await this.docsModel.getDoc(path);
   }

@@ -50,14 +50,14 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
       defaultOpenKeys: [],
     };
   }
-
+  // 所有可搜索的内容
   titleArrays = [];
 
-  handleString(string: string) {
+  public handleString(string: string) {
     return string.toLowerCase().replace(/\s/g, "");
   }
 
-  async getSearch(value: string) {
+  public async getSearch(value: string) {
     const res = [];
     let titleArray: TreeItem[];
     if (this.titleArrays.length === 0) {
@@ -109,13 +109,13 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     });
   }
 
-  async clearSearch() {
+  public clearSearch() {
     this.setState({
       result: [],
     });
   }
 
-  async getDocMenus(path: string): Promise<DocMenuItem[]> {
+  public async getDocMenus(path: string): Promise<DocMenuItem[]> {
     const resp = await this.fetchService.fetchApi("/docs/menus?path=" + encodeURIComponent(path));
     const respJson = await resp.json();
     const openKeys = await this.getDefaultOpenKeys(respJson.data);
@@ -126,28 +126,25 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     return respJson.data;
   }
 
-  initialSetOpenKeys() {
+  public initialSetOpenKeys() {
     this.setState({
       defaultOpenKeys: this.state.openKeys,
     });
   }
 
-  changeOpenKeys(openKeys) {
+  public changeOpenKeys(openKeys: []) {
     this.setState({
       defaultOpenKeys: openKeys,
     });
   }
 
-  async getAllDocsMenus(): Promise<DocMenuItem[]> {
+  public async getAllDocsMenus(): Promise<DocMenuItem[]> {
     const resp = await this.fetchService.fetchApi("/docs/allMenus");
     const respJson = await resp.json();
-    // this.setState({
-    //   docMenus: respJson.data,
-    // });
     return respJson.data;
   }
 
-  async flatDocMenus(arr, res) {
+  private flatDocMenus(arr: DocMenuItem[], res: string[]) {
     if (Array.isArray(arr)) {
       for (const child of arr) {
         if (child.children) {
@@ -158,13 +155,13 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     }
   }
 
-  async getDefaultOpenKeys(docMenus) {
+  public getDefaultOpenKeys(docMenus: DocMenuItem[]) {
     const res = [];
-    await this.flatDocMenus(docMenus, res);
+    this.flatDocMenus(docMenus, res);
     return res;
   }
 
-  async recurrencePreDocMenus(menu: DocMenuItem[], res: object[]) {
+  public async recurrencePreDocMenus(menu: DocMenuItem[], res: object[]) {
     for (const arr of menu) {
       if (arr.children) {
         if (arr.children.length > 0) {
@@ -179,17 +176,10 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     }
   }
 
-  async getPreDocMenus() {
-    const res = [];
-    await this.recurrencePreDocMenus(this.state.docMenus, res);
-    return res;
-  }
-
-  async getSnippet(path: string) {
+  public async getSnippet(path: string) {
     try {
       const respJson = await this.fetchDocDetail(path);
       const doc = respJson.data;
-      const titleTrees = respJson.treeData;
       this.setState({
         snippets: {
           ...this.state.snippets,
@@ -210,22 +200,23 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     this.setState({
       loadingCurrentDoc: true,
     });
+
     const resp = await this.fetchService.fetchApi("/docs/detail" + path);
     const respJson = await resp.json();
+
     let code = resp.status;
     let message: string;
     if (resp.status === 404) {
       message = "文档不存在。";
     }
 
-    if (code < 200 && code > 300) {
+    if (code < 200 || code >= 300) {
       throw new FetchError(code, message || "服务器错误，请重试。");
     }
-
     return respJson;
   }
 
-  async getDoc(path: string) {
+  public async getDoc(path: string) {
     this.setState({
       loadingCurrentDoc: true,
     });
@@ -233,11 +224,10 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     try {
       const respJson = await this.fetchDocDetail(path);
       const doc = respJson.data;
-      const titleTrees = respJson.treeData;
       this.setState({
         loadCurrentDocErr: undefined,
         currentDoc: doc,
-        titleTrees,
+        titleTrees: doc.anchor,
         loadingCurrentDoc: false,
       });
     } catch (e) {
