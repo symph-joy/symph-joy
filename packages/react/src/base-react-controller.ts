@@ -22,6 +22,8 @@ export interface BaseReactController {
    */
   initialModelStaticState?(urlParams: any): Promise<void | number>;
 
+  onInitialModelStaticStateDid?(): void;
+
   /**
    * 获取绑定model中的初始化状态。
    * @param context
@@ -134,6 +136,12 @@ export abstract class BaseReactController<
       if (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.ERROR) {
         if (this.initialModelStaticState) {
           const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
+            .then((rst) => {
+              if (typeof window !== undefined && typeof this.onInitialModelStaticStateDid === "function") {
+                this.onInitialModelStaticStateDid();
+              }
+              return rst;
+            })
             // .then((rst) => {
             //   this.initManager.setInitState(pathname, {
             //     initStatic: ReactRouteInitStatus.SUCCESS,
