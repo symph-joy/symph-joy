@@ -5,6 +5,9 @@ import isPlainObject from "./redux/utils/isPlainObject";
 import { func } from "prop-types";
 
 export abstract class BaseReactModel<TState> implements IComponentLifecycle, IComponentInfoAware {
+  @Inject()
+  private reactReduxService: ReactReduxService;
+
   public getNamespace(): string {
     return this._namespace;
   }
@@ -15,13 +18,10 @@ export abstract class BaseReactModel<TState> implements IComponentLifecycle, ICo
 
   public abstract getInitState(): TState;
 
-  @Inject()
-  private reduxStore: ReactReduxService;
-
   private _namespace: string;
 
   initialize(): void {
-    const initState = this.state || this.getInitState();
+    const initState = this.state || (this.getInitState && this.getInitState());
     if (process.env.NODE_ENV !== "production") {
       if (initState) {
         function getType(obj: unknown): string {
@@ -50,7 +50,7 @@ export abstract class BaseReactModel<TState> implements IComponentLifecycle, ICo
         }
       }
     }
-    this.reduxStore.registerModel(this, initState);
+    this.reactReduxService.registerModel(this, initState);
   }
 
   setProviderInfo({ name }: ComponentAwareInfo): void {
@@ -66,7 +66,7 @@ export abstract class BaseReactModel<TState> implements IComponentLifecycle, ICo
   }
 
   public get state(): TState {
-    return this.reduxStore.store.getState()[this.getNamespace()];
+    return this.reactReduxService.store.getState()[this.getNamespace()];
   }
 
   protected setState(nextState: Partial<TState>): void {
@@ -74,7 +74,7 @@ export abstract class BaseReactModel<TState> implements IComponentLifecycle, ICo
       type: this.getNamespace() + "/__SET_STATE",
       state: nextState,
     };
-    this.reduxStore.store.dispatch(action);
+    this.reactReduxService.store.dispatch(action);
   }
 
   static isModel(obj: unknown): obj is BaseReactModel<unknown> {

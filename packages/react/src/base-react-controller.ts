@@ -115,6 +115,12 @@ export abstract class BaseReactController<
     bindRouteFromCompProps(this, props);
   }
 
+  private triggerOnInitialModelStaticStateDid() {
+    if (typeof window !== "undefined" && typeof this.onInitialModelStaticStateDid === "function") {
+      this.onInitialModelStaticStateDid();
+    }
+  }
+
   protected async init(): Promise<void> {
     if (this.hasInitInvoked) {
       throw new Error("Controller init twice");
@@ -133,21 +139,17 @@ export abstract class BaseReactController<
     const { initStatic, init } = this.initManager.getRouteInitState(pathname);
 
     if (initStage >= EnumReactAppInitStage.STATIC) {
+      let initStaticTask: Promise<number | void> | null = null;
       if (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.ERROR) {
         if (this.initialModelStaticState) {
-          const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
+          initStaticTask = Promise.resolve(this.initialModelStaticState({}))
             .then((rst) => {
-              if (typeof window !== undefined && typeof this.onInitialModelStaticStateDid === "function") {
-                this.onInitialModelStaticStateDid();
-              }
+              this.triggerOnInitialModelStaticStateDid();
+              // this.initManager.setInitState(pathname, {
+              //   initStatic: ReactRouteInitStatus.SUCCESS,
+              // });
               return rst;
             })
-            // .then((rst) => {
-            //   this.initManager.setInitState(pathname, {
-            //     initStatic: ReactRouteInitStatus.SUCCESS,
-            //   });
-            //   return rst;
-            // })
             .catch((e) => {
               console.error(e);
               this.initManager.setInitState(pathname, {
@@ -163,6 +165,9 @@ export abstract class BaseReactController<
           //   initStatic: ReactRouteInitStatus.SUCCESS,
           // });
         }
+      }
+      if (!initStaticTask) {
+        this.triggerOnInitialModelStaticStateDid();
       }
     }
 
