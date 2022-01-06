@@ -168,13 +168,13 @@ export class UserModel extends BaseReactModel<{ user }> {
 
 上例中，我们通过`this.fetchService.fetchApi`请求 API 接口数据，那它为我们提供了哪些能力呢？
 
-
 - 读取配置，生成完成的请求接口地址。
 - 动态挂载业务模块内，访问自身提供的接口。
 - 服务端渲染和浏览器上运行，两者的实现方式有所不同，所以在服务端渲染时`ReactModel`中注入的是 `ReactFetchServerService` 实例，在浏览器上运行时注入的是 `ReactFetchClientService`实例，我们可以再继承这些类并扩展和定制它们。
 
   例如：在服务端渲染时有时并不能通过外网域名和端口来加载数据，得使用类似`http://localhost:${config.port}`的地址来获取当前服务启动的端口地址。
-- 
+
+-
 
 ### fetchApi
 
