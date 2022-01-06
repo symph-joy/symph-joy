@@ -47,7 +47,7 @@ export class OrderModel extends BaseReactModel<OrderModelState> {
 
 ## 更新状态 `setState`
 
-在业务方法内部，调用父类提供的`protected setState(nextState: Partial<TState>): void`方法来更新当前Model状态。
+在业务方法内部，调用父类提供的`protected setState(nextState: Partial<TState>): void`方法来更新当前 Model 状态。
 
 入参`nextState`可以是该 Model 状态的一部分值，最终和当前状态`merge`合并后形成新的状态，合并只是浅层合并，类似`Object.assign({}, nextState, curState)`, 和这和 React 类组件提供的`setState`方法类似。
 
