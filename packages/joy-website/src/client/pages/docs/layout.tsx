@@ -25,6 +25,13 @@ export default class DocsLayout extends BaseReactController {
     this.props.navigate(`/docs${menu.path}`);
   }
 
+  async initialModelStaticState(): Promise<void | number> {}
+  onInitialModelStaticStateDid = () => {
+    console.log("xxxxxxxxx:", this.docsModel.state.openKeys);
+
+    this.docsModel.initialSetOpenKeys();
+  };
+
   private renderMenuItem(items: DocMenuItem[] | undefined) {
     if (!items || items.length === 0) {
       return undefined;
@@ -47,11 +54,6 @@ export default class DocsLayout extends BaseReactController {
       }
     }
     return views;
-  }
-
-  componentDidMount(): void {
-    super.componentDidMount();
-    this.docsModel.initialSetOpenKeys();
   }
 
   onOpenChange = (openKeys) => {
