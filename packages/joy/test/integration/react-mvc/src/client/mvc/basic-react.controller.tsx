@@ -14,14 +14,18 @@ export default class BasicReactController extends BaseReactController {
     await this.helloModel.add(1);
   }
 
+  onInitialModelStaticStateDid() {
+    this.helloModel.add(2);
+  }
+
   renderView(): ReactNode {
     const { message, count } = this.helloModel.state;
     return (
       <div>
         <h1>Hello-1</h1>
         <BasicReactView message={message} count={count} />
-        <button id={"btnAdd"} onClick={() => this.helloModel.add(1)}>
-          add 1 sd
+        <button id={"btnAdd"} onClick={() => this.helloModel.add(3)}>
+          add 3
         </button>
       </div>
     );

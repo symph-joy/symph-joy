@@ -12,7 +12,7 @@ export function mvcCases(testContext: JoyTestContext) {
       const message = getDomInnerHtml(htmlContent, "#message");
       const count = getDomInnerHtml(htmlContent, "#count");
       expect(message).toBe("hello joy");
-      expect(count).toBe("1");
+      expect(count).toBe("1"); // 服务端渲染，只执行 initialModelStaticState：count + 1 = 1
     });
 
     test("should render the react-mvc mvc page.", async () => {
@@ -20,14 +20,14 @@ export function mvcCases(testContext: JoyTestContext) {
       const message = await page.innerText("#message");
       const count = await page.innerText("#count");
       expect(message).toBe("hello joy");
-      expect(count).toBe("1");
+      expect(count).toBe("3"); // 浏览器执行 onInitialModelStaticStateDid 事件：count + 2 = 3
     });
 
     test("mvc components should work well on browser.", async () => {
       await page.goto(testContext.getUrl("/react-mvc"));
       await page.click("#btnAdd");
       const count = await page.innerText("#count");
-      expect(count).toBe("2");
+      expect(count).toBe("6"); // 浏览器执行点击 事件：count + 3 = 6
     });
   });
 }
