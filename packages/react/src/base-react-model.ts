@@ -2,7 +2,6 @@ import { ReactReduxService } from "./redux/react-redux.service";
 import { Inject, IComponentInfoAware, ComponentAwareInfo, IComponentLifecycle, RuntimeException, ComponentName } from "@symph/core";
 import warning from "./redux/utils/warning";
 import isPlainObject from "./redux/utils/isPlainObject";
-import { func } from "prop-types";
 
 export abstract class BaseReactModel<TState> implements IComponentLifecycle, IComponentInfoAware {
   @Inject()

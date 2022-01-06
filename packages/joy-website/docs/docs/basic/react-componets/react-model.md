@@ -1,10 +1,10 @@
 # ReactModel
 
-ReactModel 组件管理业务行为和维护业务数据状态。
+ReactModel 组件用于管理业务行为和维护业务数据状态。
 
-状态管理基于 [redux](https://redux.js.org/) 实现，秉承了其单向不可变数据流，全局状态管理属性，即各个 Model 的状态统一在 Redux 的 `store`中管理，Model 实例上并未正真保存状态数据，读取状态时，实时从全局状态中获取属于当前 Model 的状态。
+状态管理基于 [redux](https://redux.js.org/) 实现，秉承其单向不可变数据流，全局状态管理属性的特性，各个 Model 的状态统一在 Redux 的 `store`中管理，Model 实例上并未正真保存状态数据，读取 Model 状态时，实时从全局状态中获取属于当前 Model 的状态。
 
-`ReactModel`是单例且按需加载创建的，在应用运行期间，只有当界面上使用到的`ReactModel`组件才会被创建，创建后的实例将一直在容器中存在，如果再次进入该界面，会直接使用之前的实例和其状态渲染。
+`ReactModel`是单例且按需加载和创建的，在应用运行期间，只有当前界面上使用到的`ReactModel`组件才会被创建，创建后的实例将一直在容器中存在，如果再次进入该界面，会直接使用之前的实例和其状态渲染。
 
 先看一个简单的购物车 Model 示例：
 
@@ -37,21 +37,21 @@ export class OrderModel extends BaseReactModel<OrderModelState> {
 }
 ```
 
-`OrderModel`继承了`BaseReactModel`类，使用`@ReactModel(options)` 装饰器申明这个是一个 ReactModel 组件类，通过泛型指定了其管理的`state`的数据类型。
+`OrderModel`继承了`BaseReactModel`类，使用`@ReactModel(options)` 装饰器申明这个是一个 ReactModel，通过泛型指定了其管理的`state`的数据类型。
 
 ## 设置初始状态 `getInitState`
 
 在`ReactModel`类中实现`getInitState`方法，其返回值即作为该 Model 的初始状态值。
 
-当 `ReactModel` 首次被创建时，才会向统一状态源中注册该 Model 的状态，此时注册的就是其初始默认状态值，以便界面也能够展示一些默认界面。但在开启服务端渲染时，Model 的状态
+只有在 `ReactModel` 首次被创建时，才会向统一状态源中注册该 Model 的和其初始状态值。
 
 ## 更新状态 `setState`
 
-在业务方法内部，调用父类提供的`protected setState(nextState: Partial<TState>): void`方法更新状态。
+在业务方法内部，调用父类提供的`protected setState(nextState: Partial<TState>): void`方法来更新当前Model状态。
 
-入参`nextState`可以是该 Model 状态的一部分状态值，最终和当前状态`merge`合并后形成新的状态，合并只是浅层合并，类似`Object.assign({}, nextState, curState)`, 和这和 React 类组件提供的`setState`方法类似。
+入参`nextState`可以是该 Model 状态的一部分值，最终和当前状态`merge`合并后形成新的状态，合并只是浅层合并，类似`Object.assign({}, nextState, curState)`, 和这和 React 类组件提供的`setState`方法类似。
 
-其申明的访问属性为`protected`，意为着只能在本 Model 内部调用，不能在外部直接调用更改一个 Model 的状态，我们也不建议这样，这会导致 Model 的状态难以维护。
+其访问属性为`protected`，意为着只能在本 Model 内部调用，不能在外部直接调用更改一个 Model 的状态，也不建议这样，这会导致 Model 的状态难以维护。
 
 ## 读取状态 `state`
 
@@ -169,12 +169,9 @@ export class UserModel extends BaseReactModel<{ user }> {
 上例中，我们通过`this.fetchService.fetchApi`请求 API 接口数据，那它为我们提供了哪些能力呢？
 
 - 读取配置，生成完成的请求接口地址。
-- 动态挂载业务模块内，访问自身提供的接口。
-- 服务端渲染和浏览器上运行，两者的实现方式有所不同，所以在服务端渲染时`ReactModel`中注入的是 `ReactFetchServerService` 实例，在浏览器上运行时注入的是 `ReactFetchClientService`实例，我们可以再继承这些类并扩展和定制它们。
-
+- 提供请求和响应处理器，错误封装，并发及操时控制等。（待开发）
+- 区分服务端渲染和浏览器环境，两者的实现方式有所不同，所以在服务端渲染时`ReactModel`中注入的是 `ReactFetchServerService` 实例，在浏览器上运行时注入的是 `ReactFetchClientService`实例。
   例如：在服务端渲染时有时并不能通过外网域名和端口来加载数据，得使用类似`http://localhost:${config.port}`的地址来获取当前服务启动的端口地址。
-
--
 
 ### fetchApi
 
@@ -190,7 +187,12 @@ export class UserModel extends BaseReactModel<{ user }> {
 
 `public fetchModuleApi(moduleMount: string, path: string, init?: RequestInit): Promise<Response>;`
 
-获取挂载的第三方业务模块中提供的接口。
-Joy 可以挂载第三方业务模块，挂载点`mount`是可配置的，第三方模块在开发时，并不能预测最终业务模块的挂载点什么，所以提供该方法动态的获取挂载点生成完整的请求路径。
+获取挂载业务模块中提供的接口，`moduleMount`为其挂载点。
 
-例如：开发一个用户管理模块，
+> 通常情况下，我们并不直接使用该方法调用第三业务模块中提供的接口，而是依赖第三方模块提供的`ReactModel`或`Service`服务类，调用其方法获取处理后的数据，第三方模块内封装数据请求和数据处理逻辑。
+
+### 可挂载模块获取数据
+
+第三方可挂载业务模块在开发时，并不能预测它挂载到主应用时的名称是什么，所以`@symph/joy`提供了`ReactModuleFetchService`类，其提供`fetchModuleApi`方，在运行时自动获取本模块的挂载值，然后生成完整的请求路径。
+
+例如：当我们开发一个通用的用户管理模块，在其它应用挂载该模块在`users`路径下，那么`reactModuleFetchService.fetchModuleApi("/me")`等效于 `fetch("/api/users/me")`。

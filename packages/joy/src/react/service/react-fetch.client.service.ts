@@ -29,7 +29,6 @@ export class ReactFetchClientService extends ReactFetchService {
     if (pathOrUrl[0] !== "/") {
       throw new RuntimeException('Url path must start with "/", it should be a absolute path.');
     }
-    // todo add client basePath
     return `${window.location.origin}${this.joyClientConfig.apiPrefix}${mount}${pathOrUrl}`;
   }
 }
