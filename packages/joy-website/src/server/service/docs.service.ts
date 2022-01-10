@@ -190,7 +190,7 @@ export class DocsService implements IComponentLifecycle {
         }
         let baseName = path.basename(absolutePath);
         const childNodePath = baseName.slice(0, baseName.indexOf("."));
-        let childPath = `${parentPath}/${childNodePath}`;
+        let childPath = `${parentPath}/${nodePath}/${childNodePath}`;
         const childTitle = childNodePath;
         let title;
         // 不支持menu.json中嵌套多个children，只支持一级children

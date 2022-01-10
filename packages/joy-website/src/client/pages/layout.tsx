@@ -135,16 +135,19 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                   </MenuItem>
                 )}
                 <MenuItem key="1">
-                  <a onClick={this.pushHistory.bind(this, "/docs/docs/introduce")}>开始</a>
+                  <a onClick={this.pushHistory.bind(this, "/docs/docs/start/introduce")}>开始</a>
                 </MenuItem>
-                <MenuItem key="2">
-                  <Link to="/docs/config/introduce">配置</Link>
+                {/* <MenuItem key="2">
+                  <Link to="/docs/config/start/introduce">配置</Link>
+                </MenuItem> */}
+                {/* <MenuItem key="3">
+                  <Link to="/docs/api/start/introduce">API</Link>
+                </MenuItem> */}
+                {/* <MenuItem key="4">指南</MenuItem> */}
+                {/* <MenuItem key="5">插件</MenuItem> */}
+                <MenuItem key="8">
+                  <Link to="/docs/v1/readme">v1</Link>
                 </MenuItem>
-                <MenuItem key="3">
-                  <Link to="/docs/api/introduce">API</Link>
-                </MenuItem>
-                <MenuItem key="4">指南</MenuItem>
-                <MenuItem key="5">插件</MenuItem>
                 <MenuItem key="9">
                   <a target="_blank" href="https://github.com/lnlfps/symph-joy">
                     Github
