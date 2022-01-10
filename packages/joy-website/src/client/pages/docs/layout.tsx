@@ -26,11 +26,11 @@ export default class DocsLayout extends BaseReactController {
     this.props.navigate(`/docs${menu.path}`);
   }
 
-  async initialModelStaticState(): Promise<void | number> {}
-  onInitialModelStaticStateDid = () => {
-    // console.log("xxxxxxxxx:", this.docsModel.state.defaultOpenKeys);
-    // this.docsModel.initialSetOpenKeys();
-  };
+  async initialModelStaticState(): Promise<void | number> {
+    const tem = this.props.location.pathname.split("/");
+    let path = [tem[0], tem[2]].join("/") || "/docs/docs";
+    await this.docsModel.getDocMenus(path);
+  }
 
   private renderMenuItem(items: DocMenuItem[] | undefined) {
     if (!items || items.length === 0) {

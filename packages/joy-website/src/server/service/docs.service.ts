@@ -52,10 +52,6 @@ export class DocsService implements IComponentLifecycle {
   @Value({ configKey: "docs" })
   public configDocs: DocJoyConfig;
 
-  public allMenus: Doc[];
-
-  public menus: Doc[];
-
   public searchDoc: Doc[];
 
   public menusCache: Map<string, Doc> = new Map<string, Doc>();
@@ -128,8 +124,7 @@ export class DocsService implements IComponentLifecycle {
       return [];
     }
     const dirs = typeof dir === "string" ? [dir] : dir;
-    this[key] = this.scanDir(dirs, key);
-    return this.fmtMenus(this[key]);
+    return this.fmtMenus(this.scanDir(dirs, key));
   }
 
   private scanDir(dirs: string[], key: string): Doc[] {
@@ -146,9 +141,12 @@ export class DocsService implements IComponentLifecycle {
       }
       const { doc, searchDoc } = this.recursiveFindDoc(dir, "", dir);
       doc?.children && docs.push(...doc.children);
-      // 除去@开头文件的doc
-      searchDoc?.children && docsSearch.push(...searchDoc.children);
-      this.searchDoc = docsSearch;
+      // 获取所有menu时才需要获取seach内容
+      if (key === "allMenus") {
+        // 除去@开头文件的doc
+        searchDoc?.children && docsSearch.push(...searchDoc.children);
+        this.searchDoc = docsSearch;
+      }
     }
     if (key === "allMenus") {
       this.setCache(docs);
