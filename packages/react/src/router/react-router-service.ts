@@ -1,5 +1,5 @@
 import { IReactRoute } from "../interfaces";
-import { matchRoutes } from "react-router";
+import { matchRoutes, RouteMatch } from "react-router";
 import { ClassComponent, ComponentName, isClassComponent, TComponent, Type } from "@symph/core";
 import { getRouteMeta, IRouteMeta } from "./react-route.decorator";
 import * as H from "history";
@@ -179,6 +179,10 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
       }
     }
     return false;
+  }
+
+  public matchRoutes(pathname: string): RouteMatch[] | null {
+    return matchRoutes(this.getRoutes(), pathname);
   }
 
   /**

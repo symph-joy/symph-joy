@@ -7,7 +7,7 @@ import { Outlet, Link } from "@symph/react/router-dom";
 import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
-import { changeTheme } from "../utils/theme";
+import { getTheme, changeTheme } from "../utils/theme";
 const { Option } = AutoComplete;
 const { Content } = Layout;
 const { Item: MenuItem } = Menu;
@@ -48,6 +48,32 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     observer: undefined,
     hash: "",
   };
+
+  componentDidMount() {
+    super.componentDidMount();
+    const theme = getTheme();
+    const oBtn = document.getElementById("collapseBtn");
+    const oBody = document.getElementsByTagName("body")[0];
+
+    oBody.setAttribute("data-theme", theme);
+    const observer = new IntersectionObserver(([entry]) => {
+      const { intersectionRatio } = entry;
+
+      if (intersectionRatio > 0) {
+        this.layoutModel.changeIsMobile(true);
+        oBody.setAttribute("data-is-mobile", "true");
+      } else {
+        this.layoutModel.changeIsMobile(false);
+        oBody.setAttribute("data-is-mobile", "false");
+      }
+    });
+
+    observer.observe(oBtn);
+
+    this.setState({
+      observer,
+    });
+  }
 
   onChange = (value: string) => {
     this.setState({

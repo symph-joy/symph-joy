@@ -79,10 +79,10 @@ export abstract class BaseReactController<
   private isRendingView = false;
   private modelStateDeps: Record<string, string[]> = {};
 
+  private isWaitingInitStaticDid = false;
+
   constructor(props: TProps, context: TContext) {
     super(props as any, context);
-    // this.hasInitInvoked = false;
-    // this.hasInjectProps = false;
     this.isCtlMounted = false;
 
     this.appContext = context;
@@ -96,6 +96,10 @@ export abstract class BaseReactController<
 
   componentDidMount(): void {
     this.isCtlMounted = true;
+    const { initStatic } = this.getInitState();
+    if (this.isWaitingInitStaticDid && initStatic === ReactRouteInitStatus.SUCCESS) {
+      this.triggerOnInitialModelStaticStateDid();
+    }
   }
 
   componentWillUnmount(): void {
@@ -116,6 +120,7 @@ export abstract class BaseReactController<
   }
 
   private triggerOnInitialModelStaticStateDid() {
+    this.isWaitingInitStaticDid = false;
     if (typeof window !== "undefined" && typeof this.onInitialModelStaticStateDid === "function") {
       this.onInitialModelStaticStateDid();
     }
@@ -136,18 +141,16 @@ export abstract class BaseReactController<
     };
     let pathname: string = this.props.match?.pathname || this.location.pathname;
     const initStage = this.initManager.initStage;
-    const { initStatic, init } = this.initManager.getRouteInitState(pathname);
+    const { initStatic, init } = this.getInitState();
 
     if (initStage >= EnumReactAppInitStage.STATIC) {
-      let initStaticTask: Promise<number | void> | null = null;
       if (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.ERROR) {
         if (this.initialModelStaticState) {
-          initStaticTask = Promise.resolve(this.initialModelStaticState({}))
+          const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
             .then((rst) => {
-              this.triggerOnInitialModelStaticStateDid();
-              // this.initManager.setInitState(pathname, {
-              //   initStatic: ReactRouteInitStatus.SUCCESS,
-              // });
+              this.initManager.setInitState(pathname, {
+                initStatic: ReactRouteInitStatus.SUCCESS,
+              });
               return rst;
             })
             .catch((e) => {
@@ -161,14 +164,16 @@ export abstract class BaseReactController<
             this.initManager.addTask(pathname, initStaticTask);
           }
         } else {
-          // this.initManager.setInitState(pathname, {
-          //   initStatic: ReactRouteInitStatus.SUCCESS,
-          // });
+          this.initManager.setInitState(pathname, {
+            initStatic: ReactRouteInitStatus.SUCCESS,
+          });
         }
+      } else if (initStatic === ReactRouteInitStatus.SUCCESS) {
+        // noop
+      } else if (initStatic === ReactRouteInitStatus.LOADING) {
+        // 数据由外部加载，例如加载预渲染的数据时。noop
       }
-      if (!initStaticTask) {
-        this.triggerOnInitialModelStaticStateDid();
-      }
+      this.isWaitingInitStaticDid = true;
     }
 
     if (initStage >= EnumReactAppInitStage.DYNAMIC) {
@@ -290,9 +295,12 @@ export abstract class BaseReactController<
         return false;
       }
       const matchedUrl = this.props.match.pathname;
-      const nextUrlState = (nextModelState as ReactAppInitManager["state"])[matchedUrl];
-      const preUrlState = (preModelState as ReactAppInitManager["state"])[matchedUrl];
-      return nextUrlState?.initStatic !== preUrlState?.initStatic || nextUrlState?.init !== preUrlState?.init;
+      const nextInitState = (nextModelState as ReactAppInitManager["state"])[matchedUrl];
+      const preInitState = (preModelState as ReactAppInitManager["state"])[matchedUrl];
+      if (this.isWaitingInitStaticDid && nextInitState.initStatic === ReactRouteInitStatus.SUCCESS) {
+        this.triggerOnInitialModelStaticStateDid();
+      }
+      return nextInitState?.initStatic !== preInitState?.initStatic || nextInitState?.init !== preInitState?.init;
     } else {
       const depProps = this.modelStateDeps[modelNameSpace];
       if (!depProps?.length) {
@@ -307,9 +315,14 @@ export abstract class BaseReactController<
     }
   };
 
-  render(): ReactNode {
+  protected getInitState() {
     const pathname = this.props.match?.pathname || this.location.pathname;
-    const { initStatic, init } = this.initManager.getRouteInitState(pathname);
+    const initState = this.initManager.getRouteInitState(pathname);
+    return initState;
+  }
+
+  render(): ReactNode {
+    const { initStatic, init } = this.getInitState();
 
     // reset model state dep props
     this.modelStateDeps = {};

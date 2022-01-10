@@ -19,6 +19,7 @@ export default class DocsLayout extends BaseReactController {
 
   state = {
     showDrawer: false,
+    openKeys: null,
   };
 
   private async showDoc(menu: DocMenuItem) {
@@ -27,9 +28,8 @@ export default class DocsLayout extends BaseReactController {
 
   async initialModelStaticState(): Promise<void | number> {}
   onInitialModelStaticStateDid = () => {
-    console.log("xxxxxxxxx:", this.docsModel.state.openKeys);
-
-    this.docsModel.initialSetOpenKeys();
+    // console.log("xxxxxxxxx:", this.docsModel.state.defaultOpenKeys);
+    // this.docsModel.initialSetOpenKeys();
   };
 
   private renderMenuItem(items: DocMenuItem[] | undefined) {
@@ -57,7 +57,9 @@ export default class DocsLayout extends BaseReactController {
   }
 
   onOpenChange = (openKeys) => {
-    this.docsModel.changeOpenKeys(openKeys);
+    this.setState({
+      openKeys: openKeys,
+    });
   };
 
   renderView(): ReactNode {
@@ -68,7 +70,7 @@ export default class DocsLayout extends BaseReactController {
           <Menu
             selectedKeys={[currentDoc?.path]}
             mode="inline"
-            openKeys={defaultOpenKeys}
+            openKeys={this.state.openKeys || defaultOpenKeys}
             className={styles.docMenus}
             onOpenChange={this.onOpenChange}
           >
