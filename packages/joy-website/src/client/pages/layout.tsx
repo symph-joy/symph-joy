@@ -1,16 +1,17 @@
 import React, { ReactNode } from "react";
-import { Layout, Menu, AutoComplete, Button } from "antd";
+import { Layout, Menu, AutoComplete, Button, Input } from "antd";
 import { Inject } from "@symph/core";
 import { DocsModel } from "../model/docs.model";
 import { BaseReactController, ReactController } from "@symph/react";
 import { Outlet, Link } from "@symph/react/router-dom";
-import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined } from "@ant-design/icons";
+import Icon, { MenuUnfoldOutlined, MenuFoldOutlined, CloseOutlined, SearchOutlined } from "@ant-design/icons";
 import styles from "./layout.less";
 import { LayoutModel } from "../model/layout.model";
 import { getTheme, changeTheme } from "../utils/theme";
-const { Option } = AutoComplete;
+
 const { Content } = Layout;
 const { Item: MenuItem } = Menu;
+
 const SunSvg = () => (
   <svg viewBox="0 0 1024 1024" fill="currentColor" width="1em" height="1em">
     <path
@@ -33,6 +34,8 @@ interface IStateProps {
   // 观察菜单展开收缩按钮，根据按钮是否显示决定当前是移动端还是web端
   observer: IntersectionObserver;
   hash: string;
+  // 用来控制主题色选择时的样式
+  themeSelectAfterVisible: boolean;
 }
 
 @ReactController()
@@ -47,33 +50,8 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     search: "",
     observer: undefined,
     hash: "",
+    themeSelectAfterVisible: false,
   };
-
-  componentDidMount() {
-    super.componentDidMount();
-    const theme = getTheme();
-    const oBtn = document.getElementById("collapseBtn");
-    const oBody = document.getElementsByTagName("body")[0];
-
-    oBody.setAttribute("data-theme", theme);
-    const observer = new IntersectionObserver(([entry]) => {
-      const { intersectionRatio } = entry;
-
-      if (intersectionRatio > 0) {
-        this.layoutModel.changeIsMobile(true);
-        oBody.setAttribute("data-is-mobile", "true");
-      } else {
-        this.layoutModel.changeIsMobile(false);
-        oBody.setAttribute("data-is-mobile", "false");
-      }
-    });
-
-    observer.observe(oBtn);
-
-    this.setState({
-      observer,
-    });
-  }
 
   onChange = (value: string) => {
     this.setState({
@@ -112,6 +90,32 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     }
   }
 
+  componentDidMount() {
+    super.componentDidMount();
+    const theme = getTheme();
+    const oBtn = document.getElementById("collapseBtn");
+    const oBody = document.getElementsByTagName("body")[0];
+
+    oBody.setAttribute("data-theme", theme);
+    const observer = new IntersectionObserver(([entry]) => {
+      const { intersectionRatio } = entry;
+
+      if (intersectionRatio > 0) {
+        this.layoutModel.changeIsMobile(true);
+        oBody.setAttribute("data-is-mobile", "true");
+      } else {
+        this.layoutModel.changeIsMobile(false);
+        oBody.setAttribute("data-is-mobile", "false");
+      }
+    });
+
+    observer.observe(oBtn);
+
+    this.setState({
+      observer,
+    });
+  }
+
   componentWillUnmount() {
     super.componentWillUnmount();
 
@@ -138,6 +142,12 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
     navigate(url);
   };
 
+  handleThemeSelectMouseEnter = () => {
+    this.setState({
+      themeSelectAfterVisible: true,
+    });
+  };
+
   renderView(): ReactNode {
     const { result } = this.docsModel.state;
     const { collapsed, isMobile } = this.layoutModel.state;
@@ -154,10 +164,38 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
               <Button id="collapseBtn" className={styles.menu__collapseBtn} type="text" size="large" onClick={this.handleToggleCollapsed}>
                 {React.createElement(collapsed ? MenuUnfoldOutlined : MenuFoldOutlined)}
               </Button>
+
               <Menu className={styles.menu + " " + (collapsed ? styles.menu__collapsed : "")} mode={isMobile ? "vertical" : "horizontal"}>
                 {isMobile && (
                   <MenuItem key="0" className={styles.menu__closeItem}>
                     <CloseOutlined onClick={this.handleToggleCollapsed} />
+                  </MenuItem>
+                )}
+                {!isMobile && (
+                  <MenuItem key="9">
+                    <AutoComplete
+                      allowClear
+                      value={this.state.search}
+                      onSelect={this.onSelect}
+                      onChange={this.onChange}
+                      style={{ width: 200 }}
+                      options={result.map((value, key) => ({
+                        value: JSON.stringify(value),
+                        label: (
+                          <div key={key}>
+                            {value.children ? (
+                              <a>
+                                {value.text} &gt; {value.children[0].text}
+                              </a>
+                            ) : (
+                              <a>{value.text}</a>
+                            )}
+                          </div>
+                        ),
+                      }))}
+                    >
+                      <Input prefix={<SearchOutlined />} placeholder="搜索" />
+                    </AutoComplete>
                   </MenuItem>
                 )}
                 <MenuItem key="1">
@@ -174,41 +212,19 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                 <MenuItem key="8">
                   <Link to="/docs/v1/readme">v1</Link>
                 </MenuItem>
-                <MenuItem key="9">
+                <MenuItem key="6">
                   <a target="_blank" href="https://github.com/lnlfps/symph-joy">
                     Github
                   </a>
                 </MenuItem>
                 {!isMobile && [
-                  <MenuItem key="6">
+                  <MenuItem key="7">
                     <a id="change-theme" className={styles.theme__switch} onClick={this.handleToggleThemeClick}>
                       <span>
                         <Icon component={SunSvg} />
                         <Icon component={MoonSvg} />
                       </span>
                     </a>
-                  </MenuItem>,
-                  <MenuItem key="7">
-                    <AutoComplete
-                      allowClear
-                      value={this.state.search}
-                      placeholder="搜索"
-                      onSelect={this.onSelect}
-                      onChange={this.onChange}
-                      style={{ width: 200 }}
-                    >
-                      {result.map((value, key) => (
-                        <Option key={key} value={JSON.stringify(value)}>
-                          {value.children ? (
-                            <a>
-                              {value.text} &gt; {value.children[0].text}
-                            </a>
-                          ) : (
-                            <a>{value.text}</a>
-                          )}
-                        </Option>
-                      ))}
-                    </AutoComplete>
                   </MenuItem>,
                 ]}
               </Menu>

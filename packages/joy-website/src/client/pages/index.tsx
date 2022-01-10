@@ -33,12 +33,31 @@ export default class HelloController extends BaseReactController {
     await this.docModel.getSnippet("/snippets/hello-react-controller");
   }
 
+  componentDidMount() {
+    super.componentDidMount();
+
+    (window as any).VANTA.BIRDS({
+      el: "#banner",
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 390.0,
+      minWidth: 200.0,
+      scale: 1.0,
+      scaleMobile: 1.0,
+      backgroundAlpha: 0.0,
+      color1: 0xfa541c,
+      color2: 0xfaad14,
+      colorMode: "variance",
+    });
+  }
+
   renderView(): ReactNode {
     return (
       <Layout className={styles.layout}>
         <Content>
           {/* -------- banner -------- */}
-          <section role="banner" className={styles.banner}>
+          <section role="banner" id="banner" className={styles.banner}>
             <Paragraph className={styles.banner__paragraph}>
               <h1>
                 <div>@symph/joy 让 JS/TS 应用</div>

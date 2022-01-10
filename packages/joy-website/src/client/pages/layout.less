@@ -20,9 +20,52 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1140px;
-    padding: 0 20px;
+    // max-width: 1140px;
+    padding: 0 30px;
     margin: auto;
+  }
+}
+
+.theme__select {
+  position: relative;
+  height: 20px;
+  width: 40px;
+  display: inline-block;
+  color: var(--theme-color, rgb(24, 144, 255));
+
+  &::before {
+    content: "主题色";
+    color: currentColor;
+    font-weight: bold;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 33px;
+    left: 0;
+    width: 50px;
+    height: 210px;
+    background-color: #fff;
+    border: 1px solid #a08ca1;
+    z-index: 10;
+    cursor: default;
+    display: none;
+  }
+
+  &Option {
+    position: absolute;
+    top: calc(var(--i) * 25px + 15px);
+    left: 5px;
+    width: 40px;
+    height: 20px;
+    background-color: var(--bgColor, rgb(24, 144, 255));
+    z-index: 11;
+    display: none;
+  }
+
+  &Visible:hover::after, &Visible:hover > &Option {
+    display: block;
   }
 }
 
@@ -63,7 +106,7 @@ body[data-theme="dark"] {
     }
 
     .menu {
-      min-width: 700px;
+      min-width: 850px;
       justify-content: space-evenly;
       border-bottom: 0;
       color: var(--font-color);
