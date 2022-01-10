@@ -178,7 +178,6 @@ export default class MainLayout extends BaseReactController<any, IStateProps> {
                       value={this.state.search}
                       onSelect={this.onSelect}
                       onChange={this.onChange}
-                      style={{ width: 200 }}
                       options={result.map((value, key) => ({
                         value: JSON.stringify(value),
                         label: (
