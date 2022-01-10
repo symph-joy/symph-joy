@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { ReactApplicationReactContext, ReactRouteInitStatus } from "@symph/react";
+import { ReactApplicationReactContext, ReactRouteInitStatus, ReactRouterService } from "@symph/react";
 import * as H from "history";
 import { useLocation } from "react-router-dom";
 import { JoyReactAppInitManagerClient, JoySSGPage } from "../joy-react-app-init-manager-client";
@@ -13,12 +13,14 @@ export function JoyPageSSGDataLoader({ children }: { children: React.ReactNode }
   const pathname = location.pathname;
 
   const joyAppContext = useContext(ReactApplicationReactContext);
+
   if (!joyAppContext) {
     throw new Error("react app context is not initialed");
   }
 
   // prefetch Data
   const initManager = joyAppContext.getSync(JoyReactAppInitManagerClient);
+  const reactRouter = joyAppContext.getSync(ReactRouterService);
   const ssgPage = useMemo(() => {
     if (!ssr) {
       return undefined;
@@ -26,16 +28,18 @@ export function JoyPageSSGDataLoader({ children }: { children: React.ReactNode }
     let ssgInfo: Promise<JoySSGPage | undefined> | JoySSGPage | undefined = undefined;
     // 暂时只处理叶子路由。
     ssgInfo = initManager.getPageSSGState(pathname);
-    const routeTreeInitState = initManager.getRouteTreeInitState(pathname);
-    for (const initState of routeTreeInitState) {
+    const routesMatched = reactRouter.matchRoutes(pathname) || [];
+    for (const routeMatch of routesMatched) {
+      const initState = initManager.getRouteInitState(routeMatch.pathname);
       if (
         initState.initStatic === undefined ||
         initState.initStatic === ReactRouteInitStatus.NONE ||
         initState.initStatic === ReactRouteInitStatus.ERROR
       ) {
-        initManager.setInitState(initState.pathname, { initStatic: ReactRouteInitStatus.LOADING });
+        initManager.setInitState(routeMatch.pathname, { initStatic: ReactRouteInitStatus.LOADING });
       }
     }
+
     return ssgInfo;
   }, [pathname]);
 

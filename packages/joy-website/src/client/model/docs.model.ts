@@ -118,24 +118,12 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
   public async getDocMenus(path: string): Promise<DocMenuItem[]> {
     const resp = await this.fetchService.fetchApi("/docs/menus?path=" + encodeURIComponent(path));
     const respJson = await resp.json();
-    const openKeys = this.getDefaultOpenKeys(respJson.data);
+    const defaultOpenKeys = this.getDefaultOpenKeys(respJson.data);
     this.setState({
       docMenus: respJson.data,
-      openKeys,
+      defaultOpenKeys,
     });
     return respJson.data;
-  }
-
-  public initialSetOpenKeys() {
-    this.setState({
-      defaultOpenKeys: this.state.openKeys,
-    });
-  }
-
-  public changeOpenKeys(openKeys: []) {
-    this.setState({
-      defaultOpenKeys: openKeys,
-    });
   }
 
   public async getAllDocsMenus(): Promise<DocMenuItem[]> {

@@ -14,6 +14,10 @@ export interface ReactPageInitState {
   initStatic: ReactRouteInitStatus;
 }
 
+export interface OnInitStaticDidListener {
+  onInitialModelStaticStateDid?(): void;
+}
+
 export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitState> extends BaseReactModel<{ [pathname: string]: T }> {
   public initStage: EnumReactAppInitStage = EnumReactAppInitStage.DEFAULT;
 
@@ -47,7 +51,13 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
   }
 
   async waitAllFinished(pathname: string): Promise<{ revalidate: number | undefined }> {
-    let tasks = this.initTasks[pathname] || [];
+    let tasks = [];
+    const allPaths = Object.keys(this.initTasks);
+    for (const path of allPaths) {
+      if (pathname.startsWith(path)) {
+        tasks.push(...this.initTasks[path]);
+      }
+    }
     const results = await Promise.all(tasks);
     let minRevalidate = Number.MAX_VALUE;
     results.forEach((rst) => {
