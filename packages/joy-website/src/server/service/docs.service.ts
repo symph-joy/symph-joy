@@ -237,7 +237,8 @@ export class DocsService implements IComponentLifecycle {
 
   // 处理有关HtmlContent的所有，包含anchor和title
   private getDocHtmlContent(doc: Doc, docPath: string): Doc {
-    if (doc.htmlContent === undefined) {
+    // 开发模式下不使用缓存
+    if (doc.htmlContent === undefined || process.env.NODE_ENV === "development") {
       if (!doc.file) {
         throw new Error(`Doc file is not defined. doc Path: ${docPath}`);
       }

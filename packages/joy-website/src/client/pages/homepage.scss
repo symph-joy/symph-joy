@@ -334,6 +334,8 @@
   }
 
   &__bottom {
+    background-color: var(--sub-background-color);
+
     .container {
       display: grid;
       padding: 50px 20px;

@@ -1,6 +1,7 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController } from "@symph/react";
-import { Layout, Typography, Button, Row, Input, Checkbox } from "antd";
+import { Link } from "@symph/react/router-dom";
+import { Layout, Typography, Button, Row, Input, Checkbox, Carousel } from "antd";
 import styles from "./homepage.scss";
 import {
   AndroidOutlined,
@@ -29,9 +30,14 @@ export default class HelloController extends BaseReactController {
   @Inject()
   public docModel: DocsModel;
 
-  async initialModelStaticState(urlParams: any): Promise<void | number> {
-    await this.docModel.getSnippet("/snippets/hello-react-controller");
+  async initialModelStaticState(): Promise<void | number> {
+    await Promise.all([
+      this.docModel.getSnippet("/docs/@snippets/hello-react-controller"),
+      this.docModel.getSnippet("/docs/@snippets/hello-server-controller"),
+    ]);
   }
+
+  aaa = "aaaaaa";
 
   componentDidMount() {
     super.componentDidMount();
@@ -53,6 +59,10 @@ export default class HelloController extends BaseReactController {
   }
 
   renderView(): ReactNode {
+    const { snippets } = this.docModel.state;
+    const docHelloReactController = snippets["/docs/@snippets/hello-react-controller"];
+    const docHelloServerController = snippets["/docs/@snippets/hello-server-controller"];
+
     return (
       <Layout className={styles.layout}>
         <Content>
@@ -99,8 +109,10 @@ export default class HelloController extends BaseReactController {
               </h1>
 
               <Row justify="center">
-                <Button>了解 JOY</Button>
-                <Button>快速开始</Button>
+                {/*<Button>了解 JOY</Button>*/}
+                <Button>
+                  <Link to="docs/docs/basic/getting-started">快速开始</Link>
+                </Button>
               </Row>
             </Paragraph>
           </section>
@@ -109,9 +121,8 @@ export default class HelloController extends BaseReactController {
           <section role="news" className={styles.news}>
             <div className={styles.container}>
               <div className={styles.news__list}>
-                <a href="#">Hello!</a>
-
-                <a href="#">Bye Bye!</a>
+                <a href="#">最新公告</a>
+                {/*<a href="#">Bye Bye!</a>*/}
               </div>
             </div>
           </section>
@@ -126,28 +137,28 @@ export default class HelloController extends BaseReactController {
                 <ul className={styles.function__list}>
                   <li>
                     <ApartmentOutlined />
-                    <h2>面向对象设计</h2>
-                    <p>将面向对象的设计思想运用到 JS/TS 应用，从 Joy 底层架构到业务领域，从React到Node，一次学习，多端适用。</p>
+                    <h2>面向对象</h2>
+                    <p>将面向对象编程运用到 JS/TS 应用中，从架构到业务设计，从前端到后端都适用。</p>
                   </li>
                   <li>
                     <FundOutlined />
                     <h2>React 应用</h2>
-                    <p>提供完整的 React 应用解决方案，封装底层技术细节，快速编写页面和管理全局状态，能够快速构建和启动开发服务器，方便调试和打包。</p>
+                    <p>提供完整的 React 应用解决方案，屏蔽技术细节，能够快速业务开发。</p>
                   </li>
                   <li>
                     <CloudServerOutlined />
-                    <h2>Node 应用</h2>
-                    <p>类似 Spring Boot ，基于IoC，自动扫描业务组件，注册接口和中间件等，并提供数据库、缓存、安全等组件。（开发中）</p>
+                    <h2>Node.js 应用</h2>
+                    <p>类似 Spring Boot ，基于控制反转的容器，提供数据库、缓存、安全等常用组件。（开发中）</p>
                   </li>
-                  {/*<li>*/}
-                  {/*  <ClusterOutlined />*/}
-                  {/*  <h2>多端应用</h2>*/}
-                  {/*  <p>可用于开发 Node 应用和浏览器应用，以及混合同构应用，适应多业务场景产品研发。</p>*/}
-                  {/*</li>*/}
                   <li>
                     <ClusterOutlined />
-                    <h2>多部署方案</h2>
-                    <p>前后端可独立发布和运行，可将前端导出静态部署，或者运行为Node.js应用，实时渲染页面和提供数据服务。de3de</p>
+                    <h2>多端应用</h2>
+                    <p>可用于开发 Node.js 应用和 React 应用，以及混合同构应用，适应多产品类型研发。</p>
+                  </li>
+                  <li>
+                    <ClusterOutlined />
+                    <h2>前后端分离</h2>
+                    <p>可运行为服务进程，实时渲染页面和提供数据服务，或将前端导出静态部署，前后端可分离运行。</p>
                   </li>
                   {/*<li>*/}
                   {/*  <GithubOutlined />*/}
@@ -160,97 +171,82 @@ export default class HelloController extends BaseReactController {
                   {/*  <p>Sunt in veniam commodo anim.</p>*/}
                   {/*</li>*/}
                 </ul>
-
-                <div className={styles.function__description}>
-                  <code>
-                    <span className={styles.function__description_cyan}>@ReactController()</span>
-                    <br />
-                    <span className={styles.function__description_yellow}>
-                      class <span className={styles.function__description_orange}>DemoComponent</span> extends{" "}
-                      <span className={styles.function__description_orange}>BaseReactController</span> {"\u007B"}
-                    </span>
-                    <br />
-                    <span className={styles.function__description_cyan + " " + styles.function__description_indent}>
-                      renderView() <span className={styles.function__description_yellow}>{"\u007B"}</span>
-                    </span>
-                    <br />
-                    <span className={styles.function__description_indentDouble}>
-                      <span className={styles.function__description_yellow}>return</span>{" "}
-                      <span className={styles.function__description_green}>&lt;div&gt;</span>
-                      Hello World!
-                      <span className={styles.function__description_green}>&lt;div/&gt;</span>
-                    </span>
-                    <br />
-                    <span className={styles.function__description_yellow + " " + styles.function__description_indent}>{"\u007D"}</span>
-                    <br />
-                    <span className={styles.function__description_yellow}>{"\u007D"}</span>
-                  </code>
-
-                  <div className={styles.function__description_info}>
-                    <h2>Level up your JavaScript code</h2>
-                    <p>
-                      With <a href="#">Symph Joy</a> in your app, just a few lines of codes is all you need to start building web pages like a boss.
-                    </p>
-                    <p>
-                      New to Symph Joy? Try our simply <a href="#">quickstart guide</a>
-                    </p>
+                <Carousel>
+                  <div className={styles.function__description}>
+                    <div dangerouslySetInnerHTML={{ __html: docHelloReactController?.htmlContent }}></div>
+                    <div className={styles.function__description_info}>
+                      <h2>开始 React 开发</h2>
+                      <p>@symph/joy 让我们更专注于业务和体验，避免技术细节的困扰，创建第一个文件即开始创建界面</p>
+                      <p>
+                        刚接触 <span className="code">@symph/joy</span> React开发? 让我们 <Link to="docs/docs/basic/getting-started">快速开始</Link>{" "}
+                        吧。
+                      </p>
+                    </div>
                   </div>
-                </div>
+                  <div className={styles.function__description}>
+                    <div dangerouslySetInnerHTML={{ __html: docHelloServerController?.htmlContent }}></div>
+                    <div className={styles.function__description_info}>
+                      <h2>开始 Server 服务开发</h2>
+                      <p>使用 @symph/joy，只需要创建一个文件和少数的代码，即开创建第一个服务。</p>
+                      <p>
+                        刚接触 <span className="code">@symph/joy</span> 服务端开发? 让我们 <Link to="docs/docs/basic/getting-started">快速开始</Link>{" "}
+                        吧。
+                      </p>
+                    </div>
+                  </div>
+                </Carousel>
               </div>
             </div>
           </section>
 
           {/* -------- footer -------- */}
           <footer role="footer" className={styles.footer}>
-            <div className={styles.footer__top}>
-              <div className={styles.container}>
-                <ul>
-                  <li>
-                    <h3>Get ahead</h3>
-                    <p>Deserunt dolor dolore excepteur ut ipsum in proident aliquip ut commodo aliqua aliquip ea.</p>
-                    <a href="#">Learn more</a>
-                  </li>
-                  <li>
-                    <h3>Get support</h3>
-                    <p>Officia proident aliquip sint cupidatat.</p>
-                    <a href="#">Learn more</a>
-                  </li>
-                  <li>
-                    <h3>Upcoming events</h3>
-                    <p>Ea nisi sit cillum irure labore nulla mollit sunt nulla eiusmod ea proident voluptate exercitation.</p>
-                    <a href="#">Learn more</a>
-                  </li>
-                </ul>
-              </div>
-            </div>
+            {/*<div className={styles.footer__top}>*/}
+            {/*  <div className={styles.container}>*/}
+            {/*    <ul>*/}
+            {/*      <li>*/}
+            {/*        <h3>Get ahead</h3>*/}
+            {/*        <p>Deserunt dolor dolore excepteur ut ipsum in proident aliquip ut commodo aliqua aliquip ea.</p>*/}
+            {/*        <a href="#">Learn more</a>*/}
+            {/*      </li>*/}
+            {/*      <li>*/}
+            {/*        <h3>Get support</h3>*/}
+            {/*        <p>Officia proident aliquip sint cupidatat.</p>*/}
+            {/*        <a href="#">Learn more</a>*/}
+            {/*      </li>*/}
+            {/*      <li>*/}
+            {/*        <h3>Upcoming events</h3>*/}
+            {/*        <p>Ea nisi sit cillum irure labore nulla mollit sunt nulla eiusmod ea proident voluptate exercitation.</p>*/}
+            {/*        <a href="#">Learn more</a>*/}
+            {/*      </li>*/}
+            {/*    </ul>*/}
+            {/*  </div>*/}
+            {/*</div>*/}
             <div className={styles.footer__bottom}>
               <div className={styles.container}>
-                <ul>
-                  <li>Why Symph Joy</li>
-                  <li>Microservices</li>
-                  <li>Reactive</li>
-                  <li>Event Driven</li>
-                  <li>Cloud</li>
-                  <li>Web Applications</li>
-                  <li>Serverless</li>
-                  <li>Batch</li>
-                </ul>
-                <ul>
-                  <li>Learn</li>
-                  <li>Quickstart</li>
-                  <li>Guides</li>
-                  <li>Blog</li>
-                </ul>
-                <ul>
-                  <li>Community</li>
-                  <li>Events</li>
-                  <li>Team</li>
-                </ul>
-                <div className={styles.footer__bottom_subscribe}>
-                  <h2>Get the Symph Joy newsletter</h2>
-                  <Input.Search size="large" placeholder="Email Address" enterButton={<Button>SUBSCRIBE</Button>} />
-                  <Checkbox>Yes, I would like to be contacted by The Symph Joy Team for newsletters, promotions and events</Checkbox>
+                <div>
+                  <div>联系我们</div>
+                  <div>Github Issue: https://github.com/lnlfps/symph-joy/issues</div>
+                  <div>QQ群: 929743297</div>
+                  <div>Email: lnlfps@gmail.com</div>
                 </div>
+                <div>Open-source MIT Licensed | Copyright © 2022-present</div>
+                {/*<ul>*/}
+                {/*  <li>Learn</li>*/}
+                {/*  <li>Quickstart</li>*/}
+                {/*  <li>Guides</li>*/}
+                {/*  <li>Blog</li>*/}
+                {/*</ul>*/}
+                {/*<ul>*/}
+                {/*  <li>Community</li>*/}
+                {/*  <li>Events</li>*/}
+                {/*  <li>Team</li>*/}
+                {/*</ul>*/}
+                {/*<div className={styles.footer__bottom_subscribe}>*/}
+                {/*  <h2>Get the Symph Joy newsletter</h2>*/}
+                {/*  <Input.Search size="large" placeholder="Email Address" enterButton={<Button>SUBSCRIBE</Button>} />*/}
+                {/*  <Checkbox>Yes, I would like to be contacted by The Symph Joy Team for newsletters, promotions and events</Checkbox>*/}
+                {/*</div>*/}
               </div>
             </div>
           </footer>
