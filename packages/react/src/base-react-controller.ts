@@ -148,14 +148,14 @@ export abstract class BaseReactController<
         if (this.initialModelStaticState) {
           const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
             .then((rst) => {
-              this.initManager.setInitState(pathname, {
+              this.setInitState({
                 initStatic: ReactRouteInitStatus.SUCCESS,
               });
               return rst;
             })
             .catch((e) => {
               console.error(e);
-              this.initManager.setInitState(pathname, {
+              this.setInitState({
                 initStatic: ReactRouteInitStatus.ERROR,
               });
             });
@@ -164,7 +164,7 @@ export abstract class BaseReactController<
             this.initManager.addTask(pathname, initStaticTask);
           }
         } else {
-          this.initManager.setInitState(pathname, {
+          this.setInitState({
             initStatic: ReactRouteInitStatus.SUCCESS,
           });
         }
@@ -181,13 +181,13 @@ export abstract class BaseReactController<
         if (this.initialModelState) {
           const initTask = Promise.resolve(this.initialModelState({}))
             // .then((rst) => {
-            //   this.initManager.setInitState(pathname, {
+            //   this.setInitState( {
             //     init: ReactRouteInitStatus.SUCCESS,
             //   });
             //   return rst;
             // })
             .catch((e) => {
-              this.initManager.setInitState(pathname, {
+              this.setInitState({
                 init: ReactRouteInitStatus.ERROR,
               });
             });
@@ -196,7 +196,7 @@ export abstract class BaseReactController<
             this.initManager.addTask(pathname, initTask);
           }
         } else {
-          // this.initManager.setInitState(pathname, {
+          // this.setInitState( {
           //   init: ReactRouteInitStatus.SUCCESS,
           // });
         }
@@ -317,8 +317,15 @@ export abstract class BaseReactController<
 
   protected getInitState() {
     const pathname = this.props.match?.pathname || this.location.pathname;
-    const initState = this.initManager.getRouteInitState(pathname);
+    const index = !!this.props.route?.index;
+    const initState = this.initManager.getRouteInitState({ pathname, index });
     return initState;
+  }
+
+  protected setInitState({ initStatic, init }: { initStatic?: ReactRouteInitStatus; init?: ReactRouteInitStatus }) {
+    const pathname = this.props.match?.pathname || this.location.pathname;
+    const index = !!this.props.route?.index;
+    this.initManager.setInitState({ pathname, index }, { initStatic, init });
   }
 
   render(): ReactNode {

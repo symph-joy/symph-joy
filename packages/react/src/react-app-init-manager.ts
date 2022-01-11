@@ -70,10 +70,17 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
     };
   }
 
-  setInitState(pathname: string, { initStatic, init }: { initStatic?: ReactRouteInitStatus; init?: ReactRouteInitStatus }): void {
+  setInitState(
+    pathnameArg: string | { pathname: string; index: boolean },
+    { initStatic, init }: { initStatic?: ReactRouteInitStatus; init?: ReactRouteInitStatus }
+  ): void {
+    const pathname = typeof pathnameArg === "string" ? pathnameArg : pathnameArg.pathname;
+    const index = typeof pathnameArg === "string" ? false : pathnameArg.index;
+    const cacheKey = index ? pathname + "/__index" : pathname;
     const nextState = Object.assign(
       {
         pathname,
+        index,
         // initStatic: ReactRouteInitStatus.NONE,
         // init: ReactRouteInitStatus.NONE,
       },
@@ -86,7 +93,7 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
       nextState.init = init;
     }
     this.setState({
-      [pathname]: nextState,
+      [cacheKey]: nextState,
     });
   }
 
@@ -102,9 +109,12 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
     return mathed.sort((a, b) => (a.pathname >= b.pathname ? 1 : -1));
   }
 
-  getRouteInitState(pathname: string): T {
+  getRouteInitState(pathnameArg: string | { pathname: string; index: boolean }): T {
+    const pathname = typeof pathnameArg === "string" ? pathnameArg : pathnameArg.pathname;
+    const index = typeof pathnameArg === "string" ? false : pathnameArg.index;
+    const cacheKey = index ? pathname + "/__index" : pathname;
     return (
-      this.state[pathname] ||
+      this.state[cacheKey] ||
       {
         // initStatic: ReactRouteInitStatus.NONE,
         // init: ReactRouteInitStatus.NONE,
@@ -112,8 +122,12 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
     );
   }
 
-  resetInitState(pathname: string): void {
-    delete this.state[pathname];
-    delete this.initTasks[pathname];
+  resetInitState(pathnameArg: string | { pathname: string; index: boolean }): void {
+    const pathname = typeof pathnameArg === "string" ? pathnameArg : pathnameArg.pathname;
+    const index = typeof pathnameArg === "string" ? false : pathnameArg.index;
+    const cacheKey = index ? pathname + "/__index" : pathname;
+
+    delete this.state[cacheKey];
+    delete this.initTasks[cacheKey];
   }
 }
