@@ -1,10 +1,11 @@
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, RouteParam, ReactComponent } from "@symph/react";
+import { BaseReactController, ReactController, RouteParam } from "@symph/react";
 import { Spin } from "antd";
 import styles from "./docs.less";
 import { Prerender, IJoyPrerender, TJoyPrerenderApi } from "@symph/joy/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Inject } from "@symph/core";
+import Doc from "../../component/doc";
 
 @ReactController()
 export default class Path extends BaseReactController {
@@ -13,6 +14,7 @@ export default class Path extends BaseReactController {
 
   @Inject()
   public docsModel: DocsModel;
+
   hash: string;
   state = {
     showDrawer: false,
@@ -85,17 +87,15 @@ export default class Path extends BaseReactController {
   };
 
   renderView(): ReactNode {
-    const { currentDoc, loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
-
+    const { loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
     return (
       <Spin delay={200} spinning={loadingCurrentDoc}>
         {loadCurrentDocErr ? (
           <div>
-            {" "}
             {loadCurrentDocErr.code}:{loadCurrentDocErr.message}
           </div>
         ) : undefined}
-        {currentDoc ? <div className={styles.docContent} dangerouslySetInnerHTML={{ __html: currentDoc.htmlContent }} /> : undefined}
+        <Doc location={this.props.location} className={styles.docContent} path={this.docPath || "/docs/docs/start/introduce"} />
       </Spin>
     );
   }

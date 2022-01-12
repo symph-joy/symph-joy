@@ -37,8 +37,6 @@ export default class HelloController extends BaseReactController {
     ]);
   }
 
-  aaa = "aaaaaa";
-
   componentDidMount() {
     super.componentDidMount();
 

@@ -27,7 +27,7 @@ export default class MyDocument extends Document {
               `,
             }}
           />
-          <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+          <script src="https://cdn.bootcdn.net/ajax/libs/three.js/r122/three.min.js"></script>
           <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.birds.min.js"></script>
         </Head>
         <body>
