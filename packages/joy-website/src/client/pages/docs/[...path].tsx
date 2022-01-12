@@ -1,11 +1,12 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, RouteParam } from "@symph/react";
-import { Spin } from "antd";
+import { Spin, Anchor } from "antd";
 import styles from "./docs.less";
 import { Prerender, IJoyPrerender, TJoyPrerenderApi } from "@symph/joy/react";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
 import { Inject } from "@symph/core";
 import Doc from "../../component/doc";
+const { Link } = Anchor;
 
 @ReactController()
 export default class Path extends BaseReactController {
@@ -87,16 +88,39 @@ export default class Path extends BaseReactController {
   };
 
   renderView(): ReactNode {
-    const { loadCurrentDocErr, loadingCurrentDoc } = this.docsModel.state;
+    const { loadCurrentDocErr, loadingCurrentDoc, titleTrees } = this.docsModel.state;
     return (
-      <Spin delay={200} spinning={loadingCurrentDoc}>
-        {loadCurrentDocErr ? (
-          <div>
-            {loadCurrentDocErr.code}:{loadCurrentDocErr.message}
-          </div>
-        ) : undefined}
-        <Doc location={this.props.location} className={styles.docContent} path={this.docPath || "/docs/docs/start/introduce"} />
-      </Spin>
+      <div className={styles.right}>
+        <div className={styles.center}>
+          <Spin delay={200} spinning={loadingCurrentDoc}>
+            {loadCurrentDocErr ? (
+              <div>
+                {loadCurrentDocErr.code}:{loadCurrentDocErr.message}
+              </div>
+            ) : undefined}
+            <Doc location={this.props.location} className={styles.docContent} path={this.docPath || "/docs/docs/start/introduce"} />
+          </Spin>
+        </div>
+        <div className={styles.titleTree}>
+          {titleTrees ? (
+            <Anchor>
+              {titleTrees.map((value, key) => {
+                if (value.children) {
+                  return (
+                    <Link key={key} href={value.id} title={value.text}>
+                      {value.children.map((child, k) => (
+                        <Link key={k} href={child.id} title={child.text} />
+                      ))}
+                    </Link>
+                  );
+                } else {
+                  return <Link key={key} href={value.id} title={value.text} />;
+                }
+              })}
+            </Anchor>
+          ) : undefined}
+        </div>
+      </div>
     );
   }
 }

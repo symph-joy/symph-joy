@@ -2,12 +2,10 @@ import React, { ReactNode } from "react";
 import { BaseReactController, ReactController, RouteParam } from "@symph/react";
 import { Outlet } from "@symph/react/router-dom";
 import { DocMenuItem, DocsModel } from "../../model/docs.model";
-// import { Inject } from "@symph/core";
-import { Affix, Menu, Anchor, Drawer } from "antd";
+import { Affix, Menu, Drawer } from "antd";
 import styles from "./docs.less";
 import { MenuUnfoldOutlined } from "@ant-design/icons";
 import { Inject } from "@symph/core";
-const { Link } = Anchor;
 
 @ReactController()
 export default class DocsLayout extends BaseReactController {
@@ -63,7 +61,7 @@ export default class DocsLayout extends BaseReactController {
   };
 
   renderView(): ReactNode {
-    const { docMenus, defaultOpenKeys, titleTrees, currentDoc } = this.docsModel.state;
+    const { docMenus, defaultOpenKeys, currentDoc } = this.docsModel.state;
     return (
       <div className={styles.layoutContent}>
         <Affix>
@@ -100,28 +98,7 @@ export default class DocsLayout extends BaseReactController {
             {this.renderMenuItem(docMenus)}
           </Menu>
         </Drawer>
-        <div className={styles.center}>
-          <Outlet />
-        </div>
-        <div className={styles.titleTree}>
-          {titleTrees ? (
-            <Anchor>
-              {titleTrees.map((value, key) => {
-                if (value.children) {
-                  return (
-                    <Link key={key} href={value.id} title={value.text}>
-                      {value.children.map((child, k) => (
-                        <Link key={k} href={child.id} title={child.text} />
-                      ))}
-                    </Link>
-                  );
-                } else {
-                  return <Link key={key} href={value.id} title={value.text} />;
-                }
-              })}
-            </Anchor>
-          ) : undefined}
-        </div>
+        <Outlet />
       </div>
     );
   }
