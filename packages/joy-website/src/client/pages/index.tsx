@@ -1,22 +1,9 @@
 import React, { ReactNode } from "react";
 import { BaseReactController, ReactController } from "@symph/react";
 import { Link } from "@symph/react/router-dom";
-import { Layout, Typography, Button, Row, Input, Checkbox, Carousel } from "antd";
+import { Layout, Typography, Button, Row, Carousel } from "antd";
 import styles from "./homepage.scss";
-import {
-  AndroidOutlined,
-  AppleOutlined,
-  WindowsOutlined,
-  IeOutlined,
-  ChromeOutlined,
-  GithubOutlined,
-  GitlabOutlined,
-  ClusterOutlined,
-  ApartmentOutlined,
-  FundOutlined,
-  CloudServerOutlined,
-  ApiOutlined,
-} from "@ant-design/icons";
+import { ClusterOutlined, ApartmentOutlined, FundOutlined, CloudServerOutlined } from "@ant-design/icons";
 import { Prerender } from "@symph/joy";
 import { DocsModel } from "../model/docs.model";
 import { Inject } from "@symph/core";
@@ -169,12 +156,12 @@ export default class HelloController extends BaseReactController {
                   {/*  <p>Sunt in veniam commodo anim.</p>*/}
                   {/*</li>*/}
                 </ul>
-                <Carousel>
+                <Carousel autoplay autoplaySpeed={5000} dots={true} effect="fade" className={styles.function__carousel}>
                   <div className={styles.function__description}>
                     <div dangerouslySetInnerHTML={{ __html: docHelloReactController?.htmlContent }}></div>
                     <div className={styles.function__description_info}>
                       <h2>开始 React 开发</h2>
-                      <p>@symph/joy 让我们更专注于业务和体验，避免技术细节的困扰，创建第一个文件即开始创建界面</p>
+                      <p>@symph/joy 让我们更专注于业务和体，创建第一个文件即开始创建界面</p>
                       <p>
                         刚接触 <span className="code">@symph/joy</span> React开发? 让我们 <Link to="docs/docs/basic/getting-started">快速开始</Link>{" "}
                         吧。
@@ -185,7 +172,7 @@ export default class HelloController extends BaseReactController {
                     <div dangerouslySetInnerHTML={{ __html: docHelloServerController?.htmlContent }}></div>
                     <div className={styles.function__description_info}>
                       <h2>开始 Server 服务开发</h2>
-                      <p>使用 @symph/joy，只需要创建一个文件和少数的代码，即开创建第一个服务。</p>
+                      <p>使用 @symph/joy，只需要创建一个文件和少数的代码，即可创建第一个服务。</p>
                       <p>
                         刚接触 <span className="code">@symph/joy</span> 服务端开发? 让我们 <Link to="docs/docs/basic/getting-started">快速开始</Link>{" "}
                         吧。
@@ -222,13 +209,13 @@ export default class HelloController extends BaseReactController {
             {/*</div>*/}
             <div className={styles.footer__bottom}>
               <div className={styles.container}>
-                <div>
+                <div className={styles.footer__contactUs}>
                   <div>联系我们</div>
                   <div>Github Issue: https://github.com/lnlfps/symph-joy/issues</div>
                   <div>QQ群: 929743297</div>
                   <div>Email: lnlfps@gmail.com</div>
                 </div>
-                <div>Open-source MIT Licensed | Copyright © 2022-present</div>
+                <div className={styles.footer__MIT}>Open-source MIT Licensed | Copyright © 2022-present</div>
                 {/*<ul>*/}
                 {/*  <li>Learn</li>*/}
                 {/*  <li>Quickstart</li>*/}
