@@ -39,13 +39,13 @@ export default class DocsLayout extends BaseReactController {
       const { children, title, path } = item;
       if (children) {
         views.push(
-          <Menu.SubMenu key={path} title={title}>
+          <Menu.SubMenu key={"/docs" + path} title={title}>
             {this.renderMenuItem(children)}
           </Menu.SubMenu>
         );
       } else {
         views.push(
-          <Menu.Item key={path} onClick={this.showDoc.bind(this, item)}>
+          <Menu.Item key={"/docs" + path} onClick={this.showDoc.bind(this, item)}>
             {title}
           </Menu.Item>
         );

@@ -136,7 +136,7 @@ export class DocsModel extends BaseReactModel<DocsModelState> {
     if (Array.isArray(arr)) {
       for (const child of arr) {
         if (child.children) {
-          res.push(child.path);
+          res.push("/docs" + child.path);
           this.flatDocMenus(child.children, res);
         }
       }
