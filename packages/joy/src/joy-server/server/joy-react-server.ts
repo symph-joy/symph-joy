@@ -14,7 +14,6 @@ import {
   CLIENT_PUBLIC_FILES_PATH,
   CLIENT_STATIC_FILES_PATH,
   CLIENT_STATIC_FILES_RUNTIME,
-  OUT_DIRECTORY,
   PAGES_MANIFEST,
   PHASE_PRODUCTION_SERVER,
   PRERENDER_MANIFEST,
@@ -29,7 +28,7 @@ import { execOnce, isResSent, JoyApiRequest, JoyApiResponse } from "../lib/utils
 import { __ApiPreviewProps } from "./api-utils";
 import pathMatch from "../lib/router/utils/path-match";
 import { recursiveReadDirSync } from "./lib/recursive-readdir-sync";
-import { loadComponent, loadComponents, LoadComponentsReturnType } from "./load-components";
+import { loadComponents, LoadComponentsReturnType } from "./load-components";
 import { RenderOpts, RenderOptsPartial, renderToHTML } from "./render";
 import { getPagePath, requireFontManifest } from "./require";
 import Router, { DynamicRoutes, PageChecker, Params, route, Route } from "./router";
@@ -45,13 +44,16 @@ import { PagesManifest } from "../../build/webpack/plugins/pages-manifest-plugin
 import { removePathTrailingSlash } from "../../client/normalize-trailing-slash";
 import getRouteFromAssetPath from "../lib/router/utils/get-route-from-asset-path";
 import { FontManifest } from "./font-utils";
-import { HookType, Component, IComponentLifecycle, InjectHook, IHook } from "@symph/core";
+import { Component, HookType, IComponentLifecycle, IHook, InjectHook } from "@symph/core";
 import { JoyAppConfig } from "./joy-app-config";
 import { ReactApplicationContext, ReactRouterService } from "@symph/react";
+import { RouteMatch } from "@symph/react/router-dom";
 import { ReactContextFactory } from "../../react/react-context-factory";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 import { REACT_OUT_DIR } from "../../react/react-const";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
+import { RouteSSGData } from "../lib/RouteSSGData.interface";
+import { getPathnameCacheKey } from "../../react/router/router-utils";
 
 const getCustomRouteMatcher = pathMatch(true);
 
@@ -946,13 +948,12 @@ export class JoyReactServer implements IComponentLifecycle {
       urlPathname = (urlPathname.split(this.buildId).pop() || "/").replace(/\.json$/, "").replace(/\/index$/, "/");
     }
 
-    const ssgCacheKey = !isSSG
-      ? undefined // Preview mode bypasses the cache
-      : `${urlPathname}${query.amp ? ".amp" : ""}`;
+    const matchedRoutes = ((opts as any).matchedRoutes as RouteMatch[]) || [];
+    const isIndexPage = matchedRoutes[matchedRoutes.length - 1]?.route.index;
+    const ssgCacheKey = !isSSG ? undefined : getPathnameCacheKey(urlPathname, isIndexPage);
 
     // Complete the response with cached data if its present
     const cachedData = ssgCacheKey ? await this.incrementalCache.get(ssgCacheKey) : undefined;
-
     if (cachedData) {
       const data = isDataReq ? JSON.stringify(cachedData.pageData) : cachedData.html;
 
@@ -983,6 +984,25 @@ export class JoyReactServer implements IComponentLifecycle {
       }
     }
 
+    // 获取路由的缓存数据
+
+    const pageRoutesDataMap = {} as Record<string, RouteSSGData>;
+    for (const matchedRoute of matchedRoutes) {
+      const { pathname } = matchedRoute;
+      const index = matchedRoute.route.index;
+      const cacheKey = getPathnameCacheKey(pathname, index);
+      const cachedData = await this.incrementalCache.get(cacheKey);
+      if (cachedData) {
+        const { pageData, revalidateAfter, curRevalidate } = cachedData;
+        pageRoutesDataMap[cacheKey] = {
+          pathname,
+          ssgData: pageData,
+          revalidate: typeof revalidateAfter === "number" && typeof curRevalidate === "number" ? revalidateAfter - curRevalidate : undefined,
+        } as RouteSSGData;
+        reactAppContext?.dispatchBatch(cachedData.pageData);
+      }
+    }
+
     // If we're here, that means data is missing or it's stale.
     const maybeCoalesceInvoke = ssgCacheKey
       ? (fn: any) => withCoalescedInvoke(fn).bind(null, ssgCacheKey, [])
@@ -994,8 +1014,8 @@ export class JoyReactServer implements IComponentLifecycle {
     const doRender = maybeCoalesceInvoke(
       async (): Promise<{
         html: string | null;
-        pageData: any;
-        sprRevalidate: number | false;
+        routesData: any[];
+        // sprRevalidate: number | false;
       }> => {
         // let pageData: any
         // let html: string | null
@@ -1047,11 +1067,11 @@ export class JoyReactServer implements IComponentLifecycle {
 
         const html = renderResult;
         // TODO: change this to a different passing mechanism
-        const pageData = (renderOpts as any).pageData;
-        const sprRevalidate = (renderOpts as any).revalidate;
+        const routesData = (renderOpts as any).routesSSGData;
+        const revalidate = (renderOpts as any).revalidate;
         // }
 
-        return { html, pageData, sprRevalidate };
+        return { html, routesData };
       }
     );
 
@@ -1123,9 +1143,45 @@ export class JoyReactServer implements IComponentLifecycle {
 
     const {
       isOrigin,
-      value: { html, pageData, sprRevalidate },
+      value: { html, routesData: initedRoutesData },
     } = await doRender();
     let resHtml = html;
+    let sprRevalidate: boolean | number = false;
+    // Update the cache if the head request and cacheable
+    if (isOrigin && isSSG) {
+      if (initedRoutesData?.length) {
+        for (const routeData of initedRoutesData as RouteSSGData[]) {
+          const cacheKey = getPathnameCacheKey(routeData.pathname, routeData.index);
+          await this.incrementalCache.set(cacheKey, { html: undefined, pageData: routeData.ssgData }, initedRoutesData.revalidate);
+          pageRoutesDataMap[routeData.pathname] = routeData;
+        }
+      }
+
+      sprRevalidate = Object.keys(pageRoutesDataMap).reduce((pre, cur) => {
+        const revalidate = pageRoutesDataMap[cur].revalidate;
+        if (typeof revalidate === "number" && revalidate < pre) {
+          pre = revalidate;
+        }
+        return pre;
+      }, Number.MAX_SAFE_INTEGER);
+      sprRevalidate = sprRevalidate === Number.MAX_SAFE_INTEGER ? false : sprRevalidate;
+    }
+
+    const pageData = Object.keys(pageRoutesDataMap)
+      .map((key) => pageRoutesDataMap[key])
+      .sort((a, b) => {
+        if (a.pathname.startsWith("INIT@")) {
+          return -1;
+        } else if (b.pathname.startsWith("INIT@")) {
+          return 1;
+        }
+        return a.pathname.length < b.pathname.length ? -1 : 1;
+      });
+
+    if (ssgCacheKey) {
+      await this.incrementalCache.set(ssgCacheKey, { html: html!, pageData }, sprRevalidate);
+    }
+
     if (!isResSent(res) && (isSSG || isDataReq || isServerProps)) {
       sendPayload(
         req,
@@ -1140,17 +1196,11 @@ export class JoyReactServer implements IComponentLifecycle {
           ? {
               private: false,
               stateful: !isSSG,
-              // @ts-ignore
               revalidate: sprRevalidate,
             }
           : undefined
       );
       resHtml = null;
-    }
-
-    // Update the cache if the head request and cacheable
-    if (isOrigin && ssgCacheKey) {
-      await this.incrementalCache.set(ssgCacheKey, { html: html!, pageData }, sprRevalidate);
     }
 
     return resHtml;
@@ -1160,66 +1210,70 @@ export class JoyReactServer implements IComponentLifecycle {
     const reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, pathname, query);
     const routeService = reactAppContext.getSync(ReactRouterService);
     try {
-      const matchRoutes = routeService.getMatchedRoutes(pathname);
-      if (matchRoutes?.length) {
-        const result = await this.findPageComponents("/_app", query);
+      const matchedRoutes = routeService.matchRoutes(pathname);
+      if (!matchedRoutes?.length) {
+        res.statusCode = 404;
+        return await this.renderErrorToHTML(null, req, res, pathname, query);
+      }
 
-        await this.onBeforeRender.call({
-          req,
-          res,
-          pathname,
-          query,
-          reactAppContext,
-          components: result?.components,
-          renderOptions: this.renderOpts,
-        });
-        if (res.writableEnded) {
-          // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
-        }
+      const result = await this.findPageComponents("/_app", query);
+      const renderOptions = {
+        ...this.renderOpts,
+        matchedRoutes,
+      };
+      await this.onBeforeRender.call({
+        req,
+        res,
+        pathname,
+        query,
+        reactAppContext,
+        components: result?.components,
+        renderOptions,
+      });
+      if (res.writableEnded) {
+        // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
+      }
 
-        if (result) {
-          try {
-            return await this.renderToHTMLWithComponents(req, res, pathname, reactAppContext, result, { ...this.renderOpts });
-          } catch (err) {
-            if (!(err instanceof NoFallbackError)) {
-              throw err;
-            }
+      if (result) {
+        try {
+          return await this.renderToHTMLWithComponents(req, res, pathname, reactAppContext, result, renderOptions);
+        } catch (err) {
+          if (!(err instanceof NoFallbackError)) {
+            throw err;
           }
         }
-
-        if (this.dynamicRoutes?.length) {
-          // todo 使用react-routes 4 之后的动态路由后，该路由是否还有必要存在？
-          throw new Error("使用react-routes 4 之后的动态路由后，dynamicRoutes路由不在需要" + JSON.stringify(this.dynamicRoutes));
-          // for (const dynamicRoute of this.dynamicRoutes) {
-          //   const params = dynamicRoute.match(pathname);
-          //   if (!params) {
-          //     continue;
-          //   }
-          //
-          //   const dynamicRouteResult = await this.findPageComponents(dynamicRoute.page, query, params);
-          //   if (dynamicRouteResult) {
-          //     try {
-          //       return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, {
-          //         ...this.renderOpts,
-          //         params,
-          //       });
-          //     } catch (err) {
-          //       if (!(err instanceof NoFallbackError)) {
-          //         throw err;
-          //       }
-          //     }
-          //   }
-          // }
-        }
       }
+
+      if (this.dynamicRoutes?.length) {
+        // todo 使用react-routes 4 之后的动态路由后，该路由是否还有必要存在？
+        throw new Error("使用react-routes 4 之后的动态路由后，dynamicRoutes路由不在需要" + JSON.stringify(this.dynamicRoutes));
+        // for (const dynamicRoute of this.dynamicRoutes) {
+        //   const params = dynamicRoute.match(pathname);
+        //   if (!params) {
+        //     continue;
+        //   }
+        //
+        //   const dynamicRouteResult = await this.findPageComponents(dynamicRoute.page, query, params);
+        //   if (dynamicRouteResult) {
+        //     try {
+        //       return await this.renderToHTMLWithComponents(req, res, dynamicRoute.page, reactAppContext, dynamicRouteResult, {
+        //         ...this.renderOpts,
+        //         params,
+        //       });
+        //     } catch (err) {
+        //       if (!(err instanceof NoFallbackError)) {
+        //         throw err;
+        //       }
+        //     }
+        //   }
+        // }
+      }
+      return null;
     } catch (err) {
       this.logError(err);
       res.statusCode = 500;
       return await this.renderErrorToHTML(err, req, res, pathname, query);
     }
-
-    res.statusCode = 404;
-    return await this.renderErrorToHTML(null, req, res, pathname, query);
   }
 
   public async renderError(

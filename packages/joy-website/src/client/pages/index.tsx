@@ -25,8 +25,6 @@ export default class HelloController extends BaseReactController {
   }
 
   componentDidMount() {
-    super.componentDidMount();
-
     (window as any).VANTA.BIRDS({
       el: "#banner",
       mouseControls: true,

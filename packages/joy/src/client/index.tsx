@@ -21,6 +21,7 @@ import { ReactAppContainer, ReactApplicationContext } from "@symph/react";
 import { JoyClientConfig } from "./joy-client-config";
 import { JoyReactApplicationContext } from "../react/joy-react-application-context";
 import { JoyPageSSGDataLoader } from "../react/router/joy-page-ssg-data-loader";
+import { JoyReactAppInitManagerClient } from "../react/joy-react-app-init-manager-client";
 
 /// <reference types="react-dom/experimental" />
 
@@ -82,7 +83,7 @@ if (hasBasePath(asPath)) {
   asPath = delBasePath(asPath);
 }
 
-const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppClientConfiguration, hydrateInitState);
+const reactApplicationContext = new JoyReactApplicationContext(JoyReactAppClientConfiguration);
 reactApplicationContext.container.addProviders([
   {
     name: "joyClientConfig",
@@ -310,6 +311,11 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   }
 
   await reactApplicationContext.init();
+  const initManager = reactApplicationContext.getSync(JoyReactAppInitManagerClient);
+  for (const routeSSGData of hydrateInitState) {
+    initManager.setRouteSSGState(routeSSGData);
+    reactApplicationContext.dispatchBatch(routeSSGData.ssgData);
+  }
 
   const renderCtx = {
     App: CachedApp,

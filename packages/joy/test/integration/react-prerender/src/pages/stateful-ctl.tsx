@@ -56,7 +56,7 @@ export default class StatefulCtl extends BaseReactController {
   @Inject()
   public statefulModel: StatefulModel;
 
-  async initialModelStaticState(urlParams: any): Promise<void> {
+  async initialModelStaticState(): Promise<void> {
     console.log("StatefulCtl: run initialModelStaticState");
     await this.statefulModel.setStaticMessage("hello from initialModelStaticState");
   }

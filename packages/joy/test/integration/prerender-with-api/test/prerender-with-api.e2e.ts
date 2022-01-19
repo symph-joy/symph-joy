@@ -4,6 +4,7 @@ import { JoyTestContext } from "../../../util/joy-test-context";
 import { promises } from "fs";
 import { waitFor } from "../../../util/joy-test-utils";
 import { getDomInnerHtml } from "../../../util/html-utils";
+import { RouteSSGData } from "../../../../src/joy-server/lib/RouteSSGData.interface";
 
 describe("prerender-with-api", () => {
   let testContext: JoyTestContext;
@@ -32,7 +33,10 @@ describe("prerender-with-api", () => {
     const jsonContext = await promises.readFile(staticOutputData, {
       encoding: "utf-8",
     });
-    const jsonObj = JSON.parse(jsonContext);
-    expect(jsonObj.find((it: any) => it.type === "entityModel/__SET_STATE")).toHaveProperty("state.showEntity.msg", "Hello 1.");
+    const jsonObj = JSON.parse(jsonContext) as RouteSSGData[];
+    expect(jsonObj.find((it) => it.pathname === "/entity/1")?.ssgData.find((it: any) => it.type === "entityModel/__SET_STATE")).toHaveProperty(
+      "state.showEntity.msg",
+      "Hello 1."
+    );
   });
 });

@@ -6,6 +6,7 @@ import { findPort, joyBuild, joyExport, killApp, runHttpServer, waitFor } from "
 import { getDomInnerHtml } from "../../../util/html-utils";
 import { ReactRouteInitStatus } from "@symph/react";
 import * as child_process from "child_process";
+import { RouteSSGData } from "../../../../src/joy-server/lib/RouteSSGData.interface";
 
 async function checkHtmlFile(filePath: string, domId: string, checkContent: string) {
   expect((await promises.stat(filePath)).isFile()).toBe(true);
@@ -19,8 +20,8 @@ async function checkDataFile(filePath: string, actionType: string, actionPropNam
   const jsonContext = await promises.readFile(filePath, {
     encoding: "utf-8",
   });
-  const jsonObj = JSON.parse(jsonContext);
-  expect(jsonObj.find((it: any) => it.type === actionType)).toHaveProperty(actionPropName, actionPropValue);
+  const jsonObj = JSON.parse(jsonContext) as RouteSSGData[];
+  expect(jsonObj[jsonObj.length - 1]?.ssgData.find((it: any) => it.type === actionType)).toHaveProperty(actionPropName, actionPropValue);
 }
 
 describe("joy export", () => {

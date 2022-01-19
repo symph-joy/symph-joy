@@ -1,6 +1,9 @@
+import React from "react";
 import { IReactRoute } from "../interfaces/react-route.interface";
 import { Component } from "react";
 import { getComponentMeta, Type } from "@symph/core";
+import { NavigateFunction, PathMatch } from "react-router";
+import { Location } from "history";
 
 const REACT_ROUTE_META = "__joy_route";
 const REACT_ROUTE_PARAM_META = "__joy_route_param";
@@ -29,6 +32,16 @@ export type IRouteMeta = {
 } & Pick<IReactRoute, "caseSensitive">;
 
 export type RouteOptions = Omit<IReactRoute, "isContainer">;
+
+export interface ReactRouteContextValue {
+  route?: IReactRoute;
+  match?: PathMatch;
+  location?: Location;
+  navigate?: NavigateFunction;
+  controllers: any[];
+}
+
+export const ReactRouteContext = React.createContext<ReactRouteContextValue | null>(null);
 
 export function ReactRoute(options: RouteOptions): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
   return (constructor) => {

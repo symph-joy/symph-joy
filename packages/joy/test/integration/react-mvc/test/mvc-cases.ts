@@ -1,6 +1,6 @@
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { fetchViaHTTP } from "../../../util/joy-test-utils";
+import { fetchViaHTTP, waitFor } from "../../../util/joy-test-utils";
 import { getDomInnerHtml } from "../../../util/html-utils";
 
 export function mvcCases(testContext: JoyTestContext) {

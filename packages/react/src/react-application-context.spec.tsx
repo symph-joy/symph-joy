@@ -5,7 +5,7 @@ import { BaseReactModel } from "./base-react-model";
 import { BaseReactController } from "./base-react-controller";
 import { render } from "@testing-library/react";
 import { ReactModel } from "./react-model.decorator";
-import { ReactController } from "./react-controller.decorator";
+import { ReactContext, ReactController } from "./react-controller.decorator";
 import "reflect-metadata";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
 import { Configuration, Inject } from "@symph/core";
@@ -40,11 +40,14 @@ describe("react-application", () => {
   });
 
   describe("react-mvc", () => {
-    test("define a react controller", async () => {
+    test("react controller", async () => {
       @ReactController()
       class HelloController extends BaseReactController<{ propMsg: string }, { stateMsg: string }> {
         constructor(props: any, context: any) {
           super(props, context);
+        }
+
+        initialize() {
           this.state = {
             stateMsg: "hello stateMsg",
           };
@@ -63,10 +66,53 @@ describe("react-application", () => {
       }
 
       const app = await ReactApplicationFactory.create();
-      const App = app.start(() => <HelloController propMsg={"hello propMsg"} />);
+      const element = (
+        <div>
+          <HelloController propMsg={"hello propMsg"} />
+        </div>
+      );
+      const App = app.start(() => element);
       const { getByTestId, container, rerender } = render(App);
       expect(getByTestId("propMsg").innerHTML).toEqual("hello propMsg");
       expect(getByTestId("stateMsg").innerHTML).toEqual("hello stateMsg");
+    });
+
+    test("react controller, with context prop.", async () => {
+      const AContext = React.createContext("aValue");
+      const BContext = React.createContext("bValue");
+
+      @ReactController()
+      class HelloController extends BaseReactController<{ propMsg: string }, { stateMsg: string }> {
+        @ReactContext(AContext)
+        private aContext: string;
+
+        @ReactContext(BContext)
+        private bContext: string;
+
+        renderView() {
+          return (
+            <div>
+              <span data-testid="aContext">{this.aContext}</span>
+              <span data-testid="bContext">{this.bContext}</span>
+            </div>
+          );
+        }
+      }
+
+      const app = await ReactApplicationFactory.create();
+      const element = (
+        <div>
+          <AContext.Provider value={"aValue"}>
+            <BContext.Provider value={"bValue"}>
+              <HelloController propMsg={"hello propMsg"} />
+            </BContext.Provider>
+          </AContext.Provider>
+        </div>
+      );
+      const App = app.start(() => element);
+      const { getByTestId, container, rerender } = render(App);
+      expect(getByTestId("aContext").innerHTML).toEqual("aValue");
+      expect(getByTestId("bContext").innerHTML).toEqual("bValue");
     });
 
     test("should bind model and controller ", async () => {
@@ -121,7 +167,6 @@ describe("react-application", () => {
         private helloModel: HelloModel;
 
         componentDidMount() {
-          super.componentDidMount();
           setTimeout(async () => {
             this.helloModel.say();
           }, 50);
@@ -233,7 +278,7 @@ describe("react-application", () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
-    test("should use provider.id as model's namespace", async () => {
+    test("should use component name as model's namespace", async () => {
       @ReactModel()
       class HelloModel extends BaseReactModel<{ status: string }> {
         getInitState(): { status: string } {
@@ -256,7 +301,6 @@ describe("react-application", () => {
         private helloModel1: HelloModel;
 
         componentDidMount() {
-          super.componentDidMount();
           this.helloModel1.say();
         }
 

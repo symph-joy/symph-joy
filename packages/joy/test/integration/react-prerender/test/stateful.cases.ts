@@ -77,7 +77,7 @@ export function statefulCases(testContext: JoyTestContext) {
       const data = (await res.json()) as Array<any>;
       // 是否正常返回了数据
       expect(data).toBeTruthy();
-      const setStateAction = data.find((it) => it.type === "statefulModel/__SET_STATE");
+      const setStateAction = data.find((it) => it.pathname === "/stateful").ssgData.find((it: any) => it.type === "statefulModel/__SET_STATE");
       // 必须包含初始化static state的后生成的数据。
       expect(setStateAction).toHaveProperty("state.staticMessage", "hello from initialModelStaticState");
       const staticUpdateTime = setStateAction.state.staticUpdateTime;

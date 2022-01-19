@@ -1,5 +1,5 @@
 import { BaseReactModel, ReactModel } from "@symph/react";
-import { FetchError, ReactFetchService } from "@symph/joy";
+import { FetchError, ReactFetchService } from "@symph/joy/react";
 import { Inject } from "@symph/core";
 
 export interface DocMenuItem {

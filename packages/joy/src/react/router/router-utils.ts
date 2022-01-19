@@ -90,3 +90,27 @@ export function normalizeConventionRouteV6(routePath: string): { path: string; c
   }
   return { path, catchAllParam };
 }
+
+/**
+ * 如果是Index路由，则路径一个特殊路径，用于区分和父级路由或路径，
+ * 一般用于生成缓存key.
+ */
+export function getRouteCacheKey({ path, index }: { path: string; index?: boolean }): string {
+  if (index) {
+    return path + (path.endsWith("/") ? "" : "/") + "$$index";
+  } else {
+    return path;
+  }
+}
+
+/**
+ * 如果是Index路由，则路径一个特殊路径，用于区分和父级路由或路径，
+ * 一般用于生成缓存key.
+ */
+export function getPathnameCacheKey(pathname: string, index?: boolean): string {
+  if (index) {
+    return pathname + (pathname.endsWith("/") ? "" : "/") + "$$index";
+  } else {
+    return pathname;
+  }
+}

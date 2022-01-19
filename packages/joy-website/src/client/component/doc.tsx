@@ -7,17 +7,17 @@ export default class Doc extends BaseReactController {
   @Inject()
   public docsModel: DocsModel;
 
-  // async initialModelStaticState(): Promise<void | number> {
-  //   let path = this.props.path || "/docs/docs/start/introduce";
-  //   await this.fetchPageDocData(path);
-  // }
+  async initialModelStaticState(): Promise<void | number> {
+    let path = this.props.path || "/docs/docs/start/introduce";
+    await this.fetchPageDocData(path);
+  }
 
-  // async fetchPageDocData(path) {
-  //   if (!path.startsWith("/")) {
-  //     path = "/docs/" + path;
-  //   }
-  //   await this.docsModel.getDoc(path);
-  // }
+  async fetchPageDocData(path) {
+    if (!path.startsWith("/")) {
+      path = "/docs/" + path;
+    }
+    await this.docsModel.getDoc(path);
+  }
 
   renderView(): ReactNode {
     const { currentDoc } = this.docsModel.state;

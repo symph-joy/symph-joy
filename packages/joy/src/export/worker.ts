@@ -19,6 +19,7 @@ import { JoyAppConfig } from "../joy-server/server/joy-app-config";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 import { ConfigService, CONFIG_INIT_VALUE } from "@symph/config";
 import { JoyConfigConfiguration } from "../joy-server/server/joy-config.configuration";
+import { ReactRouterService } from "@symph/react";
 
 const envConfig = require("../joy-server/lib/runtime-config");
 
@@ -330,6 +331,9 @@ export async function exportPage(
 
     const reactContextFactory = await joyContext.get(ReactContextFactory);
     const reactApplicationContext = await reactContextFactory.getReactAppContext(req, res, path, query);
+    const routeService = reactApplicationContext.getSync(ReactRouterService);
+    const matchedRoutes = routeService.matchRoutes(path);
+
     const curRenderOpts = {
       initStage: EnumReactAppInitStage.STATIC,
       ...components,
@@ -340,6 +344,7 @@ export async function exportPage(
       optimizeImages,
       fontManifest: optimizeFonts ? requireFontManifest(distDir, serverless) : null,
       reactApplicationContext,
+      matchedRoutes,
     };
     const html = (await renderMethod(req, res, page, query, curRenderOpts)) as string;
     // }
@@ -405,14 +410,14 @@ export async function exportPage(
     //   }
     // }
 
-    if ((curRenderOpts as any).pageData) {
+    if ((curRenderOpts as any).routesSSGData) {
       const dataFile = join(pagesDataDir, htmlFilename.replace(/\.html$/, ".json"));
 
       await promises.mkdir(dirname(dataFile), { recursive: true });
-      await promises.writeFile(dataFile, JSON.stringify((curRenderOpts as any).pageData), "utf8");
+      await promises.writeFile(dataFile, JSON.stringify((curRenderOpts as any).routesSSGData), "utf8");
 
       if (curRenderOpts.hybridAmp) {
-        await promises.writeFile(dataFile.replace(/\.json$/, ".amp.json"), JSON.stringify((curRenderOpts as any).pageData), "utf8");
+        await promises.writeFile(dataFile.replace(/\.json$/, ".amp.json"), JSON.stringify((curRenderOpts as any).routesSSGData), "utf8");
       }
     }
     results.fromBuildExportRevalidate = (curRenderOpts as any).revalidate;

@@ -44,6 +44,9 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
     this.routesMap = new Map();
     this.traverseTree(routes, (r) => {
       this.addRouteCache(r);
+      if (!r.element) {
+        r.element = this.createRouteElement(r);
+      }
       // this.routesMap.set(r.path, r);
       return false;
     });
@@ -190,7 +193,7 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
    * @param pathname
    */
   public getMatchedRoutes(pathname: string): T[] | undefined {
-    const matches = matchRoutes(this.getRoutes(), pathname);
+    const matches = this.matchRoutes(pathname);
     return matches?.map((it) => it.route) as T[];
     // const rst = this.find(this.getRoutes(), (route) => {
     //   let matched: PathMatch | null = matchPath({ path: route.path, end: !route.children?.length }, pathname);

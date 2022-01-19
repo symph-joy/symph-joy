@@ -19,6 +19,9 @@ export default class LinksCtl extends BaseReactController {
         <div id="dynamic-hello1" onClick={this.onClickLink.bind(this, "/dynamic/hello1")}>
           /dynamic/hello1
         </div>
+        <div id="embed" onClick={this.onClickLink.bind(this, "/embed/parent/child")}>
+          /embed/parent/child
+        </div>
       </>
     );
   }

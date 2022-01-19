@@ -10,7 +10,7 @@
 
 ## ReactController
 
-协调 ReactModel 和 View，绑定 ReactModel 的状态数据到 View，响应用户的操作，调用 ReactModel 中的业务操作方法，当状态发现变化后，自动刷新 View 界面。
+负责关联 ReactModel 和 View，绑定 ReactModel 的状态数据到 View，响应用户操作，调用 ReactModel 中的业务操作方法，当状态发现变化后，自动刷新 View 界面。
 
 ## View
 

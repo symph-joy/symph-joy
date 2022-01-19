@@ -4,31 +4,19 @@ import { ModelStateChangeHandler, ReactReduxService } from "./redux/react-redux.
 import { BaseReactModel } from "./base-react-model";
 import { bindRouteFromCompProps } from "./router/react-route.decorator";
 import { IApplicationContext, IInjectableDependency, Inject } from "@symph/core";
-import { ReactAppInitManager, ReactRouteInitStatus } from "./react-app-init-manager";
-import { ReactRouterService } from "./router/react-router-service";
+import { IInitialModelState, ReactAppInitManager, ReactRouteInitStatus } from "./react-app-init-manager";
 import type { Location } from "history";
-import { EnumReactAppInitStage } from "./react-app-init-stage.enum";
 import { IReactRoute } from "./interfaces";
 import { NavigateFunction, PathMatch } from "react-router";
+import { ReactContext } from "./react-controller.decorator";
 
 export type ControllerBaseStateType = {
   _modelStateVersion: number;
   [keys: string]: unknown;
 };
 
-export interface BaseReactController {
-  /**
-   * 获取预渲染的状态
-   */
-  initialModelStaticState?(urlParams: any): Promise<void | number>;
-
+export interface BaseReactController extends IInitialModelState {
   onInitialModelStaticStateDid?(): void;
-
-  /**
-   * 获取绑定model中的初始化状态。
-   * @param context
-   */
-  initialModelState?(context: any): Promise<void>;
 }
 
 interface ControllerProps {
@@ -55,20 +43,23 @@ export abstract class BaseReactController<
    */
   async componentPrepare(context: any): Promise<void> {}
 
-  static contextType = ReactApplicationReactContext;
+  // static contextType = ReactApplicationReactContext;
 
+  @ReactContext(ReactApplicationReactContext)
   protected appContext: IApplicationContext;
+
   protected reduxStore: ReactReduxService;
   protected isCtlMounted: boolean;
 
   protected _models: Array<BaseReactModel<unknown>>;
 
-  private hasInitInvoked = false;
+  protected hasInitInvoked = false;
   private hasInjectProps = false;
 
-  @Inject()
-  protected reactRouterService: ReactRouterService;
-
+  /**
+   * 注入 initManager， 以便监听initManager中的状态
+   * @protected
+   */
   @Inject()
   protected initManager: ReactAppInitManager;
 
@@ -79,22 +70,29 @@ export abstract class BaseReactController<
   private isRendingView = false;
   private modelStateDeps: Record<string, string[]> = {};
 
-  private isWaitingInitStaticDid = false;
+  private isWaitingInitStaticDid = true;
 
   constructor(props: TProps, context: TContext) {
     super(props as any, context);
     this.isCtlMounted = false;
 
-    this.appContext = context;
+    // this.appContext = (props as any).__ctx_appContext;
+    const contextValues = (props as any).__ctx_values;
+    if (contextValues) {
+      for (const propKey of Object.keys(contextValues)) {
+        (this as any)[propKey] = contextValues[propKey];
+      }
+    }
+
     this.reduxStore = this.appContext.getSync(ReactReduxService)!;
   }
 
-  shouldComponentUpdate(nextProps: Readonly<TProps>, nextState: Readonly<TState>, nextContext: any): boolean {
+  _patch_shouldComponentUpdate(nextProps: Readonly<TProps>, nextState: Readonly<TState>, nextContext: any): boolean {
     this.bindProps(nextProps);
     return true;
   }
 
-  componentDidMount(): void {
+  _patch_pre_componentDidMount(): void {
     this.isCtlMounted = true;
     const { initStatic } = this.getInitState();
     if (this.isWaitingInitStaticDid && initStatic === ReactRouteInitStatus.SUCCESS) {
@@ -102,9 +100,10 @@ export abstract class BaseReactController<
     }
   }
 
-  componentWillUnmount(): void {
+  _patch_componentWillUnmount(): void {
     this.isCtlMounted = false;
     let pathname: string = this.props.match?.pathname || this.location.pathname;
+    this.initManager.unregisterRouteController(pathname, this);
     if (this._models) {
       this.reduxStore.rmModelStateListener(
         this._models.map((it) => it.getNamespace()),
@@ -115,7 +114,7 @@ export abstract class BaseReactController<
   }
 
   protected bindProps(props: TProps) {
-    this.location = (this.props as any).location || window.location;
+    this.location = this.props.location!;
     bindRouteFromCompProps(this, props);
   }
 
@@ -135,73 +134,81 @@ export abstract class BaseReactController<
     this.injectProps();
     this.bindProps(this.props);
 
+    if (typeof (this as any).initialize === "function") {
+      (this as any).initialize();
+    }
+
     this.state = {
       ...this.state,
       _modelStateVersion: 1,
     };
+
     let pathname: string = this.props.match?.pathname || this.location.pathname;
-    const initStage = this.initManager.initStage;
-    const { initStatic, init } = this.getInitState();
+    this.initManager.registerRouteController(pathname, this);
 
-    if (initStage >= EnumReactAppInitStage.STATIC) {
-      if (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.ERROR) {
-        if (this.initialModelStaticState) {
-          const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
-            .then((rst) => {
-              this.setInitState({
-                initStatic: ReactRouteInitStatus.SUCCESS,
-              });
-              return rst;
-            })
-            .catch((e) => {
-              console.error(e);
-              this.setInitState({
-                initStatic: ReactRouteInitStatus.ERROR,
-              });
-            });
-          if (typeof window === "undefined" && initStaticTask) {
-            // only on server side
-            this.initManager.addTask(pathname, initStaticTask);
-          }
-        } else {
-          this.setInitState({
-            initStatic: ReactRouteInitStatus.SUCCESS,
-          });
-        }
-      } else if (initStatic === ReactRouteInitStatus.SUCCESS) {
-        // noop
-      } else if (initStatic === ReactRouteInitStatus.LOADING) {
-        // 数据由外部加载，例如加载预渲染的数据时。noop
-      }
-      this.isWaitingInitStaticDid = true;
-    }
+    // let pathname: string = this.props.match?.pathname || this.location.pathname;
+    // const initStage = this.initManager.initStage;
+    // const { initStatic, init } = this.getInitState();
 
-    if (initStage >= EnumReactAppInitStage.DYNAMIC) {
-      if (init === undefined || init === ReactRouteInitStatus.NONE || init === ReactRouteInitStatus.ERROR) {
-        if (this.initialModelState) {
-          const initTask = Promise.resolve(this.initialModelState({}))
-            // .then((rst) => {
-            //   this.setInitState( {
-            //     init: ReactRouteInitStatus.SUCCESS,
-            //   });
-            //   return rst;
-            // })
-            .catch((e) => {
-              this.setInitState({
-                init: ReactRouteInitStatus.ERROR,
-              });
-            });
-          if (typeof window == "undefined" && initTask) {
-            // only on server side
-            this.initManager.addTask(pathname, initTask);
-          }
-        } else {
-          // this.setInitState( {
-          //   init: ReactRouteInitStatus.SUCCESS,
-          // });
-        }
-      }
-    }
+    // if (initStage >= EnumReactAppInitStage.STATIC) {
+    //   if (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.ERROR) {
+    //     if (this.initialModelStaticState) {
+    //       const initStaticTask = Promise.resolve(this.initialModelStaticState({}))
+    //         .then((rst) => {
+    //           this.setInitState({
+    //             initStatic: ReactRouteInitStatus.SUCCESS,
+    //           });
+    //           return rst;
+    //         })
+    //         .catch((e) => {
+    //           console.error(e);
+    //           this.setInitState({
+    //             initStatic: ReactRouteInitStatus.ERROR,
+    //           });
+    //         });
+    //       if (typeof window === "undefined" && initStaticTask) {
+    //         // only on server side
+    //         this.initManager.addTask(pathname, initStaticTask);
+    //       }
+    //     } else {
+    //       this.setInitState({
+    //         initStatic: ReactRouteInitStatus.SUCCESS,
+    //       });
+    //     }
+    //   } else if (initStatic === ReactRouteInitStatus.SUCCESS) {
+    //     // noop
+    //   } else if (initStatic === ReactRouteInitStatus.LOADING) {
+    //     // 数据由外部加载，例如加载预渲染的数据时。noop
+    //   }
+    //   this.isWaitingInitStaticDid = true;
+    // }
+    //
+    // if (initStage >= EnumReactAppInitStage.DYNAMIC) {
+    //   if (init === undefined || init === ReactRouteInitStatus.NONE || init === ReactRouteInitStatus.ERROR) {
+    //     if (this.initialModelState) {
+    //       const initTask = Promise.resolve(this.initialModelState({}))
+    //         // .then((rst) => {
+    //         //   this.setInitState( {
+    //         //     init: ReactRouteInitStatus.SUCCESS,
+    //         //   });
+    //         //   return rst;
+    //         // })
+    //         .catch((e) => {
+    //           this.setInitState({
+    //             init: ReactRouteInitStatus.ERROR,
+    //           });
+    //         });
+    //       if (typeof window == "undefined" && initTask) {
+    //         // only on server side
+    //         this.initManager.addTask(pathname, initTask);
+    //       }
+    //     } else {
+    //       // this.setInitState( {
+    //       //   init: ReactRouteInitStatus.SUCCESS,
+    //       // });
+    //     }
+    //   }
+    // }
   }
 
   /**
@@ -297,7 +304,7 @@ export abstract class BaseReactController<
       const matchedUrl = this.props.match.pathname;
       const nextInitState = (nextModelState as ReactAppInitManager["state"])[matchedUrl];
       const preInitState = (preModelState as ReactAppInitManager["state"])[matchedUrl];
-      if (this.isWaitingInitStaticDid && nextInitState.initStatic === ReactRouteInitStatus.SUCCESS) {
+      if (this.isWaitingInitStaticDid && nextInitState?.initStatic === ReactRouteInitStatus.SUCCESS) {
         this.triggerOnInitialModelStaticStateDid();
       }
       return nextInitState?.initStatic !== preInitState?.initStatic || nextInitState?.init !== preInitState?.init;
@@ -316,7 +323,7 @@ export abstract class BaseReactController<
   };
 
   protected getInitState() {
-    const pathname = this.props.match?.pathname || this.location.pathname;
+    const pathname = this.props.match?.pathname || this.location?.pathname || "/";
     const index = !!this.props.route?.index;
     const initState = this.initManager.getRouteInitState({ pathname, index });
     return initState;

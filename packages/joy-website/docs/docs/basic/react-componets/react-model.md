@@ -1,8 +1,6 @@
 # ReactModel
 
-ReactModel 组件用于管理业务行为和维护业务数据状态。
-
-状态管理基于 [redux](https://redux.js.org/) 实现，秉承其单向不可变数据流，全局状态管理属性的特性，各个 Model 的状态统一在 Redux 的 `store`中管理，Model 实例上并未正真保存状态数据，读取 Model 状态时，实时从全局状态中获取属于当前 Model 的状态。
+ReactModel 组件用于管理业务方法和维护业务数据状态。状态管理基于 [redux](https://redux.js.org/) 实现，秉承其单向不可变数据流，全局状态管理属性的特性。
 
 `ReactModel`是单例且按需加载和创建的，在应用运行期间，只有当前界面上使用到的`ReactModel`组件才会被创建，创建后的实例将一直在容器中存在，如果再次进入该界面，会直接使用之前的实例和其状态渲染。
 
@@ -55,98 +53,21 @@ export class OrderModel extends BaseReactModel<OrderModelState> {
 
 ## 读取状态 `state`
 
-在 Model 内部和外部可通过读取`public get state(): TState；`属性来获取 Model 的当前状态，这是一个`getter`方法申明的只读属性，每次读取该属性，都会从统一数据源中获取新的当前状态值。
-
-当`ReactController`依赖注入了`ReactModel`实例，在渲染阶段并读取和使用了其 **部分** 状态，那么就只和这 **部分** 状态建立了绑定关系，当这 **部分** 状态发现变化时，界面才会重新渲染，而其它 **未使用部分** 状态发现更新，界面不会重新渲染，这能明显减少 React 的重新渲染次数，提升运行效率和界面流畅度。
-
-例如：
-
-```ts
-@ReactModel()
-export class UserModel extends BaseReactModel<{
-  userName: string;
-  phoneNumber: string;
-}> {
-  // 设置初始化状态
-  getInitState(): OrderModelState {
-    return {};
-  }
-
-  public updateUser({ userName, phoneNumber }) {
-    this.setState({ userName, phoneNumber });
-  }
-}
-```
-
-```tsx
-@ReactController()
-export default class PhoneController extends BaseReactController {
-  @Inject()
-  private userModel: UserModel;
-
-  updatePhoneNumber = () => {
-    const { userName, phoneNumber } = this.userModel.state;
-    this.userModel.updateUser({ userName, phoneNumber: "00000000" });
-  };
-
-  renderView(): ReactNode {
-    // 只使用了 UserModel 中的 phoneNumber 属性，未使用 userName 属性
-    const { phoneNumber } = this.userModel.state;
-    return (
-      <div>
-        <span>Phone Number: {phoneNumber} </span>
-        <button onClick={this.updatePhoneNumber}>edit</button>
-      </div>
-    );
-  }
-}
-```
-
-上示例中:
-
-- 在`PhoneController`的渲染方法中，只使用了`UserModel`状态的`phoneNumber`属性，未使用`name`属性，所以只有当`phoneNumber`状态发现变化时，`PhoneController`才会触发重新渲染。
-- 在 `updatePhone` 中虽然 `userName` 和 `phoneNumber`都使用了，但不是在渲染阶段使用的，所以`userName`并不会和界面建立绑定关系。
+在 Model 内部和外部可通过读取`public get state(): TState；`属性来获取 Model 的当前状态，这是一个`getter`方法申明的只读属性，每次读取该属性，都会重新从统一数据源中获取当前状态值。其实上 Model 实例并未正真保存状态数据，各个 Model 的状态统一在 Redux 的 `store`中管理，读取 Model 状态时，是实时从全局状态中获取属于当前 Model 的状态。
 
 ## 避免状态过期
 
-ReactModel 中对应的状态是不可变的，每次更新状态，都会创建一个新的状态，所以每次中获取的状态只能代表当前状态，如赋值语句`const user = userModel.state;`中的`user`只是当前的状态的快照，如果立即更改了`userModel`的状态，`user`变量并不会同步更新，**所以** 在需要时应当重新获取当前状态。
+ReactModel 中对应的状态是不可变的，每次更新状态，都会创建一个新的状态，所以每次获取的状态只能代表当前状态，在需要时应当重新获取新的状态。
+如赋值语句`const user = userModel.state;`中的`user`只是当前的状态的快照，如果立即更改了`userModel`的状态，`user`变量并不会同步更新。
 
-例如我们尝试给指定用户发送短信，但是发送之前，需要用户确认个人信息是否正确：
+```ts
+async function checkState() {
+  let userState = userModel.state;
+  await updateUser(); // 假设在 updateUser 里异步更新了UserModel中的状态。
+  console.log(userState === userModel.state); // 输出： false
 
-```tsx
-@ReactController()
-export default class PhoneController extends BaseReactController {
-  @Inject()
-  private userModel: UserModel;
-
-  sendMessage = async () => {
-    const user = this.userModel.state;
-    await this.confirmPhone(user); // 异步执行语句
-    // 错误: import! 不能直接再使用user.phoneNumber了，因为可能已经被用户修改了。
-    this.userModel.sendSMS({ phoneNumber: user.phoneNumber, smsContext: `Hello ${userName}!` });
-
-    // 正确：应该重新获取当前的状态。
-    const confirmedUser = this.userModel.state;
-    this.userModel.sendSMS({ phoneNumber: confirmedUser.phoneNumber, smsContext: `Hello ${userName}!` });
-  };
-
-  confirmPhone = async () => {
-    /********
-     * 在这里弹出用户信息确认框。
-     * 如果信息有误，用户可以立即编辑更新用户信息。
-     ******/
-  };
-
-  renderView(): ReactNode {
-    // 只使用了 UserModel 中的 phoneNumber 属性，未使用 userName 属性
-    const { phoneNumber } = this.userModel.state;
-    return (
-      <div>
-        <span>Phone Number: {phoneNumber} </span>
-        <button onClick={this.sendMessage}>Send Hell Message</button>
-      </div>
-    );
-  }
+  // 建议：在这里重新获取当前状态
+  userState = userModel.state;
 }
 ```
 

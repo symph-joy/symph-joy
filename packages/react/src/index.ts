@@ -7,6 +7,7 @@ export * from "./base-react-model";
 export * from "./react-controller.decorator";
 export * from "./router/react-route.decorator";
 export * from "./router/react-router-service";
+export * from "./router/react-route-loader";
 export * from "./react-model.decorator";
 export * from "./react-application-config";
 export * from "./react-app-container";

@@ -66,7 +66,7 @@ export class IncrementalCache {
       max: max || 50 * 1024 * 1024,
       length(val: any) {
         // rough estimate of size of cache value
-        return val.html.length + JSON.stringify(val.pageData).length;
+        return (val.html?.length || 0) + (JSON.stringify(val.pageData)?.length || 0);
       },
     });
   }
@@ -136,8 +136,8 @@ export class IncrementalCache {
   async set(
     pathname: string,
     data: {
-      html: string;
-      pageData: any;
+      html?: string;
+      pageData?: any;
     },
     revalidateSeconds?: number | false
   ) {
@@ -164,8 +164,12 @@ export class IncrementalCache {
       try {
         const seedPath = this.getSeedPath(pathname, "html");
         await promises.mkdir(path.dirname(seedPath), { recursive: true });
-        await promises.writeFile(seedPath, data.html, "utf8");
-        await promises.writeFile(this.getSeedPath(pathname, "json"), JSON.stringify(data.pageData), "utf8");
+        if (data.html) {
+          await promises.writeFile(seedPath, data.html, "utf8");
+        }
+        if (data.pageData) {
+          await promises.writeFile(this.getSeedPath(pathname, "json"), JSON.stringify(data.pageData), "utf8");
+        }
       } catch (error) {
         // failed to flush to disk
         console.warn("Failed to update prerender files for", pathname, error);

@@ -11,6 +11,7 @@ import { MountModule } from "./mount/mount-module";
 import { MountService } from "./mount/mount.service";
 import { ReactApplicationConfiguration } from "./react-application.configuration";
 import { ReactRouterService } from "./router/react-router-service";
+import { AnyAction } from "./redux";
 
 type ReactAPPEntryType = EntryType | TComponent | MountModule | (EntryType | MountModule | TComponent)[];
 
@@ -134,7 +135,11 @@ export class ReactApplicationContext extends ApplicationContext implements IReac
   }
 
   dispatch(action: any): Promise<unknown> | null | undefined {
-    return this.reduxStore.store.dispatch(action);
+    return this.reduxStore.dispatch(action);
+  }
+
+  public dispatchBatch(actions: AnyAction[]): Promise<unknown> | null | undefined {
+    return this.reduxStore.dispatchBatch(actions);
   }
 
   getState(): unknown {

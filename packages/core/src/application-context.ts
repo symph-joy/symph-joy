@@ -204,13 +204,17 @@ export class ApplicationContext implements IApplicationContext {
   /**
    * inject properties for instance
    */
-  public resolveProperties<TInstance>(instance: TInstance, typeOfInstance: TypeOrTokenType<unknown>): ThenableResult<IInjectableDependency[]> {
-    const providerId: string = this.getProviderId(typeOfInstance);
-    let instanceWrapper = this.container.getProvider(providerId);
+  public resolveProperties<TInstance extends Object>(
+    instance: TInstance,
+    typeOfInstance: TypeOrTokenType<unknown>
+  ): ThenableResult<IInjectableDependency[]> {
+    // const providerId: string = this.getProviderId(typeOfInstance);
+    const providerId: string = this.getProviderId(instance.constructor);
+    let instanceWrapper = this.container.getProvider(instance.constructor);
     if (isNil(instanceWrapper)) {
       // 生成一个临时的wrapper，用于缓存注入信息
       const provider: ClassComponent = {
-        name: providerId,
+        name: Symbol(providerId),
         type: typeOfInstance as Type,
         useClass: typeOfInstance as Type, // todo 限定为只能是类型
         scope: Scope.SINGLETON,

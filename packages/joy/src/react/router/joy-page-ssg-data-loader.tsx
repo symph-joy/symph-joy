@@ -4,6 +4,7 @@ import * as H from "history";
 import { useLocation } from "react-router-dom";
 import { JoyReactAppInitManagerClient, JoySSGPage } from "../joy-react-app-init-manager-client";
 import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
+import { AnyAction } from "@symph/react/dist/redux";
 
 const DefaultLoadingComp = ({ location }: { location: H.Location }) => <div>{location.pathname} ssg data loading...</div>;
 
@@ -21,26 +22,35 @@ export function JoyPageSSGDataLoader({ children }: { children: React.ReactNode }
   // prefetch Data
   const initManager = joyAppContext.getSync(JoyReactAppInitManagerClient);
   const reactRouter = joyAppContext.getSync(ReactRouterService);
+  const reduxService = joyAppContext.getSync(ReactReduxService);
   const ssgPage = useMemo(() => {
     if (!ssr) {
       return undefined;
     }
-    let ssgInfo: Promise<JoySSGPage | undefined> | JoySSGPage | undefined = undefined;
-    // 暂时只处理叶子路由。
-    ssgInfo = initManager.getPageSSGState(pathname);
-    const routesMatched = reactRouter.matchRoutes(pathname) || [];
-    for (const routeMatch of routesMatched) {
-      const initState = initManager.getRouteInitState(routeMatch.pathname);
-      if (
-        initState.initStatic === undefined ||
-        initState.initStatic === ReactRouteInitStatus.NONE ||
-        initState.initStatic === ReactRouteInitStatus.ERROR
-      ) {
-        initManager.setInitState(routeMatch.pathname, { initStatic: ReactRouteInitStatus.LOADING });
-      }
-    }
+    let ssgPage: Promise<JoySSGPage | undefined> | JoySSGPage | undefined = undefined;
 
-    return ssgInfo;
+    ssgPage = initManager.getPageSSGState(pathname);
+    if (ssgPage && !(ssgPage instanceof Promise)) {
+      const routeSSGDataList = ssgPage.routeSSGDataList || [];
+      routeSSGDataList.forEach((routeSSGData) => {
+        if (routeSSGData.pathname.startsWith("INIT@")) {
+          return;
+        }
+        const initState = initManager.getRouteInitState(routeSSGData);
+        if (
+          initState.initStatic === undefined ||
+          initState.initStatic === ReactRouteInitStatus.NONE ||
+          initState.initStatic === ReactRouteInitStatus.ERROR
+        ) {
+          if (routeSSGData.ssgData) {
+            reduxService.dispatchBatch(routeSSGData.ssgData);
+          } else {
+            initManager.setInitState(routeSSGData, { initStatic: ReactRouteInitStatus.LOADING });
+          }
+        }
+      });
+    }
+    return ssgPage;
   }, [pathname]);
 
   const [loadingState, setLoadingStat] = useState({
@@ -49,20 +59,35 @@ export function JoyPageSSGDataLoader({ children }: { children: React.ReactNode }
 
   // fetch page data
   useEffect(() => {
-    Promise.resolve(ssgPage).then((ssgPage) => {
-      if (!ssr) {
-        return undefined;
+    if (!ssr || !ssgPage) {
+      return;
+    }
+    const reduxService = joyAppContext.getSync(ReactReduxService);
+    const loadingPaths = [] as string[];
+    (async () => {
+      let ssgPageResolved;
+      if (ssgPage instanceof Promise) {
+        ssgPageResolved = await ssgPage;
+      } else {
+        ssgPageResolved = ssgPage;
       }
-      const initState = initManager.getRouteInitState(location.pathname);
-      if (initState?.initStatic !== ReactRouteInitStatus.SUCCESS && ssgPage?.ssgData?.length) {
-        const reduxService = joyAppContext.getSync(ReactReduxService);
-        reduxService.dispatchBatch(ssgPage.ssgData);
+      if (!ssgPageResolved) {
+        return;
       }
-      if (loadingState.isDataLoading) {
-        setLoadingStat({ isDataLoading: false });
+
+      if (ssgPageResolved.loadingTask) {
+        await ssgPageResolved.loadingTask;
       }
-    });
-    return () => {};
+      const routeSSGDataList = ssgPageResolved.routeSSGDataList || [];
+      const actions = routeSSGDataList.reduce((pre: AnyAction[], routeSSGData) => {
+        const initState = initManager.getRouteInitState(routeSSGData);
+        if (initState.initStatic !== ReactRouteInitStatus.SUCCESS) {
+          pre = pre.concat(routeSSGData.ssgData);
+        }
+        return pre;
+      }, []);
+      reduxService.dispatchBatch(actions);
+    })();
   }, [pathname]);
 
   return children;

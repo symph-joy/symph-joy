@@ -29,10 +29,12 @@ import { FontManifest, getFontDefinitionFromManifest } from "./font-utils";
 import { LoadComponentsReturnType, ManifestItem } from "./load-components";
 import { normalizePagePath } from "./normalize-page-path";
 import optimizeAmp from "./optimize-amp";
-import { ReactAppContainer, ReactAppInitManager, ReactApplicationContext, ReactRouteInitStatus, TReactAppComponent } from "@symph/react";
-import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
+import { ReactAppContainer, ReactAppInitManager, ReactApplicationContext, ReactRouteInitStatus } from "@symph/react";
+import { RouteMatch } from "@symph/react/router-dom";
+import { ACTION_INIT_MODEL, ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 import { JoySSRContext, JoySSRContextType } from "../lib/joy-ssr-react-context";
+import { RouteSSGData } from "../lib/RouteSSGData.interface";
 
 function noRouter() {
   const message =
@@ -499,35 +501,68 @@ export async function renderToHTML(
         </ReactAppContainer>
       </AppContainer>
     );
-    let revalidate: number | undefined;
+
+    const routesSSGData = [];
+    let pageRevalidate = Number.MAX_SAFE_INTEGER;
     try {
-      const initRst = await initManager.waitAllFinished(pathname);
-      revalidate = initRst.revalidate;
-      let { initStatic, init } = initManager.getRouteInitState(pathname);
-      if (
-        initStage >= EnumReactAppInitStage.STATIC &&
-        (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.LOADING)
-      ) {
-        initStatic = ReactRouteInitStatus.SUCCESS;
+      const matchedRoutes = ((renderOpts as any).matchedRoutes as RouteMatch[]) || [];
+      routesSSGData.push({
+        pathname: "INIT@" + pathname,
+        ssgData: [
+          {
+            type: ACTION_INIT_MODEL,
+            state: reduxService.store.getState(),
+          },
+        ],
+      } as RouteSSGData);
+      for (const matchedRoute of matchedRoutes) {
+        reduxService.startRecordState();
+        const { revalidate, initStaticCount, initDynamicCount } = await initManager.initControllers(matchedRoute.pathname);
+        if (revalidate !== undefined && revalidate < pageRevalidate) {
+          pageRevalidate = revalidate;
+        }
+        // let { initStatic, init } = initManager.getRouteInitState(pathname);
+        // if (
+        //   initStage >= EnumReactAppInitStage.STATIC &&
+        //   (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.LOADING)
+        // ) {
+        //   initStatic = ReactRouteInitStatus.SUCCESS;
+        // }
+        // if (
+        //   (initStage >= EnumReactAppInitStage.DYNAMIC && (init === undefined || init === ReactRouteInitStatus.NONE)) ||
+        //   init === ReactRouteInitStatus.LOADING
+        // ) {
+        //   init = ReactRouteInitStatus.SUCCESS;
+        // }
+        // initManager.setInitState(pathname, { initStatic, init });
+        const routeData = reduxService.stopRecordState();
+        // 个数等于undefined，表示该级路由在本次渲染中无需初始化。
+        if (initStaticCount !== undefined || initDynamicCount !== undefined) {
+          routesSSGData.push({
+            pathname: matchedRoute.pathname,
+            index: matchedRoute.route.index,
+            ssgData: routeData,
+            revalidate,
+          } as RouteSSGData);
+        }
       }
-      if (
-        (initStage >= EnumReactAppInitStage.DYNAMIC && (init === undefined || init === ReactRouteInitStatus.NONE)) ||
-        init === ReactRouteInitStatus.LOADING
-      ) {
-        init = ReactRouteInitStatus.SUCCESS;
-      }
-      initManager.setInitState(pathname, { initStatic, init });
     } catch (e) {
+      if (process.env.NODE_ENV === "development") {
+        console.log(e);
+      }
       initManager.setInitState(pathname, { initStatic: ReactRouteInitStatus.ERROR });
     }
 
-    const reduxStateHistories = reduxService.stopRecordState();
-    (renderOpts as any).pageData = reduxStateHistories;
-    (renderOpts as any).revalidate = revalidate;
-    return {
-      revalidate,
-      stateHistories: reduxStateHistories,
-    };
+    (renderOpts as any).routesSSGData = routesSSGData;
+    (renderOpts as any).revalidate = pageRevalidate === Number.MAX_SAFE_INTEGER ? undefined : pageRevalidate;
+
+    // const reduxStateHistories = reduxService.stopRecordState();
+
+    // (renderOpts as any).revalidate = revalidate;
+    // return {
+    //   revalidate,
+    //   stateHistories: reduxStateHistories,
+    // };
   };
   if (isSSR) {
     await renderData();
@@ -614,7 +649,7 @@ export async function renderToHTML(
     unstable_runtimeJS: process.env.NODE_ENV === "production" ? pageConfig.unstable_runtimeJS : undefined,
     dangerousAsPath: router.asPath,
     ampState,
-    initState: reactApplicationContext?.getState() || {},
+    initState: (renderOpts as any).routesSSGData || [],
     props,
     headTags: await headTags(documentCtx),
     isFallback,

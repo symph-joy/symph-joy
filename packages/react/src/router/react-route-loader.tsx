@@ -4,6 +4,8 @@ import { NavigateFunction, PathMatch, useLocation, useMatch, useNavigate } from 
 import { RuntimeException } from "@symph/core";
 import { ReactApplicationReactContext } from "../react-app-container";
 import { IReactApplication, IReactRoute } from "../interfaces";
+import { ReactRouteContext, ReactRouteContextValue } from "./react-route.decorator";
+import { ReactAppInitManager } from "../react-app-init-manager";
 
 type ReactRouteLoaderOptions = {
   // match: PathMatch;
@@ -37,15 +39,27 @@ export function getRouteElement(
   const { componentName, componentPackage, componentModule, element } = route;
 
   function wrapperComp(Comp: ComponentType<any>) {
+    let element = null;
     // 当是叶子路由且是动态路由时，url地址发生后，新地址依然匹配当前路由时，界面重新加载。
     if (!route.children?.length && isDynamicRoute(route.path)) {
       function InstComp(props: any) {
         return <Comp {...props} />;
       }
-      return <InstComp route={route} match={match} location={location} navigate={navigate} />;
+      // return <InstComp route={route} match={match} location={location} navigate={navigate} />;
+      element = <InstComp />;
     } else {
-      return <Comp route={route} match={match} location={location} navigate={navigate} />;
+      // return <Comp route={route} match={match} location={location} navigate={navigate} />;
+      element = <Comp />;
     }
+
+    const routeContextValue = {
+      route,
+      match,
+      location,
+      navigate,
+      controllers: [],
+    } as ReactRouteContextValue;
+    return <ReactRouteContext.Provider value={routeContextValue}>{element}</ReactRouteContext.Provider>;
   }
 
   if (typeof componentName !== "undefined") {
@@ -102,9 +116,10 @@ export function ReactRouteLoader({ route, loading }: ReactRouteLoaderOptions): R
     throw new Error("react app context is not initialed");
   }
   if (route.catchAllParam) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore 特殊处理，填入catchAllParam的值。
-    match.params[route.catchAllParam] = match.params["*"];
+    // 特殊处理，填入catchAllParam的值。
+    Object.defineProperty(match.params, route.catchAllParam, {
+      value: match.params["*"],
+    });
   }
 
   let routeElement: React.ReactElement | Promise<React.ReactElement> = useMemo(() => {
@@ -116,7 +131,8 @@ export function ReactRouteLoader({ route, loading }: ReactRouteLoaderOptions): R
   });
 
   useEffect(() => {
-    Promise.resolve(routeElement).then((Ctl) => {
+    const initManager = appContext.getSync(ReactAppInitManager);
+    Promise.resolve(initManager.initControllers(matchUrl)).then((Ctl) => {
       if (loadingState.isCompLoading) {
         setLoadingStat({ isCompLoading: false });
       }

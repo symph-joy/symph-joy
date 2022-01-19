@@ -1,8 +1,13 @@
-import { RuntimeException } from "@symph/core";
-
 export class FetchError extends Error {
   constructor(public code: string | number, public message: string) {
     super(message);
+  }
+
+  public toJSON() {
+    return {
+      code: this.code,
+      message: this.message,
+    };
   }
 }
 

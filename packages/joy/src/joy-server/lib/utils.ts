@@ -7,6 +7,7 @@ import { ManifestItem } from "../server/load-components";
 import { JoyRouter } from "./router/router";
 import { Env } from "../../lib/load-env-config";
 import { BuildManifest } from "../server/get-page-files";
+import { RouteSSGData } from "./RouteSSGData.interface";
 
 /**
  * Types used by both joy and joy-server
@@ -62,7 +63,7 @@ export type BaseContext = {
 };
 
 export type JOY_DATA = {
-  initState: Record<string, any>;
+  initState: RouteSSGData[];
   props: Record<string, any>;
   page: string;
   query: ParsedUrlQuery;

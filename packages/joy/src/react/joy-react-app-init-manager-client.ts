@@ -1,5 +1,5 @@
 import { matchPath } from "react-router";
-import { ReactAppInitManager, ReactComponent, ReactRouteInitStatus } from "@symph/react";
+import { ReactAppInitManager, ReactComponent, ReactRouteInitStatus, ReactRouterService } from "@symph/react";
 import { isDynamicRoute } from "./router/router-utils";
 import { parseRelativeUrl } from "../joy-server/lib/router/utils/parse-relative-url";
 import { addBasePath } from "../joy-server/lib/router/router";
@@ -9,6 +9,7 @@ import { ClientSsgManifest } from "../build/joy-build.service";
 import { ClientBuildManifest } from "../build/webpack/plugins/build-manifest-plugin";
 import { TaskThenable } from "@symph/core/dist/utils/task-thenable";
 import { Inject } from "@symph/core";
+import { RouteSSGData } from "../joy-server/lib/RouteSSGData.interface";
 
 const PAGE_LOAD_ERROR = Symbol("PAGE_LOAD_ERROR");
 
@@ -23,19 +24,25 @@ const PAGE_LOAD_ERROR = Symbol("PAGE_LOAD_ERROR");
 
 export interface JoySSGPage {
   pathname: string;
-  path: string;
-  ssgData?: any[]; // 服务端渲染的数据
+  routeSSGDataList: RouteSSGData[]; // 服务端渲染的数据
+  loadingTask?: Promise<RouteSSGData[]>;
+  loadingRoutes?: string[];
 }
 
 @ReactComponent()
 export class JoyReactAppInitManagerClient extends ReactAppInitManager {
   private ssgManifest: Set<string> | undefined;
   private ssgPages: Map<string, JoySSGPage> = new Map<string, JoySSGPage>();
+  private ssgRouteDataCache: Map<string, RouteSSGData> = new Map<string, RouteSSGData>();
 
   private promisedBuildManifest?: Promise<ClientBuildManifest>;
   private promisedSsgManifest: Promise<ClientSsgManifest>;
 
-  constructor(private joyClientConfig: JoyClientConfig, @Inject("joyPrerenderRoutes") private joyPrerenderRoutes: string[]) {
+  constructor(
+    private joyClientConfig: JoyClientConfig,
+    @Inject("joyPrerenderRoutes") private joyPrerenderRoutes: string[],
+    private reactRouter: ReactRouterService
+  ) {
     super();
 
     this.promisedBuildManifest = new Promise((resolve) => {
@@ -67,59 +74,12 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
     });
   }
 
-  // public getPageSSGState(pathname: string): Promise<JoySSGPage | undefined> | JoySSGPage | undefined {
-  //   this.ssgManifest = new Set(["/docs/*"]);
-  //   // this._cachedSSgManifest = new Set(["\u002Fdynamic\u002F:id", '/static', '/stateful' ])
-  //
-  //   const ssgPage = this.ssgPages.get(pathname);
-  //   if (ssgPage) {
-  //     return ssgPage;
-  //   } else {
-  //   }
-  //
-  //   // todo pref: 将动态路由分开，提升比较效率。
-  //   const check = (ssgManifest: Set<string>): JoySSGPage | undefined => {
-  //     let ssgRoutePath: string | undefined;
-  //     for (const ssgRoute of ssgManifest.values()) {
-  //       if (ssgRoute === pathname) {
-  //         ssgRoutePath = ssgRoute;
-  //       } else if (isDynamicRoute(ssgRoute) && matchPath({ path: ssgRoute, end: false }, pathname)) {
-  //         ssgRoutePath = ssgRoute;
-  //       }
-  //       if (ssgRoutePath) {
-  //         break;
-  //       }
-  //     }
-  //     if (ssgRoutePath) {
-  //       return {
-  //         pathname,
-  //         path: ssgRoutePath,
-  //       } as JoySSGPage;
-  //     }
-  //     return undefined;
-  //   };
-  //
-  //   if (this.ssgManifest) {
-  //     return check(this.ssgManifest);
-  //   } else {
-  //     return this.promisedSsgManifest.then((ssgManifest) => {
-  //       this.ssgManifest = ssgManifest;
-  //       return check(ssgManifest);
-  //     });
-  //   }
-  // }
-
   public getPageSSGState(pathname: string, routePath?: string): Promise<JoySSGPage | undefined> | JoySSGPage | undefined {
-    this.ssgManifest = new Set(["/", "/docs/*"]);
-
     const cache = this.ssgPages.get(pathname);
     if (cache) {
-      const initState = this.getRouteInitState(pathname);
-      if (initState.initStatic !== ReactRouteInitStatus.SUCCESS) {
-        this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });
-      }
       return cache;
     }
+
     const task = new TaskThenable((resolve, reject) => {
       if (this.ssgManifest) {
         resolve(this.ssgManifest);
@@ -148,7 +108,6 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
         if (ssgRoutePath) {
           const ssgPage = {
             pathname,
-            path: ssgRoutePath,
           } as JoySSGPage;
           this.ssgPages.set(pathname, ssgPage);
           return ssgPage;
@@ -156,29 +115,42 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
         return undefined;
       })
       .then((ssgPage) => {
-        if (ssgPage) {
-          const initState = this.getRouteInitState(pathname);
-          if (!ssgPage.ssgData) {
-            if (initState.initStatic !== ReactRouteInitStatus.SUCCESS) {
-              this.setInitState(pathname, { initStatic: ReactRouteInitStatus.LOADING });
-              return new Promise<JoySSGPage>((resolve, reject) => {
-                this.fetchSSGData(pathname).then((data) => {
-                  ssgPage.ssgData = data;
-                  resolve(ssgPage);
-                }, reject);
-              });
-            } else {
-              // 首次加载页面，html中已经包含了数据了，所以异步加载。
-              this.fetchSSGData(pathname).then((data) => {
-                ssgPage.ssgData = data;
-              });
-            }
-          }
+        if (!ssgPage) {
+          return undefined;
         }
+        const routesMatched = this.reactRouter.matchRoutes(pathname) || [];
+        const caches = routesMatched.map((m) => this.ssgRouteDataCache.get(m.pathname));
+        if (caches.indexOf(undefined) < 0) {
+          ssgPage.routeSSGDataList = caches as RouteSSGData[];
+          return ssgPage;
+        }
+        ssgPage.routeSSGDataList = caches.map((v, i) => {
+          if (v !== undefined) {
+            return v;
+          }
+          const pathname = routesMatched[i].pathname;
+          if (!ssgPage.loadingRoutes) {
+            ssgPage.loadingRoutes = [];
+          }
+          ssgPage.loadingRoutes.push(pathname);
+          return { pathname, ssgData: undefined };
+        }) as RouteSSGData[];
+
+        ssgPage.loadingTask = this.fetchSSGData(pathname).then((data) => {
+          ssgPage.routeSSGDataList = data;
+          if (data?.length) {
+            data.forEach((d) => this.ssgRouteDataCache.set(d.pathname, d));
+          }
+          return data;
+        });
         return ssgPage;
       });
 
     return task.getResult();
+  }
+
+  public setRouteSSGState(routeSSGData: RouteSSGData) {
+    this.ssgRouteDataCache.set(routeSSGData.pathname, routeSSGData);
   }
 
   private fetchRetry(url: string, attempts: number): Promise<any> {
@@ -207,7 +179,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
     });
   }
 
-  public async fetchSSGData(href: string) {
+  public async fetchSSGData(href: string): Promise<RouteSSGData[]> {
     const dataHref = this.getDataHref(href, false);
     // this.setInitState(href, {
     //   initStatic: ReactRouteInitStatus.LOADING,
@@ -226,7 +198,7 @@ export class JoyReactAppInitManagerClient extends ReactAppInitManager {
     //   initStatic: ReactRouteInitStatus.SUCCESS,
     // });
 
-    return data;
+    return data as RouteSSGData[];
   }
 
   /**

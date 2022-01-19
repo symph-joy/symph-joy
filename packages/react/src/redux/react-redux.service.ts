@@ -26,6 +26,7 @@ declare global {
 const returnSelf = (self: any) => self;
 
 export const ACTION_MERGE_STATE = "__MERGE_STATE";
+export const ACTION_INIT_MODEL = "__INIT_MODEL";
 
 export interface ModelStateChangeHandler {
   (changedModels: string[], nextState: Record<string, unknown>, previousState: Record<string, unknown>): boolean | undefined | void;
@@ -110,6 +111,18 @@ export class ReactReduxService {
           nextState[key] = { ...nextState[key], ...nextSubState[key] };
         }
         return nextState;
+      } else if (action.type === ACTION_INIT_MODEL) {
+        const initState = action.state;
+        let nextState: any = undefined;
+        for (const key in initState) {
+          if (state[key] === undefined) {
+            if (nextState === undefined) {
+              nextState = { ...state };
+            }
+            nextState[key] = initState[key];
+          }
+        }
+        return nextState || state;
       } else {
         return combined(state, action);
       }

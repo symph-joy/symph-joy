@@ -21,10 +21,10 @@ export default class Path extends BaseReactController {
     showDrawer: false,
   };
 
-  async initialModelStaticState(): Promise<void | number> {
-    let path = this.docPath || "/docs/docs/start/introduce";
-    await this.fetchPageDocData(path);
-  }
+  // async initialModelStaticState(): Promise<void | number> {
+  //   let path = this.docPath || "/docs/docs/start/introduce";
+  //   await this.fetchPageDocData(path);
+  // }
 
   async fetchPageDocData(path) {
     if (!path.startsWith("/")) {
@@ -98,7 +98,7 @@ export default class Path extends BaseReactController {
                 {loadCurrentDocErr.code}:{loadCurrentDocErr.message}
               </div>
             ) : undefined}
-            <Doc location={this.props.location} className={styles.docContent} path={this.docPath || "/docs/docs/start/introduce"} />
+            <Doc className={styles.docContent} path={this.docPath || "/docs/docs/start/introduce"} />
           </Spin>
         </div>
         <div className={styles.titleTree}>

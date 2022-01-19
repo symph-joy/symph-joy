@@ -3,6 +3,7 @@ import { getDomInnerHtml } from "../../../util/html-utils";
 import { ReactRouteInitStatus } from "@symph/react";
 import { renderViaHTTP } from "../../../util/joy-test-utils";
 import { JoyTestContext } from "../../../util/joy-test-context";
+import { RouteSSGData } from "../../../../src/joy-server/lib/RouteSSGData.interface";
 
 export function staticCases(testContext: JoyTestContext) {
   describe("static cases", () => {
@@ -40,9 +41,9 @@ export function staticCases(testContext: JoyTestContext) {
         const fileContext = await promises.readFile(filePath, {
           encoding: "utf-8",
         });
-        const date = JSON.parse(fileContext);
+        const date = JSON.parse(fileContext) as RouteSSGData[];
         console.log(date);
-        const setStateAction = (date as any[]).find((it) => it.type === "reactAppInitManager/__SET_STATE");
+        const setStateAction = date.find((it) => it.pathname === "/static")?.ssgData?.find((it) => it.type === "reactAppInitManager/__SET_STATE");
         expect(setStateAction).toBeTruthy();
         expect(setStateAction).toHaveProperty("state./static.initStatic", ReactRouteInitStatus.SUCCESS);
         expect(setStateAction).toHaveProperty("state./static.init", undefined);

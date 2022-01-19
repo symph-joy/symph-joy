@@ -1,5 +1,5 @@
 import { ClassComponent, Component, isClassComponent, RegisterTap, TComponent } from "@symph/core";
-import { BaseReactController, IReactRoute, ReactRoute, ReactRouterService } from "@symph/react";
+import { getReactControllerMeta, IReactRoute, ReactRoute, ReactRouterService } from "@symph/react";
 import { IScanOutModule } from "../../build/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join, sep } from "path";
@@ -9,7 +9,6 @@ import { handlebars } from "../../lib/handlebars";
 import { ModuleContextTypeEnum } from "../../lib/constants";
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { normalizeConventionRouteV6 } from "./router-utils";
-import { isSubClass } from "@symph/core/dist/utils/shared.utils";
 
 export interface IJoyReactRouteBuild extends IReactRoute {
   // staticPathGenerator?: IRouteMeta["staticPathGenerator"];
@@ -173,7 +172,8 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
       return undefined;
     }
     const clazz = (provider as ClassComponent).useClass;
-    if (!isSubClass(clazz, BaseReactController)) {
+    const ctlMeta = getReactControllerMeta(clazz);
+    if (!ctlMeta) {
       return;
     }
     const fsRoute = this.getFsRoute(filePath, provider, basePath);

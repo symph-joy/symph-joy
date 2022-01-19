@@ -1,12 +1,13 @@
 import "jest-playwright-preset";
 import * as path from "path";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { renderViaHTTP } from "../../../util/joy-test-utils";
+import { renderViaHTTP, waitFor } from "../../../util/joy-test-utils";
 import { promises } from "fs";
 import { getDomInnerHtml } from "../../../util/html-utils";
 import { JOY_DATA } from "../../../../src/joy-server/lib/utils";
 import { statefulCases } from "./stateful.cases";
 import { staticCases } from "./static.caces";
+import { embedCases } from "./embed.cases";
 
 describe("react-prerender", () => {
   describe("prod, prerender", () => {
@@ -27,6 +28,10 @@ describe("react-prerender", () => {
 
     describe("stateful page", () => {
       statefulCases(testContext);
+    });
+
+    describe("embed", () => {
+      embedCases(testContext);
     });
 
     describe("dynamic route", () => {
@@ -101,6 +106,7 @@ describe("react-prerender", () => {
 
     beforeAll(async () => {
       await testContext.startDev(undefined, { env: { ssr: true } });
+      // await waitFor();
     }, 999999);
 
     afterAll(async () => {
@@ -109,6 +115,10 @@ describe("react-prerender", () => {
 
     describe("stateful page", () => {
       statefulCases(testContext);
+    });
+
+    describe("embed", () => {
+      embedCases(testContext);
     });
   });
 
