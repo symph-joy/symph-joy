@@ -1,5 +1,6 @@
 {
   "name": "@symph/joy-website",
+  "private": true,
   "version": "v1.0.0",
   "description": "@symph/joy official website",
   "license": "MIT",
