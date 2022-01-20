@@ -40,5 +40,8 @@
     "@types/lodash.merge": "^4.6.6",
     "@types/lodash.set": "^4.3.6"
   },
-  "gitHead": "0f97cf7a142bee3c256cca00a13a4ca098fda435"
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "e0f1620b9998cd2b6828108f59c6409ecff59ddb"
 }
