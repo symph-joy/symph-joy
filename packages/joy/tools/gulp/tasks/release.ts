@@ -6,14 +6,13 @@ import * as fs from "fs-extra";
 /**
  * Cleans out dirs
  */
-function cleanDirs(done: () => void) {
+function release(done: () => void) {
   const dir = path.resolve(`dist`);
   if (fs.existsSync(dir)) {
     log.info(`clean dir:${dir}`);
-    fs.rmSync(dir, { recursive: true });
+    fs.rmdirSync(dir, { recursive: true });
   }
-
   done();
 }
 
-task("clean", (done) => cleanDirs(done));
+task("release", series("clean", "build"));

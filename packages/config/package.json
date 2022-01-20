@@ -23,7 +23,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@symph/core": "2.0.0-canary.175+bffd034",
+    "@symph/core": "^2.0.0-canary.2",
     "@tsed/schema": "^6.62.1",
     "ajv": "^8.8.2",
     "dotenv": "^10.0.0",
@@ -40,5 +40,5 @@
     "@types/lodash.merge": "^4.6.6",
     "@types/lodash.set": "^4.3.6"
   },
-  "gitHead": "bffd03410c501068c93d4f09faac0d0a75162626"
+  "gitHead": "0f97cf7a142bee3c256cca00a13a4ca098fda435"
 }

@@ -20,8 +20,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@symph/config": "2.0.0-canary.175+bffd034",
-    "@symph/core": "2.0.0-canary.175+bffd034",
+    "@symph/config": "2.0.0-canary.2",
+    "@symph/core": "2.0.0-canary.2",
     "fastify": "^3.24.0",
     "fastify-cors": "^6.0.2",
     "fastify-express": "^0.3.3",
@@ -34,5 +34,5 @@
     "standard": "^14.3.1",
     "tslib": "2.2.0"
   },
-  "gitHead": "bffd03410c501068c93d4f09faac0d0a75162626"
+  "gitHead": "0f97cf7a142bee3c256cca00a13a4ca098fda435"
 }
