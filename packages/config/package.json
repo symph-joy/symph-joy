@@ -1,6 +1,6 @@
 {
   "name": "@symph/config",
-  "version": "2.0.0-canary.3",
+  "version": "2.0.0-canary.4",
   "description": "Joy core - modern, effect, powerful react application framework",
   "module": "dist/index.ts",
   "main": "dist/index.js",
@@ -23,7 +23,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@symph/core": "2.0.0-canary.3",
+    "@symph/core": "2.0.0-canary.4",
     "@tsed/schema": "^6.62.1",
     "ajv": "^8.8.2",
     "dotenv": "^10.0.0",
