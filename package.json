@@ -68,7 +68,7 @@
     "flatten": "1.0.2",
     "flow-bin": "0.107.0",
     "fs-extra": "^9.1.0",
-    "get-port": "5.0.0",
+    "get-port": "^5.0.0",
     "got": "^11.8.2",
     "gulp": "4.0.2",
     "gulp-clean": "0.4.0",
