@@ -1,8 +1,8 @@
 {
   "name": "@symph/joy-website",
-  "private": true,
-  "version": "v1.0.0",
+  "version": "2.0.0-canary.2",
   "description": "@symph/joy official website",
+  "private": true,
   "license": "MIT",
   "repository": "https://github.com/lnlfps/symph-joy/packages/joy-website",
   "bugs": "https://github.com/lnlfps/symph-joy/issues",
@@ -13,14 +13,14 @@
     "joy-export": "joy build&&joy export"
   },
   "dependencies": {
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "@symph/joy": "^2.0.0",
-    "antd": "^4.17.0-alpha.9",
     "@ant-design/icons": "^4.7.0",
-    "marked": "^4.0.0",
+    "@symph/joy": "2.0.0-canary.2",
+    "animate.css": "^4.1.1",
+    "antd": "^4.17.0-alpha.9",
     "highlight.js": "^11.3.1",
-    "animate.css": "^4.1.1"
+    "marked": "^4.0.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
   },
   "devDependencies": {
     "@types/marked": "^4.0.1"

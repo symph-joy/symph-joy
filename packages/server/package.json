@@ -1,6 +1,6 @@
 {
   "name": "@symph/server",
-  "version": "2.0.0",
+  "version": "2.0.0-canary.2",
   "description": "Joy core - modern, effect, powerful react application framework",
   "module": "src/index.ts",
   "_main": "src/index.ts",
@@ -15,22 +15,24 @@
   "scripts": {
     "build": "tsc -d  -p tsconfig.json",
     "watch": "tsc -w -d --sourceMap  -p tsconfig.json",
-    "clean": "rm -rf dist"
+    "release": "npm run clean && npm run build",
+    "prepublish": "npm run release",
+    "clean": "rimraf dist"
   },
   "dependencies": {
-    "standard": "^14.3.1",
+    "@symph/config": "2.0.0-canary.175+bffd034",
+    "@symph/core": "2.0.0-canary.175+bffd034",
     "fastify": "^3.24.0",
     "fastify-cors": "^6.0.2",
+    "fastify-express": "^0.3.3",
     "fastify-formbody": "^5.2.0",
     "fastify-static": "^4.5.0",
-    "fastify-express": "^0.3.3",
     "light-my-request": "4.4.1",
     "middie": "5.2.0",
     "path-to-regexp": "3.2.0",
-    "tslib": "2.2.0",
-    "@symph/core": "^2.0.0",
-    "@symph/config": "^2.0.0",
-    "point-of-view": "^4.15.2"
+    "point-of-view": "^4.15.2",
+    "standard": "^14.3.1",
+    "tslib": "2.2.0"
   },
-  "peerDependencies": {}
+  "gitHead": "bffd03410c501068c93d4f09faac0d0a75162626"
 }
