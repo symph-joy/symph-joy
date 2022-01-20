@@ -16,7 +16,7 @@
     "clean": "lerna clean && lerna run clean",
     "publish:canary": "npm run clean && npm run build && npx lerna publish --npm-tag=beta --access public -m \"publish %`s release\"",
     "test": "jest --no-watchman",
-    "test:all": "jest --ci --reporters=default --reporters=jest-junit --forceExit --runInBand --no-watchman",
+    "test:all": "jest --ci --reporters=default --reporters=jest-junit --forceExit --no-watchman",
     "_pretest": "yarn run lint",
     "lint": "concurrently 'npm run lint:packages' 'npm run lint:integration' 'npm run lint:spec'",
     "lint:integration": "eslint 'integration/*/{,!(node_modules)/**/}/*.ts' -c '.eslintrc.spec.js' --fix",

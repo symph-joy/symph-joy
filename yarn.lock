@@ -8592,11 +8592,6 @@ get-port@^5.0.0, get-port@^5.1.1:
   resolved "https://registry.npmmirror.com/get-port/download/get-port-5.1.1.tgz?cache=0&sync_timestamp=1633308798228&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fget-port%2Fdownload%2Fget-port-5.1.1.tgz#0469ed07563479de6efb986baf053dcd7d4e3193"
   integrity sha1-BGntB1Y0ed5u+5hrrwU9zX1OMZM=
 
-get-port@^6.0.0:
-  version "6.0.0"
-  resolved "https://registry.npmmirror.com/get-port/download/get-port-6.0.0.tgz?cache=0&sync_timestamp=1633308798228&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fget-port%2Fdownload%2Fget-port-6.0.0.tgz#eeac06c17b9d22c2949d4ce5abcc80753afe9be1"
-  integrity sha1-7qwGwXudIsKUnUzlq8yAdTr+m+E=
-
 get-stdin@^4.0.1:
   version "4.0.1"
   resolved "https://registry.nlark.com/get-stdin/download/get-stdin-4.0.1.tgz#b968c6b0a04384324902e8bf1a5df32579a450fe"
