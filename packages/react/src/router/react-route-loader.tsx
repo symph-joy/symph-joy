@@ -40,8 +40,8 @@ export function getRouteElement(
 
   function wrapperComp(Comp: ComponentType<any>) {
     let element = null;
-    // 当是叶子路由且是动态路由时，url地址发生后，新地址依然匹配当前路由时，界面重新加载。
-    if (!route.children?.length && isDynamicRoute(route.path)) {
+    // url地址发生后，新地址依然匹配当前路由时，界面重新加载。
+    if (isDynamicRoute(route.path)) {
       function InstComp(props: any) {
         return <Comp {...props} />;
       }
