@@ -1,22 +1,23 @@
+// src/client/pages/index.tsx
+
 import React, { ReactNode } from "react";
-import { BaseReactController, ReactController, ReactRoute } from "@symph/react";
-import { IndexModel } from "../model/index.model";
+import { BaseReactController, ReactController } from "@symph/react";
+import { HelloModel } from "../model/hello.model";
 import { Inject } from "@symph/core";
 
-@ReactRoute({ path: "/" })
 @ReactController()
-export default class HelloReactController extends BaseReactController {
+export default class IndexController extends BaseReactController {
   @Inject()
-  indexModel: IndexModel;
-
-  async initialModelStaticState(urlParams: any): Promise<void | number> {
-    await this.indexModel.fetchMessage();
-  }
+  helloModel: HelloModel;
 
   renderView(): ReactNode {
+    const { message } = this.helloModel.state;
     return (
-      <div id="message" onClick={() => this.indexModel.fetchMessage()}>
-        {this.indexModel.state.message}
+      <div>
+        <div id="message">{message}</div>
+        <button id="btnUpdateMessage" onClick={() => this.helloModel.fetchMessage()}>
+          Update Message
+        </button>
       </div>
     );
   }

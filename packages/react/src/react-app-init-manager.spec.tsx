@@ -91,7 +91,7 @@ describe("react-app-init-manager", () => {
       state = {
         msg: "Init Layout Msg",
       };
-      async initialModelStaticState(): Promise<void | number> {
+      async initModelStaticState(): Promise<void | number> {
         this.setState({
           msg: "Static Layout",
         });
@@ -136,7 +136,7 @@ describe("react-app-init-manager", () => {
       @Inject("parentHelloModel")
       private parentHelloModel: HelloModel;
 
-      async initialModelStaticState(): Promise<void | number> {
+      async initModelStaticState(): Promise<void | number> {
         await this.parentHelloModel.setMsg("From parent initialModelStaticState");
       }
 
@@ -155,7 +155,7 @@ describe("react-app-init-manager", () => {
       @Inject("childHelloModel")
       private childHelloModel: HelloModel;
 
-      async initialModelStaticState(): Promise<void | number> {
+      async initModelStaticState(): Promise<void | number> {
         await this.childHelloModel.setMsg("From child initialModelStaticState");
       }
 
@@ -256,13 +256,13 @@ class HelloController extends BaseReactController {
   state = {
     msg: "Init Msg",
   };
-  async initialModelStaticState(): Promise<void | number> {
+  async initModelStaticState(): Promise<void | number> {
     this.setState({
       msg: "Static Hello",
     });
   }
 
-  async initialModelState() {
+  async initModelState() {
     this.setState({
       msg: "Dynamic Hello",
     });

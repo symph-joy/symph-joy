@@ -9,7 +9,7 @@ export default class HelloReactController extends BaseReactController {
   @Inject()
   indexModel: IndexModel;
 
-  async initialModelStaticState(urlParams: any): Promise<void | number> {
+  async initModelStaticState(): Promise<void | number> {
     await this.indexModel.fetchMessage();
   }
 

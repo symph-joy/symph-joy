@@ -19,13 +19,13 @@ export interface IInitialModelState {
   /**
    * 获取预渲染的状态
    */
-  initialModelStaticState?(): Promise<void | number>;
+  initModelStaticState?(): Promise<void | number>;
   // onInitialModelStaticStateDid?(): void;
   /**
    * 获取绑定model中的初始化状态。
    * @param context
    */
-  initialModelState?(context: any): Promise<void>;
+  initModelState?(): Promise<void>;
 }
 
 export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitState> extends BaseReactModel<{ [pathname: string]: T }> {
@@ -189,8 +189,8 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
       if (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.ERROR) {
         initStaticTasks = [];
         for (const ctl of ctls) {
-          if (ctl.initialModelStaticState) {
-            const initStaticTask = ctl.initialModelStaticState();
+          if (ctl.initModelStaticState) {
+            const initStaticTask = ctl.initModelStaticState();
             initStaticTasks.push(initStaticTask);
           } else {
             // noop
@@ -227,8 +227,8 @@ export class ReactAppInitManager<T extends ReactPageInitState = ReactPageInitSta
         initAllDynamicTask = Promise.all(initStaticTasks || []).then(async () => {
           initDynamicTasks = [];
           for (const ctl of ctls!) {
-            if (ctl.initialModelState) {
-              const initTask = ctl.initialModelState({});
+            if (ctl.initModelState) {
+              const initTask = ctl.initModelState();
               initDynamicTasks.push(initTask);
             } else {
               // noop

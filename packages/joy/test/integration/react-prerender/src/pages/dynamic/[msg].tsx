@@ -6,11 +6,11 @@ import { IJoyPrerender, Prerender } from "@symph/joy/react";
 @ReactRoute({ path: "/dynamic/:msg" })
 @ReactController()
 export default class DynamicRouteCtl extends BaseReactController {
-  initialModelStaticState(): Promise<void> {
+  initModelStaticState(): Promise<void> {
     return;
   }
 
-  initialModelState(context: any): Promise<void> {
+  initModelState(): Promise<void> {
     return;
   }
 

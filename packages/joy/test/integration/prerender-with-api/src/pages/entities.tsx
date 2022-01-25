@@ -9,7 +9,7 @@ export default class HelloController extends BaseReactController {
   @Inject()
   public entityModel: EntityModel;
 
-  async initialModelState(context: any): Promise<void> {
+  async initModelState(): Promise<void> {
     await this.entityModel.getAllEntities();
   }
 

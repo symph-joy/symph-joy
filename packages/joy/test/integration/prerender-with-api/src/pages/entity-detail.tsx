@@ -13,7 +13,7 @@ export default class EntityDetail extends BaseReactController {
   @Inject()
   public entityModel: EntityModel;
 
-  async initialModelStaticState(urlParams: any): Promise<void | number> {
+  async initModelStaticState(): Promise<void | number> {
     await this.entityModel.getEntity(this.id);
   }
 

@@ -7,12 +7,12 @@ import { DynamicMsgModel } from "../../model/dynamic-msg-model";
 @ReactRoute({ path: "/dynamic/:msg" })
 @ReactController()
 export default class DynamicRouteCtl extends BaseReactController {
-  async initialModelStaticState(): Promise<void> {
+  async initModelStaticState(): Promise<void> {
     await this.dynamicMsgModel.fetchMessage(this.msg);
     return;
   }
 
-  async initialModelState(): Promise<void> {
+  async initModelState(): Promise<void> {
     return;
   }
 

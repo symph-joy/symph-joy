@@ -38,7 +38,7 @@ export default class RevalidateCtl extends BaseReactController {
   @Inject()
   public revalidateModel: RevalidateModel;
 
-  async initialModelStaticState(): Promise<number> {
+  async initModelStaticState(): Promise<number> {
     await this.revalidateModel.setStaticMessage("hello from initialModelStaticState");
     return 1;
   }

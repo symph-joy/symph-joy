@@ -28,12 +28,12 @@ export default class EmbedParentCtl extends BaseReactController {
   @Inject()
   public embedParentModel: EmbedParentModel;
 
-  async initialModelStaticState(): Promise<void> {
+  async initModelStaticState(): Promise<void> {
     console.log("EmbedParentCtl: run initialModelStaticState");
     await this.embedParentModel.setMessage("hello from parent initialModelStaticState");
   }
 
-  async initialModelState(context: any): Promise<void> {
+  async initModelState(): Promise<void> {
     console.log("EmbedParentCtl: run initialModelState");
     await this.embedParentModel.setMessage("hello from parent initialModelState");
   }

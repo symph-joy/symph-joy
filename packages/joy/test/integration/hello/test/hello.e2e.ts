@@ -1,7 +1,6 @@
 import * as path from "path";
 import "jest-playwright-preset";
 import { JoyTestContext } from "../../../util/joy-test-context";
-import { waitFor } from "../../../util/joy-test-utils";
 import got from "got";
 
 describe("hello joy dev", () => {
@@ -20,12 +19,17 @@ describe("hello joy dev", () => {
       throwHttpErrors: false,
       responseType: "text",
     });
-    expect(response.body.trim()).toBe("Hello world!");
+    expect(response.body.trim()).toBe("Hello Joy!");
   }, 999999);
 
   test("react: should render hello message", async () => {
     await page.goto(testContext.getUrl("/"));
-    const browser = await page.$eval("#message", (el: any) => el.innerHTML);
-    expect(browser).toContain("Hello world!");
+    const msg = await page.innerHTML("#message");
+    expect(msg).toContain("Hello World!");
+
+    await page.click("#btnUpdateMessage");
+    await page.waitForFunction(() => document?.getElementById("message")?.innerHTML === "Hello Joy!");
+    const msgUpdated = await page.innerHTML("#message");
+    expect(msgUpdated).toContain("Hello Joy!");
   }, 999999);
 });

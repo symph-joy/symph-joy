@@ -9,7 +9,7 @@ export default class ThirdHelloReactController extends BaseReactController {
   @Inject()
   thirdModel: ThirdModel;
 
-  async initialModelStaticState(urlParams: any): Promise<void | number> {
+  async initModelStaticState(): Promise<void | number> {
     await this.thirdModel.fetchMessage();
   }
 

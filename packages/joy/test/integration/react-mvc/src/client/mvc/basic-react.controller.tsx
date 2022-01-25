@@ -10,7 +10,7 @@ export default class BasicReactController extends BaseReactController {
   @Inject()
   private helloModel: BasicReactModel;
 
-  async initialModelStaticState(): Promise<void> {
+  async initModelStaticState(): Promise<void> {
     await this.helloModel.add(1);
   }
 

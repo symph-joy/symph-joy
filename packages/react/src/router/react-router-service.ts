@@ -283,8 +283,8 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
     meta: IRouteMeta,
     useClass: Type | Function
   ): T {
-    const hasStaticState = !!useClass.prototype.initialModelStaticState;
-    const hasState = !!useClass.prototype.initialModelState;
+    const hasStaticState = !!useClass.prototype.initModelStaticState;
+    const hasState = !!useClass.prototype.initModelState;
     return {
       ...meta,
       path,
