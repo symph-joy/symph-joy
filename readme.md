@@ -18,10 +18,11 @@
 
 ## 包列表
 
-- @symph/core IoC 核心，提供组件容器、注入器、全局 Hook 管理的能力。
-- @symph/config 应用配置管理，提供应用级的配置读取、验证、注入等。
-- @symph/react 基于 core 和 config 库，实现路由和全局状态管理，以及 React MVC 组件。
-- @symph/server 基于 core 和 config 库，提供服务端 MVC 组件，集成 Fastify http 框架及其生态。
+- `@symph/core` IoC 核心，提供组件容器、注入器、全局 Hook 管理的能力。
+- `@symph/config` 应用配置管理，提供应用级的配置读取、验证、注入等。
+- `@symph/react` React 的 MVC 框架，可轻松开发大型复杂 React 单页面应用，提供 React MVC 基础组件，统一数据管理，单向数据绑定和路由等基础功能。
+- `@symph/server` 基于依赖注入和装饰器，类似 Spring MVC 的 Web 后端研发框架。
+- `@symph/joy` 整合 @symph/server 和 @symph/react，server 提供业务服务，react 负责展示和交互，是集成开发调试、编译打包、服务运行等的全栈式工具。
 
 ## 开始使用
 
