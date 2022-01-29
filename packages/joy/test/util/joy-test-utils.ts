@@ -28,7 +28,7 @@ export async function findPort(): Promise<number> {
   // return 4000;
 }
 
-export async function waitFor(millisecond = 1000 * 60 * 30): Promise<void> {
+export async function waitFor(millisecond = 1000 * 60 * 60): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, millisecond));
 }
 

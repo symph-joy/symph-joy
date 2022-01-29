@@ -117,7 +117,7 @@ export type PrivateRouteInfo = {
   __N_SSG?: boolean;
   __N_SSP?: boolean;
   props?: Record<string, any>;
-  err?: Error;
+  err?: Error | { statusCode?: number };
   error?: any;
 };
 

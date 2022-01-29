@@ -256,6 +256,7 @@ export default class HotReloader {
     const pagePaths = await Promise.all([
       findPageFile(this.pagesDir, "/_app", this.joyAppConfig.pageExtensions),
       findPageFile(this.pagesDir, "/_document", this.joyAppConfig.pageExtensions),
+      findPageFile(this.pagesDir, "/_error", this.joyAppConfig.pageExtensions),
     ]);
 
     const routes = () => {

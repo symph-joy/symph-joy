@@ -39,5 +39,22 @@ export function embedCases(testContext: JoyTestContext) {
         state: { msg: "hello from child initialModelStaticState" },
       });
     }, 999999);
+
+    test("Should render page with embed route, with cache.", async () => {
+      const [htmlContext] = await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/embed/parent/child")).then((res) => res.text()),
+        page.goto(testContext.getUrl("/embed/parent/child"), { waitUntil: "load", timeout: 50000 }),
+      ]);
+      const $ = cheerio.load(htmlContext);
+      const parentMsg = $("#parentMsg").html();
+      const childMsg = $("#childMsg").html();
+      expect(parentMsg).toBe("hello from parent initialModelStaticState");
+      expect(childMsg).toBe("hello from child initialModelStaticState");
+
+      const browserParentMsg = await page.$eval("#parentMsg", (el: any) => el.innerHTML);
+      const browserChildMsg = await page.$eval("#childMsg", (el: any) => el.innerHTML);
+      expect(browserParentMsg).toBe("hello from parent initialModelState");
+      expect(browserChildMsg).toBe("hello from child initialModelState");
+    }, 999999);
   });
 }

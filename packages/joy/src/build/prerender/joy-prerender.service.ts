@@ -88,8 +88,10 @@ export class JoyPrerenderService {
               paths = paths || [routeMeta.path];
             } else if (module.resource) {
               // try resolve fsRoute
-              const fsRoute = this.joyReactRouteBuild.getFsRoute(module.resource, provider, mount);
+              const fsRoute = this.joyReactRouteBuild.getFsRoute(module.resource, mount);
               if (fsRoute) {
+                fsRoute.componentName = provider?.name;
+                fsRoute.componentPackage = provider?.package;
                 route = fsRoute.path;
                 paths = paths || [fsRoute.path];
               }

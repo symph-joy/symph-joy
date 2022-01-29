@@ -156,7 +156,7 @@ export class IncrementalCache {
     this.cache.set(pathname, {
       ...data,
       revalidateAfter: this.calculateRevalidate(pathname),
-    });
+    } as any);
 
     // TODO: This option needs to cease to exist unless it stops mutating the
     // `joy build` output's manifest.

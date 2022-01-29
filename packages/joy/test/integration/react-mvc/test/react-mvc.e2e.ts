@@ -18,7 +18,7 @@ describe("react-mvc", () => {
     });
 
     test("start", async () => {
-      // await waitForMoment();
+      // await waitFor();
     }, 999999);
 
     describe("features", () => {

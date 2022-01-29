@@ -11,8 +11,9 @@ describe("react-custom-document", () => {
     beforeAll(async () => {
       const curPath = path.resolve(__dirname, "../");
       testContext = await JoyTestContext.createDevServerContext(curPath);
+      // testContext = await JoyTestContext.createServerContext(curPath, 3001);
       // await waitFor();
-    }, 999999);
+    }, 9999999);
 
     afterAll(async () => {
       await testContext.killServer();

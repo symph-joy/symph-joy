@@ -2,12 +2,7 @@ import React, { useContext } from "react";
 import { IReactApplication } from "./interfaces";
 import { ReactRouterService } from "./router/react-router-service";
 import { ReactApplicationReactContext } from "./react-app-container";
-import { useRoutes } from "react-router";
-
-// export type TReactAppComponentProps = {
-//   // appContext: IReactApplication;
-//   [key: string]: unknown;
-// };
+import { RoutesRenderer } from "./router/routes-renderer";
 
 export type TReactAppComponent = React.ComponentType<{
   appContext: IReactApplication;
@@ -21,5 +16,5 @@ export default function ReactAppComponent() {
   }
   const reactRouterService = appContext.getSync<ReactRouterService>("reactRouterService");
   const routes = reactRouterService.getRoutes() || [];
-  return useRoutes(routes);
+  return <RoutesRenderer routes={routes} />;
 }

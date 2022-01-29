@@ -24,12 +24,11 @@ import {
 import { getRouteMatcher, getRouteRegex, isDynamicRoute } from "../lib/router/utils";
 import * as envConfig from "../lib/runtime-config";
 import { execOnce, isResSent, JoyApiRequest, JoyApiResponse } from "../lib/utils";
-// import { tryGetPreviewData, __ApiPreviewProps } from './api-utils'
 import { __ApiPreviewProps } from "./api-utils";
 import pathMatch from "../lib/router/utils/path-match";
 import { recursiveReadDirSync } from "./lib/recursive-readdir-sync";
 import { loadComponents, LoadComponentsReturnType } from "./load-components";
-import { RenderOpts, RenderOptsPartial, renderToHTML } from "./render";
+import { RenderOpts, RenderOptsPartial, Render } from "./render";
 import { getPagePath, requireFontManifest } from "./require";
 import Router, { DynamicRoutes, PageChecker, Params, route, Route } from "./router";
 import prepareDestination from "../lib/router/utils/prepare-destination";
@@ -53,7 +52,6 @@ import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.en
 import { REACT_OUT_DIR } from "../../react/react-const";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 import { RouteSSGData } from "../lib/RouteSSGData.interface";
-import { getPathnameCacheKey } from "../../react/router/router-utils";
 
 const getCustomRouteMatcher = pathMatch(true);
 
@@ -115,6 +113,7 @@ export class JoyReactServer implements IComponentLifecycle {
   };
   private compression?: Middleware;
   private onErrorMiddleware?: ({ err }: { err: Error }) => Promise<void>;
+  private renderer: Render;
   private incrementalCache: IncrementalCache;
   router: Router;
   protected dynamicRoutes?: DynamicRoutes;
@@ -145,7 +144,7 @@ export class JoyReactServer implements IComponentLifecycle {
     this.outDir = joyAppConfig.resolveAppDir(distDir, REACT_OUT_DIR);
     this.publicDir = joyAppConfig.resolveAppDir(CLIENT_PUBLIC_FILES_PATH);
     this.hasStaticDir = existsSync(join(this.dir, "static"));
-
+    this.renderer = new Render();
     // Only serverRuntimeConfig needs the default
     // publicRuntimeConfig gets it's default in client/index.js
     const { serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, generateEtags, compress } = this.joyConfig;
@@ -155,6 +154,7 @@ export class JoyReactServer implements IComponentLifecycle {
       initStage: EnumReactAppInitStage.STATIC,
       poweredByHeader: this.joyConfig.poweredByHeader,
       canonicalBase: this.joyConfig.amp.canonicalBase,
+      dev: this.joyConfig.dev,
       buildId: this.buildId, // will be updated in afterPropertiesSet
       generateEtags,
       // previewProps: this.getPreviewProps(),
@@ -949,8 +949,8 @@ export class JoyReactServer implements IComponentLifecycle {
     }
 
     const matchedRoutes = ((opts as any).matchedRoutes as RouteMatch[]) || [];
-    const isIndexPage = matchedRoutes[matchedRoutes.length - 1]?.route.index;
-    const ssgCacheKey = !isSSG ? undefined : getPathnameCacheKey(urlPathname, isIndexPage);
+    // const isIndexPage = matchedRoutes[matchedRoutes.length - 1]?.route.index;
+    const ssgCacheKey = !isSSG ? undefined : urlPathname;
 
     // Complete the response with cached data if its present
     const cachedData = ssgCacheKey ? await this.incrementalCache.get(ssgCacheKey) : undefined;
@@ -981,25 +981,6 @@ export class JoyReactServer implements IComponentLifecycle {
       // Stop the request chain here if the data we sent was up-to-date
       if (!cachedData.isStale) {
         return null;
-      }
-    }
-
-    // 获取路由的缓存数据
-
-    const pageRoutesDataMap = {} as Record<string, RouteSSGData>;
-    for (const matchedRoute of matchedRoutes) {
-      const { pathname } = matchedRoute;
-      const index = matchedRoute.route.index;
-      const cacheKey = getPathnameCacheKey(pathname, index);
-      const cachedData = await this.incrementalCache.get(cacheKey);
-      if (cachedData) {
-        const { pageData, revalidateAfter, curRevalidate } = cachedData;
-        pageRoutesDataMap[cacheKey] = {
-          pathname,
-          ssgData: pageData,
-          revalidate: typeof revalidateAfter === "number" && typeof curRevalidate === "number" ? revalidateAfter - curRevalidate : undefined,
-        } as RouteSSGData;
-        reactAppContext?.dispatchBatch(cachedData.pageData);
       }
     }
 
@@ -1063,7 +1044,7 @@ export class JoyReactServer implements IComponentLifecycle {
           ssr: this.joyConfig.ssr,
           reactApplicationContext: reactAppContext,
         };
-        const renderResult = await renderToHTML(req, res, pathname, query, renderOpts);
+        const renderResult = await this.renderer.renderToHTML(req, res, pathname, query, renderOpts);
 
         const html = renderResult;
         // TODO: change this to a different passing mechanism
@@ -1143,41 +1124,23 @@ export class JoyReactServer implements IComponentLifecycle {
 
     const {
       isOrigin,
-      value: { html, routesData: initedRoutesData },
+      value: { html, routesData },
     } = await doRender();
     let resHtml = html;
-    let sprRevalidate: boolean | number = false;
+    let sprRevalidate: boolean | number = Number.MAX_SAFE_INTEGER;
     // Update the cache if the head request and cacheable
     if (isOrigin && isSSG) {
-      if (initedRoutesData?.length) {
-        for (const routeData of initedRoutesData as RouteSSGData[]) {
-          const cacheKey = getPathnameCacheKey(routeData.pathname, routeData.index);
-          await this.incrementalCache.set(cacheKey, { html: undefined, pageData: routeData.ssgData }, initedRoutesData.revalidate);
-          pageRoutesDataMap[routeData.pathname] = routeData;
+      if (routesData?.length) {
+        for (const routeData of routesData as RouteSSGData[]) {
+          const revalidate = routeData.revalidate;
+          if (typeof revalidate === "number" && revalidate < sprRevalidate) {
+            sprRevalidate = revalidate;
+          }
         }
+        sprRevalidate = sprRevalidate === Number.MAX_SAFE_INTEGER ? false : sprRevalidate;
       }
-
-      sprRevalidate = Object.keys(pageRoutesDataMap).reduce((pre, cur) => {
-        const revalidate = pageRoutesDataMap[cur].revalidate;
-        if (typeof revalidate === "number" && revalidate < pre) {
-          pre = revalidate;
-        }
-        return pre;
-      }, Number.MAX_SAFE_INTEGER);
-      sprRevalidate = sprRevalidate === Number.MAX_SAFE_INTEGER ? false : sprRevalidate;
     }
-
-    const pageData = Object.keys(pageRoutesDataMap)
-      .map((key) => pageRoutesDataMap[key])
-      .sort((a, b) => {
-        if (a.pathname.startsWith("INIT@")) {
-          return -1;
-        } else if (b.pathname.startsWith("INIT@")) {
-          return 1;
-        }
-        return a.pathname.length < b.pathname.length ? -1 : 1;
-      });
-
+    const pageData = routesData;
     if (ssgCacheKey) {
       await this.incrementalCache.set(ssgCacheKey, { html: html!, pageData }, sprRevalidate);
     }
@@ -1304,32 +1267,20 @@ export class JoyReactServer implements IComponentLifecycle {
     let result: null | FindComponentsResult = null;
 
     const is404 = res.statusCode === 404 || (err as any).statusCode === 404;
-    let using404Page = false;
-
-    // use static 404 page if available and is 404 response
-    if (is404) {
-      using404Page = result !== null;
-    }
-
-    if (!result) {
-      result = await this.findPageComponents("/_error", query);
-    }
-
-    if (process.env.NODE_ENV !== "production" && !using404Page && (await this.hasPage("/_error")) && !(await this.hasPage("/404"))) {
-      this.customErrorNo404Warn();
-    }
 
     let reactAppContext: ReactApplicationContext | undefined;
-    if (!err) {
-      // 404 page
-      reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, _pathname, query);
+
+    if (err) {
+      result = await this.findPageComponents("/_error", query);
+    } else {
+      reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, is404 ? "/404" : "/_error", query);
+      result = await this.findPageComponents("/_app", query);
     }
-    // const reactAppContext: any = undefined;
 
     let html: string | null;
     try {
       try {
-        html = await this.renderToHTMLWithComponents(req, res, using404Page ? "/404" : "/_error", reactAppContext, result!, {
+        html = await this.renderToHTMLWithComponents(req, res, is404 ? "/404" : "/_error", reactAppContext, result!, {
           ...result,
           ...this.renderOpts,
           err,

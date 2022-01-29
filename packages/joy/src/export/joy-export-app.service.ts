@@ -312,7 +312,8 @@ export class JoyExportAppService {
       buildId,
     });
 
-    if (!exportPathMap["/404"] && !exportPathMap["/404.html"]) {
+    // export的时候，默认输出404页面
+    if (!buildExport && !exportPathMap["/404"] && !exportPathMap["/404.html"]) {
       exportPathMap["/404"] = exportPathMap["/404.html"] = {
         page: "/_error",
       };

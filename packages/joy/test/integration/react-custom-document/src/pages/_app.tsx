@@ -10,7 +10,6 @@ export default class MyApp extends App {
         <p id="hello-app">Hello App</p>
         <p id="hello-app-hmr">Hello App HMR</p>
         <RoutesRenderer routes={routes} />
-        {/*<RouteSwitch routes={routes} extraProps={{}} />*/}
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import React from "react";
-import { BaseReactController, ReactController, RouteSwitch } from "@symph/react";
+import { BaseReactController, ReactController } from "@symph/react";
 import { Outlet } from "react-router-dom";
 
 @ReactController()

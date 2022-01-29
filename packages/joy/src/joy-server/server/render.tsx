@@ -35,6 +35,8 @@ import { ACTION_INIT_MODEL, ReactReduxService } from "@symph/react/dist/redux/re
 import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.enum";
 import { JoySSRContext, JoySSRContextType } from "../lib/joy-ssr-react-context";
 import { RouteSSGData } from "../lib/RouteSSGData.interface";
+import { isValidElementType } from "react-is";
+import LRUCache from "lru-cache";
 
 function noRouter() {
   const message =
@@ -223,7 +225,7 @@ function renderDocument(
             autoExport, // If this is an auto exported page
             isFallback,
             dynamicIds: dynamicImportsIds.length === 0 ? undefined : dynamicImportsIds,
-            err: err ? serializeError(dev, err) : undefined, // Error if one happened, otherwise don't sent in the resulting HTML
+            err: err ? err : undefined, // Error if one happened, otherwise don't sent in the resulting HTML
             // gsp, // whether the page is getStaticProps
             // gssp, // whether the page is getServerSideProps
             ssr,
@@ -260,226 +262,67 @@ const invalidKeysMsg = (methodName: string, invalidKeys: string[]) => {
   );
 };
 
-export async function renderToHTML(
-  req: IncomingMessage,
-  res: ServerResponse,
-  pathname: string,
-  query: ParsedUrlQuery,
-  renderOpts: RenderOpts
-): Promise<string | null> {
-  // In dev we invalidate the cache by appending a timestamp to the resource URL.
-  // TODO: remove this workaround when https://bugs.webkit.org/show_bug.cgi?id=187726 is fixed.
-  renderOpts.devOnlyCacheBusterQueryString = renderOpts.dev ? renderOpts.devOnlyCacheBusterQueryString || `?ts=${Date.now()}` : "";
+type RouteDataCacheValue = RouteSSGData & {
+  revalidateAfter: number | false;
+  curRevalidate?: number | false; // 当前剩余有效时间
+  isStale?: boolean;
+};
 
-  const {
-    err,
-    dev = false,
-    ampPath = "",
-    // App,
-    Component,
-    Document,
-    pageConfig = {},
-    buildManifest,
-    fontManifest,
-    reactLoadableManifest,
-    ErrorDebug,
-    // getStaticProps,
-    // getStaticPaths,
-    // getServerSideProps,
-    isDataReq,
-    params,
-    previewProps,
-    basePath,
-    devOnlyCacheBusterQueryString,
+export class Render {
+  routeDataCache: LRUCache<string, RouteDataCacheValue>;
 
-    reactApplicationContext,
-    initStage,
-    ssr = true,
-  } = renderOpts;
+  constructor() {
+    this.routeDataCache = new LRUCache({
+      max: 50 * 1024 * 1024, // default to 50MB limit
+      length(val) {
+        // rough estimate of size of cache value
+        return JSON.stringify(val.ssgData)?.length || 0;
+      },
+    });
+  }
 
-  const getFontDefinition = (url: string): string => {
-    if (fontManifest) {
-      return getFontDefinitionFromManifest(url, fontManifest);
+  getRouteDataCacheKey(pathname: string, index = false) {
+    let cacheKey = pathname;
+    if (index) {
+      cacheKey = pathname + (pathname.endsWith("/") ? "" : "/") + "$$index";
     }
-    return "";
-  };
+    return cacheKey;
+  }
 
-  const callMiddleware = async (method: string, args: any[], props = false) => {
-    let results: any = props ? {} : [];
+  setRouteData(data: RouteSSGData) {
+    const { pathname, index, revalidate, ssgData } = data;
+    let cacheKey = this.getRouteDataCacheKey(pathname, index);
+    const curTime = new Date().getTime();
+    const revalidateAfter = (typeof revalidate === "number" ? revalidate * 1000 + curTime : revalidate) || false;
+    this.routeDataCache.set(cacheKey, { ...data, revalidateAfter });
+  }
 
-    if ((Document as any)[`${method}Middleware`]) {
-      let middlewareFunc = await (Document as any)[`${method}Middleware`];
-      middlewareFunc = middlewareFunc.default || middlewareFunc;
-
-      const curResults = await middlewareFunc(...args);
-      if (props) {
-        for (const result of curResults) {
-          results = {
-            ...results,
-            ...result,
-          };
-        }
+  getRouteData(cacheKey: string): RouteDataCacheValue | undefined {
+    const data = this.routeDataCache.get(cacheKey);
+    const curTime = new Date().getTime();
+    if (data && data.revalidateAfter !== false) {
+      if (data.revalidateAfter < curTime) {
+        data.isStale = true;
       } else {
-        results = curResults;
+        data.curRevalidate = data.revalidateAfter - curTime;
       }
     }
-    return results;
-  };
-
-  const headTags = (...args: any) => callMiddleware("headTags", args);
-
-  const isFallback = !!query.__joyFallback;
-  delete query.__joyFallback;
-
-  const isSSR = ssr;
-  const isSSG = true;
-  // const isSSG = !!getStaticProps
-  // const isBuildTimeSSG = isSSG && renderOpts.joyExport
-  // const defaultAppGetInitialProps = App.getInitialProps === (App as any).origGetInitialProps;
-
-  // todo 在controller装饰器中，校验controller类的合法性
-  // const hasPageGetInitialProps = !!(Component as any).getInitialProps
-
-  const pageIsDynamic = isDynamicRoute(pathname);
-  const isAutoExport = false; // todo 开启自动导出功能，例如在路由组件中没有数据获取的纯静态路由
-
-  if (dev) {
-    const { isValidElementType } = require("react-is");
-
-    // if (!isValidElementType(Component)) {
-    //   throw new Error(`The default export is not a React Component in page: "/_app"`);
-    // }
-
-    if (!isValidElementType(Document)) {
-      throw new Error(`The default export is not a React Component in page: "/_document"`);
-    }
-
-    if (isAutoExport || isFallback) {
-      // remove query values except ones that will be set during export
-      query = {
-        ...(query.amp
-          ? {
-              amp: query.amp,
-            }
-          : {}),
-      };
-      req.url = pathname;
-      renderOpts.joyExport = true;
-    }
+    return data;
   }
-  if (isAutoExport) renderOpts.autoExport = true;
-  if (isSSG) renderOpts.joyExport = false;
 
-  await Loadable.preloadAll(); // Make sure all dynamic imports are loaded
-
-  // url will always be set
-  const asPath: string = req.url as string;
-  const router = new ServerRouter(
-    pathname,
-    query,
-    asPath,
-    {
-      isFallback: isFallback,
-    },
-    basePath
-  );
-
-  const ctx = {
+  public async renderData({
     reactApplicationContext,
-    err,
-    req: isAutoExport ? undefined : req,
-    res: isAutoExport ? undefined : res,
     pathname,
-    query,
-    asPath,
-    // AppTree: (props: any) => {
-    //   // return (
-    //   //   <AppContainer App={App}>
-    //   //     <App {...props} Component={Component} router={router} />
-    //   //   </AppContainer>
-    //   // )
-    //   return <AppContainer />;
-    // },
-  };
-  const props: any = {};
-
-  const ampState = {
-    ampFirst: pageConfig.amp === true,
-    hasQuery: Boolean(query.amp),
-    hybrid: pageConfig.amp === "hybrid",
-  };
-
-  const inAmpMode = isInAmpMode(ampState);
-
-  const reactLoadableModules: string[] = [];
-
-  let head: JSX.Element[] = defaultHead(false);
-
-  const ssrContext = { req, res, err, pathname, asPath, query } as JoySSRContextType;
-  let AppContainer = ({
-    children,
+    initStage,
+    matchedRoutes,
+    Component,
   }: {
-    // Component: TReactAppComponent
-    children: JSX.Element;
-  }) => {
-    return (
-      <AmpStateContext.Provider value={ampState}>
-        <JoySSRContext.Provider value={ssrContext}>
-          <HeadManagerContext.Provider
-            value={{
-              updateHead: (state) => {
-                head = state;
-              },
-              mountedInstances: new Set(),
-            }}
-          >
-            <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
-              {/*<ReactAppContainer appContext={reactApplicationContext!}>{children}</ReactAppContainer>*/}
-              {children}
-            </LoadableContext.Provider>
-          </HeadManagerContext.Provider>
-        </JoySSRContext.Provider>
-      </AmpStateContext.Provider>
-    );
-  };
-
-  // We only need to do this if we want to support calling
-  // _app's getInitialProps for getServerSideProps if not this can be removed
-  if (isDataReq && !isSSG) return props;
-
-  // We don't call getStaticProps or getServerSideProps while generating
-  // the fallback so make sure to set pageProps to an empty object
-  if (isFallback) {
-    props.pageProps = {};
-  }
-
-  // the response might be finished on the getInitialProps call
-  if (isResSent(res) && !isSSG) return null;
-
-  // we preload the buildManifest for auto-export dynamic pages
-  // to speed up hydrating query values
-  let filteredBuildManifest = buildManifest;
-  if (isAutoExport && pageIsDynamic) {
-    const page = denormalizePagePath(normalizePagePath(pathname));
-    // This code would be much cleaner using `immer` and directly pushing into
-    // the result from `getPageFiles`, we could maybe consider that in the
-    // future.
-    if (page in filteredBuildManifest.pages) {
-      filteredBuildManifest = {
-        ...filteredBuildManifest,
-        pages: {
-          ...filteredBuildManifest.pages,
-          [page]: [...filteredBuildManifest.pages[page], ...filteredBuildManifest.lowPriorityFiles.filter((f) => f.includes("_buildManifest"))],
-        },
-        lowPriorityFiles: filteredBuildManifest.lowPriorityFiles.filter((f) => !f.includes("_buildManifest")),
-      };
-    }
-  }
-
-  const renderData = async () => {
-    if (ctx.err) {
-      return {};
-    }
+    reactApplicationContext: ReactApplicationContext;
+    pathname: string;
+    initStage: EnumReactAppInitStage;
+    matchedRoutes: RouteMatch[];
+    Component: React.ComponentType<any>;
+  }) {
     if (!reactApplicationContext) {
       throw new Error("init controller data error, react application context is undefined.");
     }
@@ -489,23 +332,22 @@ export async function renderToHTML(
     initManager.resetInitState(pathname);
     initManager.initStage = initStage;
     reduxService.startRecordState();
-
     /**
      * 执行一次页面渲染，触发页面的initialStaticModelState()方法，获取页面的数据，然后用数据在重新绘制一次页面
      * 相当于一次页面请求，服务端需要执行两次 React 渲染
      */
     renderToStaticMarkup(
-      <AppContainer>
-        <ReactAppContainer appContext={reactApplicationContext!}>
-          <Component appContext={reactApplicationContext} />
-        </ReactAppContainer>
-      </AppContainer>
+      // <AppContainer>
+      <ReactAppContainer appContext={reactApplicationContext!}>
+        <Component appContext={reactApplicationContext} />
+      </ReactAppContainer>
+      // </AppContainer>
     );
 
     const routesSSGData = [];
     let pageRevalidate = Number.MAX_SAFE_INTEGER;
     try {
-      const matchedRoutes = ((renderOpts as any).matchedRoutes as RouteMatch[]) || [];
+      // 获取路由的缓存数据
       routesSSGData.push({
         pathname: "INIT@" + pathname,
         ssgData: [
@@ -515,35 +357,27 @@ export async function renderToHTML(
           },
         ],
       } as RouteSSGData);
+
       for (const matchedRoute of matchedRoutes) {
-        reduxService.startRecordState();
-        const { revalidate, initStaticCount, initDynamicCount } = await initManager.initControllers(matchedRoute.pathname);
-        if (revalidate !== undefined && revalidate < pageRevalidate) {
-          pageRevalidate = revalidate;
-        }
-        // let { initStatic, init } = initManager.getRouteInitState(pathname);
-        // if (
-        //   initStage >= EnumReactAppInitStage.STATIC &&
-        //   (initStatic === undefined || initStatic === ReactRouteInitStatus.NONE || initStatic === ReactRouteInitStatus.LOADING)
-        // ) {
-        //   initStatic = ReactRouteInitStatus.SUCCESS;
-        // }
-        // if (
-        //   (initStage >= EnumReactAppInitStage.DYNAMIC && (init === undefined || init === ReactRouteInitStatus.NONE)) ||
-        //   init === ReactRouteInitStatus.LOADING
-        // ) {
-        //   init = ReactRouteInitStatus.SUCCESS;
-        // }
-        // initManager.setInitState(pathname, { initStatic, init });
-        const routeData = reduxService.stopRecordState();
-        // 个数等于undefined，表示该级路由在本次渲染中无需初始化。
-        if (initStaticCount !== undefined || initDynamicCount !== undefined) {
-          routesSSGData.push({
+        const cacheKey = this.getRouteDataCacheKey(matchedRoute.pathname, matchedRoute.route.index);
+        const cachedData = await this.getRouteData(cacheKey);
+        if (cachedData && !cachedData.isStale) {
+          reactApplicationContext.dispatchBatch(cachedData.ssgData);
+          routesSSGData.push(cachedData);
+        } else {
+          const { revalidate, initStaticCount, initDynamicCount } = await initManager.initControllers(matchedRoute.pathname);
+          if (revalidate !== undefined && revalidate < pageRevalidate) {
+            pageRevalidate = revalidate;
+          }
+          const ssgData = reduxService.stopRecordState();
+          const routeData = {
             pathname: matchedRoute.pathname,
             index: matchedRoute.route.index,
-            ssgData: routeData,
+            ssgData: ssgData,
             revalidate,
-          } as RouteSSGData);
+          } as RouteSSGData;
+          routesSSGData.push(routeData);
+          this.setRouteData(routeData);
         }
       }
     } catch (e) {
@@ -552,176 +386,399 @@ export async function renderToHTML(
       }
       initManager.setInitState(pathname, { initStatic: ReactRouteInitStatus.ERROR });
     }
-
-    (renderOpts as any).routesSSGData = routesSSGData;
-    (renderOpts as any).revalidate = pageRevalidate === Number.MAX_SAFE_INTEGER ? undefined : pageRevalidate;
-
-    // const reduxStateHistories = reduxService.stopRecordState();
-
-    // (renderOpts as any).revalidate = revalidate;
-    // return {
-    //   revalidate,
-    //   stateHistories: reduxStateHistories,
-    // };
-  };
-  if (isSSR) {
-    await renderData();
+    return {
+      routesSSGData: routesSSGData,
+      revalidate: pageRevalidate === Number.MAX_SAFE_INTEGER ? undefined : pageRevalidate,
+    };
+    // (renderOpts as any).routesSSGData = routesSSGData;
+    // (renderOpts as any).revalidate = pageRevalidate === Number.MAX_SAFE_INTEGER ? undefined : pageRevalidate;
   }
 
-  const renderPage: RenderPage = (options: ComponentsEnhancer = {}): { html: string; head: any } => {
-    if (!isSSR) {
-      return { html: "", head };
+  async renderToHTML(
+    req: IncomingMessage,
+    res: ServerResponse,
+    pathname: string,
+    query: ParsedUrlQuery,
+    renderOpts: RenderOpts
+  ): Promise<string | null> {
+    // In dev we invalidate the cache by appending a timestamp to the resource URL.
+    // TODO: remove this workaround when https://bugs.webkit.org/show_bug.cgi?id=187726 is fixed.
+    renderOpts.devOnlyCacheBusterQueryString = renderOpts.dev ? renderOpts.devOnlyCacheBusterQueryString || `?ts=${Date.now()}` : "";
+
+    const {
+      dev = false,
+      ampPath = "",
+      // App,
+      Component,
+      Document,
+      pageConfig = {},
+      buildManifest,
+      fontManifest,
+      reactLoadableManifest,
+      ErrorDebug,
+      // getStaticProps,
+      // getStaticPaths,
+      // getServerSideProps,
+      isDataReq,
+      params,
+      previewProps,
+      basePath,
+      devOnlyCacheBusterQueryString,
+
+      reactApplicationContext,
+      initStage,
+      ssr = true,
+    } = renderOpts;
+    const err = renderOpts.err ? serializeError(dev, renderOpts.err) : undefined;
+
+    const getFontDefinition = (url: string): string => {
+      if (fontManifest) {
+        return getFontDefinitionFromManifest(url, fontManifest);
+      }
+      return "";
+    };
+
+    const callMiddleware = async (method: string, args: any[], props = false) => {
+      let results: any = props ? {} : [];
+
+      if ((Document as any)[`${method}Middleware`]) {
+        let middlewareFunc = await (Document as any)[`${method}Middleware`];
+        middlewareFunc = middlewareFunc.default || middlewareFunc;
+
+        const curResults = await middlewareFunc(...args);
+        if (props) {
+          for (const result of curResults) {
+            results = {
+              ...results,
+              ...result,
+            };
+          }
+        } else {
+          results = curResults;
+        }
+      }
+      return results;
+    };
+
+    const headTags = (...args: any) => callMiddleware("headTags", args);
+
+    const isFallback = !!query.__joyFallback;
+    delete query.__joyFallback;
+
+    const isSSR = ssr;
+    const isSSG = true;
+    // const isSSG = !!getStaticProps
+    // const isBuildTimeSSG = isSSG && renderOpts.joyExport
+    // const defaultAppGetInitialProps = App.getInitialProps === (App as any).origGetInitialProps;
+
+    // todo 在controller装饰器中，校验controller类的合法性
+    // const hasPageGetInitialProps = !!(Component as any).getInitialProps
+
+    const pageIsDynamic = isDynamicRoute(pathname);
+    const isAutoExport = false; // todo 开启自动导出功能，例如在路由组件中没有数据获取的纯静态路由
+
+    if (dev) {
+      const { isValidElementType } = require("react-is");
+
+      // if (!isValidElementType(Component)) {
+      //   throw new Error(`The default export is not a React Component in page: "/_app"`);
+      // }
+
+      if (!isValidElementType(Document)) {
+        throw new Error(`The default export is not a React Component in page: "/_document"`);
+      }
+
+      if (isAutoExport || isFallback) {
+        // remove query values except ones that will be set during export
+        query = {
+          ...(query.amp
+            ? {
+                amp: query.amp,
+              }
+            : {}),
+        };
+        req.url = pathname;
+        renderOpts.joyExport = true;
+      }
     }
-    if (ctx.err) {
-      if (ErrorDebug) {
-        return { html: renderToString(<ErrorDebug error={ctx.err} />), head };
-      } else {
-        return {
-          html: renderToString(
-            <AppContainer>
-              <Component err={err} />
-            </AppContainer>
-          ),
-          head,
+    if (isAutoExport) renderOpts.autoExport = true;
+    if (isSSG) renderOpts.joyExport = false;
+
+    await Loadable.preloadAll(); // Make sure all dynamic imports are loaded
+
+    // url will always be set
+    const asPath: string = req.url as string;
+    const router = new ServerRouter(
+      pathname,
+      query,
+      asPath,
+      {
+        isFallback: isFallback,
+      },
+      basePath
+    );
+
+    const ctx = {
+      reactApplicationContext,
+      err,
+      req: isAutoExport ? undefined : req,
+      res: isAutoExport ? undefined : res,
+      pathname,
+      query,
+      asPath,
+      // AppTree: (props: any) => {
+      //   // return (
+      //   //   <AppContainer App={App}>
+      //   //     <App {...props} Component={Component} router={router} />
+      //   //   </AppContainer>
+      //   // )
+      //   return <AppContainer />;
+      // },
+    };
+    const props: any = {};
+
+    const ampState = {
+      ampFirst: pageConfig.amp === true,
+      hasQuery: Boolean(query.amp),
+      hybrid: pageConfig.amp === "hybrid",
+    };
+
+    const inAmpMode = isInAmpMode(ampState);
+
+    const reactLoadableModules: string[] = [];
+
+    let head: JSX.Element[] = defaultHead(false);
+
+    const ssrContext = { req, res, err, pathname, asPath, query } as JoySSRContextType;
+    let AppContainer = ({
+      children,
+    }: {
+      // Component: TReactAppComponent
+      children: JSX.Element;
+    }) => {
+      return (
+        <AmpStateContext.Provider value={ampState}>
+          <JoySSRContext.Provider value={ssrContext}>
+            <HeadManagerContext.Provider
+              value={{
+                updateHead: (state) => {
+                  head = state;
+                },
+                mountedInstances: new Set(),
+              }}
+            >
+              <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
+                {/*<ReactAppContainer appContext={reactApplicationContext!}>{children}</ReactAppContainer>*/}
+                {children}
+              </LoadableContext.Provider>
+            </HeadManagerContext.Provider>
+          </JoySSRContext.Provider>
+        </AmpStateContext.Provider>
+      );
+    };
+
+    // We only need to do this if we want to support calling
+    // _app's getInitialProps for getServerSideProps if not this can be removed
+    if (isDataReq && !isSSG) return props;
+
+    // We don't call getStaticProps or getServerSideProps while generating
+    // the fallback so make sure to set pageProps to an empty object
+    if (isFallback) {
+      props.pageProps = {};
+    }
+
+    // the response might be finished on the getInitialProps call
+    if (isResSent(res) && !isSSG) return null;
+
+    // we preload the buildManifest for auto-export dynamic pages
+    // to speed up hydrating query values
+    let filteredBuildManifest = buildManifest;
+    if (isAutoExport && pageIsDynamic) {
+      const page = denormalizePagePath(normalizePagePath(pathname));
+      // This code would be much cleaner using `immer` and directly pushing into
+      // the result from `getPageFiles`, we could maybe consider that in the
+      // future.
+      if (page in filteredBuildManifest.pages) {
+        filteredBuildManifest = {
+          ...filteredBuildManifest,
+          pages: {
+            ...filteredBuildManifest.pages,
+            [page]: [...filteredBuildManifest.pages[page], ...filteredBuildManifest.lowPriorityFiles.filter((f) => f.includes("_buildManifest"))],
+          },
+          lowPriorityFiles: filteredBuildManifest.lowPriorityFiles.filter((f) => !f.includes("_buildManifest")),
         };
       }
     }
 
-    // if (dev && (props.router || props.Component)) {
-    //   throw new Error(
-    //     `'router' and 'Component' can not be returned in getInitialProps from _app.js https://err.sh/vercel/next.js/cant-override-next-props`
-    //   );
-    // }
-
-    const {
-      App: EnhancedApp,
-      // Component: EnhancedComponent,
-    } = enhanceComponents(options, Component);
-
-    const html = renderToString(
-      <AppContainer>
-        <ReactAppContainer appContext={reactApplicationContext!}>
-          <EnhancedApp appContext={reactApplicationContext!} />
-        </ReactAppContainer>
-      </AppContainer>
-    );
-
-    return { html, head };
-  };
-  const documentCtx = { ...ctx, renderPage };
-  const docProps: DocumentInitialProps = await loadGetInitialProps(Document, documentCtx);
-  // the response might be finished on the getInitialProps call
-  if (isResSent(res) && !isSSG) return null;
-
-  if (!docProps || typeof docProps.html !== "string") {
-    const message = `"${getDisplayName(Document)}.getInitialProps()" should resolve to an object with a "html" prop set with a valid html string`;
-    throw new Error(message);
-  }
-
-  const dynamicImportIdsSet = new Set<string>();
-  const dynamicImports: ManifestItem[] = [];
-
-  for (const mod of reactLoadableModules) {
-    const manifestItem: ManifestItem[] = reactLoadableManifest[mod];
-
-    if (manifestItem) {
-      manifestItem.forEach((item) => {
-        dynamicImports.push(item);
-        dynamicImportIdsSet.add(item.id as string);
+    if (isSSR && !ctx.err && reactApplicationContext) {
+      const matchedRoutes = (renderOpts as any).matchedRoutes;
+      const { routesSSGData, revalidate } = await this.renderData({
+        reactApplicationContext,
+        pathname,
+        initStage,
+        matchedRoutes,
+        Component,
       });
+      (renderOpts as any).routesSSGData = routesSSGData;
+      (renderOpts as any).revalidate = revalidate;
     }
-  }
 
-  const dynamicImportsIds = [...dynamicImportIdsSet];
-  const hybridAmp = ampState.hybrid;
+    const renderPage: RenderPage = (options: ComponentsEnhancer = {}): { html: string; head: any } => {
+      if (!isSSR) {
+        return { html: "", head };
+      }
+      if (ctx.err) {
+        if (ErrorDebug) {
+          return { html: renderToString(<ErrorDebug error={ctx.err} />), head };
+        } else {
+          return {
+            html: renderToString(
+              <AppContainer>
+                <Component err={err} />
+              </AppContainer>
+            ),
+            head,
+          };
+        }
+      }
 
-  // update renderOpts so export knows current state
-  renderOpts.inAmpMode = inAmpMode;
-  renderOpts.hybridAmp = hybridAmp;
+      // if (dev && (props.router || props.Component)) {
+      //   throw new Error(
+      //     `'router' and 'Component' can not be returned in getInitialProps from _app.js https://err.sh/vercel/next.js/cant-override-next-props`
+      //   );
+      // }
 
-  const docComponentsRendered: DocumentProps["docComponentsRendered"] = {};
+      const {
+        App: EnhancedComponent,
+        // Component: EnhancedComponent,
+      } = enhanceComponents(options, Component);
 
-  let html = renderDocument(Document, {
-    ...renderOpts,
-    docComponentsRendered,
-    buildManifest: filteredBuildManifest,
-    // Only enabled in production as development mode has features relying on HMR (style injection for example)
-    unstable_runtimeJS: process.env.NODE_ENV === "production" ? pageConfig.unstable_runtimeJS : undefined,
-    dangerousAsPath: router.asPath,
-    ampState,
-    initState: (renderOpts as any).routesSSGData || [],
-    props,
-    headTags: await headTags(documentCtx),
-    isFallback,
-    docProps,
-    pathname,
-    ampPath,
-    query,
-    inAmpMode,
-    hybridAmp,
-    dynamicImportsIds,
-    dynamicImports,
-    // gsp: !!getStaticProps ? true : undefined,
-    // gssp: !!getServerSideProps ? true : undefined,
-    // gip: hasPageGetInitialProps ? true : undefined,
-    // gsp: true,
-    // gssp: true,
-    ssr: isSSR,
-    gip: true,
-    // appGip: !defaultAppGetInitialProps ? true : undefined,
-    devOnlyCacheBusterQueryString,
-  });
+      const html = renderToString(
+        <AppContainer>
+          <ReactAppContainer appContext={reactApplicationContext!}>
+            <EnhancedComponent appContext={reactApplicationContext!} />
+          </ReactAppContainer>
+        </AppContainer>
+      );
 
-  if (process.env.NODE_ENV !== "production") {
-    const nonRenderedComponents = [];
-    const expectedDocComponents = ["Main", "Head", "JoyScript", "Html"];
+      return { html, head };
+    };
+    const documentCtx = { ...ctx, renderPage };
+    const docProps: DocumentInitialProps = await loadGetInitialProps(Document, documentCtx);
+    // the response might be finished on the getInitialProps call
+    if (isResSent(res) && !isSSG) return null;
 
-    for (const comp of expectedDocComponents) {
-      if (!(docComponentsRendered as any)[comp]) {
-        nonRenderedComponents.push(comp);
+    if (!docProps || typeof docProps.html !== "string") {
+      const message = `"${getDisplayName(Document)}.getInitialProps()" should resolve to an object with a "html" prop set with a valid html string`;
+      throw new Error(message);
+    }
+
+    const dynamicImportIdsSet = new Set<string>();
+    const dynamicImports: ManifestItem[] = [];
+
+    for (const mod of reactLoadableModules) {
+      const manifestItem: ManifestItem[] = reactLoadableManifest[mod];
+
+      if (manifestItem) {
+        manifestItem.forEach((item) => {
+          dynamicImports.push(item);
+          dynamicImportIdsSet.add(item.id as string);
+        });
       }
     }
-    const plural = nonRenderedComponents.length !== 1 ? "s" : "";
 
-    if (nonRenderedComponents.length) {
-      console.warn(
-        `Expected Document Component${plural} ${nonRenderedComponents.join(", ")} ${
-          plural ? "were" : "was"
-        } not rendered. Make sure you render them in your custom \`_document\`\n` +
-          `See more info here https://err.sh/next.js/missing-document-component`
-      );
+    const dynamicImportsIds = [...dynamicImportIdsSet];
+    const hybridAmp = ampState.hybrid;
+
+    // update renderOpts so export knows current state
+    renderOpts.inAmpMode = inAmpMode;
+    renderOpts.hybridAmp = hybridAmp;
+
+    const docComponentsRendered: DocumentProps["docComponentsRendered"] = {};
+
+    let html = renderDocument(Document, {
+      ...renderOpts,
+      docComponentsRendered,
+      buildManifest: filteredBuildManifest,
+      // Only enabled in production as development mode has features relying on HMR (style injection for example)
+      unstable_runtimeJS: process.env.NODE_ENV === "production" ? pageConfig.unstable_runtimeJS : undefined,
+      dangerousAsPath: router.asPath,
+      ampState,
+      initState: (renderOpts as any).routesSSGData || [],
+      props,
+      headTags: await headTags(documentCtx),
+      isFallback,
+      docProps,
+      pathname,
+      ampPath,
+      query,
+      inAmpMode,
+      hybridAmp,
+      dynamicImportsIds,
+      dynamicImports,
+      // gsp: !!getStaticProps ? true : undefined,
+      // gssp: !!getServerSideProps ? true : undefined,
+      // gip: hasPageGetInitialProps ? true : undefined,
+      // gsp: true,
+      // gssp: true,
+      ssr: isSSR,
+      err,
+      gip: true,
+      // appGip: !defaultAppGetInitialProps ? true : undefined,
+      devOnlyCacheBusterQueryString,
+    });
+
+    if (process.env.NODE_ENV !== "production") {
+      const nonRenderedComponents = [];
+      const expectedDocComponents = ["Main", "Head", "JoyScript", "Html"];
+
+      for (const comp of expectedDocComponents) {
+        if (!(docComponentsRendered as any)[comp]) {
+          nonRenderedComponents.push(comp);
+        }
+      }
+      const plural = nonRenderedComponents.length !== 1 ? "s" : "";
+
+      if (nonRenderedComponents.length) {
+        console.warn(
+          `Expected Document Component${plural} ${nonRenderedComponents.join(", ")} ${
+            plural ? "were" : "was"
+          } not rendered. Make sure you render them in your custom \`_document\`\n` +
+            `See more info here https://err.sh/next.js/missing-document-component`
+        );
+      }
     }
-  }
 
-  if (inAmpMode && html) {
-    // inject HTML to AMP_RENDER_TARGET to allow rendering
-    // directly to body in AMP mode
-    const ampRenderIndex = html.indexOf(AMP_RENDER_TARGET);
-    html = html.substring(0, ampRenderIndex) + `<!-- __JOY_DATA__ -->${docProps.html}` + html.substring(ampRenderIndex + AMP_RENDER_TARGET.length);
-    html = await optimizeAmp(html, renderOpts.ampOptimizerConfig);
+    if (inAmpMode && html) {
+      // inject HTML to AMP_RENDER_TARGET to allow rendering
+      // directly to body in AMP mode
+      const ampRenderIndex = html.indexOf(AMP_RENDER_TARGET);
+      html = html.substring(0, ampRenderIndex) + `<!-- __JOY_DATA__ -->${docProps.html}` + html.substring(ampRenderIndex + AMP_RENDER_TARGET.length);
+      html = await optimizeAmp(html, renderOpts.ampOptimizerConfig);
 
-    if (!renderOpts.ampSkipValidation && renderOpts.ampValidator) {
-      await renderOpts.ampValidator(html, pathname);
+      if (!renderOpts.ampSkipValidation && renderOpts.ampValidator) {
+        await renderOpts.ampValidator(html, pathname);
+      }
     }
-  }
 
-  html = await postProcess(
-    html,
-    {
-      getFontDefinition,
-    },
-    {
-      optimizeFonts: renderOpts.optimizeFonts,
-      optimizeImages: renderOpts.optimizeImages,
+    html = await postProcess(
+      html,
+      {
+        getFontDefinition,
+      },
+      {
+        optimizeFonts: renderOpts.optimizeFonts,
+        optimizeImages: renderOpts.optimizeImages,
+      }
+    );
+
+    if (inAmpMode || hybridAmp) {
+      // fix &amp being escaped for amphtml rel link
+      html = html.replace(/&amp;amp=1/g, "&amp=1");
     }
-  );
 
-  if (inAmpMode || hybridAmp) {
-    // fix &amp being escaped for amphtml rel link
-    html = html.replace(/&amp;amp=1/g, "&amp=1");
+    return html;
   }
-
-  return html;
 }
 
 function errorToJSON(err: Error): Error {

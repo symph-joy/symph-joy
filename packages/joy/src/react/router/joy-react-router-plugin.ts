@@ -1,9 +1,9 @@
-import { ClassComponent, Component, isClassComponent, RegisterTap, TComponent } from "@symph/core";
+import { ClassComponent, Component, IComponentLifecycle, isClassComponent, RegisterTap, TComponent } from "@symph/core";
 import { getReactControllerMeta, IReactRoute, ReactRoute, ReactRouterService } from "@symph/react";
 import { IScanOutModule } from "../../build/scanner/file-scanner";
 import { readFileSync } from "fs";
 import { join, sep } from "path";
-
+import { sync } from "resolve";
 import { IGenerateFiles } from "../../build/file-generator";
 import { handlebars } from "../../lib/handlebars";
 import { ModuleContextTypeEnum } from "../../lib/constants";
@@ -20,7 +20,7 @@ export interface IJoyReactRouteBuild extends IReactRoute {
  * used in build phase
  */
 @Component()
-export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRouteBuild> extends ReactRouterService<T> {
+export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRouteBuild> extends ReactRouterService<T> implements IComponentLifecycle {
   protected routesTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes-client.handlebars"), "utf-8"));
 
   protected routesServerTemplate = handlebars.compile(readFileSync(join(__dirname, "./routes-server.handlebars"), "utf-8"));
@@ -32,6 +32,21 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     protected joyAppConfig: JoyAppConfig // protected fileGenerator: FileGenerator, // protected fileScanner: FileScanner
   ) {
     super();
+  }
+
+  initialize(): Promise<void> | void {
+    // 添加默认 404 页面
+    const route404 = this.getDefault404Route();
+    this.addRoute(route404);
+  }
+
+  protected getDefault404Route(): T {
+    const page404Path = sync("../../pages/_error");
+    return {
+      path: "/404",
+      componentName: "joyErrorComponent",
+      srcPath: page404Path,
+    } as IJoyReactRouteBuild as any;
   }
 
   // protected fromRouteMeta(
@@ -73,9 +88,9 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     scanOutModule.providerDefines.forEach((providerDefine, exportKey) => {
       providerDefine.providers.forEach((provider) => {
         let routes = this.addRouteProvider(provider, scanOutModule.mount);
-        if (!routes?.length) {
+        if (!routes?.length && scanOutModule.resource) {
           // 未自定义路由信息，尝试使用文件约定路由
-          const fsRoute = this.addFSRoute(scanOutModule, exportKey, provider, scanOutModule.mount) as T | undefined;
+          const fsRoute = this.addFSRoute(scanOutModule.resource, provider, scanOutModule.mount) as T | undefined;
           if (fsRoute) {
             routes = [fsRoute];
           }
@@ -127,19 +142,39 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     this.addFromScanOutModule(module);
   }
 
-  public getFsRoute(filePath: string, provider?: TComponent, basePath?: string): T | undefined {
+  public getFsRoute(filePath: string, basePath?: string): T | undefined {
     const pagesDir = this.joyAppConfig.resolvePagesDir();
     if (!filePath.startsWith(pagesDir)) {
       return undefined;
     }
-    let routePath = filePath.substr(pagesDir.length);
+    let routePath = filePath.slice(pagesDir.length);
     const pathSegments = routePath.split(sep).filter(Boolean);
+    if (
+      pathSegments.find((it) => {
+        if (it.startsWith(".") || (it.startsWith("_") && !/^_layout\./i.test(it))) {
+          // 以 . 或 _ 开头的文件或目录
+          return true;
+        }
+        const lowerIt = it.toLowerCase();
+        if (lowerIt === "components" || lowerIt === "component" || lowerIt === "utils" || lowerIt === "util") {
+          return true;
+        }
+        return false;
+      })
+    ) {
+      return undefined;
+    }
+    if (/(test|spec|e2e)\.(tsx?|jsx?)$/.test(routePath)) {
+      // 测试文件
+      return undefined;
+    }
+
     let lastSeg = pathSegments[pathSegments.length - 1];
     if (/\.\w+$/.test(lastSeg)) {
       lastSeg = lastSeg.slice(0, lastSeg.lastIndexOf("."));
       pathSegments[pathSegments.length - 1] = lastSeg;
     }
-    const isContainer = lastSeg === "layout";
+    const isContainer = lastSeg === "_layout";
     if (isContainer) {
       pathSegments.pop();
     }
@@ -159,15 +194,12 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
       isContainer,
       index: isIndex,
       catchAllParam,
-      componentName: provider?.name,
-      componentPackage: provider?.package,
     } as IJoyReactRouteBuild as T;
 
     return fsRoute;
   }
 
-  private addFSRoute(scanOutModule: IScanOutModule, exportKey: string, provider: TComponent, basePath?: string): T | undefined {
-    const filePath = scanOutModule.resource;
+  public addFSRoute(filePath: string, provider: TComponent, basePath?: string): T | undefined {
     if (!filePath) {
       return undefined;
     }
@@ -176,8 +208,10 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
     if (!ctlMeta) {
       return;
     }
-    const fsRoute = this.getFsRoute(filePath, provider, basePath);
+    const fsRoute = this.getFsRoute(filePath, basePath);
     if (fsRoute) {
+      fsRoute.componentName = provider?.name;
+      fsRoute.componentPackage = provider?.package;
       if (isClassComponent(provider)) {
         ReactRoute(fsRoute)(provider.useClass);
       }

@@ -11,10 +11,12 @@ export default class BasicReactController extends BaseReactController {
   private helloModel: BasicReactModel;
 
   async initModelStaticState(): Promise<void> {
+    console.log("initModelStaticState");
     await this.helloModel.add(1);
   }
 
   onInitialModelStaticStateDid() {
+    console.log("onInitialModelStaticStateDid");
     this.helloModel.add(2);
   }
 

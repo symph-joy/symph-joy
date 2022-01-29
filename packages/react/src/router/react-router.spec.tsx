@@ -7,11 +7,13 @@ import { ReactRouterService } from "./react-router-service";
 import DynamicRoutePath from "./fixtures/router/pages/dynamic-route-path";
 import { ReactApplicationFactory } from "../react-application-factory";
 import Hello from "./fixtures/router/pages/hello";
-import NestLayout from "./fixtures/router/pages/nest/layout";
+import Ctl404 from "./fixtures/router/pages/404";
+import NestLayout from "./fixtures/router/pages/nest/_layout";
 import NestAbc from "./fixtures/router/pages/nest/abc";
 import NestIndex from "./fixtures/router/pages/nest";
 import NestChildAbc from "./fixtures/router/pages/nest/child/abc";
 import CatchAllPage from "./fixtures/router/pages/catch-all-page";
+import { RoutesRenderer } from "./routes-renderer";
 
 describe("react-router", () => {
   test("should render the hello route", async () => {
@@ -120,5 +122,37 @@ describe("react-router", () => {
     const appContent = app.start();
     const { getByTestId, container, rerender, getByText } = render(appContent);
     expect(getByTestId("message").innerHTML).toBe("a/b/c");
+  });
+
+  test("should render 404 page", async () => {
+    const app = await ReactApplicationFactory.create(ReactApplicationConfiguration, undefined, [
+      {
+        name: "reactRouterProps",
+        type: Object,
+        useValue: { initialEntries: ["/404"] },
+      },
+      Hello,
+      Ctl404,
+    ]);
+    const appContent = app.start();
+    const { getByTestId, container, rerender, getByText } = render(appContent);
+    console.log(container.innerHTML);
+    expect(getByTestId("error").innerHTML).toBe("404");
+  });
+
+  test("should return 404 page, if the route is NOT exists.", async () => {
+    const app = await ReactApplicationFactory.create(ReactApplicationConfiguration, undefined, [
+      {
+        name: "reactRouterProps",
+        type: Object,
+        useValue: { initialEntries: ["/not-found"] },
+      },
+      Hello,
+      Ctl404,
+    ]);
+    const appContent = app.start();
+    const { getByTestId, container, rerender, getByText } = render(appContent);
+    console.log(container.innerHTML);
+    expect(getByTestId("error").innerHTML).toBe("404");
   });
 });

@@ -9,46 +9,34 @@ import { warn } from "./output/log";
 import { ClientPagesLoaderOptions } from "./webpack/loaders/joy-client-pages-loader";
 import { ServerlessLoaderQuery } from "./webpack/loaders/joy-serverless-loader";
 import { LoadedEnvFiles } from "../lib/load-env-config";
-import { resolveRequest } from "../lib/resolve-request";
 
 type PagesMapping = {
   [page: string]: string;
 };
 
-export function createPagesMapping(
-  pagePaths: string[],
-  extensions: string[]
-): PagesMapping {
+export function createPagesMapping(pagePaths: string[], extensions: string[]): PagesMapping {
   const previousPages: PagesMapping = {};
-  const pages: PagesMapping = pagePaths.reduce(
-    (result: PagesMapping, pagePath): PagesMapping => {
-      const page = `${pagePath
-        .replace(new RegExp(`\\.+(${extensions.join("|")})$`), "")
-        .replace(/\\/g, "/")}`.replace(/\/index$/, "");
+  const pages: PagesMapping = pagePaths.reduce((result: PagesMapping, pagePath): PagesMapping => {
+    const page = `${pagePath.replace(new RegExp(`\\.+(${extensions.join("|")})$`), "").replace(/\\/g, "/")}`.replace(/\/index$/, "");
 
-      const pageKey = page === "" ? "/" : page;
+    const pageKey = page === "" ? "/" : page;
 
-      if (pageKey in result) {
-        warn(
-          `Duplicate page detected. ${chalk.cyan(
-            join("pages", previousPages[pageKey])
-          )} and ${chalk.cyan(
-            join("pages", pagePath)
-          )} both resolve to ${chalk.cyan(pageKey)}.`
-        );
-      } else {
-        previousPages[pageKey] = pagePath;
-      }
-      result[pageKey] = join(PAGES_DIR_ALIAS, pagePath).replace(/\\/g, "/");
-      return result;
-    },
-    {}
-  );
+    if (pageKey in result) {
+      warn(
+        `Duplicate page detected. ${chalk.cyan(join("pages", previousPages[pageKey]))} and ${chalk.cyan(
+          join("pages", pagePath)
+        )} both resolve to ${chalk.cyan(pageKey)}.`
+      );
+    } else {
+      previousPages[pageKey] = pagePath;
+    }
+    result[pageKey] = join(PAGES_DIR_ALIAS, pagePath).replace(/\\/g, "/");
+    return result;
+  }, {});
 
   pages["/_app"] = pages["/_app"] || "@symph/joy/dist/pages/_app";
   pages["/_error"] = pages["/_error"] || "@symph/joy/dist/pages/_error";
-  pages["/_document"] =
-    pages["/_document"] || "@symph/joy/dist/pages/_document";
+  pages["/_document"] = pages["/_document"] || "@symph/joy/dist/pages/_document";
 
   return pages;
 }
@@ -73,9 +61,7 @@ export function createEntrypoints(
   const client: WebpackEntrypoints = {};
   const server: WebpackEntrypoints = {};
 
-  const hasRuntimeConfig =
-    Object.keys(config.publicRuntimeConfig).length > 0 ||
-    Object.keys(config.serverRuntimeConfig).length > 0;
+  const hasRuntimeConfig = Object.keys(config.publicRuntimeConfig).length > 0 || Object.keys(config.serverRuntimeConfig).length > 0;
 
   const defaultServerlessOptions = {
     absoluteAppPath: pages["/_app"],
@@ -96,9 +82,7 @@ export function createEntrypoints(
       : "",
     previewProps: JSON.stringify(previewMode),
     // base64 encode to make sure contents don't break webpack URL loading
-    loadedEnvFiles: Buffer.from(JSON.stringify(loadedEnvFiles)).toString(
-      "base64"
-    ),
+    loadedEnvFiles: Buffer.from(JSON.stringify(loadedEnvFiles)).toString("base64"),
   };
 
   Object.keys(pages).forEach((page) => {
@@ -117,9 +101,7 @@ export function createEntrypoints(
         absolutePagePath,
         ...defaultServerlessOptions,
       };
-      server[serverBundlePath] = `joy-serverless-loader?${stringify(
-        serverlessLoaderOptions
-      )}!`;
+      server[serverBundlePath] = `joy-serverless-loader?${stringify(serverlessLoaderOptions)}!`;
     } else if (isApiRoute || target === "server") {
       server[serverBundlePath] = [absolutePagePath];
     } else if (isLikeServerless && page !== "/_app" && page !== "/_document") {
@@ -128,9 +110,7 @@ export function createEntrypoints(
         absolutePagePath,
         ...defaultServerlessOptions,
       };
-      server[serverBundlePath] = `joy-serverless-loader?${stringify(
-        serverlessLoaderOptions
-      )}!`;
+      server[serverBundlePath] = `joy-serverless-loader?${stringify(serverlessLoaderOptions)}!`;
     }
 
     if (page === "/_document") {
@@ -142,18 +122,13 @@ export function createEntrypoints(
         page,
         absolutePagePath,
       };
-      const pageLoader = `joy-client-pages-loader?${stringify(
-        pageLoaderOpts
-      )}!`;
+      const pageLoader = `joy-client-pages-loader?${stringify(pageLoaderOpts)}!`;
 
       // Make sure next/router is a dependency of _app or else chunk splitting
       // might cause the router to not be able to load causing hydration
       // to fail
 
-      client[clientBundlePath] =
-        page === "/_app"
-          ? [pageLoader, require.resolve("../client/router")]
-          : pageLoader;
+      client[clientBundlePath] = page === "/_app" ? [pageLoader, require.resolve("../client/router")] : pageLoader;
     }
   });
 

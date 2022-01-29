@@ -41,10 +41,10 @@ declare global {
 }
 
 type RenderRouteInfo = PrivateRouteInfo & {
-  App: AppComponent;
+  Component: AppComponent;
   reactApplicationContext: ReactApplicationContext;
 };
-type RenderErrorProps = Omit<RenderRouteInfo, "Component" | "styleSheets">;
+type RenderErrorProps = Omit<RenderRouteInfo, "styleSheets">;
 
 const data: typeof window["__JOY_DATA__"] = JSON.parse(document.getElementById("__JOY_DATA__")!.textContent!);
 window.__JOY_DATA__ = data;
@@ -112,7 +112,7 @@ const appElement = document.getElementById("__joy");
 let lastAppProps: AppProps;
 let lastRenderReject: (() => void) | null;
 let webpackHMR: any;
-export let router: Router;
+// export let router: Router;
 let CachedComponent: React.ComponentType;
 let cachedStyleSheets: StyleSheetTuple[];
 let CachedApp: AppComponent, onPerfEntry: (metric: any) => void;
@@ -127,34 +127,34 @@ class Container extends React.Component<{
   componentDidMount() {
     this.scrollToHash();
 
-    // We need to replace the router state if:
-    // - the page was (auto) exported and has a query string or search (hash)
-    // - it was auto exported and is a dynamic route (to provide params)
-    // - if it is a client-side skeleton (fallback render)
-    if (
-      router.isSsr &&
-      (isFallback ||
-        (data.joyExport && (isDynamicRoute(router.pathname) || location.search)) ||
-        (hydrateProps && hydrateProps.__N_SSG && location.search))
-    ) {
-      // update query on mount for exported pages
-      router.replace(
-        router.pathname + "?" + String(querystring.assign(querystring.urlQueryToSearchParams(router.query), new URLSearchParams(location.search))),
-        asPath,
-        {
-          // @ts-ignore
-          // WARNING: `_h` is an internal option for handing Joy.js
-          // client-side hydration. Your app should _never_ use this property.
-          // It may change at any time without notice.
-          _h: 1,
-          // Fallback pages must trigger the data fetch, so the transition is
-          // not shallow.
-          // Other pages (strictly updating query) happens shallowly, as data
-          // requirements would already be present.
-          shallow: !isFallback,
-        }
-      );
-    }
+    // // We need to replace the router state if:
+    // // - the page was (auto) exported and has a query string or search (hash)
+    // // - it was auto exported and is a dynamic route (to provide params)
+    // // - if it is a client-side skeleton (fallback render)
+    // if (
+    //   router.isSsr &&
+    //   (isFallback ||
+    //     (data.joyExport && (isDynamicRoute(router.pathname) || location.search)) ||
+    //     (hydrateProps && hydrateProps.__N_SSG && location.search))
+    // ) {
+    //   // update query on mount for exported pages
+    //   router.replace(
+    //     router.pathname + "?" + String(querystring.assign(querystring.urlQueryToSearchParams(router.query), new URLSearchParams(location.search))),
+    //     asPath,
+    //     {
+    //       // @ts-ignore
+    //       // WARNING: `_h` is an internal option for handing Joy.js
+    //       // client-side hydration. Your app should _never_ use this property.
+    //       // It may change at any time without notice.
+    //       _h: 1,
+    //       // Fallback pages must trigger the data fetch, so the transition is
+    //       // not shallow.
+    //       // Other pages (strictly updating query) happens shallowly, as data
+    //       // requirements would already be present.
+    //       shallow: !isFallback,
+    //     }
+    //   );
+    // }
 
     if (process.env.__JOY_TEST_MODE) {
       window.__JOY_HYDRATED = true;
@@ -193,7 +193,7 @@ class Container extends React.Component<{
 }
 
 export const emitter = mitt();
-const errorPages = ["/_error", "/404"];
+const errorPages = ["/_error"];
 
 export default async (opts: { webpackHMR?: any } = {}) => {
   // This makes sure this specific lines are removed in production
@@ -278,37 +278,37 @@ export default async (opts: { webpackHMR?: any } = {}) => {
     await window.__JOY_PRELOADREADY(dynamicIds);
   }
 
-  router = createRouter(page, query, asPath, {
-    initialProps: hydrateProps,
-    pageLoader,
-    App: CachedApp,
-    Component: CachedComponent,
-    initialStyleSheets: cachedStyleSheets,
-    wrapApp,
-    err: initialErr,
-    isFallback: Boolean(isFallback),
-    subscription: ({ styleSheets, props, err }, App) =>
-      render({
-        App,
-        styleSheets,
-        props,
-        err,
-        reactApplicationContext,
-      }),
-  });
+  // router = createRouter(page, query, asPath, {
+  //   initialProps: hydrateProps,
+  //   pageLoader,
+  //   App: CachedApp,
+  //   Component: CachedComponent,
+  //   initialStyleSheets: cachedStyleSheets,
+  //   wrapApp,
+  //   err: initialErr,
+  //   isFallback: Boolean(isFallback),
+  //   subscription: ({ styleSheets, props, err }, App) =>
+  //     render({
+  //       Component: App,
+  //       styleSheets,
+  //       props,
+  //       err,
+  //       reactApplicationContext,
+  //     }),
+  // });
 
   // call init-client middleware
-  if (process.env.__JOY_PLUGINS) {
-    // @ts-ignore
-    // eslint-disable-next-line
-    import("joy-plugin-loader?middleware=on-init-client!")
-      .then((initClientModule) => {
-        return initClientModule.default({ router });
-      })
-      .catch((initClientErr) => {
-        console.error("Error calling client-init for plugins", initClientErr);
-      });
-  }
+  // if (process.env.__JOY_PLUGINS) {
+  //   // @ts-ignore
+  //   // eslint-disable-next-line
+  //   import("joy-plugin-loader?middleware=on-init-client!")
+  //     .then((initClientModule) => {
+  //       return initClientModule.default({ router });
+  //     })
+  //     .catch((initClientErr) => {
+  //       console.error("Error calling client-init for plugins", initClientErr);
+  //     });
+  // }
 
   await reactApplicationContext.init();
   const initManager = reactApplicationContext.getSync(JoyReactAppInitManagerClient);
@@ -318,8 +318,8 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   }
 
   const renderCtx = {
-    App: CachedApp,
-    Component: CachedComponent,
+    // App: CachedApp,
+    Component: CachedApp,
     styleSheets: cachedStyleSheets,
     props: hydrateProps,
     err: initialErr,
@@ -362,7 +362,7 @@ export async function render(renderingProps: RenderRouteInfo) {
 // 404 and 500 errors are special kind of errors
 // and they are still handle via the main render method.
 export function renderError(renderErrorProps: RenderErrorProps) {
-  const { App, err, reactApplicationContext } = renderErrorProps;
+  const { Component, err, reactApplicationContext } = renderErrorProps;
 
   // In development runtime errors are caught by our overlay
   // In production we catch runtime errors using componentDidCatch which will trigger renderError
@@ -374,7 +374,7 @@ export function renderError(renderErrorProps: RenderErrorProps) {
     // We need to render an empty <App> so that the `<ReactDevOverlay>` can
     // render itself.
     return doRender({
-      App: () => null,
+      Component: () => null,
       props: {},
       // Component: () => null,
       styleSheets: [],
@@ -394,21 +394,21 @@ export function renderError(renderErrorProps: RenderErrorProps) {
   }
 
   // Make sure we log the error to the console, otherwise users can't track down issues.
-  console.error(err);
   return pageLoader.loadPage("/_error").then(({ page: ErrorComponent, styleSheets }) => {
     // In production we do a normal render with the `ErrorComponent` as component.
     // If we've gotten here upon initial render, we can use the props from the server.
     // Otherwise, we need to call `getInitialProps` on `App` before mounting.
-    const AppTree = wrapApp(App);
+    const AppTree = wrapApp(Component);
     const appCtx = {
       Component: ErrorComponent,
       AppTree,
-      router,
+      // router,
       ctx: { err, pathname: page, query, asPath, AppTree },
     };
-    return Promise.resolve(renderErrorProps.props ? renderErrorProps.props : loadGetInitialProps(App, appCtx)).then((initProps) =>
+    return Promise.resolve(renderErrorProps.props ? renderErrorProps.props : loadGetInitialProps(Component, appCtx)).then((initProps) =>
       doRender({
         ...renderErrorProps,
+        Component: ErrorComponent,
         err,
         // Component: ErrorComponent,
         styleSheets,
@@ -498,9 +498,9 @@ function AppContainer({ children }: React.PropsWithChildren<{}>): React.ReactEle
         renderError({ App: CachedApp, err: error }).catch((err) => console.error("Error rendering page: ", err))
       }
     >
-      <RouterContext.Provider value={makePublicRouterInstance(router)}>
-        <HeadManagerContext.Provider value={headManager}>{children}</HeadManagerContext.Provider>
-      </RouterContext.Provider>
+      {/*<RouterContext.Provider value={makePublicRouterInstance(router)}>*/}
+      <HeadManagerContext.Provider value={headManager}>{children}</HeadManagerContext.Provider>
+      {/*</RouterContext.Provider>*/}
     </Container>
   );
 }
@@ -510,7 +510,7 @@ const wrapApp = (App: AppComponent) => (wrappedAppProps: Record<string, any>) =>
     ...wrappedAppProps,
     Component: CachedComponent,
     err: hydrateErr,
-    router,
+    // router,
   };
   return (
     <AppContainer>
@@ -519,7 +519,7 @@ const wrapApp = (App: AppComponent) => (wrappedAppProps: Record<string, any>) =>
   );
 };
 
-function doRender({ App, props, err, styleSheets, reactApplicationContext }: RenderRouteInfo): Promise<any> {
+function doRender({ Component, props, err, styleSheets, reactApplicationContext }: RenderRouteInfo): Promise<any> {
   // Component = Component || lastAppProps.Component;
   props = props || lastAppProps.props;
 
@@ -527,7 +527,8 @@ function doRender({ App, props, err, styleSheets, reactApplicationContext }: Ren
     ...props,
     // Component,
     err,
-    router,
+    appContext: reactApplicationContext,
+    // router,
   };
   // lastAppProps has to be set before ReactDom.render to account for ReactDom throwing an error.
   lastAppProps = appProps;
@@ -642,7 +643,7 @@ function doRender({ App, props, err, styleSheets, reactApplicationContext }: Ren
       <AppContainer>
         <ReactAppContainer appContext={reactApplicationContext}>
           <JoyPageSSGDataLoader>
-            <App appContext={reactApplicationContext} />
+            <Component {...appProps} />
           </JoyPageSSGDataLoader>
         </ReactAppContainer>
       </AppContainer>

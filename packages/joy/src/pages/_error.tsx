@@ -1,6 +1,7 @@
 import React from "react";
 import { Head } from "../joy-server/lib/head";
 import { JoySSRContext } from "../joy-server/lib/joy-ssr-react-context";
+import { ReactComponent } from "@symph/react";
 
 const statusCodes: { [code: number]: string } = {
   400: "Bad Request",
@@ -10,28 +11,33 @@ const statusCodes: { [code: number]: string } = {
 };
 
 export type ErrorProps = {
-  statusCode: number;
+  statusCode?: number;
   title?: string;
+  err?: any;
 };
 
 /**
  * `Error` component used for handling errors.
  */
-export default class Error<P = {}> extends React.Component<P & ErrorProps> {
+@ReactComponent({ name: "joyErrorComponent" })
+export class ErrorComponent<P = {}> extends React.Component<P & ErrorProps> {
   static displayName = "ErrorPage";
 
   static contextType = JoySSRContext;
 
   getErrorObject() {
-    const statusCode = this.context?.res?.statusCode || this.context?.err?.statusCode || 404;
-    const title = this.context?.err?.message;
+    const err = this.props.err || this.context?.err;
+    const statusCode = this.props.statusCode || err?.statusCode || this.context?.res?.statusCode || 404;
+    const title = this.props.title || err?.message || statusCodes[statusCode] || "An unexpected error has occurred";
     return { statusCode, title };
   }
 
   render() {
     const errObj = this.getErrorObject();
-    const { statusCode } = errObj;
-    let title = errObj.title || statusCodes[statusCode] || "An unexpected error has occurred";
+    return this.renderView(errObj);
+  }
+
+  renderView({ statusCode, title }: { statusCode: string; title: string }) {
     return (
       <div style={styles.error}>
         <Head>
@@ -91,3 +97,5 @@ const styles: { [k: string]: React.CSSProperties } = {
     padding: 0,
   },
 };
+
+export default ErrorComponent;

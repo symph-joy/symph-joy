@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { ReactApplicationReactContext, ReactRouteInitStatus, ReactRouterService } from "@symph/react";
 import * as H from "history";
-import { useLocation } from "react-router-dom";
+import { UNSAFE_LocationContext } from "react-router-dom";
 import { JoyReactAppInitManagerClient, JoySSGPage } from "../joy-react-app-init-manager-client";
 import { ReactReduxService } from "@symph/react/dist/redux/react-redux.service";
 import { AnyAction } from "@symph/react/dist/redux";
@@ -10,7 +10,8 @@ const DefaultLoadingComp = ({ location }: { location: H.Location }) => <div>{loc
 
 export function JoyPageSSGDataLoader({ children }: { children: React.ReactNode }): any {
   const { ssr } = window.__JOY_DATA__;
-  const location = useLocation();
+  const locationCtxValue = useContext(UNSAFE_LocationContext);
+  const location = locationCtxValue.location;
   const pathname = location.pathname;
 
   const joyAppContext = useContext(ReactApplicationReactContext);
@@ -19,7 +20,7 @@ export function JoyPageSSGDataLoader({ children }: { children: React.ReactNode }
     throw new Error("react app context is not initialed");
   }
 
-  // prefetch Data
+  // check has ssg
   const initManager = joyAppContext.getSync(JoyReactAppInitManagerClient);
   const reactRouter = joyAppContext.getSync(ReactRouterService);
   const reduxService = joyAppContext.getSync(ReactReduxService);

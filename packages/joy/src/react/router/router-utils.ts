@@ -108,9 +108,10 @@ export function getRouteCacheKey({ path, index }: { path: string; index?: boolea
  * 一般用于生成缓存key.
  */
 export function getPathnameCacheKey(pathname: string, index?: boolean): string {
+  let rst = pathname;
   if (index) {
-    return pathname + (pathname.endsWith("/") ? "" : "/") + "$$index";
-  } else {
-    return pathname;
+    rst = pathname + (pathname.endsWith("/") ? "" : "/") + "$$index";
   }
+  rst = rst + (rst.endsWith("/") ? "" : "/") + "::route";
+  return rst;
 }

@@ -33,7 +33,7 @@ describe("react hmr", () => {
     await page.goto(testContext.getUrl("/hello"));
     const msg = await page.$eval("#message", (el: any) => el.innerHTML);
     expect(msg).toContain("*message*");
-  }, 999999);
+  }, 60000);
 
   describe("modify file", () => {
     afterAll(async () => {
@@ -51,7 +51,7 @@ describe("react hmr", () => {
       await page.waitForFunction(() => document?.getElementById("message")?.innerHTML === "*modified*");
       msg = await page.$eval("#message", (el: any) => el.innerHTML);
       expect(msg).toContain("*modified*");
-    }, 999999);
+    }, 60000);
   });
 
   describe("Add file", () => {
@@ -63,7 +63,7 @@ describe("react hmr", () => {
         .replace('"/hello"', '"/hello1"')
         .replace("*message*", "*message1*");
       writeFileSync(newCtlFilePath, updatedSource, { encoding: "utf-8" });
-    }, 999999);
+    }, 60000);
 
     afterAll(async () => {
       rmSync(newCtlFilePath);
@@ -75,10 +75,10 @@ describe("react hmr", () => {
       await page.waitForFunction(() => document?.getElementById("message")?.innerHTML === "*message1*", undefined, { timeout: 60000 });
       let msg = await page.$eval("#message", (el: any) => el.innerHTML);
       expect(msg).toContain("*message1*");
-    }, 999999);
+    }, 60000);
   });
 
-  test("Delete file, then should render the old page.", async () => {
+  test("Delete file, then should render the 404 page.", async () => {
     let newCtlFilePath: string | undefined;
     try {
       // add
@@ -103,5 +103,5 @@ describe("react hmr", () => {
         rmSync(newCtlFilePath);
       }
     }
-  }, 999999);
+  }, 90000);
 });

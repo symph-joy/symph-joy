@@ -1,5 +1,5 @@
 import { dirname, extname, join, sep } from "path";
-import { renderToHTML } from "../joy-server/server/render";
+import { Render } from "../joy-server/server/render";
 import { promises } from "fs";
 import AmpHtmlValidator from "amphtml-validator";
 import { loadComponents, LoadComponentsReturnType } from "../joy-server/server/load-components";
@@ -80,11 +80,6 @@ export interface ExportRenderOpts {
   optimizeImages?: boolean;
   fontManifest?: FontManifest;
 }
-
-type ComponentModule = ComponentType<{}> & {
-  renderReqToHTML: typeof renderToHTML;
-  getStaticProps?: GetStaticProps;
-};
 
 @Configuration()
 export class JoyExportConfig {
@@ -218,7 +213,7 @@ export async function exportPage(
 
     await promises.mkdir(baseDir, { recursive: true });
 
-    let renderMethod = renderToHTML;
+    let render = new Render();
 
     const hasRenderedDuringBuild = () => {
       // return !buildExport && !isDynamicRoute(path);
@@ -346,7 +341,7 @@ export async function exportPage(
       reactApplicationContext,
       matchedRoutes,
     };
-    const html = (await renderMethod(req, res, page, query, curRenderOpts)) as string;
+    const html = (await render.renderToHTML(req, res, page, query, curRenderOpts)) as string;
     // }
     // }
 
