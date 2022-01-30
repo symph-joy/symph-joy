@@ -144,7 +144,7 @@ export class JoyReactServer implements IComponentLifecycle {
     this.outDir = joyAppConfig.resolveAppDir(distDir, REACT_OUT_DIR);
     this.publicDir = joyAppConfig.resolveAppDir(CLIENT_PUBLIC_FILES_PATH);
     this.hasStaticDir = existsSync(join(this.dir, "static"));
-    this.renderer = new Render();
+    this.renderer = new Render(joyAppConfig);
     // Only serverRuntimeConfig needs the default
     // publicRuntimeConfig gets it's default in client/index.js
     const { serverRuntimeConfig = {}, publicRuntimeConfig, assetPrefix, generateEtags, compress } = this.joyConfig;

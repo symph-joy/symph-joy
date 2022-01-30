@@ -213,7 +213,8 @@ export async function exportPage(
 
     await promises.mkdir(baseDir, { recursive: true });
 
-    let render = new Render();
+    const joyAppConfig = joyContext.getSync(JoyAppConfig);
+    let render = new Render(joyAppConfig);
 
     const hasRenderedDuringBuild = () => {
       // return !buildExport && !isDynamicRoute(path);

@@ -37,6 +37,7 @@ import { JoySSRContext, JoySSRContextType } from "../lib/joy-ssr-react-context";
 import { RouteSSGData } from "../lib/RouteSSGData.interface";
 import { isValidElementType } from "react-is";
 import LRUCache from "lru-cache";
+import { JoyAppConfig } from "./joy-app-config";
 
 function noRouter() {
   const message =
@@ -271,7 +272,7 @@ type RouteDataCacheValue = RouteSSGData & {
 export class Render {
   routeDataCache: LRUCache<string, RouteDataCacheValue>;
 
-  constructor() {
+  constructor(private joyAppConfig: JoyAppConfig) {
     this.routeDataCache = new LRUCache({
       max: 50 * 1024 * 1024, // default to 50MB limit
       length(val) {
@@ -298,6 +299,9 @@ export class Render {
   }
 
   getRouteData(cacheKey: string): RouteDataCacheValue | undefined {
+    if (this.joyAppConfig.dev) {
+      return undefined;
+    }
     const data = this.routeDataCache.get(cacheKey);
     const curTime = new Date().getTime();
     if (data && data.revalidateAfter !== false) {
