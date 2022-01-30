@@ -31,7 +31,7 @@ export type IRouteMeta = {
   isContainer?: boolean;
 } & Pick<IReactRoute, "caseSensitive">;
 
-export type RouteOptions = Omit<IReactRoute, "isContainer">;
+export type RouteOptions = Pick<IReactRoute, "path" | "index" | "caseSensitive">;
 
 export interface ReactRouteContextValue {
   route?: IReactRoute;

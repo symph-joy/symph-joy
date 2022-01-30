@@ -2,16 +2,14 @@ import React from "react";
 import { ErrorComponent } from "@symph/joy/react";
 
 export default class MyError extends ErrorComponent {
-  render() {
-    const err = this.getErrorObject();
-    console.log(">>> MyError, err:", err);
-    const { statusCode, title } = err;
+  renderView({ statusCode, title }: { statusCode: string; title: string }) {
     return (
-      <div>
-        <div id={"pageTitle"}>Custom Error</div>
-        <div id={"statusCode"}>{statusCode}</div>
-        <div id={"title"}>{title}</div>
-      </div>
+      <>
+        <h1>My Custom Error Page</h1>
+        <p>
+          {statusCode}|{title}
+        </p>
+      </>
     );
   }
 }
