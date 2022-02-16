@@ -11,9 +11,14 @@ import { componentNameGenerate } from "../../injector/component-name-generate";
  */
 export type ComponentOptions = {
   /**
-   * provider name
+   * component name
    */
   name?: ComponentName;
+
+  /**
+   * component package
+   */
+  package?: string;
 
   /**
    * Optional enum defining lifetime of the provider that is injected.

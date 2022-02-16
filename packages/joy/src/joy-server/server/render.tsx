@@ -330,6 +330,9 @@ export class Render {
     if (!reactApplicationContext) {
       throw new Error("init controller data error, react application context is undefined.");
     }
+    if (!matchedRoutes) {
+      matchedRoutes = [{ pathname, pathnameBase: "", route: { path: pathname }, params: {} }];
+    }
 
     const initManager = await reactApplicationContext.get(ReactAppInitManager);
     const reduxService = await reactApplicationContext.get(ReactReduxService);

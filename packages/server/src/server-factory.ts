@@ -18,12 +18,12 @@ export class ServerFactoryProtoClass<T extends ServerApplication, OPT extends Re
 
   constructor(public serverApplicationClass: { new (...args: any[]): T }) {}
 
-  public async create(entry: EntryType, options?: NestApplicationOptions): Promise<T> {
+  public async create(entry: EntryType | EntryType[], options?: NestApplicationOptions): Promise<T> {
     return this.createServer(entry, ServerConfiguration, options, undefined);
   }
 
   public async createServer(
-    entry: EntryType,
+    entry: EntryType | EntryType[],
     configurationClass: typeof ServerConfiguration = ServerConfiguration,
     options: NestApplicationOptions | OPT = {},
     parent?: IApplicationContext
@@ -165,7 +165,7 @@ export class ServerFactoryProtoClass<T extends ServerApplication, OPT extends Re
         return receiver[prop];
       },
     });
-    return (proxy as unknown) as T;
+    return proxy as unknown as T;
   }
 
   protected applyLogger(options: JoyContextOptions | undefined): void {
