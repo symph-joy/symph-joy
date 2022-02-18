@@ -153,19 +153,19 @@ export class ApplicationContext implements IApplicationContext {
     ]);
   }
 
-  public getProviderDefinition<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, packageName?: string): ComponentWrapper<TInput> | undefined {
-    const instanceWrapper = this.container.getProvider(typeOrToken, packageName);
+  public getProviderDefinition<TInput = any>(typeOrName: TypeOrTokenType<TInput>, packageName?: string): ComponentWrapper<TInput> | undefined {
+    const instanceWrapper = this.container.getProvider(typeOrName, packageName);
     return instanceWrapper;
   }
 
-  public getOptional<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined {
+  public getOptional<TInput = any>(typeOrName: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined {
     let injectBy: EnuInjectBy, name: string | undefined, type: Type<any> | undefined;
-    if (typeof typeOrToken === "function") {
+    if (typeof typeOrName === "function") {
       injectBy = EnuInjectBy.TYPE;
-      type = typeOrToken as Type;
+      type = typeOrName as Type;
     } else {
       injectBy = EnuInjectBy.NAME;
-      name = typeOrToken as string;
+      name = typeOrName as string;
     }
     const instanceWrapper = this.injector.getInstanceWrapper(injectBy, type, name);
     if (isNil(instanceWrapper)) {
@@ -176,25 +176,25 @@ export class ApplicationContext implements IApplicationContext {
     return provider as Promise<TInput> | TInput;
   }
 
-  public get<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput {
-    const instance = this.getOptional<TInput>(typeOrToken, options);
+  public get<TInput = any>(typeOrName: TypeOrTokenType<TInput>): Promise<TInput> | TInput {
+    const instance = this.getOptional<TInput>(typeOrName);
     if (isNil(instance)) {
-      const providerId = this.getProviderId(typeOrToken);
+      const providerId = this.getProviderId(typeOrName);
       throw new UnknownElementException(providerId);
     }
     return instance as Promise<TInput> | TInput;
   }
 
-  public getOptionalSync<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput | undefined {
-    const loadRst = this.getOptional<TInput>(typeOrToken, options);
+  public getOptionalSync<TInput = any>(typeOrName: TypeOrTokenType<TInput>): TInput | undefined {
+    const loadRst = this.getOptional<TInput>(typeOrName);
     if (loadRst instanceof Promise) {
       throw new RuntimeException("Its an async provider, can not load as sync");
     }
     return loadRst;
   }
 
-  public getSync<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput {
-    const loadRst = this.get<TInput>(typeOrToken, options);
+  public getSync<TInput = any>(typeOrName: TypeOrTokenType<TInput>): TInput {
+    const loadRst = this.get<TInput>(typeOrName);
     if (loadRst instanceof Promise) {
       throw new RuntimeException("Its an async provider, can not load as sync");
     }
@@ -204,10 +204,7 @@ export class ApplicationContext implements IApplicationContext {
   /**
    * inject properties for instance
    */
-  public resolveProperties<TInstance extends Object>(
-    instance: TInstance,
-    typeOfInstance: TypeOrTokenType<unknown>
-  ): ThenableResult<IInjectableDependency[]> {
+  public resolveProperties<TInstance extends Object>(instance: TInstance, typeOfInstance: Type<unknown>): ThenableResult<IInjectableDependency[]> {
     // const providerId: string = this.getProviderId(typeOfInstance);
     const providerId: string = this.getProviderId(instance.constructor);
     let instanceWrapper = this.container.getProvider(instance.constructor);

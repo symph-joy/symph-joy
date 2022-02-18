@@ -17,18 +17,18 @@ import { InjectCustomOptionsInterface } from "../../interfaces/inject-custom-opt
  * `@Injectable()` decorator use the class name. Custom Providers may use strings
  * or as the injection id.
  *
- * @param typeOrId lookup key for the provider to be injected (assigned to the constructor
+ * @param typeOrName lookup key for the provider to be injected (assigned to the constructor
  * parameter).
  *
  * @publicApi
  */
-export function Inject<T = any>(typeOrId?: string | symbol | Type<T>) {
+export function Inject(typeOrName?: string | symbol | Type) {
   let providerName: string | symbol;
-  let providerType: Type<T>;
-  if (isFunction(typeOrId)) {
-    providerType = typeOrId as Type<T>;
+  let providerType: Type;
+  if (isFunction(typeOrName)) {
+    providerType = typeOrName as Type;
   } else {
-    providerName = typeOrId as string | symbol;
+    providerName = typeOrName as string | symbol;
   }
 
   return (target: Object, key: string | symbol, index?: number) => {

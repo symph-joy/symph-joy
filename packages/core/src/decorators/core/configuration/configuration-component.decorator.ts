@@ -10,7 +10,7 @@ import { InjectCustomOptionsInterface } from "../../../interfaces/inject-custom-
  *
  * @publicApi
  */
-export type ProviderOptions = {
+export type ComponentOptions = {
   /**
    * provider name
    */
@@ -33,7 +33,7 @@ export type ProviderOptions = {
   alias?: ComponentName[];
 };
 
-export function Component(options: ProviderOptions = {}): PropertyDecorator {
+export function Component(options: ComponentOptions = {}): PropertyDecorator {
   return (target, propertyKey) => {
     const propType = Reflect.getMetadata("design:type", target, propertyKey);
     const paramTypes = Reflect.getMetadata("design:paramtypes", target, propertyKey);

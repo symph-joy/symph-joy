@@ -20,24 +20,40 @@ export interface IApplicationContext {
 
   readonly parent?: IApplicationContext;
 
-  getProviderDefinition<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, packageName?: string): ComponentWrapper<TInput> | undefined;
+  getProviderDefinition<TInput = any>(typeOrName: TypeOrTokenType<TInput>, packageName?: string): ComponentWrapper<TInput> | undefined;
 
   registerModule(module: EntryType | EntryType[]): ComponentWrapper[];
 
   loadModule(module: EntryType | EntryType[]): Promise<ComponentWrapper[]>;
 
-  get<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput;
+  /**
+   * 获取组件值
+   * @param typeOrName 组件类型或名称
+   */
+  get<TInput = any>(typeOrName: TypeOrTokenType<TInput>): Promise<TInput> | TInput;
 
-  getOptional<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): Promise<TInput> | TInput | undefined;
+  /**
+   * 获取组件值，如果组件不存在，返回null。
+   * @param typeOrName 组件类型或名称
+   */
+  getOptional<TInput = any>(typeOrName: TypeOrTokenType<TInput>): Promise<TInput> | TInput | undefined;
 
-  getSync<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput;
+  /**
+   * 同步获取组件值，如果组件是异步组件，将会抛出异常。
+   *  @param typeOrName 组件类型或名称
+   */
+  getSync<TInput = any>(typeOrName: TypeOrTokenType<TInput>): TInput;
 
-  getOptionalSync<TInput = any>(typeOrToken: TypeOrTokenType<TInput>, options?: { strict?: boolean }): TInput | undefined;
+  /**
+   * 同步获取组件值，如果组件不存在，返回null，如果组件是异步组件，将会抛出异常。
+   * @param typeOrName 组件类型或名称
+   */
+  getOptionalSync<TInput = any>(typeOrName: TypeOrTokenType<TInput>): TInput | undefined;
 
   /**
    * inject properties for instance
    */
-  resolveProperties<TInstance>(instance: TInstance, typeOrToken: TypeOrTokenType<unknown>): ThenableResult<IInjectableDependency[]>;
+  resolveProperties<TInstance>(instance: TInstance, typeOfInstance: Type<unknown>): ThenableResult<IInjectableDependency[]>;
 
   /**
    * Initialize the application.
