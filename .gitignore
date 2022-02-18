@@ -23,3 +23,7 @@ junit.xml
 .DS_Store
 .idea
 *.iml
+
+
+packages/joy-website
+packages/joy-admin
