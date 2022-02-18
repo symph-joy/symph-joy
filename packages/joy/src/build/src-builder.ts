@@ -36,11 +36,12 @@ export class SrcBuilder {
   public isWatch = false;
 
   constructor(@Inject() private joyAppConfig: JoyAppConfig) {
-    const clientDir = this.joyAppConfig.resolveAppDir("src/client");
     this.rootDir = this.joyAppConfig.resolveAppDir("src");
-    if (existsSync(clientDir)) {
-      this.srcDir = clientDir;
-    } else if (existsSync(this.rootDir)) {
+    // const clientDir = this.joyAppConfig.resolveAppDir("src/client");
+    // if (existsSync(clientDir)) {
+    //   this.srcDir = clientDir;
+    // } else
+    if (existsSync(this.rootDir)) {
       this.srcDir = this.rootDir;
     } else {
       console.debug("React src dir(src/client or src/pages) is not exists.");
@@ -63,7 +64,8 @@ export class SrcBuilder {
     }
     return new Promise<void>((resolve, reject) => {
       this.watcher = watch([`${this.srcDir}${sep}**${sep}*.{js,jsx,ts,tsx}`], {
-        ignored: "**/*.{spec,test}.{js,jsx,ts,tsx}",
+        ignored: [this.rootDir + "/server/**", "**/*.{spec,test}.{js,jsx,ts,tsx}"], //服务端代码，由服务端模块处理，这里暂时只处理React的代码。
+        // ignored: ["**/*.{spec,test}.{js,jsx,ts,tsx}"],
         followSymlinks: false,
         awaitWriteFinish: true,
         ignoreInitial: false,
@@ -159,8 +161,8 @@ export class SrcBuilder {
   );
 
   private applyChange(mount = "", filePath: string, changeType: keyof AggregateChange) {
+    // 服务端代码，由服务端模块处理，这里暂时只处理React的代码。
     if (filePath.startsWith(path.join(this.rootDir, "server"))) {
-      // 服务端代码，由服务端模块处理，这里暂时只处理React的代码。
       return;
     }
     this.aggregateChange[changeType].push({ filePath: filePath });
