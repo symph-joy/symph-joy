@@ -101,43 +101,60 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
 
     const configData = {} as Record<string, unknown>;
     for (let i = 0; i < configValues.length; i++) {
-      const { configKey, propKey, schema, transform } = configValues[i];
+      const { configKey, propKey, schema, transform, default: defaultValue } = configValues[i];
 
       // propKeys[i] = propKey;
       configKeys[i] = configKey;
       if (schema) {
         configJsonSchema.addProperty(configKey, new JsonSchema(schema));
       }
-      const originValue = internalConfig[configKey];
+      // const originValue = internalConfig[configKey];
+      const originValue = this.get(configKey as any);
       if (transform && originValue !== undefined) {
         configData[configKey] = transform(originValue);
       } else {
         configData[configKey] = originValue;
       }
+      if (configData[configKey] === undefined) {
+        if (defaultValue !== undefined) {
+          configData[configKey] = defaultValue;
+        } else if (schema?.default !== undefined) {
+          configData[configKey] = schema?.default;
+        }
+      }
     }
 
-    const ajv = new Ajv({ useDefaults: true, strictTypes: false });
-    const isValid = ajv.validate(configJsonSchema.toObject(), configData);
+    const ajv = new Ajv({ useDefaults: true, strict: false });
+    const objConfigJsonSchema = configJsonSchema.toObject();
+    const isValid = ajv.validate(objConfigJsonSchema, configData);
     if (!isValid) {
       const errMsg = ajv.errorsText(ajv.errors);
       throw new Error(errMsg);
     }
 
+    // Ajv的默认实现，并不将数组的Default值赋值给属性
+    const injectArrDefault = (schema: any, data: Record<string, any>) => {
+      if (!schema.properties || !data) {
+        return;
+      }
+      for (const prop of Object.keys(schema.properties)) {
+        const propScheme = schema.properties[prop];
+        if (propScheme.type === "object") {
+          injectArrDefault(propScheme, data[prop]);
+        } else if (propScheme.type === "array") {
+          if (propScheme.items?.default !== undefined) {
+            data[prop] = propScheme.items?.default;
+          }
+        }
+      }
+    };
+    injectArrDefault(objConfigJsonSchema, configData);
+
     for (let i = 0; i < configValues.length; i++) {
       const configMeta = configValues[i];
       const value = configData[configMeta.configKey];
       const presetValue = instance[configMeta.propKey];
-      if (typeof value === "undefined") {
-        if (configMeta.default !== undefined) {
-          if (presetValue === undefined) {
-            instance[configMeta.propKey] = configMeta.default;
-          } else {
-            // use preset value
-          }
-        } else {
-          // noop
-        }
-      } else {
+      if (typeof value !== "undefined") {
         instance[configMeta.propKey] = value;
       }
     }
