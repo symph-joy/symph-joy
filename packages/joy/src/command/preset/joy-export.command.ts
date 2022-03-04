@@ -7,6 +7,7 @@ import { JoyExportAppService } from "../../export/joy-export-app.service";
 import path from "path";
 import { JoyExportConfiguration } from "../../server/joy-export.configuration";
 import { JoyServerFactory } from "../../joy-server/server/joy-server-factory";
+import getPort from "get-port";
 
 @Configuration()
 class JoyExportCommandConfig {
@@ -64,6 +65,10 @@ export class JoyExportCommand extends JoyCommand {
 
     const appContext = await JoyServerFactory.createServer({}, JoyExportConfiguration, { dir, dev: false });
     try {
+      // 默认使用随机端口，用于启动导出服务器
+      const joyAppConfig = appContext.getSync(JoyAppConfig);
+      joyAppConfig.port = await getPort();
+
       const exportService = await appContext.get(JoyExportAppService);
       await exportService.exportApp(dir, { outdir: absOutdir, silent, threads });
       printAndExit(undefined, 0);
