@@ -142,7 +142,7 @@ export class ConfigService<K = Record<string, any>> implements InjectorHookTaps,
         if (propScheme.type === "object") {
           injectArrDefault(propScheme, data[prop]);
         } else if (propScheme.type === "array") {
-          if (propScheme.items?.default !== undefined) {
+          if (data[prop] === undefined && propScheme.items?.default !== undefined) {
             data[prop] = propScheme.items?.default;
           }
         }
