@@ -45,4 +45,4 @@ if (target === TARGET.CONSOLE) {
 }
 
 // JSON is always reported to allow for diagnostics
-export const reporter = new MultiReporter([reportToJson, traceTargetReporter]);
+export const reporter = new MultiReporter(process.env.TRACE ? [reportToJson, traceTargetReporter] : []);

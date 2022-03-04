@@ -154,11 +154,11 @@ export class FastifyAdapter<
   }
 
   public getHttpServer<T = TServer>(): T {
-    return (this.instance.server as unknown) as T;
+    return this.instance.server as unknown as T;
   }
 
   public getInstance<T = FastifyInstance<TServer, TRawRequest, TRawResponse>>(): T {
-    return (this.instance as unknown) as T;
+    return this.instance as unknown as T;
   }
 
   public register<Options extends FastifyPluginOptions = any>(
@@ -258,7 +258,7 @@ export class FastifyAdapter<
       // The following type assertion is valid as we enforce "middie" plugin registration
       // which enhances the FastifyInstance with the "use()" method.
       // ref https://github.com/fastify/middie/pull/55
-      const instanceWithUseFn = (this.instance as unknown) as FastifyInstance & {
+      const instanceWithUseFn = this.instance as unknown as FastifyInstance & {
         use: Function;
       };
 

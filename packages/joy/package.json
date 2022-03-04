@@ -31,7 +31,7 @@
     "_types": "tsc --declaration --emitDeclarationOnly --declarationDir dist",
     "typescript": "tsc --noEmit --declaration",
     "ncc-compiled": "taskr ncc",
-    "clean": "gulp clean:bundle"
+    "clean": "gulp clean"
   },
   "taskr": {
     "requires": [
@@ -172,7 +172,13 @@
     "webpack": "^5.64.4",
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-sources": "^3.2.2",
-    "yargs": "^17.1.0"
+    "yargs": "^17.1.0",
+    "image-size": "^1.0.1",
+    "get-orientation": "^1.1.2",
+    "@hapi/accept": "^5.0.2",
+    "@squoosh/lib": "^0.4.0",
+    "content-disposition": "^0.5.4",
+    "is-animated": "^2.0.2"
   },
   "peerDependencies": {
     "@types/react": "^17.0.0",
@@ -225,6 +231,7 @@
     "@types/watchpack": "^1.1.7",
     "@types/webpack-sources": "^3.2.0",
     "@types/yargs": "15.0.7",
+    "@types/content-disposition": "^0.5.4",
     "@zeit/ncc": "0.22.0",
     "debug": "4.1.1",
     "gulp": "^4.0.2",

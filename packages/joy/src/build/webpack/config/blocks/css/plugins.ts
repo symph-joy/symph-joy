@@ -13,18 +13,24 @@ type CssPluginShape = [string, object | boolean];
 const genericErrorText = "Malformed PostCSS Configuration";
 
 function getError_NullConfig(pluginName: string) {
-  return `${chalk.red.bold("Error")}: Your PostCSS configuration for '${pluginName}' cannot have ${chalk.bold("null")} configuration.\nTo disable '${pluginName}', pass ${chalk.bold("false")}, otherwise, pass ${chalk.bold("true")} or a configuration object.`;
+  return `${chalk.red.bold("Error")}: Your PostCSS configuration for '${pluginName}' cannot have ${chalk.bold(
+    "null"
+  )} configuration.\nTo disable '${pluginName}', pass ${chalk.bold("false")}, otherwise, pass ${chalk.bold("true")} or a configuration object.`;
 }
 
 function isIgnoredPlugin(pluginPath: string): boolean {
-  const ignoredRegex = /(?:^|[\\/])(postcss-modules-values|postcss-modules-scope|postcss-modules-extract-imports|postcss-modules-local-by-default|postcss-modules)(?:[\\/]|$)/i;
+  const ignoredRegex =
+    /(?:^|[\\/])(postcss-modules-values|postcss-modules-scope|postcss-modules-extract-imports|postcss-modules-local-by-default|postcss-modules)(?:[\\/]|$)/i;
   const match = ignoredRegex.exec(pluginPath);
   if (match == null) {
     return false;
   }
 
   const plugin = match.pop()!;
-  console.warn(`${chalk.yellow.bold("Warning")}: Please remove the ${chalk.underline(plugin)} plugin from your PostCSS configuration. ` + `This plugin is automatically configured by Joy.\n`);
+  console.warn(
+    `${chalk.yellow.bold("Warning")}: Please remove the ${chalk.underline(plugin)} plugin from your PostCSS configuration. ` +
+      `This plugin is automatically configured by Joy.\n`
+  );
   return true;
 }
 
@@ -111,7 +117,10 @@ export async function getPostCssPlugins(dir: string, isProduction: boolean, defa
   // Warn user about configuration keys which are not respected
   const invalidKey = Object.keys(config).find((key) => key !== "plugins");
   if (invalidKey) {
-    console.warn(`${chalk.yellow.bold("Warning")}: Your PostCSS configuration defines a field which is not supported (\`${invalidKey}\`). ` + `Please remove this configuration value.`);
+    console.warn(
+      `${chalk.yellow.bold("Warning")}: Your PostCSS configuration defines a field which is not supported (\`${invalidKey}\`). ` +
+        `Please remove this configuration value.`
+    );
   }
 
   // Enforce the user provided plugins if the configuration file is present
@@ -149,14 +158,20 @@ export async function getPostCssPlugins(dir: string, isProduction: boolean, defa
         parsed.push([pluginName, pluginConfig]);
       } else {
         if (typeof pluginName !== "string") {
-          console.error(`${chalk.red.bold("Error")}: A PostCSS Plugin must be provided as a ${chalk.bold("string")}. Instead, we got: '${pluginName}'.\n`);
+          console.error(
+            `${chalk.red.bold("Error")}: A PostCSS Plugin must be provided as a ${chalk.bold("string")}. Instead, we got: '${pluginName}'.\n`
+          );
         } else {
-          console.error(`${chalk.red.bold("Error")}: A PostCSS Plugin was passed as an array but did not provide its configuration ('${pluginName}').\n`);
+          console.error(
+            `${chalk.red.bold("Error")}: A PostCSS Plugin was passed as an array but did not provide its configuration ('${pluginName}').\n`
+          );
         }
         throw new Error(genericErrorText);
       }
     } else if (typeof plugin === "function") {
-      console.error(`${chalk.red.bold("Error")}: A PostCSS Plugin was passed as a function using require(), but it must be provided as a ${chalk.bold("string")}.`);
+      console.error(
+        `${chalk.red.bold("Error")}: A PostCSS Plugin was passed as a function using require(), but it must be provided as a ${chalk.bold("string")}.`
+      );
       throw new Error(genericErrorText);
     } else {
       console.error(`${chalk.red.bold("Error")}: An unknown PostCSS plugin was provided (${plugin}).\n`);

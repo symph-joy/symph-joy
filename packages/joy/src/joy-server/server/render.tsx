@@ -38,6 +38,7 @@ import { RouteSSGData } from "../lib/RouteSSGData.interface";
 import { isValidElementType } from "react-is";
 import LRUCache from "lru-cache";
 import { JoyAppConfig } from "./joy-app-config";
+import { ImageConfigContext } from "../../react/components/image-config-context";
 
 function noRouter() {
   const message =
@@ -509,7 +510,7 @@ export class Render {
       }
     }
     if (isAutoExport) renderOpts.autoExport = true;
-    if (isSSG) renderOpts.joyExport = false;
+    // if (isSSG) renderOpts.joyExport = false;
 
     await Loadable.preloadAll(); // Make sure all dynamic imports are loaded
 
@@ -576,7 +577,7 @@ export class Render {
             >
               <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
                 {/*<ReactAppContainer appContext={reactApplicationContext!}>{children}</ReactAppContainer>*/}
-                {children}
+                <ImageConfigContext.Provider value={this.joyAppConfig.images}>{children}</ImageConfigContext.Provider>
               </LoadableContext.Provider>
             </HeadManagerContext.Provider>
           </JoySSRContext.Provider>

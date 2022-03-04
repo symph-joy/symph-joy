@@ -5,9 +5,10 @@ export default class MyError extends ErrorComponent {
   renderView({ statusCode, title }: { statusCode: string; title: string }) {
     return (
       <>
-        <h1>My Custom Error Page</h1>
+        <h1 id={"pageTitle"}>My Custom Error Page</h1>
         <p>
-          {statusCode}|{title}
+          <div id={"statusCode"}>{statusCode}</div>
+          <div id={"title"}>{title}</div>
         </p>
       </>
     );

@@ -22,10 +22,7 @@ module.exports = function (content, sourceMap) {
   const regExp = query.regExp;
   const opts = { context, content, regExp };
   const interpolateName = query.interpolateName || ((inputName) => inputName);
-  const interpolatedName = interpolateName(
-    loaderUtils.interpolateName(this, name, opts),
-    { name, opts }
-  );
+  const interpolatedName = interpolateName(loaderUtils.interpolateName(this, name, opts), { name, opts });
   const emit = (code, map) => {
     this.emitFile(interpolatedName, code, map);
     callback(null, code, map);

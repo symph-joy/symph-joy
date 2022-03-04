@@ -1,11 +1,11 @@
-import loaderUtils from "next/dist/compiled/loader-utils";
-import { resizeImage, getImageSize } from "../../../server/image-optimizer";
+import loaderUtils from "loader-utils";
+import { resizeImage, getImageSize } from "../../../joy-server/server/image/joy-image-optimize.service";
 
 const BLUR_IMG_SIZE = 8;
 const BLUR_QUALITY = 70;
 const VALID_BLUR_EXT = ["jpeg", "png", "webp", "avif"]; // should match joy/client/image.tsx
 
-function nextImageLoader(content) {
+function joyImageLoader(content) {
   const imageLoaderSpan = this.currentTraceSpan.traceChild("joy-image-loader");
   return imageLoaderSpan.traceAsyncFn(async () => {
     const { isServer, isDev, assetPrefix, basePath } = loaderUtils.getOptions(this);
@@ -34,7 +34,6 @@ function nextImageLoader(content) {
       } else {
         // Shrink the image's largest dimension
         const dimension = imageSize.width >= imageSize.height ? "width" : "height";
-
         const resizeImageSpan = imageLoaderSpan.traceChild("image-resize");
         const resizedImage = await resizeImageSpan.traceAsyncFn(() => resizeImage(content, dimension, BLUR_IMG_SIZE, extension, BLUR_QUALITY));
         const blurDataURLSpan = imageLoaderSpan.traceChild("image-base64-tostring");
@@ -55,8 +54,10 @@ function nextImageLoader(content) {
       this.emitFile(interpolatedName, content, null);
     }
 
-    return `export default ${stringifiedData};`;
+    return `export default ${stringifiedData}; export const src=${JSON.stringify(outputPath)}; export const height=${JSON.stringify(
+      imageSize.height
+    )};export const width=${JSON.stringify(imageSize.width)};export const blurDataURL=${JSON.stringify(blurDataURL)};`;
   });
 }
 export const raw = true;
-export default nextImageLoader;
+export default joyImageLoader;

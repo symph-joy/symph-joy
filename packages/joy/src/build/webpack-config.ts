@@ -5,8 +5,8 @@ import { existsSync, readFileSync } from "fs";
 import chalk from "chalk";
 import TerserPlugin from "terser-webpack-plugin";
 import path from "path";
-import webpack, { Chunk, RuleSetRule } from "webpack";
 import type { Configuration } from "webpack";
+import webpack, { Chunk, RuleSetRule } from "webpack";
 import { DOT_JOY_ALIAS, JOY_PROJECT_ROOT, JOY_PROJECT_ROOT_DIST_CLIENT, PAGES_DIR_ALIAS } from "../lib/constants";
 import { fileExists } from "../lib/file-exists";
 import { resolveRequest } from "../lib/resolve-request";
@@ -16,8 +16,8 @@ import {
   CLIENT_STATIC_FILES_RUNTIME_POLYFILLS,
   CLIENT_STATIC_FILES_RUNTIME_WEBPACK,
   REACT_LOADABLE_MANIFEST,
-  SERVERLESS_DIRECTORY,
   SERVER_DIRECTORY,
+  SERVERLESS_DIRECTORY,
 } from "../joy-server/lib/constants";
 import { execOnce } from "../joy-server/lib/utils";
 import { findPageFile } from "../server/lib/find-page-file";
@@ -38,20 +38,16 @@ import PagesManifestPlugin from "./webpack/plugins/pages-manifest-plugin";
 import { ProfilingPlugin } from "./webpack/plugins/profiling-plugin";
 import { ReactLoadablePlugin } from "./webpack/plugins/react-loadable-plugin";
 import { ServerlessPlugin } from "./webpack/plugins/serverless-plugin";
-import WebpackConformancePlugin, {
-  DuplicatePolyfillsConformanceCheck,
-  GranularChunksConformanceCheck,
-  MinificationConformanceCheck,
-  ReactSyncScriptsConformanceCheck,
-} from "./webpack/plugins/webpack-conformance-plugin";
 import { WellKnownErrorsPlugin } from "./webpack/plugins/wellknown-errors-plugin";
 import { Rewrite } from "../lib/load-custom-routes";
 import { webpack5 } from "../types/webpack5";
-import OptimizationSplitChunksOptions = webpack5.OptimizationSplitChunksOptions;
 import { stringify } from "querystring";
 import { IJoyReactRouteBuild } from "../react/router/joy-react-router-plugin";
 import { REACT_OUT_DIR } from "../react/react-const";
 import { Span } from "../trace";
+import { regexLikeCss } from "./webpack/config/blocks/css";
+import OptimizationSplitChunksOptions = webpack5.OptimizationSplitChunksOptions;
+
 type ExcludesFalse = <T>(x: T | false) => x is T;
 
 const isWebpack5 = parseInt(webpack.version!) === 5;
@@ -183,7 +179,7 @@ export default async function getBaseWebpackConfig(
     entrypoints: WebpackEntrypoints;
     rewrites: Rewrite[];
     routes?: IJoyReactRouteBuild[] | (() => IJoyReactRouteBuild[]);
-    runWebpackSpan?: Span;
+    runWebpackSpan: Span;
   }
 ): Promise<webpack.Configuration> {
   const productionBrowserSourceMaps = config.experimental.productionBrowserSourceMaps && !isServer;
@@ -842,6 +838,7 @@ export default async function getBaseWebpackConfig(
         "noop-loader",
         "joy-plugin-loader",
         "joy-require-context-loader",
+        "joy-image-loader",
       ].reduce((alias, loader) => {
         // using multiple aliases to replace `resolveLoader.modules`
         if (process.env.NODE_ENV === "test") {
@@ -849,7 +846,7 @@ export default async function getBaseWebpackConfig(
             __dirname,
             "webpack",
             "loaders",
-            ["joy-babel-loader", "emit-file-loader"].includes(loader) ? loader + ".js" : loader + ".ts"
+            ["joy-babel-loader", "emit-file-loader", "joy-image-loader"].includes(loader) ? loader + ".js" : loader + ".ts"
           );
         } else {
           alias[loader] = path.join(__dirname, "webpack", "loaders", loader + ".js");
@@ -902,6 +899,22 @@ export default async function getBaseWebpackConfig(
             ? [require.resolve("@next/react-refresh-utils/loader"), defaultLoaders.babel]
             : defaultLoaders.babel,
         },
+        ...(!config.images.disableStaticImages
+          ? [
+              {
+                test: joyImageLoaderRegex,
+                loader: "joy-image-loader",
+                issuer: { not: regexLikeCss },
+                dependency: { not: ["url"] },
+                options: {
+                  isServer,
+                  isDev: dev,
+                  basePath: config.basePath,
+                  assetPrefix: config.assetPrefix,
+                },
+              },
+            ]
+          : []),
       ].filter(Boolean),
     },
     plugins: [
@@ -951,6 +964,19 @@ export default async function getBaseWebpackConfig(
         "process.env.__JOY_SCROLL_RESTORATION": JSON.stringify(config.experimental.scrollRestoration),
         "process.env.__JOY_ROUTER_BASEPATH": JSON.stringify(config.basePath),
         "process.env.__JOY_HAS_REWRITES": JSON.stringify(hasRewrites),
+        "process.env.__JOY_IMAGE_OPTS": JSON.stringify({
+          deviceSizes: config.images.deviceSizes,
+          imageSizes: config.images.imageSizes,
+          path: config.images.path,
+          loader: config.images.loader,
+          unoptimized: config.images.unoptimized,
+          ...(dev
+            ? {
+                // pass domains in development to allow validating on the client
+                domains: config.images.domains,
+              }
+            : {}),
+        }),
         ...(isServer
           ? {
               // Fix bad-actors in the npm ecosystem (e.g. `node-formidable`)
@@ -1166,6 +1192,7 @@ export default async function getBaseWebpackConfig(
     sassOptions: config.sassOptions,
     lessOptions: config.lessOptions,
     productionBrowserSourceMaps,
+    disableStaticImages: config.images.disableStaticImages,
   });
 
   const originalDevtool = webpackConfig.devtool;
@@ -1188,6 +1215,20 @@ export default async function getBaseWebpackConfig(
 
     if (typeof (webpackConfig as any).then === "function") {
       console.warn("> Promise returned in joy config.");
+    }
+  }
+
+  if (!config.images.disableStaticImages) {
+    const rules = webpackConfig.module?.rules || [];
+    const hasCustomSvg = rules.some(
+      (rule: any) => rule.loader !== "joy-image-loader" && "test" in rule && rule.test instanceof RegExp && rule.test.test(".svg")
+    );
+    const joyImageRule = rules.find((rule: any) => rule.loader === "next-image-loader") as any;
+    if (hasCustomSvg && joyImageRule) {
+      // Exclude svg if the user already defined it in custom
+      // webpack config such as `@svgr/webpack` plugin or
+      // the `babel-plugin-inline-react-svg` plugin.
+      joyImageRule.test = /\.(png|jpg|jpeg|gif|webp|avif|ico|bmp)$/i;
     }
   }
 

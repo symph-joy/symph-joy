@@ -11,6 +11,7 @@ import { Value } from "@symph/config";
 import { Integer } from "@tsed/schema";
 import { ApplicationConfig } from "@symph/server";
 import { Component } from "@symph/core";
+import { ImageConfig } from "./image/image-config";
 
 const targets = ["server", "serverless", "experimental-serverless-trace"];
 const reactModes = ["legacy", "blocking", "concurrent"];
@@ -218,6 +219,9 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   serverRuntimeConfig = {};
   publicRuntimeConfig = {};
   reactStrictMode = false;
+
+  @Value({ default: {} })
+  public images: ImageConfig;
 
   public getAppRelativeDir(absPath: string) {
     return path.relative(this.dir, absPath);

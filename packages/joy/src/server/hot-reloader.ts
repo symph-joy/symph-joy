@@ -32,6 +32,7 @@ import crypto from "crypto";
 import { JoyReactRouterPluginDev } from "../react/router/joy-react-router-plugin-dev";
 import { getWebpackConfigForApi } from "../build/webpack-config-for-api";
 import { SrcBuilder } from "../build/src-builder";
+import { Span, trace } from "../trace";
 
 export async function renderScriptError(res: ServerResponse, error: Error, { verbose = true } = {}) {
   // Asks CDNs and others to not to cache the errored page
@@ -153,6 +154,7 @@ export default class HotReloader {
   public reactClientCompiler: Compiler;
   public reactServerCompiler: Compiler;
   // public srcCompiler: Compiler;
+  private hotReloaderSpan: Span;
 
   constructor(
     private joyAppConfig: JoyAppConfig,
@@ -169,7 +171,10 @@ export default class HotReloader {
     this.clientStats = null;
     this.serverStats = null;
     this.serverPrevDocumentHash = undefined;
-
+    this.hotReloaderSpan = trace("hot-reloader");
+    // Ensure the hotReloaderSpan is flushed immediately as it's the parentSpan for all processing
+    // of the current `joy dev` invocation.
+    this.hotReloaderSpan.stop();
     // this.srcEntryGenerator = new SrcEntryGenerator(joyAppConfig, emitSrcService, fileScanner)
     // this.srcEntryGenerator.getSrcFiles(true)
   }
@@ -247,12 +252,16 @@ export default class HotReloader {
     return {};
   }
 
-  private async clean(): Promise<void> {
-    await recursiveDelete(this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir), /^cache/);
-    await this.fileGenerator.mkTempDirs();
+  private async clean(span: Span): Promise<void> {
+    return span.traceChild("clean").traceAsyncFn(async () => {
+      await recursiveDelete(this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir), /^cache/);
+      await this.fileGenerator.mkTempDirs();
+    });
   }
 
-  private async getWebpackConfig() {
+  private async getWebpackConfig(span: Span) {
+    const webpackConfigSpan = span.traceChild("get-webpack-config");
+
     const pagePaths = await Promise.all([
       findPageFile(this.pagesDir, "/_app", this.joyAppConfig.pageExtensions),
       findPageFile(this.pagesDir, "/_document", this.joyAppConfig.pageExtensions),
@@ -277,28 +286,32 @@ export default class HotReloader {
 
     additionalClientEntrypoints[CLIENT_STATIC_FILES_RUNTIME_REACT_REFRESH] = require.resolve(`@next/react-refresh-utils/runtime`);
 
-    return Promise.all([
-      getBaseWebpackConfig(this.dir, {
-        dev: true,
-        isServer: false,
-        config: this.joyAppConfig,
-        buildId,
-        pagesDir: this.pagesDir,
-        rewrites: rewrites,
-        routes,
-        entrypoints: { ...entrypoints.client, ...additionalClientEntrypoints },
-      }),
-      getBaseWebpackConfig(this.dir, {
-        dev: true,
-        isServer: true,
-        config: this.joyAppConfig,
-        buildId,
-        pagesDir: this.pagesDir,
-        rewrites: rewrites,
-        routes,
-        entrypoints: { ...entrypoints.server },
-      }),
-    ]);
+    return webpackConfigSpan.traceChild("generate-webpack-config").traceAsyncFn(() =>
+      Promise.all([
+        getBaseWebpackConfig(this.dir, {
+          dev: true,
+          isServer: false,
+          config: this.joyAppConfig,
+          buildId,
+          pagesDir: this.pagesDir,
+          rewrites: rewrites,
+          routes,
+          entrypoints: { ...entrypoints.client, ...additionalClientEntrypoints },
+          runWebpackSpan: this.hotReloaderSpan,
+        }),
+        getBaseWebpackConfig(this.dir, {
+          dev: true,
+          isServer: true,
+          config: this.joyAppConfig,
+          buildId,
+          pagesDir: this.pagesDir,
+          rewrites: rewrites,
+          routes,
+          entrypoints: { ...entrypoints.server },
+          runWebpackSpan: this.hotReloaderSpan,
+        }),
+      ])
+    );
   }
 
   private startPromise?: Promise<void>;
@@ -316,7 +329,10 @@ export default class HotReloader {
   }
 
   private async _start(): Promise<void> {
-    await this.clean();
+    const startSpan = this.hotReloaderSpan.traceChild("start");
+    startSpan.stop(); // Stop immediately to create an artificial parent span
+
+    await this.clean(startSpan);
 
     await this.onWillJoyBuild.call({ dev: this.joyAppConfig.dev });
 
@@ -324,7 +340,7 @@ export default class HotReloader {
     const distDir = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, "dist/src");
     await this.fileScanner.scanDist(distDir);
 
-    const _configs = await this.getWebpackConfig();
+    const _configs = await this.getWebpackConfig(startSpan);
 
     for (const config of _configs) {
       const defaultEntry = config.entry;

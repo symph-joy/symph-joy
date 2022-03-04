@@ -137,7 +137,6 @@ export function runJoyCommand(argv: string[], opts: RunOptions = { stdout: true,
   const env = {
     ...process.env,
     ...opts.env,
-    NODE_ENV: "",
     __NEXT_TEST_MODE: "true",
   };
 
@@ -337,15 +336,18 @@ export async function joyDev(dir: any, port: any, options?: RunOptions): Promise
 }
 
 export function joyStart(dir: string, port: number, opts?: RunOptions) {
-  return runJoyServer(false, [dir, "-p", port], opts);
+  const env = { ...opts?.env, NODE_ENV: "production" };
+  return runJoyServer(false, [dir, "-p", port], { ...opts, env });
 }
 
 export function joyBuild(dir: string, args: any[] = [], opts?: RunOptions) {
-  return runJoyCommand(["build", dir, ...args], opts);
+  const env = { ...opts?.env, NODE_ENV: "production" };
+  return runJoyCommand(["build", dir, ...args], { ...opts, env });
 }
 
 export function joyExport(dir: string, outdir: string, opts?: RunOptions) {
-  return runJoyCommand(["export", dir, "--outdir", outdir], opts);
+  const env = { ...opts?.env, NODE_ENV: "production" };
+  return runJoyCommand(["export", dir, "--outdir", outdir], { ...opts, env });
 }
 
 export function joyExportDefault(dir: string, opts?: RunOptions) {

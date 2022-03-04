@@ -71,13 +71,7 @@ export type PageConfig = {
   unstable_runtimeJS?: false;
 };
 
-export {
-  JoyPageContext,
-  JoyComponentType,
-  JoyApiResponse,
-  JoyApiRequest,
-  JoyApiHandler,
-};
+export { JoyPageContext, JoyComponentType, JoyApiResponse, JoyApiRequest, JoyApiHandler };
 
 export type GetStaticPropsContext<Q extends ParsedUrlQuery = ParsedUrlQuery> = {
   params?: Q;
@@ -90,29 +84,22 @@ export type GetStaticPropsResult<P> = {
   revalidate?: number | boolean;
 };
 
-export type GetStaticProps<
-  P extends { [key: string]: any } = { [key: string]: any },
-  Q extends ParsedUrlQuery = ParsedUrlQuery
-> = (context: GetStaticPropsContext<Q>) => Promise<GetStaticPropsResult<P>>;
+export type GetStaticProps<P extends { [key: string]: any } = { [key: string]: any }, Q extends ParsedUrlQuery = ParsedUrlQuery> = (
+  context: GetStaticPropsContext<Q>
+) => Promise<GetStaticPropsResult<P>>;
 
 export type InferGetStaticPropsType<T> = T extends GetStaticProps<infer P, any>
   ? P
-  : T extends (
-      context?: GetStaticPropsContext<any>
-    ) => Promise<GetStaticPropsResult<infer P>>
+  : T extends (context?: GetStaticPropsContext<any>) => Promise<GetStaticPropsResult<infer P>>
   ? P
   : never;
 
-export type GetStaticPaths<
-  P extends ParsedUrlQuery = ParsedUrlQuery
-> = () => Promise<{
+export type GetStaticPaths<P extends ParsedUrlQuery = ParsedUrlQuery> = () => Promise<{
   paths: Array<string | { params: P }>;
   fallback: boolean | "unstable_blocking";
 }>;
 
-export type GetServerSidePropsContext<
-  Q extends ParsedUrlQuery = ParsedUrlQuery
-> = {
+export type GetServerSidePropsContext<Q extends ParsedUrlQuery = ParsedUrlQuery> = {
   req: IncomingMessage;
   res: ServerResponse;
   params?: Q;
@@ -125,21 +112,13 @@ export type GetServerSidePropsResult<P> = {
   props: P;
 };
 
-export type GetServerSideProps<
-  P extends { [key: string]: any } = { [key: string]: any },
-  Q extends ParsedUrlQuery = ParsedUrlQuery
-> = (
+export type GetServerSideProps<P extends { [key: string]: any } = { [key: string]: any }, Q extends ParsedUrlQuery = ParsedUrlQuery> = (
   context: GetServerSidePropsContext<Q>
 ) => Promise<GetServerSidePropsResult<P>>;
 
-export type InferGetServerSidePropsType<T> = T extends GetServerSideProps<
-  infer P,
-  any
->
+export type InferGetServerSidePropsType<T> = T extends GetServerSideProps<infer P, any>
   ? P
-  : T extends (
-      context?: GetServerSidePropsContext<any>
-    ) => Promise<GetServerSidePropsResult<infer P>>
+  : T extends (context?: GetServerSidePropsContext<any>) => Promise<GetServerSidePropsResult<infer P>>
   ? P
   : never;
 

@@ -43,7 +43,7 @@ import { PagesManifest } from "../../build/webpack/plugins/pages-manifest-plugin
 import { removePathTrailingSlash } from "../../client/normalize-trailing-slash";
 import getRouteFromAssetPath from "../lib/router/utils/get-route-from-asset-path";
 import { FontManifest } from "./font-utils";
-import { Component, HookType, IComponentLifecycle, IHook, InjectHook } from "@symph/core";
+import { Component, HookType, IComponentLifecycle, IHook, Inject, InjectHook } from "@symph/core";
 import { JoyAppConfig } from "./joy-app-config";
 import { ReactApplicationContext, ReactRouterService } from "@symph/react";
 import { RouteMatch } from "@symph/react/router-dom";
@@ -52,6 +52,7 @@ import { EnumReactAppInitStage } from "@symph/react/dist/react-app-init-stage.en
 import { REACT_OUT_DIR } from "../../react/react-const";
 import { getSortedRoutes } from "@symph/react/dist/router/route-sorter";
 import { RouteSSGData } from "../lib/RouteSSGData.interface";
+import { JoyImageOptimizeService } from "./image/joy-image-optimize.service";
 
 const getCustomRouteMatcher = pathMatch(true);
 
@@ -132,6 +133,10 @@ export class JoyReactServer implements IComponentLifecycle {
   //   dev = false,
   //   customServer = true,
   // }: ServerConstructor = {}) {
+
+  @Inject()
+  public imageOptimizeService: JoyImageOptimizeService;
+
   public constructor(protected joyAppConfig: JoyAppConfig, protected reactContextFactory: ReactContextFactory) {
     const { dir, quiet, dev, customServer, distDir } = joyAppConfig;
     this.dir = joyAppConfig.resolveAppDir(dir);
@@ -422,6 +427,16 @@ export class JoyReactServer implements IComponentLifecycle {
           return {
             finished: true,
           };
+        },
+      },
+      {
+        match: route("/_joy/image"),
+        type: "route",
+        name: "_joy/image catchall",
+        fn: (req, res, _params, parsedUrl) => {
+          // const { imageOptimizer } = require("./image-optimizer") as typeof import("./image-optimizer");
+          // return this.imageOptimizeService.imageOptimizer(this, req, res, parsedUrl, this.distDir, this.renderOpts.dev);
+          return this.imageOptimizeService.handleRequest(this, req, res, parsedUrl);
         },
       },
       {
@@ -734,8 +749,19 @@ export class JoyReactServer implements IComponentLifecycle {
 
           // if basePath is defined require it be present
           if (basePath) {
-            if (pathParts[0] !== basePath.substr(1)) return { finished: false };
-            pathParts.shift();
+            const basePathParts = basePath.split("/");
+            // remove first empty value
+            basePathParts.shift();
+
+            if (
+              !basePathParts.every((part: string, idx: number) => {
+                return part === pathParts[idx];
+              })
+            ) {
+              return { finished: false };
+            }
+
+            pathParts.splice(0, basePathParts.length);
           }
 
           const path = `/${pathParts.join("/")}`;

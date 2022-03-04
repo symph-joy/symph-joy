@@ -144,7 +144,9 @@ export class ProfilingPlugin {
         moduleSpansByCompilation?.get(compilation)?.get(module)?.stop();
       });
 
-      this.traceHookPair("webpack-compilation-seal", compilation.hooks.seal, compilation.hooks.afterSeal, { parentSpan: () => spans.get(compilation)! });
+      this.traceHookPair("webpack-compilation-seal", compilation.hooks.seal, compilation.hooks.afterSeal, {
+        parentSpan: () => spans.get(compilation)!,
+      });
 
       compilation.hooks.addEntry.tap(pluginName, (entry: any) => {
         const compilationSpan = spans.get(compilation);
@@ -160,12 +162,24 @@ export class ProfilingPlugin {
         spans.get(entry)?.stop();
       });
 
-      this.traceHookPair("webpack-compilation-chunk-graph", compilation.hooks.beforeChunks, compilation.hooks.afterChunks, { parentSpan: () => spans.get(compilation) || spans.get(compiler)! });
-      this.traceHookPair("webpack-compilation-optimize", compilation.hooks.optimize, compilation.hooks.reviveModules, { parentSpan: () => spans.get(compilation) || spans.get(compiler)! });
-      this.traceHookPair("webpack-compilation-optimize-modules", compilation.hooks.optimizeModules, compilation.hooks.afterOptimizeModules, { parentSpan: () => spans.get(compilation) || spans.get(compiler)! });
-      this.traceHookPair("webpack-compilation-optimize-chunks", compilation.hooks.optimizeChunks, compilation.hooks.afterOptimizeChunks, { parentSpan: () => spans.get(compilation) || spans.get(compiler)! });
-      this.traceHookPair("webpack-compilation-optimize-tree", compilation.hooks.optimizeTree, compilation.hooks.afterOptimizeTree, { parentSpan: () => spans.get(compilation) || spans.get(compiler)! });
-      this.traceHookPair("webpack-compilation-hash", compilation.hooks.beforeHash, compilation.hooks.afterHash, { parentSpan: () => spans.get(compilation) || spans.get(compiler)! });
+      this.traceHookPair("webpack-compilation-chunk-graph", compilation.hooks.beforeChunks, compilation.hooks.afterChunks, {
+        parentSpan: () => spans.get(compilation) || spans.get(compiler)!,
+      });
+      this.traceHookPair("webpack-compilation-optimize", compilation.hooks.optimize, compilation.hooks.reviveModules, {
+        parentSpan: () => spans.get(compilation) || spans.get(compiler)!,
+      });
+      this.traceHookPair("webpack-compilation-optimize-modules", compilation.hooks.optimizeModules, compilation.hooks.afterOptimizeModules, {
+        parentSpan: () => spans.get(compilation) || spans.get(compiler)!,
+      });
+      this.traceHookPair("webpack-compilation-optimize-chunks", compilation.hooks.optimizeChunks, compilation.hooks.afterOptimizeChunks, {
+        parentSpan: () => spans.get(compilation) || spans.get(compiler)!,
+      });
+      this.traceHookPair("webpack-compilation-optimize-tree", compilation.hooks.optimizeTree, compilation.hooks.afterOptimizeTree, {
+        parentSpan: () => spans.get(compilation) || spans.get(compiler)!,
+      });
+      this.traceHookPair("webpack-compilation-hash", compilation.hooks.beforeHash, compilation.hooks.afterHash, {
+        parentSpan: () => spans.get(compilation) || spans.get(compiler)!,
+      });
     });
   }
 }

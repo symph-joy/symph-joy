@@ -3,6 +3,7 @@ import { base } from "./blocks/base";
 import { css } from "./blocks/css";
 import { images } from "./blocks/images";
 import { ConfigurationContext, pipe } from "./utils";
+import { ImageConfig } from "../../../joy-server/server/image/image-config";
 
 export async function build(
   config: webpack.Configuration,
@@ -15,6 +16,7 @@ export async function build(
     sassOptions,
     lessOptions,
     productionBrowserSourceMaps,
+    disableStaticImages,
   }: {
     rootDirectory: string;
     customAppFile: string | null;
@@ -24,6 +26,7 @@ export async function build(
     sassOptions: any;
     lessOptions: any;
     productionBrowserSourceMaps: boolean;
+    disableStaticImages: ImageConfig["disableStaticImages"];
   }
 ): Promise<webpack.Configuration> {
   const ctx: ConfigurationContext = {
@@ -38,7 +41,10 @@ export async function build(
     lessOptions,
     productionBrowserSourceMaps,
   };
-
-  const fn = pipe(base(ctx), css(ctx), images(ctx));
+  const fns = [base(ctx), css(ctx)];
+  if (!disableStaticImages) {
+    fns.push(images(ctx));
+  }
+  const fn = pipe(...fns);
   return fn(config) as any;
 }

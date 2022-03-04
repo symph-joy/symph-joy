@@ -22,8 +22,8 @@ describe("react-custom-error", () => {
         const statusCode = await page.innerHTML("#statusCode");
         const pageTitle = await page.innerHTML("#pageTitle");
         expect(title).toContain(" Internal Server Error");
-        expect(statusCode).toBe("500");
-        expect(pageTitle).toBe("Custom Error");
+        expect(statusCode).toContain("500");
+        expect(pageTitle).toContain("Custom Error");
       }, 999999);
     });
 

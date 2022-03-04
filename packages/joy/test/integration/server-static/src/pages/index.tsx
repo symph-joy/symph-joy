@@ -5,6 +5,10 @@ import { BaseReactController, ReactController, ReactRoute } from "@symph/react";
 @ReactController()
 export default class HelloController extends BaseReactController {
   renderView(): ReactNode {
-    return <div id="message">Welcome to Joy!</div>;
+    return (
+      <>
+        <div id="message">Welcome to Joy!</div>
+      </>
+    );
   }
 }

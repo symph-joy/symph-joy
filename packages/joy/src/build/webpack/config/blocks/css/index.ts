@@ -530,6 +530,9 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
             // `asset/resource` always emits a URL reference, where `asset`
             // might inline the asset as a data URI
             type: "asset/resource",
+            generator: {
+              filename: "static/assets/[name].[hash].[ext][query]",
+            },
           },
         ],
       })

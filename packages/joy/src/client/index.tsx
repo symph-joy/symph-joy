@@ -3,25 +3,22 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { HeadManagerContext } from "../joy-server/lib/head-manager-context";
 import mitt from "../joy-server/lib/mitt";
-import { RouterContext } from "../joy-server/lib/router-context";
 import type { AppComponent, AppProps, PrivateRouteInfo } from "../joy-server/lib/router/router";
-import type Router from "../joy-server/lib/router/router";
 import { delBasePath, hasBasePath } from "../joy-server/lib/router/router";
-import { isDynamicRoute } from "../joy-server/lib/router/utils/is-dynamic";
-import * as querystring from "../joy-server/lib/router/utils/querystring";
 import * as envConfig from "../joy-server/lib/runtime-config";
 import type { JOY_DATA } from "../joy-server/lib/utils";
 import { getURL, loadGetInitialProps, ST } from "../joy-server/lib/utils";
 import initHeadManager from "./head-manager";
 import PageLoader, { looseToArray, StyleSheetTuple } from "./page-loader";
 import measureWebVitals from "./performance-relayer";
-import { createRouter, makePublicRouterInstance } from "./router";
 import { JoyReactAppClientConfiguration } from "../react/joy-react-app-client.configuration";
 import { ReactAppContainer, ReactApplicationContext } from "@symph/react";
 import { JoyClientConfig } from "./joy-client-config";
 import { JoyReactApplicationContext } from "../react/joy-react-application-context";
 import { JoyPageSSGDataLoader } from "../react/router/joy-page-ssg-data-loader";
 import { JoyReactAppInitManagerClient } from "../react/joy-react-app-init-manager-client";
+import { ImageConfigContext } from "../react/components/image-config-context";
+import { ImageConfig } from "../joy-server/server/image/image-config";
 
 /// <reference types="react-dom/experimental" />
 
@@ -499,7 +496,9 @@ function AppContainer({ children }: React.PropsWithChildren<{}>): React.ReactEle
       }
     >
       {/*<RouterContext.Provider value={makePublicRouterInstance(router)}>*/}
-      <HeadManagerContext.Provider value={headManager}>{children}</HeadManagerContext.Provider>
+      <HeadManagerContext.Provider value={headManager}>
+        <ImageConfigContext.Provider value={process.env.__JOY_IMAGE_OPTS as any as ImageConfig}>{children}</ImageConfigContext.Provider>
+      </HeadManagerContext.Provider>
       {/*</RouterContext.Provider>*/}
     </Container>
   );

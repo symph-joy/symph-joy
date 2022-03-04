@@ -22,7 +22,11 @@ export const store = createStore<OutputState>({
 
 let preState: OutputState = { appUrl: null, bootstrap: true };
 function hasStoreChanged(nextState: OutputState) {
-  if (([...new Set([...Object.keys(preState), ...Object.keys(nextState)])] as Array<keyof OutputState>).every((key) => Object.is(preState[key], nextState[key]))) {
+  if (
+    ([...new Set([...Object.keys(preState), ...Object.keys(nextState)])] as Array<keyof OutputState>).every((key) =>
+      Object.is(preState[key], nextState[key])
+    )
+  ) {
     return false;
   }
 
@@ -51,7 +55,9 @@ store.subscribe((state) => {
   }
 
   if (state.errors) {
-    Log.error(state.errors[0]);
+    for (let i = 0; i < Math.min(2, state.errors.length); i++) {
+      Log.error(state.errors[i]);
+    }
 
     const cleanError = stripAnsi(state.errors[0]);
     if (cleanError.indexOf("SyntaxError") > -1) {

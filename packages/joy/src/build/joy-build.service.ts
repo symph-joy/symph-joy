@@ -609,7 +609,7 @@ export class JoyBuildService {
         entrypoints: entrypoints.client,
         rewrites,
         routes: this.joyReactRoute.getRoutes(),
-        // runWebpackSpan,
+        runWebpackSpan,
       }),
       getBaseWebpackConfig(dir, {
         buildId,
@@ -621,7 +621,7 @@ export class JoyBuildService {
         entrypoints: entrypoints.server,
         rewrites,
         routes: this.joyReactRoute.getRoutes(),
-        // runWebpackSpan,
+        runWebpackSpan,
       }),
     ]);
     genWebpackConfigSpan.stop();

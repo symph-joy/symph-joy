@@ -51,7 +51,7 @@ describe("joy export", () => {
     }
   });
 
-  test("Should copy static files.", async () => {
+  test("Should copy static public files.", async () => {
     const filePath = testContext.joyAppConfig.resolveAppDir("out/hello.txt");
     expect((await promises.stat(filePath)).isFile()).toBe(true);
     const content = await promises.readFile(filePath, { encoding: "utf-8" });
@@ -71,7 +71,14 @@ describe("joy export", () => {
     await checkDataFile(helloData, "reactAppInitManager/__SET_STATE", "state./hello.initStatic", ReactRouteInitStatus.SUCCESS);
   }, 999999);
 
-  test("Should export out fs route page.", async () => {
+  test("Should joyExport flag is true.", async () => {
+    await page.goto(testContext.getUrl("/hello"));
+    // @ts-ignore
+    const joyData = await page.$eval("body", () => window.__JOY_DATA__);
+    expect(joyData.joyExport).toBe(true);
+  });
+
+  test("Should export page, which defined by fs route.", async () => {
     // await waitForMoment()
     const indexHtml = testContext.joyAppConfig.resolveAppDir("out/sub-route/fs-route.html");
     await checkHtmlFile(indexHtml, "msg", "hello fs route");

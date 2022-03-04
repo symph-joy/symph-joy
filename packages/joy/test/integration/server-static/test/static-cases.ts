@@ -10,4 +10,12 @@ export function staticCases(testContext: JoyTestContext) {
       expect(content.trim()).toBe("Hello world!");
     });
   });
+  describe("public files", () => {
+    test("should return public static file, /hello.txt", async () => {
+      const res = await fetchViaHTTP(testContext.port, "/hello.txt");
+      expect(res.status).toBe(200);
+      const content = await res.text();
+      expect(content.trim()).toBe("Hello world!");
+    });
+  });
 }
