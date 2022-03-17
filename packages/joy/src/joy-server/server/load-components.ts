@@ -2,9 +2,8 @@ import { BUILD_MANIFEST, REACT_LOADABLE_MANIFEST } from "../lib/constants";
 import { join } from "path";
 import { requirePage } from "./require";
 import { BuildManifest } from "./get-page-files";
-import { AppType, DocumentType } from "../lib/utils";
+import { DocumentType } from "../lib/utils";
 import { PageConfig } from "../../types";
-import { TReactAppComponent } from "@symph/react";
 
 export function interopDefault(mod: any) {
   return mod.default || mod;
@@ -12,11 +11,10 @@ export function interopDefault(mod: any) {
 
 export type ManifestItem = {
   id: number | string;
-  name: string;
-  file: string;
+  files: string[];
 };
 
-type ReactLoadableManifest = { [moduleId: string]: ManifestItem[] };
+type ReactLoadableManifest = { [moduleId: string]: ManifestItem };
 
 export type LoadComponentsReturnType = {
   Component: React.ComponentType<any>;

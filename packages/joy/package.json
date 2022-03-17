@@ -232,6 +232,7 @@
     "@types/webpack-sources": "^3.2.0",
     "@types/yargs": "15.0.7",
     "@types/content-disposition": "^0.5.4",
+    "@types/gulp-babel": "^6.1.30",
     "@zeit/ncc": "0.22.0",
     "debug": "4.1.1",
     "gulp": "^4.0.2",

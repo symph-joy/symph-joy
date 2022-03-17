@@ -128,7 +128,7 @@ export class Head extends Component<OriginProps & React.DetailedHTMLProps<React.
     const cssFiles = files.allFiles.filter((f) => f.endsWith(".css"));
     const sharedFiles = new Set(files.sharedFiles);
 
-    let dynamicCssFiles = dedupe(dynamicImports.filter((f) => f.file.endsWith(".css"))).map((f) => f.file);
+    let dynamicCssFiles = dynamicImports.filter((f) => f.endsWith(".css"));
     if (dynamicCssFiles.length) {
       const existing = new Set(cssFiles);
       dynamicCssFiles = dynamicCssFiles.filter((f) => !(existing.has(f) || sharedFiles.has(f)));
@@ -165,30 +165,26 @@ export class Head extends Component<OriginProps & React.DetailedHTMLProps<React.
   getPreloadDynamicChunks() {
     const { dynamicImports, assetPrefix, devOnlyCacheBusterQueryString } = this.context;
 
-    return (
-      dedupe(dynamicImports)
-        .map((bundle) => {
-          // `dynamicImports` will contain both `.js` and `.module.js` when the
-          // feature is enabled. This clause will filter down to the modern
-          // variants only.
-          if (!bundle.file.endsWith(getOptionalModernScriptVariant(".js"))) {
-            return null;
-          }
+    const scripts = [] as React.ReactElement[];
 
-          return (
-            <link
-              rel="preload"
-              key={bundle.file}
-              href={`${assetPrefix}/_joy/${encodeURI(bundle.file)}${devOnlyCacheBusterQueryString}`}
-              as="script"
-              nonce={this.props.nonce}
-              crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
-            />
-          );
-        })
-        // Filter out nulled scripts
-        .filter(Boolean)
-    );
+    dynamicImports.forEach((file) => {
+      if (!file.endsWith(getOptionalModernScriptVariant(".js"))) {
+        return null;
+      }
+
+      scripts.push(
+        <link
+          rel="preload"
+          key={file}
+          href={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`}
+          as="script"
+          nonce={this.props.nonce}
+          crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
+        />
+      );
+    });
+
+    return scripts;
   }
 
   getPreloadMainLinks(files: DocumentFiles): JSX.Element[] | null {
@@ -429,26 +425,29 @@ export class JoyScript extends Component<OriginProps> {
 
   getDynamicChunks(files: DocumentFiles) {
     const { dynamicImports, assetPrefix, isDevelopment, devOnlyCacheBusterQueryString } = this.context;
+    const scripts = [] as React.ReactElement[];
 
-    return dedupe(dynamicImports).map((bundle) => {
+    dynamicImports.forEach((file) => {
       let modernProps = {};
       if (process.env.__JOY_MODERN_BUILD) {
-        modernProps = bundle.file.endsWith(".module.js") ? { type: "module" } : { noModule: true };
+        modernProps = file.endsWith(".module.js") ? { type: "module" } : { noModule: true };
       }
 
-      if (!bundle.file.endsWith(".js") || files.allFiles.includes(bundle.file)) return null;
+      if (!file.endsWith(".js") || files.allFiles.includes(file)) return null;
 
-      return (
+      scripts.push(
         <script
           async={!isDevelopment}
-          key={bundle.file}
-          src={`${assetPrefix}/_joy/${encodeURI(bundle.file)}${devOnlyCacheBusterQueryString}`}
+          key={file}
+          src={`${assetPrefix}/_joy/${encodeURI(file)}${devOnlyCacheBusterQueryString}`}
           nonce={this.props.nonce}
           crossOrigin={this.props.crossOrigin || process.env.__JOY_CROSS_ORIGIN}
           {...modernProps}
         />
       );
     });
+
+    return scripts;
   }
 
   getScripts(files: DocumentFiles) {

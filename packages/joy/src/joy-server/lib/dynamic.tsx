@@ -1,61 +1,13 @@
 import React from "react";
-import Loadable from "./loadable";
+import _loadable, { LoadableBaseOptions, LoadableFn, LoadableSuspenseOptions, Loader } from "./loadable";
 
 const isServerSide = typeof window === "undefined";
 
-export type LoaderComponent<P = {}> = Promise<
-  React.ComponentType<P> | { default: React.ComponentType<P> }
->;
+type DynamicLoadableOptions<P> = LoadableBaseOptions<P> & { ssr?: boolean };
 
-export type Loader<P = {}> = (() => LoaderComponent<P>) | LoaderComponent<P>;
+export type DynamicOptions<P = {}> = DynamicLoadableOptions<P> | LoadableSuspenseOptions;
 
-export type LoaderMap = { [mdule: string]: () => Loader<any> };
-
-export type LoadableGeneratedOptions = {
-  webpack?(): any;
-  modules?(): LoaderMap;
-};
-
-export type DynamicLoading = ({
-  error,
-  isLoading,
-  pastDelay,
-}: {
-  error?: Error | null;
-  isLoading?: boolean;
-  pastDelay?: boolean;
-  retry?: () => void;
-  timedOut?: boolean;
-}) => JSX.Element | null;
-
-export type LoadableBaseOptions<P = {}> = LoadableGeneratedOptions & {
-  loading?: DynamicLoading;
-  loader?: Loader<P> | LoaderMap;
-  loadableGenerated?: LoadableGeneratedOptions;
-  ssr?: boolean;
-};
-
-export type LoadableOptions<P = {}> = LoadableBaseOptions<P> & {
-  render?(loader: any, props: any): JSX.Element;
-};
-
-export type DynamicOptions<P = {}> = LoadableBaseOptions<P> & {
-  /**
-   * @deprecated the modules option has been planned for removal
-   */
-  render?(props: P, loaded: any): JSX.Element;
-};
-
-export type LoadableFn<P = {}> = (
-  opts: LoadableOptions<P>
-) => React.ComponentType<P>;
-
-export type LoadableComponent<P = {}> = React.ComponentType<P>;
-
-export function noSSR<P = {}>(
-  LoadableInitializer: LoadableFn<P>,
-  loadableOptions: LoadableOptions<P>
-): React.ComponentType<P> {
+export function noSSR<P = {}>(LoadableInitializer: LoadableFn<P>, loadableOptions: LoadableBaseOptions<P>): React.ComponentType<P> {
   // Removing webpack and modules means react-loadable won't try preloading
   delete loadableOptions.webpack;
   delete loadableOptions.modules;
@@ -67,19 +19,12 @@ export function noSSR<P = {}>(
 
   const Loading = loadableOptions.loading!;
   // This will only be rendered on the server side
-  return () => (
-    <Loading error={null} isLoading pastDelay={false} timedOut={false} />
-  );
+  return () => <Loading error={null} isLoading pastDelay={false} timedOut={false} />;
 }
 
-// function dynamic<P = {}, O extends DynamicOptions>(options: O):
-
-export default function dynamic<P = {}>(
-  dynamicOptions: DynamicOptions<P> | Loader<P>,
-  options?: DynamicOptions<P>
-): React.ComponentType<P> {
-  let loadableFn: LoadableFn<P> = Loadable;
-  let loadableOptions: LoadableOptions<P> = {
+export function dynamic<P = {}>(dynamicOptions: DynamicOptions<P> | Loader<P>, options?: DynamicOptions<P>): React.ComponentType<P> {
+  let loadableFn: LoadableFn<P> = _loadable;
+  let loadableOptions: DynamicLoadableOptions<P> = {
     // A loading component is not required, so we default it
     loading: ({ error, isLoading, pastDelay }) => {
       if (!pastDelay) return null;
@@ -116,41 +61,21 @@ export default function dynamic<P = {}>(
     loadableOptions = { ...loadableOptions, ...dynamicOptions };
   }
 
-  // Support for passing options, eg: dynamic(import('../hello-world'), {loading: () => <p>DynamicLoading something</p>})
+  // Support for passing options, eg: dynamic(import('../hello-world'), {loading: () => <p>Loading something</p>})
   loadableOptions = { ...loadableOptions, ...options };
 
-  if (
-    typeof dynamicOptions === "object" &&
-    !(dynamicOptions instanceof Promise)
-  ) {
-    // show deprecation warning for `modules` key in development
-    if (process.env.NODE_ENV !== "production") {
-      if (dynamicOptions.modules) {
-        console.warn(
-          "The modules option for @symph/joy/dynamic has been deprecated. "
-        );
-      }
+  const suspenseOptions = loadableOptions as LoadableSuspenseOptions & {
+    loader: Loader<P>;
+  };
+  if (!process.env.__JOY_CONCURRENT_FEATURES) {
+    // Error if react root is not enabled and `suspense` option is set to true
+    if (!process.env.__JOY_REACT_ROOT && suspenseOptions.suspense) {
+      // TODO: add error doc when this feature is stable
+      throw new Error(`Invalid suspense option usage in @symph/joy/dynamic.`);
     }
-    // Support for `render` when using a mapping, eg: `dynamic({ modules: () => {return {HelloWorld: import('../hello-world')}, render(props, loaded) {} } })
-    if (dynamicOptions.render) {
-      loadableOptions.render = (loaded, props) =>
-        dynamicOptions.render!(props, loaded);
-    }
-    // Support for `modules` when using a mapping, eg: `dynamic({ modules: () => {return {HelloWorld: import('../hello-world')}, render(props, loaded) {} } })
-    if (dynamicOptions.modules) {
-      loadableFn = Loadable.Map;
-      const loadModules: LoaderMap = {};
-      const modules = dynamicOptions.modules();
-      Object.keys(modules).forEach((key) => {
-        const value: any = modules[key];
-        if (typeof value.then === "function") {
-          loadModules[key] = () => value.then((mod: any) => mod.default || mod);
-          return;
-        }
-        loadModules[key] = value;
-      });
-      loadableOptions.loader = loadModules;
-    }
+  }
+  if (suspenseOptions.suspense) {
+    return loadableFn(suspenseOptions);
   }
 
   // coming from build/babel/plugins/react-loadable-plugin.js
@@ -173,3 +98,5 @@ export default function dynamic<P = {}>(
 
   return loadableFn(loadableOptions);
 }
+
+export default dynamic;

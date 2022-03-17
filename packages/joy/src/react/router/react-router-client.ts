@@ -12,15 +12,14 @@ export class ReactRouterClient extends ReactRouterService {
   ) {
     super();
     const routeTrees = joyReactAutoGenRoutes;
-
     this.traverseTree(routeTrees, (route) => {
       this.addRouteCache(route);
-      if (route.componentName && !route.element) {
-        route.element = this.createRouteElement(route);
-      }
+      // if (route.componentName && !route.element) {
+      route.element = this.createElementWrapper(route);
+      // }
       return false;
     });
-    this.routeTrees = routeTrees;
+    this.refreshTree();
   }
 
   // protected createRouteElement(route: IReactRoute): React.FunctionComponentElement<any> {

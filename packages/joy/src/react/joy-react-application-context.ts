@@ -6,19 +6,31 @@ export class JoyReactApplicationContext extends ReactApplicationContext {
 
   constructor(
     // protected readonly entry: EntryType | EntryType[],
-    protected reactApplicationConfiguration: typeof ReactApplicationConfiguration,
+    protected reactApplicationConfiguration: new (...args: any) => ReactApplicationConfiguration,
     // protected readonly appConfig: ApplicationConfig,
     // container?: ApplicationContainer,
     initState: Record<string, any> = {},
     public readonly parent?: IApplicationContext
   ) {
     super(reactApplicationConfiguration, initState, parent);
+    this.scannedModules = [];
+  }
+
+  /**
+   * 注册提前自动生成的模块
+   * @param mod
+   */
+  public registerPreGenModule(mod: Record<string, unknown>) {
+    const components = this.dependenciesScanner.scan(mod);
+    if (components) {
+      this.container.addProviders(components);
+    }
   }
 
   protected async initContext(): Promise<void> {
     await super.initContext();
     const joyReactAutoGenRoutes = this.getSync("joyReactAutoGenRoutes") as IReactRoute[];
-    this.scannedModules = [];
+
     const findRouteModule = (routes: IReactRoute[]) => {
       for (const route of routes) {
         if (route.componentModule) {

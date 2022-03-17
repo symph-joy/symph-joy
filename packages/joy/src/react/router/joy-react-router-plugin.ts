@@ -1,19 +1,21 @@
-import { ClassComponent, Component, IComponentLifecycle, isClassComponent, RegisterTap, TComponent } from "@symph/core";
-import { getReactControllerMeta, IReactRoute, ReactRoute, ReactRouterService } from "@symph/react";
+import { ClassComponent, Component, ComponentName, IComponentLifecycle, isClassComponent, RegisterTap, TComponent, Type } from "@symph/core";
+import { getReactControllerMeta, IReactRoute, IReactRouteMeta, ReactRoute, ReactRouterService } from "@symph/react";
 import { IScanOutModule } from "../../build/scanner/file-scanner";
 import { readFileSync } from "fs";
-import { join, sep } from "path";
+import path, { join, sep } from "path";
 import { sync } from "resolve";
 import { IGenerateFiles } from "../../build/file-generator";
 import { handlebars } from "../../lib/handlebars";
 import { ModuleContextTypeEnum } from "../../lib/constants";
 import { JoyAppConfig } from "../../joy-server/server/joy-app-config";
 import { normalizeConventionRouteV6 } from "./router-utils";
+import { getReactDynamicLoadMeta, ReactDynamicLoadMeta } from "../dynamic/react-dynamic-load.decorator";
 
 export interface IJoyReactRouteBuild extends IReactRoute {
   // staticPathGenerator?: IRouteMeta["staticPathGenerator"];
   srcPath?: string;
   mount?: string;
+  dynamicLoad?: ReactDynamicLoadMeta;
 }
 
 /**
@@ -106,6 +108,18 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
       });
     });
     return scanOutRoutes;
+  }
+
+  protected createFromMeta(
+    path: string,
+    providerName: ComponentName,
+    providerPackage: string | undefined,
+    meta: IReactRouteMeta,
+    useClass: Type | Function
+  ): T {
+    const route = super.createFromMeta(path, providerName, providerPackage, meta, useClass);
+    route.dynamicLoad = getReactDynamicLoadMeta(useClass);
+    return route;
   }
 
   public removeModule(modulePath: string): T[] | undefined {
@@ -213,8 +227,9 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
       fsRoute.componentName = provider?.name;
       fsRoute.componentPackage = provider?.package;
       if (isClassComponent(provider)) {
-        ReactRoute(fsRoute)(provider.useClass);
+        ReactRoute(fsRoute)(clazz);
       }
+      fsRoute.dynamicLoad = getReactDynamicLoadMeta(clazz);
       this.addRoute(fsRoute);
     }
     return fsRoute;
@@ -227,19 +242,37 @@ export class JoyReactRouterPlugin<T extends IJoyReactRouteBuild = IJoyReactRoute
   @RegisterTap()
   protected async onGenerateFiles(genFiles: IGenerateFiles) {
     const clientRoutes = this.getClientRoutes();
-    const clientFileContent = this.routesTemplate({ children: clientRoutes });
+
+    const dynamicLoadRoutes = [] as T[];
+    this.traverseTree(clientRoutes, (route) => {
+      if (route.dynamicLoad) {
+        // @ts-ignore
+        route.__dynamicCompName = route.path.replace(/[^0-9a-zA-z_]/g, "_");
+        const loading = route.dynamicLoad.loading;
+        if (loading?.startsWith("/") || loading?.startsWith(".")) {
+          const loadingModule = path.relative(route.srcPath!, loading);
+        }
+        dynamicLoadRoutes.push(route);
+      }
+      return false;
+    });
+
+    const clientFileContent = this.routesTemplate({ children: clientRoutes, dynamicLoadRoutes });
     if (this.lastClientRoutesContent.length !== clientFileContent.length || this.lastClientRoutesContent !== clientFileContent) {
-      genFiles["./react/client/routes.js"] = clientFileContent;
+      genFiles["./react/common/routes.js"] = clientFileContent;
+      // genFiles["./react/client/routes.js"] = clientFileContent;
       this.lastClientRoutesContent = clientFileContent;
+      // genFiles["./react/server/routes.js"] = clientFileContent;
     }
 
-    const serverFileContent = this.routesServerTemplate({
-      children: clientRoutes,
-    });
-    if (this.lastServerRoutesContent.length !== serverFileContent.length || this.lastServerRoutesContent !== serverFileContent) {
-      genFiles["./react/server/routes.js"] = serverFileContent;
-      this.lastServerRoutesContent = serverFileContent;
-    }
+    // const serverFileContent = this.routesServerTemplate({
+    //   children: clientRoutes,
+    //   dynamicLoadRoutes,
+    // });
+    // if (this.lastServerRoutesContent.length !== serverFileContent.length || this.lastServerRoutesContent !== serverFileContent) {
+    //   genFiles["./react/server/routes.js"] = serverFileContent;
+    //   this.lastServerRoutesContent = serverFileContent;
+    // }
 
     return genFiles;
   }

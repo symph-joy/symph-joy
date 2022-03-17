@@ -1,7 +1,7 @@
 import { IReactRoute } from "../interfaces";
 import { matchRoutes, RouteMatch } from "react-router";
 import { ClassComponent, ComponentName, isClassComponent, TComponent, Type } from "@symph/core";
-import { getRouteMeta, IRouteMeta } from "./react-route.decorator";
+import { getRouteMeta, IReactRouteMeta } from "./react-route.decorator";
 import * as H from "history";
 import { RoutePathNode } from "./route-sorter";
 import React from "react";
@@ -45,7 +45,7 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
     this.traverseTree(routes, (r) => {
       this.addRouteCache(r);
       if (!r.element) {
-        r.element = this.createRouteElement(r);
+        r.element = this.createElementWrapper(r);
       }
       // this.routesMap.set(r.path, r);
       return false;
@@ -71,22 +71,24 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
     const existRoute = this.getRouteCache(route);
     if (existRoute) {
       console.debug(
-        `Overriding route {path:${existRoute.path}}, replacing {providerName: ${String(existRoute.componentName)} with {providerName: ${String(
+        `Overriding route path:${existRoute.path}, replacing {providerName: ${String(existRoute.componentName)} with {providerName: ${String(
           route.componentName
-        )}`
+        )}}`
       );
     }
-    if (!route.element) {
-      route.element = this.createRouteElement(route);
-    }
+    route.element = this.createElementWrapper(route);
     this.addRouteCache(route);
     // this.routesMap.set(route.path, route);
     this.rootRouteNode.insertRoute(route);
     this.routeTrees = this.rootRouteNode.smooth();
   }
 
-  protected createRouteElement(route: T) {
-    return React.createElement<any>(ReactRouteLoader, { route });
+  protected createElementWrapper(route: T) {
+    const { element } = route;
+    if (element && (element as React.FunctionComponentElement<any>).type === ReactRouteLoader) {
+      return element;
+    }
+    return React.createElement<any>(ReactRouteLoader, { route, element, key: route.path });
   }
 
   /**
@@ -280,7 +282,7 @@ export class ReactRouterService<T extends IReactRoute = IReactRoute> {
     path: string,
     providerName: ComponentName,
     providerPackage: string | undefined,
-    meta: IRouteMeta,
+    meta: IReactRouteMeta,
     useClass: Type | Function
   ): T {
     const hasStaticState = !!useClass.prototype.initModelStaticState;

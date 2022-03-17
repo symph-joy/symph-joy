@@ -153,7 +153,7 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   @Value({ default: ".joy" })
   distDir: string;
 
-  autoGenOutputDir = "gen-files";
+  autoGenOutputDir = "gen";
 
   @Value({ default: "" })
   assetPrefix: string;

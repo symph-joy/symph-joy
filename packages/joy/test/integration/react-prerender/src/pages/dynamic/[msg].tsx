@@ -14,20 +14,28 @@ export default class DynamicRouteCtl extends BaseReactController {
     return;
   }
 
+  state = {
+    count: 1,
+  };
+
   @RouteParam()
   private msg: string;
 
   onClickLink = (link: string) => {
     this.props.navigate(link);
+    this.setState({ count: 1 });
   };
 
   renderView(): ReactNode {
     return (
       <>
         <div>
+          count: <span id="count">{this.state.count}</span>
+        </div>
+        <div>
           msg: <span id="msg">{this.msg}</span>
         </div>
-        <div id="link-hello2" onClick={this.onClickLink.bind(this, "/dynamic/hello2")}>
+        <div id="link-hello2" onClick={this.onClickLink.bind(this, "/dynamic/hello2" + new Date().getTime())}>
           /dynamic/hello2
         </div>
       </>

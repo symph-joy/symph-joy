@@ -74,7 +74,7 @@ export type JOY_DATA = {
   joyExport?: boolean;
   autoExport?: boolean;
   isFallback?: boolean;
-  dynamicIds?: string[];
+  dynamicIds?: (string | number)[];
   err?: Error & { statusCode?: number };
   // gsp?: boolean;
   // gssp?: boolean;
@@ -147,7 +147,7 @@ export type DocumentProps = DocumentInitialProps & {
   inAmpMode: boolean;
   hybridAmp: boolean;
   isDevelopment: boolean;
-  dynamicImports: ManifestItem[];
+  dynamicImports: string[];
   assetPrefix?: string;
   canonicalBase: string;
   headTags: any[];

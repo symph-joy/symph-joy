@@ -33,7 +33,7 @@ export class RoutePathNode<T extends Route> {
   }
 
   private _smoosh(prefix = "/"): T[] {
-    const childrenPaths = [...this.children.keys()].sort();
+    const childrenPaths = Array.from(this.children.keys()).sort();
     if (this.slugName !== null) {
       childrenPaths.splice(childrenPaths.indexOf("[]"), 1);
     }
@@ -44,7 +44,12 @@ export class RoutePathNode<T extends Route> {
       childrenPaths.splice(childrenPaths.indexOf("[[...]]"), 1);
     }
     let routes: T[] = [];
-    const childrenRoutes = childrenPaths.map((c) => this.children.get(c)!._smoosh(`${prefix}${c}/`)).reduce((prev, curr) => [...prev, ...curr], []);
+    const childrenRoutes = childrenPaths
+      .map((c) => {
+        const childNode = this.children.get(c);
+        return childNode!._smoosh(`${prefix}${c}/`);
+      })
+      .reduce((prev, curr) => [...prev, ...curr], []);
 
     if (this.slugName !== null) {
       childrenRoutes.push(...this.children.get("[]")!._smoosh(`${prefix}:${this.slugName}/`));

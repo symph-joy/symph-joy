@@ -1,4 +1,15 @@
 import {MountModule} from "@symph/react/dist/mount/mount-module";
+import dynamic from "@symph/joy/dynamic";
+import {createReactRouteResolver} from "@symph/react/dist/router/react-route-loader"
+
+{{#dynamicLoadRoutes}}
+  const {{__dynamicCompName}} =  dynamic(
+  () =>import({{json srcPath}}),
+  {
+    resolve: createReactRouteResolver("{{path}}",{{json componentName}}, {{json componentPackage}}, {{json mount}})
+  })
+{{/dynamicLoadRoutes}}
+
 
 {{#*inline "renderRoutes"}}
   [
@@ -7,11 +18,12 @@ import {MountModule} from "@symph/react/dist/mount/mount-module";
     path: "{{path}}",
     {{#if index}}index: {{json index}},{{/if}}
     {{#if caseSensitive}}caseSensitive: {{json caseSensitive}},{{/if}}
-    {{#if dynamic}}dynamic: {{json dynamic}},{{/if}}
+    {{#if dynamicLoad}}dynamicLoad: {{json dynamicLoad}},{{/if}}
     {{#if catchAllParam}}catchAllParam: {{json catchAllParam}},{{/if}}
     {{#if componentName}}componentName: "{{componentName}}",{{/if}}
     {{#if componentPackage}}componentPackage: "{{componentPackage}}",{{/if}}
-    componentModule: {{#if mount}}{mount:"{{mount}}", module:require({{json srcPath}})}{{else}}require({{json srcPath}}){{/if}},
+    componentModule: {{#if mount}}\{mount:"{{mount}}", module:{{#if dynamicLoad}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}}\}{{else}}{{#if dynamicLoad}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}}{{/if}},
+    {{#if __dynamicCompName}}element: <{{__dynamicCompName}} />,{{/if}}
     children: {{> renderRoutes this}}
     },
   {{/children}}

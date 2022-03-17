@@ -3287,6 +3287,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/gulp-babel@^6.1.30":
+  version "6.1.30"
+  resolved "https://registry.npmmirror.com/@types/gulp-babel/-/gulp-babel-6.1.30.tgz#72220a2e72517bd2cf461fc6250849035ad58798"
+  integrity sha512-tMs5xeU3iZy0eXwMudKtLonhMrvZLj804lL68Sv+IofA9bReGWFukPYXxWVGWlw7vXdVloP10Fycs5ecrx+eMA==
+  dependencies:
+    "@types/node" "*"
+
 "@types/gulp@^4.0.9":
   version "4.0.9"
   resolved "https://registry.npmmirror.com/@types/gulp/download/@types/gulp-4.0.9.tgz#a2f9667bcc26bc72b4899dd16216d6584a12346c"

@@ -1,5 +1,5 @@
 import { Component, RegisterTap, ComponentName, Type } from "@symph/core";
-import { IReactRoute, IRouteMeta } from "@symph/react";
+import { IReactRoute, IReactRouteMeta } from "@symph/react";
 import { IJoyReactRouteBuild, JoyReactRouterPlugin } from "./joy-react-router-plugin";
 import { IScanOutModule } from "../../build/scanner/file-scanner";
 
@@ -26,7 +26,7 @@ export class JoyReactRouterPluginDev extends JoyReactRouterPlugin<IReactRouteBui
     path: string,
     componentName: ComponentName,
     providerPackage: string | undefined,
-    meta: IRouteMeta,
+    meta: IReactRouteMeta,
     useClass: Type
   ): IReactRouteBuildDev {
     const route = super.createFromMeta(path, componentName, providerPackage, meta, useClass);

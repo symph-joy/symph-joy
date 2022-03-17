@@ -31,7 +31,7 @@ declare global {
     __JOY_HYDRATED_CB?: () => void;
 
     /* prod */
-    __JOY_PRELOADREADY?: (ids?: string[]) => void;
+    __JOY_PRELOADREADY?: (ids?: (string | number)[]) => void;
     __JOY_DATA__: JOY_DATA;
     __JOY_P: any[];
   }

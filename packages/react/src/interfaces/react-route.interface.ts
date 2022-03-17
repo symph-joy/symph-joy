@@ -6,7 +6,6 @@ export interface IReactRoute extends RouteObject {
   componentName?: ComponentName;
   componentPackage?: string;
   componentModule?: Record<string, any>;
-  dynamic?: boolean;
   hasState?: boolean;
   hasStaticState?: boolean;
   isContainer?: boolean;

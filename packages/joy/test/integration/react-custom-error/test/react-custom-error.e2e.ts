@@ -1,6 +1,7 @@
 import "jest-playwright-preset";
 import * as path from "path";
 import { JoyTestContext } from "../../../util/joy-test-context";
+import { waitFor } from "../../../util/joy-test-utils";
 
 describe("react-custom-error", () => {
   describe("prod", () => {

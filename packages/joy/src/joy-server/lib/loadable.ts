@@ -19,33 +19,95 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 */
 // https://github.com/jamiebuilds/react-loadable/blob/v5.5.0/src/index.js
-// Modified to be compatible with webpack 4 / Joy.js
+// Modified to be compatible with webpack 4 / Joy
 
-import React from "react";
-import { useSubscription } from "use-subscription";
+import React, { ComponentType, useContext } from "react";
+import { Subscription, useSubscription } from "use-subscription";
 import { LoadableContext } from "./loadable-context";
+import { ReactApplicationReactContext } from "@symph/react";
 
-const ALL_INITIALIZERS: any[] = [];
-const READY_INITIALIZERS: any[] = [];
+// type LoadFun = () => Promise<any>;
+
+// interface LoadOptions {
+//   loader: LoadFun;
+//   loading?: React.ComponentType;
+//   delay?: number;
+//   timeout?: number;
+//   webpack?: () => string[];
+//   modules?: string[];
+//   suspense?: boolean;
+// }
+
+export type LoaderComponent<P = {}> = Promise<React.ComponentType<P> | { default: React.ComponentType<P> }>;
+
+export type Loader<P = {}> = (() => LoaderComponent<P>) | LoaderComponent<P>;
+
+export type LoaderMap = { [mdule: string]: () => Loader<any> };
+
+export type LoadableGeneratedOptions = {
+  webpack?(): any;
+  modules?(): LoaderMap;
+};
+
+export interface LoadableLoadingComponentProps {
+  error?: Error | null;
+  isLoading?: boolean;
+  pastDelay?: boolean;
+  retry?: () => void;
+  timedOut?: boolean;
+}
+
+export type LoadableBaseOptions<P = {}> = LoadableGeneratedOptions & {
+  loading?: (({ error, isLoading, pastDelay }: LoadableLoadingComponentProps) => JSX.Element | null) | string;
+  loader?: Loader<P> | LoaderMap;
+  loadableGenerated?: LoadableGeneratedOptions;
+  delay?: number; // delay render loading
+  timeout?: number; // loading component timeout
+  // ssr?: boolean;
+  resolve?: (...args: any) => React.ReactElement;
+};
+
+export type LoadableSuspenseOptions = {
+  suspense?: boolean;
+};
+
+export type LoadableOptions<P = {}> = LoadableBaseOptions<P>;
+
+export type LoadableFn<P = {}> = (opts: LoadableOptions<P> | LoadableSuspenseOptions) => React.ComponentType<P>;
+
+export type LoadableComponent<P = {}> = React.ComponentType<P>;
+
+type ImportedModule = Record<string, unknown> | React.ComponentType | { default: React.ComponentType } | null;
+
+interface LoadState {
+  loading: boolean;
+  loaded: ImportedModule;
+  error: null | Error;
+  promise: Promise<ImportedModule>;
+  timedOut?: boolean;
+  pastDelay?: boolean;
+}
+
+const ALL_INITIALIZERS = [] as Array<(...args: any) => Promise<any> | undefined>;
+const READY_INITIALIZERS = [] as Array<(...args: any) => Promise<any> | undefined>;
 let initialized = false;
 
-function load(loader: any) {
-  const promise = loader();
+function load(loader: Loader): LoadState {
+  let promise = typeof loader === "function" ? loader() : loader;
 
-  const state = {
+  let state = {
     loading: true,
     loaded: null,
     error: null,
-    promise: undefined,
-  };
+  } as LoadState;
 
   state.promise = promise
-    .then((loaded: any) => {
+    .then((loaded) => {
       state.loading = false;
       state.loaded = loaded;
       return loaded;
     })
-    .catch((err: any) => {
+    .catch((err) => {
       state.loading = false;
       state.error = err;
       throw err;
@@ -54,80 +116,42 @@ function load(loader: any) {
   return state;
 }
 
-function loadMap(obj: any) {
-  const state: any = {
-    loading: false,
-    loaded: {},
-    error: null,
-  };
-
-  const promises: any[] = [];
-
-  try {
-    Object.keys(obj).forEach((key) => {
-      const result: any = load(obj[key]);
-
-      if (!result.loading) {
-        state.loaded[key] = result.loaded;
-        state.error = result.error;
-      } else {
-        state.loading = true;
-      }
-
-      promises.push(result.promise);
-
-      result.promise
-        .then((res: any) => {
-          state.loaded[key] = res;
-        })
-        .catch((err: any) => {
-          state.error = err;
-        });
-    });
-  } catch (err) {
-    state.error = err;
-  }
-
-  state.promise = Promise.all(promises)
-    .then((res) => {
-      state.loading = false;
-      return res;
-    })
-    .catch((err) => {
-      state.loading = false;
-      throw err;
-    });
-
-  return state;
+function defaultResolve(appContext: any, obj: ImportedModule | any, props: any): React.ReactElement {
+  const comp = (obj && obj.__esModule ? obj.default : obj) as any;
+  return React.createElement(comp, props);
 }
 
-function resolve(obj: any) {
-  return obj && obj.__esModule ? obj.default : obj;
-}
-
-function render(loaded: any, props: any) {
-  return React.createElement(resolve(loaded), props);
-}
-
-function createLoadableComponent(loadFn: any, options: any) {
-  const opts = Object.assign(
+function createLoadableComponent<P = {}>(loadFn: typeof load, options: LoadableOptions<P> | LoadableSuspenseOptions) {
+  // let opts = Object.assign(
+  //   {
+  //     loader: null,
+  //     loading: null,
+  //     delay: 200,
+  //     timeout: null,
+  //     webpack: null,
+  //     modules: null,
+  //     suspense: false,
+  //   },
+  //   options
+  // ) as LoadableOptions<P> | LoadableSuspenseOptions;
+  const suspenseOpts = ((options as LoadableSuspenseOptions).suspense ? options : { suspense: false }) as LoadableSuspenseOptions;
+  const loadableOpts = Object.assign(
     {
       loader: null,
       loading: null,
       delay: 200,
       timeout: null,
-      render: render,
       webpack: null,
       modules: null,
+      suspense: false,
     },
-    options
-  );
+    options as LoadableOptions
+  ) as LoadableOptions<P>;
 
-  let subscription: any = null;
-
+  let subscription: Subscription<LoadState> & Pick<LoadableSubscription, "retry" | "promise">;
   function init() {
     if (!subscription) {
-      const sub = new LoadableSubscription(loadFn, opts);
+      const sub = new LoadableSubscription(loadFn, loadableOpts);
       subscription = {
         getCurrentValue: sub.getCurrentValue.bind(sub),
         subscribe: sub.subscribe.bind(sub),
@@ -139,28 +163,31 @@ function createLoadableComponent(loadFn: any, options: any) {
   }
 
   // Server only
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" && !suspenseOpts.suspense) {
     ALL_INITIALIZERS.push(init);
   }
 
   // Client only
-  if (!initialized && typeof window !== "undefined" && typeof opts.webpack === "function") {
-    const moduleIds = opts.webpack();
-    READY_INITIALIZERS.push((ids: any) => {
-      for (const moduleId of moduleIds) {
-        if (ids.indexOf(moduleId) !== -1) {
-          return init();
+  if (!initialized && typeof window !== "undefined" && !suspenseOpts.suspense) {
+    // require.resolveWeak check is needed for environments that don't have it available like Jest
+    const moduleIds = loadableOpts.webpack && typeof (require as any).resolveWeak === "function" ? loadableOpts.webpack() : loadableOpts.modules;
+    if (moduleIds) {
+      READY_INITIALIZERS.push((ids: string[]) => {
+        for (const moduleId of moduleIds) {
+          if (ids.indexOf(moduleId) !== -1) {
+            return init();
+          }
         }
-      }
-    });
+      });
+    }
   }
 
-  const LoadableComponent = (props: any, ref: any) => {
+  function LoadableImpl(props: Record<string, unknown>, ref: React.Ref<any>) {
     init();
 
-    const context = React.useContext(LoadableContext);
-    const state: any = useSubscription(subscription);
-
+    const appContext = useContext(ReactApplicationReactContext);
+    const loadableContext = React.useContext(LoadableContext);
+    const state = useSubscription(subscription);
     React.useImperativeHandle(
       ref,
       () => ({
@@ -169,44 +196,71 @@ function createLoadableComponent(loadFn: any, options: any) {
       []
     );
 
-    if (context && Array.isArray(opts.modules)) {
-      opts.modules.forEach((moduleName: any) => {
-        context(moduleName);
+    if (loadableContext && Array.isArray(loadableOpts.modules)) {
+      loadableOpts.modules.forEach((moduleName) => {
+        loadableContext(moduleName);
       });
     }
 
     return React.useMemo(() => {
       if (state.loading || state.error) {
-        return React.createElement(opts.loading, {
-          isDataLoading: state.loading,
+        let loadingComp: React.ComponentType<any>;
+        const optionLoading = loadableOpts.loading;
+        if (typeof optionLoading === "string") {
+          const loadingCompDef = appContext?.getProviderDefinition(optionLoading);
+          if (loadingCompDef && loadingCompDef.useClass) {
+            loadingComp = loadingCompDef.useClass as any;
+          } else {
+            throw new Error(`Can not find the dynamic loading show component in context. loading componentName = ${loadableOpts.loading}`);
+          }
+        } else if (typeof optionLoading === "function") {
+          loadingComp = optionLoading;
+        } else {
+          loadingComp = () => null;
+        }
+        return React.createElement<any>(loadingComp, {
+          isLoading: state.loading,
           pastDelay: state.pastDelay,
           timedOut: state.timedOut,
           error: state.error,
           retry: subscription.retry,
         });
       } else if (state.loaded) {
-        return opts.render(state.loaded, props);
+        const resolve = loadableOpts.resolve || defaultResolve;
+        return resolve(appContext, state.loaded, props);
       } else {
         return null;
       }
     }, [props, state]);
-  };
+  }
 
-  LoadableComponent.preload = () => init();
-  LoadableComponent.displayName = "LoadableComponent";
+  let LazyComp: ComponentType;
+  if (suspenseOpts.suspense) {
+    // @ts-ignore
+    LazyComp = React.lazy(loadableOpts.loader!);
+  }
+  function LazyImpl(props: any, ref: React.Ref<any>) {
+    return React.createElement(LazyComp, { ...props, ref });
+  }
+
+  const LoadableComponent = suspenseOpts.suspense ? LazyImpl : LoadableImpl;
+  (LoadableComponent as any).preload = () => !suspenseOpts.suspense && init();
+  (LoadableComponent as any).displayName = "LoadableComponent";
 
   return React.forwardRef(LoadableComponent);
 }
 
 class LoadableSubscription {
-  _loadFn: any;
-  _opts: any;
-  _callbacks: any;
-  _delay: any;
-  _timeout: any;
-  _res: any;
-  _state: any;
-  constructor(loadFn: any, opts: any) {
+  private _loadFn: typeof load;
+  private _opts: LoadableOptions;
+  private _callbacks: Set<() => any>;
+  private _delay: null | any;
+  private _timeout: null | any;
+  private _res: LoadState;
+
+  private _state: LoadState;
+
+  constructor(private loadFn: typeof load, opts: LoadableOptions<any>) {
     this._loadFn = loadFn;
     this._opts = opts;
     this._callbacks = new Set();
@@ -222,12 +276,12 @@ class LoadableSubscription {
 
   retry() {
     this._clearTimeouts();
-    this._res = this._loadFn(this._opts.loader);
+    this._res = this._loadFn(this._opts.loader as Loader);
 
     this._state = {
       pastDelay: false,
       timedOut: false,
-    };
+    } as LoadState;
 
     const { _res: res, _opts: opts } = this;
 
@@ -256,14 +310,14 @@ class LoadableSubscription {
         this._update({});
         this._clearTimeouts();
       })
-      .catch((_err: Error) => {
+      .catch((_err) => {
         this._update({});
         this._clearTimeouts();
       });
     this._update({});
   }
 
-  _update(partial: any) {
+  _update(partial: Partial<LoadState>) {
     this._state = {
       ...this._state,
       error: this._res.error,
@@ -271,7 +325,7 @@ class LoadableSubscription {
       loading: this._res.loading,
       ...partial,
     };
-    this._callbacks.forEach((callback: any) => callback());
+    this._callbacks.forEach((callback) => callback());
   }
 
   _clearTimeouts() {
@@ -283,7 +337,7 @@ class LoadableSubscription {
     return this._state;
   }
 
-  subscribe(callback: any) {
+  subscribe(callback: () => any) {
     this._callbacks.add(callback);
     return () => {
       this._callbacks.delete(callback);
@@ -291,26 +345,18 @@ class LoadableSubscription {
   }
 }
 
-function Loadable(opts: any) {
-  return createLoadableComponent(load, opts);
+function Loadable<P = {}>(opts: LoadableOptions<P> | LoadableSuspenseOptions): React.ComponentType<P> {
+  return createLoadableComponent(load, opts) as any;
 }
 
-function LoadableMap(opts: any) {
-  if (typeof opts.render !== "function") {
-    throw new Error("LoadableMap requires a `render(loaded, props)` function");
-  }
-
-  return createLoadableComponent(loadMap, opts);
-}
-
-Loadable.Map = LoadableMap;
-
-function flushInitializers(initializers: any, ids: any): any {
-  const promises = [];
+function flushInitializers(initializers: Array<(...args: any) => Promise<any> | undefined>, ids?: (string | number)[]): Promise<any> {
+  let promises = [];
 
   while (initializers.length) {
-    const init = initializers.pop();
-    promises.push(init(ids));
+    let init = initializers.pop();
+    if (init) {
+      promises.push(init(ids));
+    }
   }
 
   return Promise.all(promises).then(() => {
@@ -322,11 +368,11 @@ function flushInitializers(initializers: any, ids: any): any {
 
 Loadable.preloadAll = () => {
   return new Promise((resolveInitializers, reject) => {
-    flushInitializers(ALL_INITIALIZERS, undefined).then(resolveInitializers, reject);
+    flushInitializers(ALL_INITIALIZERS).then(resolveInitializers, reject);
   });
 };
 
-Loadable.preloadReady = (ids = []) => {
+Loadable.preloadReady = (ids: (string | number)[] = []) => {
   return new Promise<void>((resolvePreload) => {
     const res = () => {
       initialized = true;
@@ -338,7 +384,6 @@ Loadable.preloadReady = (ids = []) => {
 };
 
 if (typeof window !== "undefined") {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.__JOY_PRELOADREADY = Loadable.preloadReady;
 }

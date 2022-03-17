@@ -25,13 +25,13 @@ export interface IReactRouteStaticPathGenerator<P extends ParsedUrlQuery = Parse
   getPaths(): Promise<Array<string | { params: P }>>;
 }
 
-export type IRouteMeta = {
+export type IReactRouteMeta = {
   path: string | string[];
   dynamic?: boolean;
   isContainer?: boolean;
-} & Pick<IReactRoute, "caseSensitive">;
+} & Pick<IReactRoute, "caseSensitive" | "index">;
 
-export type RouteOptions = Pick<IReactRoute, "path" | "index" | "caseSensitive">;
+export type ReactRouteOptions = Pick<IReactRoute, "path" | "index" | "caseSensitive">;
 
 export interface ReactRouteContextValue {
   route?: IReactRoute;
@@ -43,7 +43,7 @@ export interface ReactRouteContextValue {
 
 export const ReactRouteContext = React.createContext<ReactRouteContextValue | null>(null);
 
-export function ReactRoute(options: RouteOptions): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
+export function ReactRoute(options: ReactRouteOptions): <TFunction extends Function>(constructor: TFunction) => TFunction | void {
   return (constructor) => {
     const injectableMeta = getComponentMeta(constructor);
     if (!injectableMeta) {
@@ -56,7 +56,7 @@ export function ReactRoute(options: RouteOptions): <TFunction extends Function>(
   };
 }
 
-export function ReactRouteContainer(options: RouteOptions): ClassDecorator {
+export function ReactRouteContainer(options: ReactRouteOptions): ClassDecorator {
   return (constructor) => {
     const injectableMeta = getComponentMeta(constructor);
     if (!injectableMeta) {
@@ -69,7 +69,7 @@ export function ReactRouteContainer(options: RouteOptions): ClassDecorator {
   };
 }
 
-export function getRouteMeta(target: Object): IRouteMeta {
+export function getRouteMeta(target: Object): IReactRouteMeta {
   return Reflect.getMetadata(REACT_ROUTE_META, target);
 }
 

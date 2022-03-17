@@ -71,6 +71,7 @@ describe("react-prerender", () => {
 
         await Promise.all([page.click("#link-hello2")]);
         msg = await page.innerHTML("#msg");
+
         expect(msg).toBe("hello2");
       });
     });

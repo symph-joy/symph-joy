@@ -7,7 +7,7 @@ import { AmpStateContext } from "../lib/amp-context";
 import { AMP_RENDER_TARGET } from "../lib/constants";
 import { defaultHead } from "../lib/head";
 import { HeadManagerContext } from "../lib/head-manager-context";
-import Loadable from "../lib/loadable";
+import loadable from "../lib/loadable";
 import { LoadableContext } from "../lib/loadable-context";
 import mitt, { MittEmitter } from "../lib/mitt";
 import postProcess from "../lib/post-process";
@@ -196,8 +196,8 @@ function renderDocument(
     ampPath: string;
     inAmpMode: boolean;
     hybridAmp: boolean;
-    dynamicImportsIds: string[];
-    dynamicImports: ManifestItem[];
+    dynamicImportsIds: Set<string | number>;
+    dynamicImports: Set<string>;
     headTags: any;
     isFallback?: boolean;
     // gsp?: boolean;
@@ -226,7 +226,7 @@ function renderDocument(
             joyExport, // If this is a page exported by `joy export`
             autoExport, // If this is an auto exported page
             isFallback,
-            dynamicIds: dynamicImportsIds.length === 0 ? undefined : dynamicImportsIds,
+            dynamicIds: dynamicImportsIds.size === 0 ? undefined : Array.from(dynamicImportsIds),
             err: err ? err : undefined, // Error if one happened, otherwise don't sent in the resulting HTML
             // gsp, // whether the page is getStaticProps
             // gssp, // whether the page is getServerSideProps
@@ -243,7 +243,7 @@ function renderDocument(
           inAmpMode,
           isDevelopment: !!dev,
           hybridAmp,
-          dynamicImports,
+          dynamicImports: Array.from(dynamicImports),
           assetPrefix,
           headTags,
           unstable_runtimeJS,
@@ -340,16 +340,18 @@ export class Render {
     initManager.resetInitState(pathname);
     initManager.initStage = initStage;
     reduxService.startRecordState();
+
+    const reactLoadableModules: string[] = [];
     /**
      * 执行一次页面渲染，触发页面的initialStaticModelState()方法，获取页面的数据，然后用数据在重新绘制一次页面
      * 相当于一次页面请求，服务端需要执行两次 React 渲染
      */
     renderToStaticMarkup(
-      // <AppContainer>
-      <ReactAppContainer appContext={reactApplicationContext!}>
-        <Component appContext={reactApplicationContext} />
-      </ReactAppContainer>
-      // </AppContainer>
+      <LoadableContext.Provider value={(moduleName) => reactLoadableModules.push(moduleName)}>
+        <ReactAppContainer appContext={reactApplicationContext!}>
+          <Component appContext={reactApplicationContext} />
+        </ReactAppContainer>
+      </LoadableContext.Provider>
     );
 
     const routesSSGData = [];
@@ -512,7 +514,7 @@ export class Render {
     if (isAutoExport) renderOpts.autoExport = true;
     // if (isSSG) renderOpts.joyExport = false;
 
-    await Loadable.preloadAll(); // Make sure all dynamic imports are loaded
+    await loadable.preloadAll(); // Make sure all dynamic imports are loaded
 
     // url will always be set
     const asPath: string = req.url as string;
@@ -681,21 +683,20 @@ export class Render {
       throw new Error(message);
     }
 
-    const dynamicImportIdsSet = new Set<string>();
-    const dynamicImports: ManifestItem[] = [];
+    const dynamicImportsIds = new Set<string | number>();
+    const dynamicImports = new Set<string>();
 
     for (const mod of reactLoadableModules) {
-      const manifestItem: ManifestItem[] = reactLoadableManifest[mod];
+      const manifestItem: ManifestItem = reactLoadableManifest[mod];
 
       if (manifestItem) {
-        manifestItem.forEach((item) => {
-          dynamicImports.push(item);
-          dynamicImportIdsSet.add(item.id as string);
+        dynamicImportsIds.add(manifestItem.id);
+        manifestItem.files.forEach((file) => {
+          dynamicImports.add(file);
         });
       }
     }
 
-    const dynamicImportsIds = [...dynamicImportIdsSet];
     const hybridAmp = ampState.hybrid;
 
     // update renderOpts so export knows current state

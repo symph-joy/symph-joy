@@ -4,3 +4,5 @@ export * from "./service/react-module-fetch.service";
 
 export * from "./components/image";
 export * from "./components/image-config-context";
+
+export * from "./dynamic/react-dynamic-load.decorator";

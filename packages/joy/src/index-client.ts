@@ -6,3 +6,5 @@ export * from "./react/index-client";
 export * from "./pages/_app";
 export * from "./pages/_error";
 export * from "./joy-server/lib/joy-ssr-react-context";
+export * from "./joy-server/lib/dynamic";
+export * from "./joy-server/lib/loadable";

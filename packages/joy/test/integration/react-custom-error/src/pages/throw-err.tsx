@@ -8,7 +8,7 @@ export default class ThrowErrController extends BaseReactController {
     count: 1,
   };
   renderView(): ReactNode {
-    // throw new Error("Throw MyError");
+    throw new Error("Throw MyError");
     return (
       <div>
         count:<span>{this.state.count}</span>

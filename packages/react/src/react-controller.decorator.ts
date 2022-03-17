@@ -70,15 +70,15 @@ export function ReactController<T>(options: Partial<ControllerMeta> = {}): <TFun
         }
       }
 
-      shouldComponentUpdate(nextProps: any, nextState: any, nextContext: any): boolean {
-        let superRst = false;
+      shouldComponentUpdate(nextProps: any, nextState: any, nextContext: any): boolean | undefined {
+        let superRst = true;
         if (typeof super.shouldComponentUpdate === "function") {
           superRst = super.shouldComponentUpdate(nextProps);
         }
-        if (!superRst) {
+        if (superRst) {
+          this._patch_shouldComponentUpdate(nextProps, nextState, nextContext);
           return true;
         }
-        return this._patch_shouldComponentUpdate(nextProps, nextState, nextContext);
       }
 
       componentDidMount(): void {
@@ -140,12 +140,15 @@ export function ReactController<T>(options: Partial<ControllerMeta> = {}): <TFun
         };
       }
       return React.createElement(ExtReactControllerDeco as any, {
+        key: routeContextValue.match?.pathname,
         ...routeContextValue,
         ...props,
         // __ctx_appContext: appContext,
         __ctx_values: contextValues,
       });
     };
+
+    ReactControllerWrapper.innerController = constructor;
 
     ReactComponent(options)(ReactControllerWrapper);
     Reflect.defineMetadata(META_KEY_REACT_CONTROLLER, true, ReactControllerWrapper);

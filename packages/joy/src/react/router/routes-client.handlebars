@@ -1,17 +1,31 @@
+import dynamic from "@symph/joy/dynamic";
+import {createReactRouteResolver} from "@symph/react/dist/router/react-route-loader"
+import {createJoyReactRouteResolver} from "@symph/joy/dist/joy-server/lib/loadable-react-route"
+
+{{#dynamicLoadRoutes}}
+  const {{__dynamicCompName}} =  dynamic(
+  () => import({{json srcPath}}),
+  {
+    resolve: createJoyReactRouteResolver("{{path}}",{{json componentName}}, {{json componentPackage}}, {{json mount}}),
+    {{jsonProps dynamicLoad}}
+  })
+{{/dynamicLoadRoutes}}
+
 
 {{#*inline "renderRoutes"}}
   [
   {{#children}}
     {
       path: "{{path}}",
-      {{#if dynamic}}dynamic: {{json dynamic}},{{/if}}
       {{#if index}}index: {{json index}},{{/if}}
       {{#if caseSensitive}}caseSensitive: {{json caseSensitive}},{{/if}}
+      {{#if dynamicLoad}}dynamicLoad: {{json dynamicLoad}},{{/if}}
       {{#if catchAllParam}}catchAllParam: {{json catchAllParam}},{{/if}}
       {{#if componentName}}componentName: "{{componentName}}",{{/if}}
       {{#if componentPackage}}componentPackage: "{{componentPackage}}",{{/if}}
-      componentModule: {{#if dynamic}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}},
-    children: {{> renderRoutes this}}
+      componentModule: {{#if dynamicLoad}}()=>import({{json srcPath}}){{else}}require({{json srcPath}}){{/if}},
+      {{#if __dynamicCompName}}element: <{{__dynamicCompName}} />,{{/if}}
+      children: {{> renderRoutes this}}
     },
   {{/children}}
   ]
