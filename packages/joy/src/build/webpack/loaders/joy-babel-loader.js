@@ -114,6 +114,7 @@ module.exports = babelLoader.custom((babel) => {
         options.presets = [...options.presets, presetItem];
       }
 
+      options.caller.pagesDir = pagesDir;
       options.caller.isServer = isServer;
       options.caller.isSrc = isSrc;
       options.caller.isModern = isModern;
@@ -137,7 +138,10 @@ module.exports = babelLoader.custom((babel) => {
         const reactRefreshPlugin = babel.createConfigItem([require("react-refresh/babel"), { skipEnvCheck: true }], { type: "plugin" });
         options.plugins.unshift(reactRefreshPlugin);
         if (!isServer && isCwdFile) {
-          const noAnonymousDefaultExportPlugin = babel.createConfigItem([require("../../babel/plugins/no-anonymous-default-export"), { dir: pagesDir }], { type: "plugin" });
+          const noAnonymousDefaultExportPlugin = babel.createConfigItem(
+            [require("../../babel/plugins/no-anonymous-default-export"), { dir: pagesDir }],
+            { type: "plugin" }
+          );
           options.plugins.unshift(noAnonymousDefaultExportPlugin);
         }
       }
@@ -151,7 +155,9 @@ module.exports = babelLoader.custom((babel) => {
       }
 
       if (isServer && source.indexOf("joy/data") !== -1) {
-        const joyDataPlugin = babel.createConfigItem([require("../../babel/plugins/joy-data"), { key: basename(filename) + "-" + hash(filename) }], { type: "plugin" });
+        const joyDataPlugin = babel.createConfigItem([require("../../babel/plugins/joy-data"), { key: basename(filename) + "-" + hash(filename) }], {
+          type: "plugin",
+        });
         options.plugins.push(joyDataPlugin);
       }
 

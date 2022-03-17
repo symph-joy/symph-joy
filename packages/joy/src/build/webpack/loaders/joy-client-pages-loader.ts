@@ -10,9 +10,7 @@ export type ClientPagesLoaderOptions = {
 };
 
 const joyClientPagesLoader: loader.Loader = function () {
-  const { absolutePagePath, page } = loaderUtils.getOptions(
-    this
-  ) as ClientPagesLoaderOptions;
+  const { absolutePagePath, page } = loaderUtils.getOptions(this) as ClientPagesLoaderOptions;
   const stringifiedAbsolutePagePath = JSON.stringify(absolutePagePath);
   const stringifiedPage = JSON.stringify(page);
 

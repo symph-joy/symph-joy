@@ -64,6 +64,10 @@ export default function ({ types: t }: { types: typeof BabelTypes }): PluginObj<
         const source = path.node.source.value;
         if (!isJsModule(source, state.filename)) {
           path.node.source.value = emptyModulePath;
+          return;
+        }
+        if (source === "@symph/joy/dynamic") {
+          path.node.source.value = "@symph/joy/dist/joy-server/lib/dynamic-empty";
         }
       },
       CallExpression(path, state) {

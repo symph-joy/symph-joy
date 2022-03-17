@@ -256,6 +256,7 @@ export default async function getBaseWebpackConfig(
   //   config.autoGenOutputDir,
   //   "./gen-client-modules.js"
   // );
+  const autoGenCommonOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/common");
   const autoGenClientOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/client");
   const autoGenServerOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/server");
 
@@ -273,9 +274,9 @@ export default async function getBaseWebpackConfig(
             // existsSync(autoGenClientModulesFile)
             //   ? autoGenClientModulesFile
             //   : undefined,
-            existsSync(autoGenClientOutputAbsDir)
+            existsSync(autoGenCommonOutputAbsDir) || existsSync(autoGenClientOutputAbsDir)
               ? `joy-require-context-loader?${stringify({
-                  absolutePath: autoGenClientOutputAbsDir,
+                  absolutePath: [autoGenCommonOutputAbsDir, autoGenClientOutputAbsDir],
                   globalVar: "window",
                   globalKey: "__JOY_AUTOGEN",
                   useFileScan: true,
@@ -292,9 +293,9 @@ export default async function getBaseWebpackConfig(
           // existsSync(autoGenServerModulesFile)
           //   ? autoGenServerModulesFile
           //   : undefined,
-          existsSync(autoGenServerOutputAbsDir)
+          existsSync(autoGenCommonOutputAbsDir) || existsSync(autoGenServerOutputAbsDir)
             ? `joy-require-context-loader?${stringify({
-                absolutePath: autoGenServerOutputAbsDir,
+                absolutePath: [autoGenCommonOutputAbsDir, autoGenServerOutputAbsDir],
                 useFileScan: true,
               })}!`
             : undefined,
@@ -1005,8 +1006,11 @@ export default async function getBaseWebpackConfig(
       !isServer &&
         new ReactLoadablePlugin({
           filename: REACT_LOADABLE_MANIFEST,
+          pagesDir,
+          runtimeAsset: undefined,
+          dev,
         }),
-      !isServer && new DropClientPage(),
+      isServer && new DropClientPage(),
       // Moment.js is an extremely popular library that bundles large locale files
       // by default due to how Webpack interprets its code. This is a practical
       // solution that requires the user to opt into importing specific locales.

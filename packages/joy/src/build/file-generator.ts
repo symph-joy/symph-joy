@@ -99,10 +99,14 @@ export class FileGenerator implements IComponentLifecycle {
 
   public async mkTempDirs() {
     const joy = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, "./joy");
+    const commonPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, "./react/common");
     const serverPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, "./react/server");
     const clientPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.distDir, this.joyAppConfig.autoGenOutputDir, "./react/client");
     if (!(await fileExists(joy, "directory"))) {
       await mkdirp(joy);
+    }
+    if (!(await fileExists(commonPath, "directory"))) {
+      await mkdirp(commonPath);
     }
     if (!(await fileExists(serverPath, "directory"))) {
       await mkdirp(serverPath);
