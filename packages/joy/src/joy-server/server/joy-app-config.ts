@@ -191,7 +191,9 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
   basePath: string;
 
   sassOptions = {};
-  lessOptions = {};
+
+  @Value({ default: {} })
+  lessOptions: any;
 
   trailingSlash = false;
   experimental = {
@@ -208,6 +210,7 @@ export class JoyAppConfig extends ApplicationConfig implements IJoyConfig {
     optimizeFonts: false,
     optimizeImages: false,
     scrollRestoration: false,
+    esmExternals: true, // boolean | 'loose'
   };
 
   @Value()

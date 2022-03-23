@@ -144,6 +144,7 @@ export type RenderOptsPartial = {
 
   reactApplicationContext?: ReactApplicationContext;
   ssr?: boolean;
+  matchedRoutes?: RouteMatch[] | null;
 };
 
 export type RenderOpts = LoadComponentsReturnType & RenderOptsPartial;
@@ -325,11 +326,11 @@ export class Render {
     reactApplicationContext: ReactApplicationContext;
     pathname: string;
     initStage: EnumReactAppInitStage;
-    matchedRoutes: RouteMatch[];
+    matchedRoutes: RouteMatch[] | null | undefined;
     Component: React.ComponentType<any>;
   }) {
     if (!reactApplicationContext) {
-      throw new Error("init controller data error, react application context is undefined.");
+      throw new Error("Init controller data error, react application context is undefined.");
     }
     if (!matchedRoutes) {
       matchedRoutes = [{ pathname, pathnameBase: "", route: { path: pathname }, params: {} }];
@@ -439,6 +440,17 @@ export class Render {
       initStage,
       ssr = true,
     } = renderOpts;
+    let AppComponent: React.ComponentType<any>;
+    if (!Component) {
+      if (!ssr) {
+        AppComponent = () => null;
+      } else {
+        throw new Error(`Can not SSR path:${pathname}, Component is undefined.`);
+      }
+    } else {
+      AppComponent = Component;
+    }
+
     const err = renderOpts.err ? serializeError(dev, renderOpts.err) : undefined;
 
     const getFontDefinition = (url: string): string => {
@@ -620,8 +632,8 @@ export class Render {
       }
     }
 
-    if (isSSR && !ctx.err && reactApplicationContext) {
-      const matchedRoutes = (renderOpts as any).matchedRoutes;
+    if (isSSR && !ctx.err && reactApplicationContext && Component) {
+      const matchedRoutes = renderOpts.matchedRoutes;
       const { routesSSGData, revalidate } = await this.renderData({
         reactApplicationContext,
         pathname,
@@ -644,7 +656,7 @@ export class Render {
           return {
             html: renderToString(
               <AppContainer>
-                <Component err={err} />
+                <AppComponent err={err} />
               </AppContainer>
             ),
             head,
@@ -661,7 +673,7 @@ export class Render {
       const {
         App: EnhancedComponent,
         // Component: EnhancedComponent,
-      } = enhanceComponents(options, Component);
+      } = enhanceComponents(options, AppComponent);
 
       const html = renderToString(
         <AppContainer>

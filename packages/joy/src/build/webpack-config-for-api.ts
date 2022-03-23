@@ -19,7 +19,7 @@ export async function getWebpackConfigForApi(serverConfig: webpack.Configuration
     ],
   };
   apiConfig.externalsPresets = { node: true };
-  apiConfig.target = "node";
+  apiConfig.target = "node12.22";
   apiConfig.externals = [
     ({ context, request }, callback) => {
       let res: string;
@@ -43,14 +43,14 @@ export async function getWebpackConfigForApi(serverConfig: webpack.Configuration
 
       // if (res === require.resolve('../server/dev/poll')){
       //   return callback()
-      // }
+      //     }
 
       // Webpack itself has to be compiled because it doesn't always use module relative paths
       if (res.match(/node_modules[/\\]webpack/) || res.match(/node_modules[/\\]css-loader/)) {
         return callback();
       }
 
-      if (res.match(/node_modules[/\\].*\.js$/)) {
+      if (res.match(/node_modules[/\\].*\.[c]?js$/)) {
         return callback(undefined, `commonjs ${request}`);
       }
 

@@ -868,30 +868,27 @@ export class JoyReactServer implements IComponentLifecycle {
     return this.sendHTML(req, res, html);
   }
 
-  private async findPageComponents(pathname: string, query: ParsedUrlQuery = {}, params: Params | null = null): Promise<FindComponentsResult | null> {
-    const paths = [
-      // try serving a static AMP version first
-      // query.amp ? normalizePagePath(pathname) + ".amp" : null,
-      pathname,
-    ].filter(Boolean);
-    for (const routePath of paths) {
-      try {
-        const components = await loadComponents(this.outDir, routePath!, !this.renderOpts.dev && this._isLikeServerless);
-        return {
-          components,
-          // query: {
-          //   ...(components.getStaticProps
-          //     ? {_joyDataReq: query._joyDataReq, amp: query.amp}
-          //     : query),
-          //   ...(params || {}),
-          query: {
-            ...query,
-            ...(params || {}),
-          },
-        };
-      } catch (err) {
-        if (err.code !== "ENOENT") throw err;
-      }
+  private async findPageComponents(
+    pathname: string | undefined,
+    query: ParsedUrlQuery = {},
+    params: Params | null = null
+  ): Promise<FindComponentsResult | null> {
+    try {
+      const components = await loadComponents(this.outDir, pathname, !this.renderOpts.dev && this._isLikeServerless);
+      return {
+        components,
+        // query: {
+        //   ...(components.getStaticProps
+        //     ? {_joyDataReq: query._joyDataReq, amp: query.amp}
+        //     : query),
+        //   ...(params || {}),
+        query: {
+          ...query,
+          ...(params || {}),
+        },
+      };
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
     }
     return null;
   }
@@ -974,7 +971,7 @@ export class JoyReactServer implements IComponentLifecycle {
       urlPathname = (urlPathname.split(this.buildId).pop() || "/").replace(/\.json$/, "").replace(/\/index$/, "/");
     }
 
-    const matchedRoutes = ((opts as any).matchedRoutes as RouteMatch[]) || [];
+    const matchedRoutes = opts.matchedRoutes || [];
     // const isIndexPage = matchedRoutes[matchedRoutes.length - 1]?.route.index;
     const ssgCacheKey = !isSSG ? undefined : urlPathname;
 
@@ -1196,36 +1193,46 @@ export class JoyReactServer implements IComponentLifecycle {
   }
 
   public async renderToHTML(req: IncomingMessage, res: ServerResponse, pathname: string, query: ParsedUrlQuery = {}): Promise<string | null> {
-    const reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, pathname, query);
-    const routeService = reactAppContext.getSync(ReactRouterService);
     try {
-      const matchedRoutes = routeService.matchRoutes(pathname);
-      if (!matchedRoutes?.length) {
-        res.statusCode = 404;
-        return await this.renderErrorToHTML(null, req, res, pathname, query);
+      let reactAppContext: ReactApplicationContext | undefined;
+      let pageComponents: FindComponentsResult | null;
+      let renderOptions: RenderOptsPartial;
+      if (this.joyConfig.ssr) {
+        reactAppContext = await this.reactContextFactory.getReactAppContext(req, res, pathname, query);
+        const routeService = reactAppContext.getSync(ReactRouterService);
+        const matchedRoutes = routeService.matchRoutes(pathname);
+        if (!matchedRoutes?.length) {
+          res.statusCode = 404;
+          return await this.renderErrorToHTML(null, req, res, pathname, query);
+        }
+        pageComponents = await this.findPageComponents("/_app", query);
+        renderOptions = {
+          ...this.renderOpts,
+          matchedRoutes,
+        };
+      } else {
+        pageComponents = await this.findPageComponents(undefined, query);
+        renderOptions = {
+          ...this.renderOpts,
+        };
       }
 
-      const result = await this.findPageComponents("/_app", query);
-      const renderOptions = {
-        ...this.renderOpts,
-        matchedRoutes,
-      };
       await this.onBeforeRender.call({
         req,
         res,
         pathname,
         query,
         reactAppContext,
-        components: result?.components,
+        components: pageComponents?.components,
         renderOptions,
       });
       if (res.writableEnded) {
         // todo 终止渲染，场景：在hook中已经结束响应，不用再渲染了
       }
 
-      if (result) {
+      if (pageComponents) {
         try {
-          return await this.renderToHTMLWithComponents(req, res, pathname, reactAppContext, result, renderOptions);
+          return await this.renderToHTMLWithComponents(req, res, pathname, reactAppContext, pageComponents, renderOptions);
         } catch (err) {
           if (!(err instanceof NoFallbackError)) {
             throw err;

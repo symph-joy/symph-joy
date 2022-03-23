@@ -85,6 +85,7 @@ const regexSass = /\.(scss|sass)$/;
 const regexLess = /\.less$/;
 
 export const css = curry(async function css(ctx: ConfigurationContext, config: Configuration) {
+  const sourceMap = ctx.isDevelopment ? true : false;
   const { additionalData: lessAdditionalData, ...lessOptions } = ctx.lessOptions;
   const lessPreprocess: RuleSetUseItem[] = [
     {
@@ -92,9 +93,10 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
       options: {
         // Source maps are required so that `resolve-url-loader` can locate
         // files original to their source directory.
-        sourceMap: true,
+        sourceMap,
         lessOptions,
         additionalData: lessAdditionalData,
+        // additionalData: lessAdditionalData,
       },
     },
     // Then, `less-loader` will have passed-through CSS imports as-is instead
@@ -107,7 +109,7 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
       options: {
         // Source maps are not required here, but we may as well emit
         // them.
-        sourceMap: true,
+        sourceMap,
       },
     },
   ];
@@ -121,7 +123,7 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
       options: {
         // Source maps are required so that `resolve-url-loader` can locate
         // files original to their source directory.
-        sourceMap: true,
+        sourceMap,
         sassOptions,
         additionalData: sassAdditionalData,
       },
@@ -136,7 +138,7 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
       options: {
         // Source maps are not required here, but we may as well emit
         // them.
-        sourceMap: true,
+        sourceMap,
       },
     },
   ];
@@ -279,10 +281,10 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
         oneOf: [
           {
             test: regexLess,
-            issuer: {
-              and: [ctx.rootDirectory],
-              not: [/node_modules/],
-            },
+            // issuer: {
+            //   and: [ctx.rootDirectory],
+            //   not: [/node_modules/],
+            // },
             use: require.resolve("ignore-loader"),
           },
         ],
@@ -303,10 +305,10 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
             test: regexLess,
             // Sass Modules are only supported in the user's application. We're
             // not yet allowing Sass imports _within_ `node_modules`.
-            issuer: {
-              and: [ctx.rootDirectory],
-              not: [/node_modules/],
-            },
+            // issuer: {
+            //   and: [ctx.rootDirectory],
+            //   not: [/node_modules/],
+            // },
             use: getCssLoader(ctx, postCssPlugins, lessPreprocess, false),
           },
         ],
@@ -347,10 +349,10 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
             test: regexSass,
             // Sass Modules are only supported in the user's application. We're
             // not yet allowing Sass imports _within_ `node_modules`.
-            issuer: {
-              and: [ctx.rootDirectory],
-              not: [/node_modules/],
-            },
+            // issuer: {
+            //   and: [ctx.rootDirectory],
+            //   not: [/node_modules/],
+            // },
             use: require.resolve("ignore-loader"),
           },
         ],
@@ -371,10 +373,10 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
             test: regexSass,
             // Sass Modules are only supported in the user's application. We're
             // not yet allowing Sass imports _within_ `node_modules`.
-            issuer: {
-              and: [ctx.rootDirectory],
-              not: [/node_modules/],
-            },
+            // issuer: {
+            //   and: [ctx.rootDirectory],
+            //   not: [/node_modules/],
+            // },
             use: getCssLoader(ctx, postCssPlugins, sassPreprocessors, false),
           },
         ],
@@ -531,7 +533,14 @@ export const css = curry(async function css(ctx: ConfigurationContext, config: C
             // might inline the asset as a data URI
             type: "asset/resource",
             generator: {
-              filename: "static/assets/[name].[hash].[ext][query]",
+              // "static/assets/[name].[hash].[ext][query]",
+              filename: (pathData: any) => {
+                let name: string = pathData.filename;
+                if (/^data:/.test(name)) {
+                  name = "data-64";
+                }
+                return `static/assets/${name}.[hash].[ext][query]`;
+              },
             },
           },
         ],

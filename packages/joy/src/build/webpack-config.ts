@@ -54,6 +54,121 @@ const isWebpack5 = parseInt(webpack.version!) === 5;
 
 export const joyImageLoaderRegex = /\.(png|jpg|jpeg|gif|webp|avif|ico|bmp|svg)$/i;
 
+export const NODE_RESOLVE_OPTIONS = {
+  dependencyType: "commonjs",
+  modules: ["node_modules"],
+  fallback: false,
+  exportsFields: ["exports"],
+  importsFields: ["imports"],
+  conditionNames: ["node", "require"],
+  descriptionFiles: ["package.json"],
+  extensions: [".js", ".json", ".node"],
+  enforceExtensions: false,
+  symlinks: true,
+  mainFields: ["main"],
+  mainFiles: ["index"],
+  roots: [],
+  fullySpecified: false,
+  preferRelative: false,
+  preferAbsolute: false,
+  restrictions: [],
+};
+
+export const NODE_BASE_RESOLVE_OPTIONS = {
+  ...NODE_RESOLVE_OPTIONS,
+  alias: false,
+};
+
+export const NODE_ESM_RESOLVE_OPTIONS = {
+  ...NODE_RESOLVE_OPTIONS,
+  alias: false,
+  dependencyType: "esm",
+  conditionNames: ["node", "import"],
+  fullySpecified: true,
+};
+
+export const NODE_BASE_ESM_RESOLVE_OPTIONS = {
+  ...NODE_ESM_RESOLVE_OPTIONS,
+  alias: false,
+};
+
+export async function resolveExternal(
+  appDir: string,
+  esmExternalsConfig: boolean | "loose",
+  context: string,
+  request: string,
+  isEsmRequested: boolean,
+  getResolve: (options: any) => (resolveContext: string, resolveRequest: string) => Promise<[string | null, boolean]>,
+  isLocalCallback?: (res: string) => any,
+  baseResolveCheck = true,
+  esmResolveOptions: any = NODE_ESM_RESOLVE_OPTIONS,
+  nodeResolveOptions: any = NODE_RESOLVE_OPTIONS,
+  baseEsmResolveOptions: any = NODE_BASE_ESM_RESOLVE_OPTIONS,
+  baseResolveOptions: any = NODE_BASE_RESOLVE_OPTIONS
+) {
+  const esmExternals = !!esmExternalsConfig;
+  const looseEsmExternals = esmExternalsConfig === "loose";
+
+  let res: string | null = null;
+  let isEsm = false;
+
+  let preferEsmOptions = esmExternals && isEsmRequested ? [true, false] : [false];
+  for (const preferEsm of preferEsmOptions) {
+    const resolve = getResolve(preferEsm ? esmResolveOptions : nodeResolveOptions);
+
+    // Resolve the import with the webpack provided context, this
+    // ensures we're resolving the correct version when multiple
+    // exist.
+    try {
+      [res, isEsm] = await resolve(context, request);
+    } catch (err) {
+      res = null;
+    }
+
+    if (!res) {
+      continue;
+    }
+
+    // ESM externals can only be imported (and not required).
+    // Make an exception in loose mode.
+    if (!isEsmRequested && isEsm && !looseEsmExternals) {
+      continue;
+    }
+
+    if (isLocalCallback) {
+      return { localRes: isLocalCallback(res) };
+    }
+
+    // Bundled Node.js code is relocated without its node_modules tree.
+    // This means we need to make sure its request resolves to the same
+    // package that'll be available at runtime. If it's not identical,
+    // we need to bundle the code (even if it _should_ be external).
+    if (baseResolveCheck) {
+      let baseRes: string | null;
+      let baseIsEsm: boolean;
+      try {
+        const baseResolve = getResolve(isEsm ? baseEsmResolveOptions : baseResolveOptions);
+        [baseRes, baseIsEsm] = await baseResolve(appDir, request);
+      } catch (err) {
+        baseRes = null;
+        baseIsEsm = false;
+      }
+
+      // Same as above: if the package, when required from the root,
+      // would be different from what the real resolution would use, we
+      // cannot externalize it.
+      // if request is pointing to a symlink it could point to the the same file,
+      // the resolver will resolve symlinks so this is handled
+      if (baseRes !== res || isEsm !== baseIsEsm) {
+        res = null;
+        continue;
+      }
+    }
+    break;
+  }
+  return { res, isEsm };
+}
+
 const escapePathVariables = (value: any) => {
   return typeof value === "string" ? value.replace(/\[(\\*[\w:]+\\*)\]/gi, "[\\$1\\]") : value;
 };
@@ -534,92 +649,73 @@ export default async function getBaseWebpackConfig(
     config.conformance
   );
 
-  function handleServerExternals(context: any, request: any, callback: any) {
-    // Resolve the import with the webpack provided context, this
-    // ensures we're resolving the correct version when multiple
-    // exist.
-    let res: string;
-    try {
-      res = resolveRequest(request, `${context}/`);
-    } catch (err) {
-      // If the request cannot be resolved, we need to tell webpack to
-      // "bundle" it so that webpack shows an error (that it cannot be
-      // resolved).
-      return callback();
+  // function handleServerExternals(
+  //   context: string,
+  //   request: any,
+  //   dependencyType: string,
+  //   getResolve: (options: any) => (resolveContext: string, resolveRequest: string) => Promise<[string | null, boolean]>
+  // ) {
+  //   // Resolve the import with the webpack provided context, this
+  //   // ensures we're resolving the correct version when multiple
+  //   // exist.
+  //   let res: string;
+  //   try {
+  //     res = resolveRequest(request, `${context}/`);
+  //   } catch (err) {
+  //     // If the request cannot be resolved, we need to tell webpack to
+  //     // "bundle" it so that webpack shows an error (that it cannot be
+  //     // resolved).
+  //     return callback();
+  //   }
+  //
+  //   // Same as above, if the request cannot be resolved we need to have
+  //   // webpack "bundle" it so it surfaces the not found error.
+  //   if (!res) {
+  //     return callback();
+  //   }
+  //
+  //   // Anything else that is standard JavaScript within `node_modules`
+  //   // can be externalized.
+  //   if (res.match(/node_modules[/\\].*\.js$/)) {
+  //     return callback(undefined, `commonjs ${request}`);
+  //   }
+  //
+  //   // Anything else that is standard JavaScript within `node_modules`
+  //   // can be externalized.
+  //   if (
+  //     res.match(/@symph[/\\].*\.js$/) ||
+  //     res.match(/packages[/\\]joy[/\\]dist[/\\]/) ||
+  //     res.match(/packages[/\\]core[/\\]dist[/\\]/) ||
+  //     res.match(/packages[/\\]react[/\\]dist[/\\]/) ||
+  //     res.match(/packages[/\\]server[/\\]dist[/\\]/) ||
+  //     res.match(/packages[/\\]config[/\\]dist[/\\]/)
+  //   ) {
+  //     return callback(undefined, `commonjs ${request}`);
+  //   }
+  //
+  //   return callback();
+  // }
+
+  const looseEsmExternals = config.experimental?.esmExternals === "loose";
+
+  async function handleExternals(
+    context: string | undefined,
+    request: string | undefined,
+    dependencyType: string | undefined,
+    getResolve: (options: any) => (resolveContext: string, resolveRequest: string) => Promise<[string | null, boolean]>
+  ) {
+    if (context === undefined || request === undefined) {
+      return;
     }
 
-    // Same as above, if the request cannot be resolved we need to have
-    // webpack "bundle" it so it surfaces the not found error.
-    if (!res) {
-      return callback();
-    }
-
-    // Anything else that is standard JavaScript within `node_modules`
-    // can be externalized.
-    if (res.match(/node_modules[/\\].*\.js$/)) {
-      return callback(undefined, `commonjs ${request}`);
-    }
-
-    // Anything else that is standard JavaScript within `node_modules`
-    // can be externalized.
-    if (
-      res.match(/@symph[/\\].*\.js$/) ||
-      res.match(/packages[/\\]joy[/\\]dist[/\\]/) ||
-      res.match(/packages[/\\]core[/\\]dist[/\\]/) ||
-      res.match(/packages[/\\]react[/\\]dist[/\\]/) ||
-      res.match(/packages[/\\]server[/\\]dist[/\\]/) ||
-      res.match(/packages[/\\]config[/\\]dist[/\\]/)
-    ) {
-      return callback(undefined, `commonjs ${request}`);
-    }
-
-    return callback();
-  }
-
-  /**
-   * 将废弃掉，逐步采用handleServerExternals方法替换。
-   * @param context
-   * @param request
-   * @param callback
-   */
-  function handleExternals(context: any, request: any, callback: any) {
-    // return     callback()
-    return callback(undefined, `commonjs ${request}`);
-    if (request.includes("joy-fetch.service")) {
+    if (/marked/.test(request)) {
       console.log(request);
     }
-    if (request === "@symph/joy") {
-      return callback(undefined, `commonjs ${request}`);
-    }
-    if (request === "@symph/joy/dist/index-server") {
-      return callback(undefined, `commonjs ${request}`);
-    }
-    if (request === "@symph/joy/dist/react/service/joy-fetch.service") {
-      return callback(undefined, `commonjs ${request}`);
-    }
 
-    if (request === "@symph/core") {
-      return callback(undefined, `commonjs ${request}`);
-    }
-
-    if (request === "@symph/react") {
-      return callback(undefined, `commonjs ${request}`);
-    }
-
-    if (request === "@symph/server") {
-      return callback(undefined, `commonjs ${request}`);
-    }
-
-    // todo 适配es module的导出方式
-    const notExternalModules = ["joy/app", "joy/document", "joy/link", "joy/error", "string-hash", "joy/constants"];
-
-    if (notExternalModules.indexOf(request) !== -1) {
-      return callback();
-    }
-
+    // if (/font-style|webpack-config|joy-build.service|joy-build.command|joy-boot|index-server/.test(request)) {
+    // }
     // We need to externalize internal requests for files intended to
     // not be bundled.
-
     const isLocal: boolean =
       request.startsWith(".") ||
       // Always check for unix-style path, as webpack sometimes
@@ -628,109 +724,114 @@ export default async function getBaseWebpackConfig(
       // When on Windows, we also want to check for Windows-specific
       // absolute paths.
       (process.platform === "win32" && path.win32.isAbsolute(request));
-    const isLikelyJoyExternal = isLocal && /[/\\]joy-server[/\\]/.test(request);
 
     // Relative requires don't need custom resolution, because they
     // are relative to requests we've already resolved here.
     // Absolute requires (require('/foo')) are extremely uncommon, but
     // also have no need for customization as they're already resolved.
-    if (isLocal && !isLikelyJoyExternal) {
-      return callback();
+    if (!isLocal) {
+      const notExternalModules = /^(?:private-joy-pages\/|@symph[/\\]joy\/(?:dist\/pages\/|(?:app|document|dynamic)$)|string-hash$)/;
+      if (notExternalModules.test(request)) {
+        return;
+      }
+
+      if (/^(?:@symph[/\\](?:joy|react|server|core|config)$|react(?:$|\/))/.test(request)) {
+        return `commonjs ${request}`;
+      }
     }
 
-    // Resolve the import with the webpack provided context, this
-    // ensures we're resolving the correct version when multiple
-    // exist.
-    let res: string;
-    try {
-      res = resolveRequest(request, `${context}/`);
-    } catch (err) {
-      // If the request cannot be resolved, we need to tell webpack to
-      // "bundle" it so that webpack shows an error (that it cannot be
-      // resolved).
-      return callback();
-    }
+    // When in esm externals mode, and using import, we resolve with
+    // ESM resolving options.
+    const isEsmRequested = dependencyType === "esm";
 
-    // Same as above, if the request cannot be resolved we need to have
+    const isLocalCallback = (localRes: string) => {
+      // Makes sure dist/shared and dist/server are not bundled
+      // we need to process shared `router/router` and `dynamic`,
+      // so that the DefinePlugin can inject process.env values
+      const isNextExternal = /@symph[/\\]joy[/\\]dist[/\\](joy-server)[/\\](?!lib[/\\](loadable|dynamic))/.test(localRes);
+
+      if (isNextExternal) {
+        // Generate Next.js external import
+        const externalRequest = path.posix.join(
+          "@symph/joy",
+          "dist",
+          path
+            .relative(
+              // Root of Next.js package:
+              path.join(__dirname, ".."),
+              localRes
+            )
+            // Windows path normalization
+            .replace(/\\/g, "/")
+        );
+        return `commonjs ${externalRequest}`;
+      } else {
+        // We don't want to retry local requests
+        // with other preferEsm options
+        return;
+      }
+    };
+
+    const resolveResult = await resolveExternal(
+      dir,
+      config.experimental.esmExternals,
+      context,
+      request,
+      isEsmRequested,
+      getResolve,
+      isLocal ? isLocalCallback : undefined
+    );
+
+    if ("localRes" in resolveResult) {
+      return resolveResult.localRes;
+    }
+    const { res, isEsm } = resolveResult;
+
+    // If the request cannot be resolved we need to have
     // webpack "bundle" it so it surfaces the not found error.
     if (!res) {
-      return callback();
+      return;
     }
 
-    let isJoyExternal = false;
-    if (isLocal) {
-      // we need to process joy-server/lib/reactRouterService/reactRouterService so that
-      // the DefinePlugin can inject process.env values
-      // isJoyExternal = /joy([/\\]dist)?[/\\]joy-server[/\\](?!lib[/\\]reactRouterService[/\\]reactRouterService)/.test(
-      isJoyExternal = /joy[/\\]dist[/\\]joy-server[/\\](?!lib[/\\]reactRouterService[/\\]reactRouterService)/.test(res);
-
-      if (!isJoyExternal) {
-        return callback();
-      }
+    // ESM externals can only be imported (and not required).
+    // Make an exception in loose mode.
+    if (!isEsmRequested && isEsm && !looseEsmExternals) {
+      throw new Error(
+        `ESM packages (${request}) need to be imported. Use 'import' to reference the package instead. https://nextjs.org/docs/messages/import-esm-externals`
+      );
     }
 
-    // `isJoyExternal` special cases Joy.js' internal requires that
-    // should not be bundled. We need to skip the base resolve routine
-    // to prevent it from being bundled (assumes Joy version cannot
-    // mismatch).
-    if (!isJoyExternal) {
-      // Bundled Node.js code is relocated without its node_modules tree.
-      // This means we need to make sure its request resolves to the same
-      // package that'll be available at runtime. If it's not identical,
-      // we need to bundle the code (even if it _should_ be external).
-      let baseRes: string | null;
-      try {
-        baseRes = resolveRequest(request, `${dir}/`);
-      } catch (err) {
-        baseRes = null;
-      }
+    const externalType = isEsm ? "module" : "commonjs";
 
-      // Same as above: if the package, when required from the root,
-      // would be different from what the real resolution would use, we
-      // cannot externalize it.
-      if (baseRes !== res) {
-        return callback();
-      }
-    }
+    // if (res.match(/@symph[/\\]joy[/\\]dist[/\\]shared[/\\](?!lib[/\\]router[/\\]router)/)) {
+    //   return `${externalType} ${request}`;
+    // }
 
     // Default pages have to be transpiled
     if (
-      !res.match(/joy[/\\]dist[/\\]joy-server[/\\]/) &&
-      (res.match(/[/\\]joy[/\\]dist[/\\]/) ||
-        // This is the @babel/plugin-transform-runtime "helpers: true" option
-        res.match(/node_modules[/\\]@babel[/\\]runtime[/\\]/))
+      res.match(/[/\\]@symph[/\\]joy[/\\]dist[/\\]pages[/\\]/) ||
+      // This is the @babel/plugin-transform-runtime "helpers: true" option
+      res.match(/node_modules[/\\]@babel[/\\]runtime[/\\]/)
     ) {
-      return callback();
+      return;
+    }
+
+    if (/^(?:@symph[/\\](?:joy|react|server|core|config)[/\\]?|react(?:$|\/))/.test(request)) {
+      return `commonjs ${request}`;
     }
 
     // Webpack itself has to be compiled because it doesn't always use module relative paths
     if (res.match(/node_modules[/\\]webpack/) || res.match(/node_modules[/\\]css-loader/)) {
-      return callback();
+      return;
     }
 
     // Anything else that is standard JavaScript within `node_modules`
     // can be externalized.
-    if (isJoyExternal || res.match(/node_modules[/\\].*\.js$/)) {
-      const externalRequest = isJoyExternal
-        ? // Generate Joy external import
-          path.posix.join(
-            "@symph/joy/dist/",
-            path
-              .relative(
-                // Root of Joy package:
-                path.join(__dirname, ".."),
-                res
-              )
-              // Windows path normalization
-              .replace(/\\/g, "/")
-          )
-        : request;
-
-      return callback(undefined, `commonjs ${externalRequest}`);
+    if (/node_modules[/\\].*\.[mc]?js$/.test(res)) {
+      return `${externalType} ${request}`;
     }
 
     // Default behavior: bundle the code!
-    callback();
   }
 
   let webpackConfig: webpack.Configuration = {
@@ -738,10 +839,39 @@ export default async function getBaseWebpackConfig(
       ? // make sure importing "@symph/joy" is handled gracefully for client
         // bundles in case a user imported types and it wasn't removed
         // TODO: should we warn/error for this instead?
-        // ["@symph/joy"]
-        []
+        ["@symph/joy"]
       : !isServerless
-      ? [({ context, request }, callback) => handleServerExternals(context, request, callback)]
+      ? [
+          ({
+            context,
+            request,
+            dependencyType,
+            getResolve,
+          }: {
+            context?: string;
+            request?: string;
+            dependencyType?: string;
+            getResolve?: (
+              options: any
+            ) => (
+              resolveContext: string,
+              resolveRequest: string,
+              callback: (err?: Error, result?: string, resolveData?: { descriptionFileData?: { type?: any } }) => void
+            ) => void;
+          }) =>
+            handleExternals(context, request, dependencyType, (options) => {
+              const resolveFunction = getResolve!(options);
+              return (resolveContext: string, requestToResolve: string) =>
+                new Promise((resolve, reject) => {
+                  resolveFunction(resolveContext, requestToResolve, (err, result, resolveData) => {
+                    if (err) return reject(err);
+                    if (!result) return resolve([null, false]);
+                    const isEsm = /\.js$/i.test(result) ? resolveData?.descriptionFileData?.type === "module" : /\.mjs$/i.test(result);
+                    resolve([result, isEsm]);
+                  });
+                });
+            }),
+        ]
       : [
           // When the 'serverless' target is used all node_modules will be compiled into the output bundles
           // So that the 'serverless' bundles have 0 runtime dependencies

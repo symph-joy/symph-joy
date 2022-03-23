@@ -1,7 +1,7 @@
 // @ts-ignore 默认的安装^v3.0.0 版本和webpack的5的类型定义冲突，所以这里暂时不用校验
 import path from "path";
 import glob from "glob";
-import { LoaderDefinitionFunction } from "webpack";
+import type { LoaderDefinitionFunction } from "webpack";
 
 export type JoyRequireContextLoaderOptions = {
   absolutePath: string;

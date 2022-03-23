@@ -43,8 +43,6 @@ export abstract class BaseReactController<
    */
   async componentPrepare(context: any): Promise<void> {}
 
-  // static contextType = ReactApplicationReactContext;
-
   @ReactContext(ReactApplicationReactContext)
   protected appContext: IApplicationContext;
 
@@ -76,7 +74,6 @@ export abstract class BaseReactController<
     super(props as any, context);
     this.isCtlMounted = false;
 
-    // this.appContext = (props as any).__ctx_appContext;
     const contextValues = (props as any).__ctx_values;
     if (contextValues) {
       for (const propKey of Object.keys(contextValues)) {

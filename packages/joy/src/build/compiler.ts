@@ -31,40 +31,27 @@ function closeCompiler(compiler: webpack.Compiler | webpack.MultiCompiler) {
   });
 }
 
-export function runCompiler(
-  config: Configuration | Configuration[]
-): Promise<CompilerResult> {
+export function runCompiler(config: Configuration | Configuration[]): Promise<CompilerResult> {
   return new Promise((resolve, reject) => {
     const compiler = webpack(config as Configuration);
-    compiler.run(
-      (
-        err: Error | undefined,
-        statsOrMultiStats: { stats: Stats[] } | Stats | undefined
-      ) => {
-        closeCompiler(compiler).then(() => {
-          if (err) {
-            const reason = err?.toString();
-            if (reason) {
-              return resolve({ errors: [reason], warnings: [] });
-            }
-            return reject(err);
+    compiler.run((err: Error | undefined | null, statsOrMultiStats: { stats: Stats[] } | Stats | undefined) => {
+      closeCompiler(compiler).then(() => {
+        if (err) {
+          const reason = err?.toString();
+          if (reason) {
+            return resolve({ errors: [reason], warnings: [] });
           }
+          return reject(err);
+        }
 
-          if (statsOrMultiStats && "stats" in statsOrMultiStats) {
-            const result: CompilerResult = statsOrMultiStats.stats.reduce(
-              generateStats,
-              { errors: [], warnings: [] }
-            );
-            return resolve(result);
-          }
-
-          const result = generateStats(
-            { errors: [], warnings: [] },
-            statsOrMultiStats!
-          );
+        if (statsOrMultiStats && "stats" in statsOrMultiStats) {
+          const result: CompilerResult = statsOrMultiStats.stats.reduce(generateStats, { errors: [], warnings: [] });
           return resolve(result);
-        });
-      }
-    );
+        }
+
+        const result = generateStats({ errors: [], warnings: [] }, statsOrMultiStats!);
+        return resolve(result);
+      });
+    });
   });
 }

@@ -2,7 +2,7 @@
 
 import { ReactModel, BaseReactModel } from "@symph/react";
 import { Inject } from "@symph/core";
-import { ReactFetchService } from "@symph/joy";
+import { ReactFetchService } from "@symph/joy/react";
 
 @ReactModel()
 export class HelloModel extends BaseReactModel<{

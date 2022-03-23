@@ -230,7 +230,7 @@ export class FileScanner {
       delete require.cache[fullFilePath];
       requiredModule = require(fullFilePath);
     } catch (e) {
-      console.debug("Load file error:", e);
+      console.debug(`Load file: ${fullFilePath} \n error:`, e);
     }
     if (!requiredModule) {
       return undefined;

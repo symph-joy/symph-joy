@@ -1,10 +1,7 @@
 import webpack, { Compiler } from "webpack";
 import { namedTypes } from "ast-types";
 import sources from "webpack-sources";
-import {
-  getFontDefinitionFromNetwork,
-  FontManifest,
-} from "../../../joy-server/server/font-utils";
+import { getFontDefinitionFromNetwork, FontManifest } from "../../../joy-server/server/font-utils";
 // @ts-ignore
 import BasicEvaluatedExpression from "webpack/lib/BasicEvaluatedExpression";
 import postcss from "postcss";
@@ -46,83 +43,63 @@ export class FontStylesheetGatheringPlugin {
     const JS_TYPES = ["auto", "esm", "dynamic"];
     // Do an extra walk per module and add interested visitors to the walk.
     for (const type of JS_TYPES) {
-      factory.hooks.parser
-        .for("javascript/" + type)
-        .tap(this.constructor.name, (parser: any) => {
-          /**
-           * Webpack fun facts:
-           * `parser.hooks.call.for` cannot catch calls for user defined identifiers like `__jsx`
-           * it can only detect calls for native objects like `window`, `this`, `eval` etc.
-           * In order to be able to catch calls of variables like `__jsx`, first we need to catch them as
-           * Identifier and then return `BasicEvaluatedExpression` whose `id` and `type` webpack matches to
-           * invoke hook for call.
-           * See: https://github.com/webpack/webpack/blob/webpack-4/lib/Parser.js#L1931-L1932.
-           */
-          parser.hooks.evaluate
-            .for("Identifier")
-            .tap(this.constructor.name, (node: namedTypes.Identifier) => {
-              // We will only optimize fonts from first party code.
-              if (parser?.state?.module?.resource.includes("node_modules")) {
-                return;
-              }
-              return node.name === "__jsx"
-                ? new BasicEvaluatedExpression()
-                    //@ts-ignore
-                    .setRange(node.range)
-                    .setExpression(node)
-                    .setIdentifier("__jsx")
-                : undefined;
-            });
-
-          parser.hooks.call
-            .for("__jsx")
-            .tap(this.constructor.name, (node: namedTypes.CallExpression) => {
-              if (node.arguments.length !== 2) {
-                // A font link tag has only two arguments rel=stylesheet and href='...'
-                return;
-              }
-              if (!isNodeCreatingLinkElement(node)) {
-                return;
-              }
-
-              // node.arguments[0] is the name of the tag and [1] are the props.
-              const propsNode = node
-                .arguments[1] as namedTypes.ObjectExpression;
-              const props: { [key: string]: string } = {};
-              propsNode.properties.forEach((prop) => {
-                if (prop.type !== "Property") {
-                  return;
-                }
-                if (
-                  prop.key.type === "Identifier" &&
-                  prop.value.type === "Literal"
-                ) {
-                  props[prop.key.name] = prop.value.value as string;
-                }
-              });
-              if (
-                !props.rel ||
-                props.rel !== "stylesheet" ||
-                !props.href ||
-                !OPTIMIZED_FONT_PROVIDERS.some((url) =>
-                  props.href.startsWith(url)
-                )
-              ) {
-                return false;
-              }
-
-              this.gatheredStylesheets.push(props.href);
-            });
+      factory.hooks.parser.for("javascript/" + type).tap(this.constructor.name, (parser: any) => {
+        /**
+         * Webpack fun facts:
+         * `parser.hooks.call.for` cannot catch calls for user defined identifiers like `__jsx`
+         * it can only detect calls for native objects like `window`, `this`, `eval` etc.
+         * In order to be able to catch calls of variables like `__jsx`, first we need to catch them as
+         * Identifier and then return `BasicEvaluatedExpression` whose `id` and `type` webpack matches to
+         * invoke hook for call.
+         * See: https://github.com/webpack/webpack/blob/webpack-4/lib/Parser.js#L1931-L1932.
+         */
+        parser.hooks.evaluate.for("Identifier").tap(this.constructor.name, (node: namedTypes.Identifier) => {
+          // We will only optimize fonts from first party code.
+          if (parser?.state?.module?.resource.includes("node_modules")) {
+            return;
+          }
+          return node.name === "__jsx"
+            ? new BasicEvaluatedExpression()
+                //@ts-ignore
+                .setRange(node.range)
+                .setExpression(node)
+                .setIdentifier("__jsx")
+            : undefined;
         });
+
+        parser.hooks.call.for("__jsx").tap(this.constructor.name, (node: namedTypes.CallExpression) => {
+          if (node.arguments.length !== 2) {
+            // A font link tag has only two arguments rel=stylesheet and href='...'
+            return;
+          }
+          if (!isNodeCreatingLinkElement(node)) {
+            return;
+          }
+
+          // node.arguments[0] is the name of the tag and [1] are the props.
+          const propsNode = node.arguments[1] as namedTypes.ObjectExpression;
+          const props: { [key: string]: string } = {};
+          propsNode.properties.forEach((prop) => {
+            if (prop.type !== "Property") {
+              return;
+            }
+            if (prop.key.type === "Identifier" && prop.value.type === "Literal") {
+              props[prop.key.name] = prop.value.value as string;
+            }
+          });
+          if (!props.rel || props.rel !== "stylesheet" || !props.href || !OPTIMIZED_FONT_PROVIDERS.some((url) => props.href.startsWith(url))) {
+            return false;
+          }
+
+          this.gatheredStylesheets.push(props.href);
+        });
+      });
     }
   };
 
   public apply(compiler: Compiler) {
     this.compiler = compiler;
-    compiler.hooks.normalModuleFactory.tap(
-      this.constructor.name,
-      this.parserHandler
-    );
+    compiler.hooks.normalModuleFactory.tap(this.constructor.name, this.parserHandler);
     compiler.hooks.make.tapAsync(this.constructor.name, (compilation, cb) => {
       // @ts-ignore
       if (compilation.options.output.path.endsWith("serverless")) {
@@ -131,43 +108,29 @@ export class FontStylesheetGatheringPlugin {
          * For target: server drive the manifest through physical file and less of webpack magic.
          */
         const mainTemplate = compilation.mainTemplate;
-        mainTemplate.hooks.requireExtensions.tap(
-          this.constructor.name,
-          (source: string) => {
-            return `${source}
+        mainTemplate.hooks.requireExtensions.tap(this.constructor.name, (source: string) => {
+          return `${source}
                 // Font manifest declaration
-                ${
-                  mainTemplate.requireFn
-                }.__JOY_FONT_MANIFEST__ = ${JSON.stringify(
-              this.manifestContent
-            )};`;
-          }
-        );
+                ${mainTemplate.requireFn}.__JOY_FONT_MANIFEST__ = ${JSON.stringify(this.manifestContent)};`;
+        });
       }
-      compilation.hooks.finishModules.tapAsync(
-        this.constructor.name,
-        async (_: any, modulesFinished: Function) => {
-          const fontDefinitionPromises = this.gatheredStylesheets.map((url) =>
-            getFontDefinitionFromNetwork(url)
-          );
+      compilation.hooks.finishModules.tapAsync(this.constructor.name, async (_: any, modulesFinished: Function) => {
+        const fontDefinitionPromises = this.gatheredStylesheets.map((url) => getFontDefinitionFromNetwork(url));
 
-          this.manifestContent = [];
-          for (const promiseIndex in fontDefinitionPromises) {
-            const css = await fontDefinitionPromises[promiseIndex];
-            const content = await minifyCss(css);
-            this.manifestContent.push({
-              url: this.gatheredStylesheets[promiseIndex],
-              content,
-            });
-          }
-          if (!isWebpack5) {
-            compilation.assets["font-manifest.json"] = new RawSource(
-              JSON.stringify(this.manifestContent, null, "  ")
-            );
-          }
-          modulesFinished();
+        this.manifestContent = [];
+        for (const promiseIndex in fontDefinitionPromises) {
+          const css = await fontDefinitionPromises[promiseIndex];
+          const content = await minifyCss(css);
+          this.manifestContent.push({
+            url: this.gatheredStylesheets[promiseIndex],
+            content,
+          });
         }
-      );
+        if (!isWebpack5) {
+          compilation.assets["font-manifest.json"] = new RawSource(JSON.stringify(this.manifestContent, null, "  "));
+        }
+        modulesFinished();
+      });
       cb();
     });
 
@@ -181,9 +144,7 @@ export class FontStylesheetGatheringPlugin {
             stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
           },
           (assets: any) => {
-            assets["font-manifest.json"] = new RawSource(
-              JSON.stringify(this.manifestContent, null, "  ")
-            );
+            assets["font-manifest.json"] = new RawSource(JSON.stringify(this.manifestContent, null, "  "));
           }
         );
       });

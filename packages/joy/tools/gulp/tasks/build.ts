@@ -57,7 +57,7 @@ function copyAsset() {
 
 function buildJS() {
   return gulp
-    .src("src/**/*.js")
+    .src(["src/**/*.js", "!src/**/fixtures/**"])
     .pipe(sourcemaps.init())
     .pipe(
       babel({
@@ -70,7 +70,7 @@ function buildJS() {
 
 function watchJS() {
   log.info("Watching js files..");
-  gulp.watch([`src/**/*.{js,jsx}`], { ignoreInitial: false }, gulp.series([buildJS]));
+  gulp.watch([`src/**/*.{js,jsx}`], { ignoreInitial: false, ignored: ["**/fixtures/**"] }, gulp.series([buildJS]));
 }
 
 function watchAsset() {
