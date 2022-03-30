@@ -1,15 +1,13 @@
 import { FSWatcher, watch } from "chokidar";
-import lodash from "lodash";
-import winPath from "../util/winPath/winPath";
 import { InjectHook, Component, HookType, IHook, Inject, IComponentLifecycle } from "@symph/core";
 import { dirname } from "path";
 import { EOL } from "os";
 import { promises } from "fs";
 import { JoyAppConfig } from "../joy-server/server/joy-app-config";
-import mkdirp from "mkdirp";
 import { recursiveDelete } from "../lib/recursive-delete";
 import { fileExists } from "../lib/file-exists";
 import { Stream } from "stream";
+import { mkdirp } from "fs-extra";
 
 const GEN_CLIENT_CONTENT = `
 const modules = (typeof window !== 'undefined' && window.__JOY_AUTOGEN) || [];
@@ -191,8 +189,9 @@ export class FileGenerator implements IComponentLifecycle {
 
   private async writeTmpFile(absPath: string, content: string | Stream, { skipTSCheck }: TWriteFileOptions): Promise<void> {
     // const absPath = this.joyAppConfig.resolveAppDir(this.joyAppConfig.outDir, this.joyAppConfig.autoGenOutputDir, path)
-    if (await fileExists(dirname(absPath))) {
-      await mkdirp(dirname(absPath));
+    const absDirname = dirname(absPath);
+    if (!(await fileExists(absDirname))) {
+      await mkdirp(absDirname);
     }
     if (isTSFile(absPath) && skipTSCheck) {
       // write @ts-nocheck into first line

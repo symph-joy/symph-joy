@@ -35,7 +35,7 @@ export default class DynamicRouteCtl extends BaseReactController {
         <div>
           msg: <span id="msg">{this.msg}</span>
         </div>
-        <div id="link-hello2" onClick={this.onClickLink.bind(this, "/dynamic/hello2" + new Date().getTime())}>
+        <div id="link-hello2" onClick={this.onClickLink.bind(this, "/dynamic/hello2")}>
           /dynamic/hello2
         </div>
       </>

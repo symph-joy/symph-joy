@@ -8,12 +8,13 @@ export type PrerenderMeta = {
   route: string;
   paths: string[];
   isFallback: boolean;
-  routeComponent?: { new (...args: any[]): any };
+  isFormPrerender: boolean; // 是否来自Prerender类；
+  routeComponent?: { new (...args: any[]): any }; // 装饰Prerender类时，定义需要被预渲染的路由组件。
 };
 
 export interface PrerenderOptions {
   route?: string;
-  routeComponent?: { new (...args: any[]): any };
+  routeComponent?: { new (...args: any[]): any }; // 装饰Prerender类时，定义需要被预渲染的路由组件。
   paths?: string[];
   isFallback?: boolean;
 }
@@ -40,6 +41,7 @@ export function Prerender(options: PrerenderOptions = {}): <TFunction extends Fu
       const meta = {
         routeComponent,
         route: resolvedRoute,
+        isFormPrerender: true,
       } as PrerenderMeta;
 
       Reflect.defineMetadata(JOY_PRERENDER_META, meta, constructor);
@@ -73,16 +75,13 @@ export function Prerender(options: PrerenderOptions = {}): <TFunction extends Fu
         // 有可能是文件路由，所以不做非空判断
         //   throw new Error(`The component(${constructor.name}) is not a route component, so can't decorate by @Prerender(). `);
       }
-      let resolvedPath = paths;
-      if (!resolvedPath?.length) {
-        resolvedPath = resolvedRoute ? [resolvedRoute] : undefined;
-      }
 
       const meta = Object.assign(
         {
           routeComponent: undefined,
           route: resolvedRoute,
-          paths: resolvedPath,
+          paths,
+          isFormPrerender: false,
         },
         options
       ) as PrerenderMeta;

@@ -374,6 +374,7 @@ export default async function getBaseWebpackConfig(
   const autoGenCommonOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/common");
   const autoGenClientOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/client");
   const autoGenServerOutputAbsDir = path.join(distDir, config.autoGenOutputDir, "react/server");
+  const serverPrerenderModulesJs = path.join(distDir, config.autoGenOutputDir, "react/entries/prerender-modules.js"); // todo 动态获取入口文件，生成独立的bundle。
 
   const clientEntries = !isServer
     ? () =>
@@ -415,7 +416,7 @@ export default async function getBaseWebpackConfig(
               })}!`
             : undefined,
         ].filter(Boolean) as string[],
-        // 'joy-gen-entry': [],
+        "prerender-modules": [existsSync(serverPrerenderModulesJs) ? serverPrerenderModulesJs : undefined].filter(Boolean) as string[],
       })
     : undefined;
 
