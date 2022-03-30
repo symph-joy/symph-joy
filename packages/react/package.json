@@ -1,6 +1,6 @@
 {
   "name": "@symph/react",
-  "version": "2.0.0-canary.5",
+  "version": "2.0.0-canary.6",
   "description": "Joy core - modern, effect, powerful react application framework",
   "module": "dist/index.js",
   "main": "dist/index.js",
@@ -34,8 +34,8 @@
     "bin/*": "standard"
   },
   "dependencies": {
-    "@symph/config": "2.0.0-canary.5",
-    "@symph/core": "2.0.0-canary.5",
+    "@symph/config": "2.0.0-canary.6",
+    "@symph/core": "2.0.0-canary.6",
     "flatten": "1.0.3",
     "global": "4.4.0",
     "invariant": "2.2.1",
