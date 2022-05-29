@@ -277,7 +277,7 @@ export class JoyPrerenderService {
 
 const PrerenderModulesTmp = handlebars.compile(`
 {{#modulePaths}}
-import * as m{{@index}} from "{{this}}";
+import * as m{{@index}} from {{json this}};
 {{/modulePaths}}
 
 export default [{{#modulePaths}}m{{@index}},{{/modulePaths}}];
