@@ -121,7 +121,7 @@ export function ReactRouteLoader({ route, element, loading }: ReactRouteLoaderOp
       controllers: [],
     } as ReactRouteContextValue;
     return routeContextValue;
-  }, [matchUrl]);
+  }, [location, match]);
 
   let routeElement: React.ReactElement | Promise<React.ReactElement> = useMemo(() => {
     const children = element || getRouteElement(appContext, route);
